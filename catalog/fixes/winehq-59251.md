@@ -18,20 +18,58 @@ ai_assisted: true
 
 # winehq-59251
 
-The missing thumbnails are covered by winehq-59609. This separate patch handles wheel events in a horizontal ICON list with no vertical scrollbar. Preserve partial-detent accumulation and direction reversal. This candidate does not yet claim to fix the separately reported slow scrolling at high DPI.
+## Problem
 
-## Validation status
+In a list-view in icon view (`LVS_ICON`), the mouse wheel does not behave
+like Windows:
 
-Candidate under review. The research workflow compares Windows, unmodified Wine,
-patched Wine and undo. Source compilation alone is insufficient: the patched
-module must be loaded as native and the affected FastStone UI must be checked.
-FastStone 8.5 at 192 DPI requires its own acceptance; a 7.5 result does not prove it.
-See [the audit](../../docs/faststone.md) for unresolved cases and applicability.
+1. A list that grows horizontally (left-aligned icons, horizontal scrollbar
+   only, e.g. FastStone's fullscreen thumbnail strip) does not scroll at all:
+   Wine always scrolls vertically.
+2. Where it scrolls, Wine moves a fixed 37 pixels per `WM_MOUSEWHEEL`,
+   whatever the wheel delta: half a detent, one detent and two detents all
+   move 37 pixels, and a zero delta moves too.
+
+The missing thumbnails in the same strip are a different defect
+(winehq-59609).
+
+## Windows behavior (measured)
+
+comctl32 v6, three wheel lines (the default):
+
+- Deltas accumulate; nothing moves until a full `WHEEL_DELTA` (120) is
+  reached, and leftovers are dropped when the direction changes.
+- Each detent scrolls `lines × spacing / 2` pixels on the scrolled axis,
+  where `spacing` is the icon spacing on that axis (`LVM_GETITEMSPACING`) and
+  `lines` comes from `SPI_GETWHEELSCROLLLINES`; at most one page.
+- The scrolled axis is horizontal when the control has a horizontal
+  scrollbar and no vertical one, otherwise vertical.
+
+Evidence: 32×32 icons with 74-pixel spacing → 111 pixels per detent (this is
+where Wine's constant 37 = 74 / 2 comes from); FastStone's 138×144 cells at
+96 DPI → 207 pixels horizontally and 216 vertically. Comctl32 v5 is
+unchanged by this fix.
+
+## The fix, in words
+
+In `LISTVIEW_MouseWheel`, for `LV_VIEW_ICON`: choose the axis as above;
+accumulate the delta in the existing `cWheelRemainder` (reset on direction
+change); for each whole detent, scroll `lines × (item width or height) / 2`
+pixels (falling back to 37 when the size is unknown), capped at one page;
+call the horizontal or vertical scroll routine with that amount. Zero or
+partial deltas do nothing. The v5 build keeps 37 pixels per detent but uses
+the same axis choice and accumulation.
+
+## Results
+
+FastStone 8.5, Wine 11.0, 192 DPI, item 0 position after each event
+(½, ½, 1, 2 detents): unpatched 37/37/37/37 pixels; patched 0/426/426/852
+(426 = 3 × 284 / 2); Windows at 96 DPI 0/216/216/432. The strict controls
+fixture checks both axes, zero and half-detent deltas and Ctrl. See
+`results` in the frontmatter and [the audit](../../docs/faststone.md).
 
 ## Installation
 
-The per-bug entry points are `scripts/apply-winehq-59251.sh` and
-`scripts/undo-winehq-59251.sh`. A downloadable binary release is not yet published;
-`--build` explicitly requests local compilation. The combined selection is
-`scripts/apply-faststone.sh`, with `scripts/undo-faststone.sh` for rollback.
+Part of the FastStone recipe (`dllmgr fix faststone`). The per-bug entry
+points are `scripts/apply-winehq-59251.sh` and `scripts/undo-winehq-59251.sh`.
 Use the same `WINEPREFIX` and close FastStone before changing its modules.
