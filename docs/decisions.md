@@ -256,3 +256,16 @@ running one for the same branch. While a deep run is in progress, push only
   primary goal: it is an everyday tool.
 - Reason: cloud runners cannot reproduce desktop-only symptoms; console work
   makes full use of them.
+
+## D22 — Planned default TUI administration on vtui
+
+- Date: 2026-11-06
+- Decided by: owner
+- Decision: plan a terminal administration interface built with vtui. It
+  selects applications/prefixes and fixes with checkboxes and provides actions
+  to apply, remove and undo fixes. When implemented, running `dllmgr` without
+  arguments opens this TUI by default. Explicit CLI commands remain available
+  for scripts. The interface must use the same applicability checks and
+  transaction/rollback operations as the CLI.
+- Scope: plan only. Do not implement the TUI during the current FastStone
+  debugging work. Improving today's CLI presentation is a separate current task.

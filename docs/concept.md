@@ -758,3 +758,11 @@ Hooks to keep in the design now:
 8. **Vendor kits.** A software vendor can ship a recipe's modules inside its own package,
    active only under the Wine releases they were measured on. See
    [vendor-kits.md](vendor-kits.md) (D19).
+
+## Planned default terminal administration
+
+Owner decision D22: add a TUI using [vtui](https://github.com/unxed/vtui), with
+checkboxes for selecting fixes and buttons for applying, removing and undoing
+selections. Bare `dllmgr` should open it by default once it exists. Retain the
+explicit CLI commands for automation and share the install/undo engine between
+interfaces. This is a recorded plan; implementation is deferred.
