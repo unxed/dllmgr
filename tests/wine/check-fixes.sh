@@ -8,6 +8,7 @@ src=$FIW_WORK/src/$tag
 mkdir -p results out
 git clone -q --depth 1 --branch "$tag" "$FIW_WINE_GIT" "$src"
 wineboot -u
+wineserver -p
 for exe in controls.exe controls6.exe; do
     set +e
     wine "$exe" --check-label --check-wheel --check-position > "results/before-$exe.txt"
@@ -41,7 +42,14 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
     if [[ " $modules " == *" gdiplus "* ]]; then
         cp "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "$RUNNER_TEMP/original-gdiplus.dll"
         python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe pencil.exe --dll "out/$selection/gdiplus-$tag-x86_64.dll" --name gdiplus.dll
-        WINEDEBUG=+loaddll wine pencil.exe --check >"results/$selection-pencil.txt" 2>"results/$selection-pencil-load.txt"
+        wine reg query 'HKCU\Software\Wine\AppDefaults\pencil.exe\DllOverrides' > "results/$selection-registry.txt"
+        sha256sum "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "out/$selection/gdiplus-$tag-x86_64.dll" >"results/$selection-hashes.txt"
+        if ! WINEDEBUG=+loaddll,+module wine ./pencil.exe --check >"results/$selection-pencil.txt" 2>"results/$selection-pencil-load.txt"; then
+            WINEDLLOVERRIDES='gdiplus=n,b;mscoree,mshtml=' WINEDEBUG=+loaddll wine ./pencil.exe --check >"results/$selection-pencil-env.txt" 2>"results/$selection-pencil-env-load.txt" || true
+            cp "$WINEPREFIX/user.reg" "results/$selection-user.reg"
+            sha256sum "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" >>"results/$selection-hashes.txt"
+            exit 1
+        fi
         cat "results/$selection-pencil.txt"
         python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe pencil.exe --name gdiplus
         cmp "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "$RUNNER_TEMP/original-gdiplus.dll"
@@ -55,8 +63,8 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
     python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe controls6.exe --dll "out/$selection/comctl32_v6-$tag-x86_64.dll" --name comctl32.dll --slot 'sxs:amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.*'
     wine reg query 'HKCU\Software\Wine\AppDefaults\controls.exe\DllOverrides'
     sha256sum "$original" "out/$selection/comctl32-$tag-x86_64.dll"
-    WINEDEBUG=+loaddll,+module wine controls.exe $checks 2>"results/$selection-v5-load.txt" | tee "results/$selection-v5.txt"
-    WINEDEBUG=+loaddll wine controls6.exe $checks 2>"results/$selection-v6-load.txt" | tee "results/$selection-v6.txt"
+    WINEDEBUG=+loaddll,+module wine ./controls.exe $checks 2>"results/$selection-v5-load.txt" | tee "results/$selection-v5.txt"
+    WINEDEBUG=+loaddll wine ./controls6.exe $checks 2>"results/$selection-v6-load.txt" | tee "results/$selection-v6.txt"
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls.exe --name comctl32
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls6.exe --name comctl32
     cmp "$original" "$RUNNER_TEMP/original-v5.dll"
