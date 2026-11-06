@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Switch verified FastStone fix sets while retaining the original undo baseline."""
+"""Switch verified FastStone fix sets, with one transaction across all modules."""
 import argparse
 import copy
 import json
@@ -10,7 +10,8 @@ import sys
 sys.path.insert(0, os.environ["DLLMGR_TOOLS"])
 import override
 
-KNOWN = {"winehq-48872", "winehq-59251", "winehq-59609", "faststone"}
+KNOWN = {"winehq-48872", "winehq-48874", "winehq-59251", "winehq-59609", "faststone"}
+NAMES = {"comctl32", "gdiplus"}
 
 
 def installed_fix(entry):
@@ -20,89 +21,115 @@ def installed_fix(entry):
     if managed in KNOWN:
         return managed
     legacy = json.loads(Path(__file__).with_name("legacy-59609.json").read_text())
-    if entry["new_sha256"] in legacy:
+    if override.norm(entry["name"]) == "comctl32" and entry["new_sha256"] in legacy:
         return "winehq-59609"
     raise override.OverrideError("unrecognized existing FSViewer override; undo it with its original tool first")
 
 
-def restore(prefix, dest, raw, mode, link, state, registry):
-    if link is None:
-        override.write_atomic(dest, raw, mode)
-    else:
-        temp = dest + ".dllmgr-rollback-%d" % os.getpid()
-        os.symlink(link, temp)
-        os.replace(temp, dest)
-    current = override.reg_query(prefix, "FSViewer.exe", "comctl32")
-    if registry is None:
-        if current is not None:
-            override.reg_delete(prefix, "FSViewer.exe", "comctl32")
-    else:
-        override.reg_add(prefix, "FSViewer.exe", "comctl32", registry)
-    override.save_state(prefix, state)
+def snapshot(prefix, dest, name):
+    return dict(dest=dest, name=name, raw=override.read_file(dest), mode=os.stat(dest).st_mode & 0o7777,
+                link=os.readlink(dest) if os.path.islink(dest) else None,
+                registry=override.reg_query(prefix,"FSViewer.exe",override.norm(name)))
+
+
+def restore(prefix, files, state):
+    for item in files:
+        if item["link"] is None:
+            override.write_atomic(item["dest"],item["raw"],item["mode"])
+        else:
+            temp = item["dest"] + ".dllmgr-rollback-%d" % os.getpid()
+            os.symlink(item["link"],temp)
+            os.replace(temp,item["dest"])
+        value = override.norm(item["name"])
+        current = override.reg_query(prefix,"FSViewer.exe",value)
+        if item["registry"] is None:
+            if current is not None:
+                override.reg_delete(prefix,"FSViewer.exe",value)
+        else:
+            override.reg_add(prefix,"FSViewer.exe",value,item["registry"])
+    override.save_state(prefix,state)
+
+
+def check_entry(state, entry, dest):
+    if not entry:
+        return
+    installed_fix(entry)
+    if entry["dest"] != dest or override.file_sha(dest) != entry["new_sha256"]:
+        raise override.OverrideError("installed DLL or slot changed; use the original undo before switching sets")
+    if override.file_sha(entry["backup"]) != entry["orig_sha256"]:
+        raise override.OverrideError("original backup is missing or changed")
+    if any(e is not entry and e["dest"] == dest for e in state["entries"]):
+        raise override.OverrideError("this DLL is shared by another managed application; cannot switch it")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["apply", "undo"])
-    parser.add_argument("--fix", required=True, choices=sorted(KNOWN))
-    parser.add_argument("--prefix", required=True)
+    parser.add_argument("command",choices=["apply","undo"])
+    parser.add_argument("--fix",required=True,choices=sorted(KNOWN))
+    parser.add_argument("--prefix",required=True)
     parser.add_argument("--dll")
-    parser.add_argument("--slot", default="system")
+    parser.add_argument("--name",default="comctl32.dll")
+    parser.add_argument("--slot",default="system")
+    parser.add_argument("--plan",type=Path)
     args = parser.parse_args()
     prefix = os.path.abspath(args.prefix)
     state = override.load_state(prefix)
-    entry = override.find_entry(state, "FSViewer.exe", "comctl32")
-    previous = installed_fix(entry)
+    plan = []
     if args.command == "undo":
-        if previous != args.fix:
-            raise override.OverrideError("%s is installed, not %s" % (previous or "no fix", args.fix))
-        return override.main(["undo", "--prefix", prefix, "--exe", "FSViewer.exe", "--name", "comctl32"])
-
-    if not args.dll:
-        parser.error("apply requires --dll")
-    raw = override.unmark(override.read_file(args.dll))
-    arch = override.pe_machine(raw)
-    dest = os.path.join(override.slot_dir(prefix, args.slot, arch, override.prefix_arch(prefix)), "comctl32.dll")
-    if entry:
-        if entry["dest"] != dest or override.file_sha(dest) != entry["new_sha256"]:
-            raise override.OverrideError("installed DLL or slot changed; use the original undo before switching sets")
-        if override.file_sha(entry["backup"]) != entry["orig_sha256"]:
-            raise override.OverrideError("original backup is missing or changed")
-        if entry["new_sha256"] == override.sha256(raw) and previous == args.fix:
+        for entry in state["entries"]:
+            if entry["exe"].lower() != "fsviewer.exe" or override.norm(entry["name"]) not in NAMES:
+                continue
+            if installed_fix(entry) == args.fix:
+                check_entry(state,entry,entry["dest"])
+                plan.append(dict(name=entry["name"],dest=entry["dest"],entry=entry))
+        if not plan:
+            raise override.OverrideError("%s is not installed" % args.fix)
+    else:
+        modules = json.loads(args.plan.read_text()) if args.plan else [dict(dll=args.dll,name=args.name,slot=args.slot)]
+        seen = set()
+        for module in modules:
+            name = module["name"]
+            if override.norm(name) not in NAMES or override.norm(name) in seen or not module.get("dll"):
+                parser.error("apply needs unique supported modules and DLL paths")
+            seen.add(override.norm(name))
+            raw = override.unmark(override.read_file(module["dll"]))
+            dest = os.path.join(override.slot_dir(prefix,module["slot"],override.pe_machine(raw),override.prefix_arch(prefix)),name)
+            entry = override.find_entry(state,"FSViewer.exe",name)
+            check_entry(state,entry,dest)
+            plan.append(dict(module,dest=dest,entry=entry,sha256=override.sha256(raw)))
+        if not plan:
+            parser.error("empty apply plan")
+        if all(item["entry"] and installed_fix(item["entry"]) == args.fix and
+               item["entry"]["new_sha256"] == item["sha256"] for item in plan):
             print("%s is already enabled for FSViewer.exe" % args.fix)
             return 0
-        if any(e is not entry and e["dest"] == dest for e in state["entries"]):
-            raise override.OverrideError("this DLL is shared by another managed application; cannot switch it")
 
-    # Read everything before the first mutation. A failed switch restores the
-    # old installed set, not just the prefix's original DLL.
-    old_raw = override.read_file(dest)
-    old_mode = os.stat(dest).st_mode & 0o7777
-    old_link = os.readlink(dest) if os.path.islink(dest) else None
+    files = [snapshot(prefix,item["dest"],item["name"]) for item in plan]
     old_state = copy.deepcopy(state)
-    registry = override.reg_query(prefix, "FSViewer.exe", "comctl32")
     try:
-        if entry:
-            rc = override.main(["undo", "--prefix", prefix, "--exe", "FSViewer.exe", "--name", "comctl32"])
-            if rc:
-                raise override.OverrideError("could not remove the previous fix set")
-        rc = override.main(["apply", "--prefix", prefix, "--exe", "FSViewer.exe", "--dll", args.dll,
-                            "--name", "comctl32.dll", "--slot", args.slot])
-        if rc:
-            raise override.OverrideError("could not apply %s" % args.fix)
-        state = override.load_state(prefix)
-        override.find_entry(state, "FSViewer.exe", "comctl32")["dllmgr_fix"] = args.fix
-        override.save_state(prefix, state)
+        for item in plan:
+            if item["entry"]:
+                rc = override.main(["undo","--prefix",prefix,"--exe","FSViewer.exe","--name",item["name"]])
+                if rc:
+                    raise override.OverrideError("could not remove the previous fix set")
+            if args.command == "apply":
+                rc = override.main(["apply","--prefix",prefix,"--exe","FSViewer.exe","--dll",item["dll"],
+                                    "--name",item["name"],"--slot",item["slot"]])
+                if rc:
+                    raise override.OverrideError("could not apply %s" % args.fix)
+                updated = override.load_state(prefix)
+                override.find_entry(updated,"FSViewer.exe",item["name"])["dllmgr_fix"] = args.fix
+                override.save_state(prefix,updated)
     except BaseException:
-        restore(prefix, dest, old_raw, old_mode, old_link, old_state, registry)
+        restore(prefix,files,old_state)
         raise
-    print("Enabled %s for FSViewer.exe" % args.fix)
+    print("%s %s for FSViewer.exe" % ("Enabled" if args.command == "apply" else "Removed",args.fix))
     return 0
 
 
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except (override.OverrideError, override.NotPE, override.Placeholder) as error:
-        print("dllmgr: %s" % error, file=sys.stderr)
+    except (override.OverrideError,override.NotPE,override.Placeholder) as error:
+        print("dllmgr: %s" % error,file=sys.stderr)
         sys.exit(1)

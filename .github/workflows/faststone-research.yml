@@ -37,7 +37,7 @@ jobs:
         run: |
           ./controls.exe --check-label --check-wheel --check-position | tee windows-v5.txt
           ./controls6.exe --check-label --check-wheel --check-position | tee windows-v6.txt
-          ./pencil.exe | tee windows-pencil.txt
+          ./pencil.exe --check | tee windows-pencil.txt
       - uses: actions/upload-artifact@v4
         with:
           name: windows-baseline

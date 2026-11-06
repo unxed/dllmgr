@@ -1,0 +1,14 @@
+diff --git a/dlls/gdiplus/graphics.c b/dlls/gdiplus/graphics.c
+index 2419eea..e461d47 100644
+--- a/dlls/gdiplus/graphics.c
++++ b/dlls/gdiplus/graphics.c
+@@ -298,6 +298,9 @@ static INT prepare_dc(GpGraphics *graphics, HDC hdc, GpPen *pen)
+ 
+     save_state = SaveDC(hdc);
+ 
++    /* GDI+ drawing ignores the raster operation inherited from the HDC. */
++    SetROP2(hdc, R2_COPYPEN);
++
+     EndPath(hdc);
+ 
+     if(pen->unit == UnitPixel){
