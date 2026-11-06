@@ -14,7 +14,7 @@ import (
 func sortStrings(s []string) { sort.Strings(s) }
 
 // Dirs are the subdirectories of a catalog that hold entries, one per kind.
-var Dirs = []string{"fixes", "variants"}
+var Dirs = []string{"fixes", "variants", "bundles"}
 
 // LoadDir parses every entry under dir/fixes and dir/variants (the files
 // named README.md are documentation and are skipped). It reports all
@@ -26,6 +26,9 @@ func LoadDir(dir string) ([]Entry, error) {
 	for _, sub := range Dirs {
 		files, err := os.ReadDir(filepath.Join(dir, sub))
 		if err != nil {
+			if sub == "bundles" && os.IsNotExist(err) {
+				continue
+			}
 			errs = append(errs, err)
 			continue
 		}
@@ -55,6 +58,20 @@ func LoadDir(dir string) ([]Entry, error) {
 			}
 			seen[e.ID] = e.Path
 			entries = append(entries, *e)
+		}
+	}
+	byID := make(map[string]Entry, len(entries))
+	for _, entry := range entries {
+		byID[entry.ID] = entry
+	}
+	for _, entry := range entries {
+		if entry.Kind != KindBundle {
+			continue
+		}
+		for _, id := range entry.Fixes {
+			if fix, ok := byID[id]; !ok || fix.Kind != KindFix {
+				errs = append(errs, fmt.Errorf("%s: field \"fixes\": %q does not name a catalog fix", entry.Path, id))
+			}
 		}
 	}
 	if len(errs) > 0 {

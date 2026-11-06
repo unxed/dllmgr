@@ -16,6 +16,7 @@ jobs:
           x86_64-w64-mingw32-gcc -O2 -Wall -o controls.exe faststone-controls.c -lcomctl32 -luxtheme -lgdi32
           x86_64-w64-mingw32-windres controls.rc -O coff -o controls.res
           x86_64-w64-mingw32-gcc -O2 -Wall -o controls6.exe faststone-controls.c controls.res -lcomctl32 -luxtheme -lgdi32
+          x86_64-w64-mingw32-gcc -O2 -Wall -o pencil.exe pencil.c -lgdiplus -lgdi32
       - uses: actions/upload-artifact@v4
         with:
           name: controls
@@ -31,6 +32,7 @@ jobs:
         run: |
           ./controls.exe --check-label --check-wheel --check-position | tee windows-v5.txt
           ./controls6.exe --check-label --check-wheel --check-position | tee windows-v6.txt
+          ./pencil.exe | tee windows-pencil.txt
       - uses: actions/upload-artifact@v4
         with:
           name: windows-baseline
@@ -48,7 +50,7 @@ jobs:
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq wine wine64 xvfb
       - run: |
           export WINEPREFIX="$RUNNER_TEMP/dllmgr-research-prefix"
-          xvfb-run -a bash -e -o pipefail -c 'wineboot -u; wine controls.exe | tee wine-v5.txt; wine controls6.exe | tee wine-v6.txt'
+          xvfb-run -a bash -e -o pipefail -c 'wineboot -u; wine controls.exe | tee wine-v5.txt; wine controls6.exe | tee wine-v6.txt; wine pencil.exe | tee wine-pencil.txt'
       - uses: actions/upload-artifact@v4
         with:
           name: wine-baseline
