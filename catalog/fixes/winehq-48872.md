@@ -18,20 +18,39 @@ ai_assisted: true
 
 # winehq-48872
 
-FastStone draws file names itself inside the rectangle returned by `LVM_GETITEMRECT(LVIR_LABEL)`. Wine returns zero width for an empty control label. The patch changes the public label/select rectangle without changing painting metrics: selected items with empty text must not acquire a painted empty label. This avoids the visual regression discussed in MR 10093.
+## Problem
 
-## Validation status
+In a list-view in icon view, an item whose own text is empty gets a
+zero-width rectangle from `LVM_GETITEMRECT(LVIR_LABEL)` and no label part in
+`LVIR_SELECTBOUNDS`. Applications that keep the text elsewhere and draw the
+name themselves inside that rectangle show no names. FastStone does this for
+every file and folder under its thumbnails.
 
-Candidate under review. The research workflow compares Windows, unmodified Wine,
-patched Wine and undo. Source compilation alone is insufficient: the patched
-module must be loaded as native and the affected FastStone UI must be checked.
-FastStone 8.5 at 192 DPI requires its own acceptance; a 7.5 result does not prove it.
-See [the audit](../../docs/faststone.md) for unresolved cases and applicability.
+## Windows behavior (measured)
+
+comctl32 v6, 32×32 icons, 96 DPI, item text `''`: `LVIR_LABEL` is
+(1,37)–(76,54), the full item width under the icon, and a selected item paints
+no pixels there. Text `' '` paints a selection background (119 pixels).
+
+## The fix, in words
+
+In `LISTVIEW_GetItemRect`, icon view, modes `LVIR_LABEL` and
+`LVIR_SELECTBOUNDS`, when the item text is empty or a callback: return a label
+rectangle as wide as the item (`nItemWidth`), starting below the icon
+(`ICON_TOP_PADDING_HITABLE + iconSize.cy + ICON_BOTTOM_PADDING`), one text line
+high (`ntmHeight + HEIGHT_PADDING`); for `LVIR_SELECTBOUNDS` unite it with the
+existing rectangle. Painting metrics are unchanged, so an empty selected
+label still paints nothing. This keeps the geometry of MR 10093 without its
+painted selection rectangle.
+
+## Results
+
+FastStone 8.5 at 192 DPI: the first label's width goes from 0 to 276 pixels
+and names appear under files and folders, including Cyrillic ones. The
+controls fixture `--check-label` checks a usable rectangle and no painted
+pixels. See `results` and [the audit](../../docs/faststone.md).
 
 ## Installation
 
-The per-bug entry points are `scripts/apply-winehq-48872.sh` and
-`scripts/undo-winehq-48872.sh`. A downloadable binary release is not yet published;
-`--build` explicitly requests local compilation. The combined selection is
-`scripts/apply-faststone.sh`, with `scripts/undo-faststone.sh` for rollback.
-Use the same `WINEPREFIX` and close FastStone before changing its modules.
+Part of the FastStone recipe (`dllmgr fix faststone`). The per-bug entry
+points are `scripts/apply-winehq-48872.sh` and `scripts/undo-winehq-48872.sh`.
