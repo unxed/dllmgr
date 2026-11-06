@@ -91,3 +91,16 @@ The install plan must show the combined modules, covered bugs and applicability;
 removing one fix must rebuild/select the remaining combination and preserve the
 original baseline for a complete uninstall. Keep composition and rollback logic
 in the manager, outside the GUI.
+
+## Input and timing observations (official portable 8.5)
+
+The shared `app-observer.exe` launches a generated white BMP, uses real input,
+and logs visible-window geometry and WM_NULL round trips. These are proxies for
+readiness, not proof of completed painting or a full performance benchmark.
+Windows run [42169416997](https://github.com/unxed/dllmgr/actions/runs/42169416997)
+observed a clean process exit (code 0) after middle click when started with an
+image file. The same Wine observation therefore does not establish an input
+bug. The bundled help's Browser ↔ Full Screen description needs to be checked
+from browser mode as well. Enter kept the process alive in this experiment.
+Draw Board mapped in about 0.45/0.39 seconds on that Windows runner; hardware,
+fonts, image size and cache state differ from the user's machine.
