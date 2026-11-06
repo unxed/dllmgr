@@ -75,9 +75,16 @@ browser). Not a Wine bug so far.
 
 ## Open threads
 
-- Architecture and vision review (branch `design/vision`, PR into
-  `fix/faststone-v2` when finished): vendor bundles, text descriptions of
-  fixes as first-class artifacts, one-click UX, the owner's vision text.
+- Architecture and vision review: https://github.com/unxed/dllmgr/pull/16
+  (into `fix/faststone-v2`) and https://github.com/unxed/fix-it-in-wine/pull/10.
+  It adds `docs/vision.md` (the owner's text verbatim plus marked editorial
+  notes), D16 clean-room rules (Wine gets text only; Windows only as a black
+  box), D17 the four headings for every fix file, D18 `dllmgr fix` without an
+  app name (scan the prefix, match, ask) and a desktop menu entry, D19 vendor
+  kits (`docs/vendor-kits.md`). Questions for the owner: accept D17 and D19?
+  Enable a vendor kit at install time or by a launcher at each start? May a
+  Bugzilla report link to a clearly labeled AI-written patch in the catalog?
+  The data model (D14) waits for the owner's review of this PR.
 - fix-it-in-wine PRs: lessons from this session
   (https://github.com/unxed/fix-it-in-wine/pull/8), showcase scope
   (https://github.com/unxed/fix-it-in-wine/pull/9).
