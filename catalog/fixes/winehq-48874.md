@@ -10,6 +10,8 @@ patch: https://raw.githubusercontent.com/unxed/dllmgr/main/patches/winehq-48874.
 patch_sha256: 8a4379e7967b771bc8c2296dd2dd158b6acb6ee6e82abfbbf60fd628e28a5e68
 recipe: "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 gdiplus"
 evidence: https://github.com/unxed/dllmgr/actions/workflows/faststone-research.yml
+results:
+  - {check: tests/wine/pencil.c, wine: wine-11.0, host_arch: x86_64, prefix_arch: win64, without: fail, with: pass, windows: pass, run: https://github.com/unxed/dllmgr/actions/runs/42256305651}
 license: LGPL-2.1-or-later
 ai_assisted: true
 ---

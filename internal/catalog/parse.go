@@ -22,7 +22,7 @@ var (
 )
 
 var fixFields = set("id", "kind", "title", "bug", "dlls", "programs", "wine",
-	"patch", "patch_sha256", "recipe", "binaries", "evidence", "license",
+	"patch", "patch_sha256", "recipe", "binaries", "evidence", "results", "license",
 	"authors", "ai_assisted", "funding")
 
 var fixRequired = []string{"title", "bug", "dlls", "patch", "patch_sha256", "license"}
@@ -273,6 +273,39 @@ func (v *validator) fix(e *Entry) {
 	v.url("binaries", e.Binaries, false)
 	v.url("evidence", e.Evidence, false)
 	v.url("funding", e.Funding, false)
+	v.results(e)
+}
+
+var resultFields = set("check", "exe_sha256", "wine", "host_arch", "prefix_arch",
+	"dpi", "without", "with", "windows", "run")
+
+// results checks the evidence rows: closed keys, a named check, an exact Wine
+// tag, pass/fail outcomes and a link to the run.
+func (v *validator) results(e *Entry) {
+	raw, _ := v.raw["results"].([]any)
+	for i, r := range e.Results {
+		if i < len(raw) {
+			if m, ok := raw[i].(map[string]any); ok {
+				for _, k := range sortedKeys(m) {
+					if !resultFields[k] {
+						v.fail("results", "row %d has unknown field %q", i+1, k)
+					}
+				}
+			}
+		}
+		outcome := func(s string, optional bool) bool {
+			return s == "pass" || s == "fail" || (optional && s == "")
+		}
+		if r.Check == "" || !strings.HasPrefix(r.Wine, "wine-") || !verRe.MatchString(r.Wine) ||
+			!outcome(r.Without, false) || !outcome(r.With, false) || !outcome(r.Windows, true) ||
+			(r.ExeSHA256 != "" && !sha256Re.MatchString(r.ExeSHA256)) {
+			v.fail("results", "row %d needs a check, a Wine tag, pass/fail for without and with, and optional windows", i+1)
+		}
+		v.url("results", r.Run, true)
+		if r.Run == "" {
+			v.fail("results", "row %d needs the run URL", i+1)
+		}
+	}
 }
 
 func (v *validator) variant(e *Entry) {

@@ -10,6 +10,8 @@ patch: https://raw.githubusercontent.com/unxed/dllmgr/main/patches/winehq-48872.
 patch_sha256: 5088c1e05ab76663cad8527a4b2d432d52557513762f74124da11af51027144e
 recipe: "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 comctl32 comctl32_v6"
 evidence: https://github.com/unxed/dllmgr/actions/workflows/faststone-research.yml
+results:
+  - {check: tests/wine/faststone85.sh browser names, exe_sha256: 05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621, wine: wine-11.0, host_arch: x86_64, prefix_arch: win64, dpi: 192, without: fail, with: pass, windows: pass, run: https://github.com/unxed/dllmgr/actions/runs/42236384573}
 license: LGPL-2.1-or-later
 ai_assisted: true
 ---

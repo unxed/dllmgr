@@ -19,7 +19,7 @@ title: "comctl32 v6: report the whole cell as the LVIR_ICON rectangle"
 dlls: [comctl32_v6]
 patch: https://…/patches/dllmgr-14.patch          # or: module: <a ready DLL>
 patch_sha256: 2e63…
-evidence:                           # rows; see "Environment" below
+results:                            # evidence rows; see "Environment" below
   - {check: faststone85.sh browser, exe_sha256: 05c8…, wine: wine-11.0,
      host_arch: x86_64, prefix_arch: win64, dpi: 192,
      without: fail, with: pass, run: https://github.com/…/runs/42256224744}
@@ -50,7 +50,7 @@ when:
 A flat `key: value` row: `exe_sha256`, `wine` (or later `target: reactos`),
 `host_arch`, `prefix_arch`, `dpi` when it matters, plus what the row is for
 (`release` in a recipe; `check`, `without`, `with`, `windows`, `run` in
-evidence). The same keys mean the same thing everywhere, so matching "my
+`results`). The same keys mean the same thing everywhere, so matching "my
 system" against a recipe or against a fix's evidence is one comparison.
 
 ## What falls out of it
@@ -100,8 +100,9 @@ releases every two weeks and other targets. What makes that safe:
 
 ## Gaps against the current catalog
 
-1. `evidence` rows do not exist yet; the results are in CI logs and
-   `docs/faststone.md`. Next step: add rows to the five FastStone fixes.
+1. `results` rows exist for winehq-48872, winehq-48874 and dllmgr-14. Rows for
+   winehq-59251 and winehq-59609 wait for a run of the current patches.
+   (`evidence` keeps its older meaning: a link to the workflow.)
 2. Recipes call `when` `profiles`; rename together with step 1.
 3. `catalog/variants/` holds whole-module changes separately; they can become
    fix files with `module:` when the first one is used by a recipe.
