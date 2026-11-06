@@ -120,3 +120,16 @@ replaces an earlier one says so.
 - Reason: the owner asked for a model simple enough for people, models,
   scripts and administrators, following OpenStreetMap's "few primitives plus
   key=value" lesson. It matches the current files, so adoption is gradual.
+
+## D13 — The data model centers on problem, change and check (replaces D12)
+
+- Date: 2026-11-06
+- Decided by: Claude (agent), pending the owner's review
+- Decision: the catalog models a problem, the change that fixes it, and the
+  checks whose evidence (environment, without, with, Windows) shows that it
+  works. Environments are values. Recipes are views over problems whose
+  changes have evidence for an environment. See `docs/data-model.md`.
+- Reason: the owner pointed out that copying OpenStreetMap's literal shape
+  (few primitives plus free tags) misses the point. The question every reader
+  asks is whether a change works on their system and what proves it; the
+  first draft had no place for that proof.
