@@ -11,6 +11,11 @@ sleep 8
 mkdir -p snapshots
 scrot snapshots/01-open.png
 xdotool getactivewindow getwindowname
+xdotool key Escape
+sleep 1
+scrot snapshots/01b-browser.png
+xdotool key Return
+sleep 1
 xdotool key d
 sleep 3
 scrot snapshots/02-draw.png

@@ -5,9 +5,11 @@
 #include <commctrl.h>
 #include <uxtheme.h>
 #include <stdio.h>
+#include <string.h>
 
 static HWND parent;
 static HIMAGELIST images;
+static int check_label, check_wheel, failures;
 
 static HWND listview(DWORD style, int width, int height, const char *text, int count)
 {
@@ -54,6 +56,7 @@ static void label_probe(const char *text)
             if (GetPixel(dc, x, y) != RGB(255,255,255)) painted++;
     ReleaseDC(lv, dc);
     printf("label selected text='%s': painted pixels=%d\n", text, painted);
+    if (check_label && !*text && (label.right <= label.left || painted)) failures++;
     DestroyWindow(lv);
 }
 
@@ -64,10 +67,12 @@ static void wheel_probe(DWORD view, DWORD align, int delta, int keys)
     SendMessageA(lv, WM_MOUSEWHEEL, MAKEWPARAM(keys, delta), 0);
     printf("wheel view=%lu align=%lu delta=%d keys=%d: h=%d->%d v=%d->%d\n",
            view, align, delta, keys, h0, GetScrollPos(lv, SB_HORZ), v0, GetScrollPos(lv, SB_VERT));
+    if (check_wheel && view == LVS_ICON && align == LVS_ALIGNLEFT && !keys && delta == -120 &&
+        GetScrollPos(lv, SB_HORZ) <= h0) failures++;
     DestroyWindow(lv);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     INITCOMMONCONTROLSEX init = {sizeof(init), ICC_LISTVIEW_CLASSES};
     HBITMAP bitmap;
@@ -76,6 +81,11 @@ int main(void)
     HBRUSH brush = CreateSolidBrush(RGB(0,180,0));
     int i;
     const int deltas[] = {0, -60, -120, -240};
+    for (i = 1; i < argc; i++)
+    {
+        if (!strcmp(argv[i], "--check-label")) check_label = 1;
+        if (!strcmp(argv[i], "--check-wheel")) check_wheel = 1;
+    }
     InitCommonControlsEx(&init);
     parent = CreateWindowA("STATIC", "FastStone controls probe", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                            0, 0, 500, 400, NULL, NULL, GetModuleHandleA(NULL), NULL);
@@ -95,5 +105,6 @@ int main(void)
     }
     wheel_probe(LVS_ICON,LVS_ALIGNLEFT,-120,MK_CONTROL);
     ImageList_Destroy(images); DestroyWindow(parent);
-    return 0;
+    printf("Failures: %d\n", failures);
+    return !!failures;
 }

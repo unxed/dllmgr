@@ -39,7 +39,6 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     env:
-      WINEPREFIX: ${{ runner.temp }}/dllmgr-research-prefix
       WINEDEBUG: -all
       WINEDLLOVERRIDES: mscoree,mshtml=
     steps:
@@ -48,6 +47,7 @@ jobs:
           name: controls
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq wine wine64 xvfb
       - run: |
+          export WINEPREFIX="$RUNNER_TEMP/dllmgr-research-prefix"
           xvfb-run -a bash -e -o pipefail -c 'wineboot -u; wine controls.exe | tee wine-v5.txt; wine controls6.exe | tee wine-v6.txt'
       - uses: actions/upload-artifact@v4
         with:
