@@ -196,6 +196,33 @@ static void reveal_fullscreen_strip(HWND fullscreen, const RECT *bounds)
     Sleep(150);
 }
 
+/* How long the fullscreen strip stays up under a cursor that does not move.
+ * Separates "Wine hides the strip" from "the harness sends no mouse motion". */
+static void strip_persistence(void)
+{
+    struct wheel_target target=wheel_target_at_cursor();
+    DWORD start=GetTickCount(), hidden=0;
+    POINT cursor={0};
+
+    if (!target.hwnd)
+    {
+        printf("strip_persistence: no list-view under the cursor after reveal\n");
+        return;
+    }
+    while (GetTickCount()-start<3000)
+    {
+        if (!IsWindowVisible(target.hwnd))
+        {
+            hidden=GetTickCount()-start;
+            GetCursorPos(&cursor);
+            break;
+        }
+        Sleep(25);
+    }
+    if (hidden) printf("strip_persistence: hidden_after_ms=%lu cursor=%ld,%ld\n",hidden,cursor.x,cursor.y);
+    else printf("strip_persistence: visible_for_ms=3000\n");
+}
+
 static void wheel_series(const char *stage, HWND fullscreen, const RECT *bounds, HANDLE process)
 {
     static const int deltas[]={-WHEEL_DELTA/2,-WHEEL_DELTA/2,-WHEEL_DELTA,-2*WHEEL_DELTA};
@@ -343,6 +370,8 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     SetForegroundWindow(fullscreen);
     GetWindowRect(fullscreen,&bounds);
     observe_left_panel(&bounds);
+    reveal_fullscreen_strip(fullscreen,&bounds);
+    strip_persistence();
     reveal_fullscreen_strip(fullscreen,&bounds);
     observe_listviews("fullscreen-strip",process,pid);
     wheel_series("fullscreen-strip",fullscreen,&bounds,process);
