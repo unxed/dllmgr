@@ -11,7 +11,7 @@ static HIMAGELIST images;
 
 static HWND listview(DWORD style, int width, int height, const char *text, int count)
 {
-    HWND lv = CreateWindowA(WC_LISTVIEWA, "", WS_CHILD | WS_VISIBLE | style,
+    HWND lv = CreateWindowA(WC_LISTVIEWA, "", WS_CHILD | WS_VISIBLE | LVS_SHAREIMAGELISTS | style,
                             0, 0, width, height, parent, NULL, GetModuleHandleA(NULL), NULL);
     LVITEMA item = {0};
     int i;
