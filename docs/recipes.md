@@ -23,6 +23,10 @@ sudo and works with an existing dllmgr installation created by this installer.
 You can call `"$HOME/.local/bin/dllmgr"` directly when `~/.local/bin` is outside
 your `PATH`.
 
+The installer also adds a menu entry, **Fix Windows programs**. It opens a
+terminal and runs `dllmgr fix` for the default prefix (see below). To remove
+it, delete `~/.local/share/applications/dllmgr-fix.desktop`.
+
 ## Fix the programs in a prefix
 
 ```sh
