@@ -44,6 +44,7 @@ Existing:
   patches, diagnostics, iterations).
 - `docs/decisions.md`: the log of decisions (who, when, why).
 - `docs/handoff.md`: where the FastStone work stands and what needs a local machine.
+- `docs/far3.md`: the Far Manager 3 plan; cloud sessions work on it while GUI work waits (D21).
 - `docs/data-model.md`: the catalog data model (fix files, recipe files, environment rows).
 - `catalog/`: the catalog. One Markdown file with YAML frontmatter per entry,
   `fixes/` (one file per bug) and `variants/` (whole-DLL alternatives),

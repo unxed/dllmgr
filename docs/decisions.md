@@ -244,3 +244,15 @@ running one for the same branch. While a deep run is in progress, push only
     Windows or on an unmeasured Wine.
 - Reason: owner's answers on 2026-11-06. `launch` costs a few milliseconds per
   start but never leaves a stale fix active after a Wine upgrade.
+
+## D21 — Cloud sessions work on Far3 while GUI work waits for the owner
+
+- Date: 2026-11-06
+- Decided by: owner
+- Decision: when a GUI application task (FastStone and the like) is blocked
+  on the owner's desktop (fonts, real mouse, real display), a cloud session
+  works on Far Manager 3 instead, following `docs/far3.md`. Far3 is a console
+  program, so a headless runner sees what the user sees. Fast startup is a
+  primary goal: it is an everyday tool.
+- Reason: cloud runners cannot reproduce desktop-only symptoms; console work
+  makes full use of them.

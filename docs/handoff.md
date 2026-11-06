@@ -1,5 +1,10 @@
 # Handoff: FastStone work, from the cloud session to a local agent
 
+## Cloud sessions
+
+If this session runs in the cloud and the next FastStone step needs the
+owner's desktop, switch to Far Manager 3: `docs/far3.md` (D21).
+
 ## First steps for the next session
 
 Everything was merged without waiting for CI, at the owner's request.
