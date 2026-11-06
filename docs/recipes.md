@@ -52,7 +52,7 @@ removing the fix and let its Wine server exit before relaunching the app.
 Set `WINEPREFIX` to the prefix you already use for FastStone. If the portable
 app lives outside that prefix, pass `--exe /path/to/FSViewer.exe` to
 `dllmgr fix faststone`. The fixer uses `curl` and `sha256sum` to fetch and
-check the [preview's prebuilt DLLs](https://github.com/unxed/dllmgr/releases/tag/faststone-v1).
+check the [prebuilt DLLs](https://github.com/unxed/dllmgr/releases) of the release named in the recipe profile.
 If the release has not been published yet, `dllmgr fix faststone --build`
 builds the same patches from source with Git, GCC, make, flex, bison, and
 the i686 and x86-64 MinGW GCC toolchains installed.

@@ -73,4 +73,7 @@ type BundleProfile struct {
 	Wine       string `yaml:"wine" json:"wine"`
 	HostArch   string `yaml:"host_arch" json:"host_arch"`
 	PrefixArch string `yaml:"prefix_arch" json:"prefix_arch"`
+	// Release is the GitHub release tag with prebuilt modules for this
+	// profile. Bump it whenever the bundle's fixes or patches change.
+	Release string `yaml:"release,omitempty" json:"release,omitempty"`
 }

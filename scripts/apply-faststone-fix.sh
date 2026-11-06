@@ -44,7 +44,7 @@ done
 if [ "$undo" = 0 ]; then
     tag=$("$DLLMGR_WINE" --version | cut -d' ' -f1)
     if [ "${DLLMGR_REQUIRE_PROFILE:-0}" = 1 ]; then
-        release=https://github.com/unxed/dllmgr/releases/download/faststone-v1
+        release=https://github.com/unxed/dllmgr/releases/download/$(python3 "$here/catalog_fixes.py" --release "$fix" "$tag")
         args=()
         [ -z "$exe" ] || args+=("$exe")
         exe=$(python3 "$here/select-faststone.py" "$here/../catalog/index.json" "$WINEPREFIX" "$tag" "${args[@]}")

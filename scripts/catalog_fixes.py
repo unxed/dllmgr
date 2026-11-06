@@ -6,6 +6,7 @@ installer, the tests and the release read it from here instead of copying it.
 
     catalog_fixes.py faststone        -> winehq-48872 winehq-48874 ...
     catalog_fixes.py winehq-59609     -> winehq-59609
+    catalog_fixes.py --release faststone wine-11.0 -> faststone-v2
 """
 import json
 from pathlib import Path
@@ -24,6 +25,17 @@ def resolve(requested, index=None):
     raise KeyError(requested)
 
 
+def release(requested, wine, index=None):
+    """The prebuilt-module release of the bundle profile for a Wine tag."""
+    index = index if index is not None else json.loads(INDEX.read_text(encoding="utf-8"))
+    for entry in index:
+        if entry["kind"] == "bundle" and requested in (entry["id"], entry.get("application")):
+            for profile in entry.get("profiles", []):
+                if profile["wine"] == wine and profile.get("release"):
+                    return profile["release"]
+    raise KeyError(f"{requested} on {wine}")
+
+
 def known(index=None):
     """Every ID accepted by resolve() for installable application bundles."""
     index = index if index is not None else json.loads(INDEX.read_text(encoding="utf-8"))
@@ -36,6 +48,12 @@ def known(index=None):
 
 
 def main():
+    if len(sys.argv) == 4 and sys.argv[1] == "--release":
+        try:
+            print(release(sys.argv[2], sys.argv[3]))
+        except KeyError:
+            sys.exit(f"no prebuilt release for {sys.argv[2]} on {sys.argv[3]}")
+        return
     if len(sys.argv) != 2:
         sys.exit("usage: catalog_fixes.py RECIPE_OR_FIX_ID")
     try:

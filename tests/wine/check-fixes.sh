@@ -122,13 +122,3 @@ for selection in $bundle_fixes faststone; do
     (cd "out/$selection" && sha256sum *.dll > SHA256SUMS)
 done
 
-if [ "${FS85_ICON_CELL_EXPERIMENT:-false}" = true ]; then
-    # The source tree still has the four patches from the last selection.
-    experiment="$GITHUB_WORKSPACE/tests/wine/faststone-icon-cell-experiment.patch"
-    git -C "$src" apply "$experiment"
-    cp -a out/faststone out/faststone-icon-cell
-    build_modules out/faststone-icon-cell comctl32_v6
-    cp "$experiment" out/faststone-icon-cell/
-    printf 'Experimental addition: %s\n' "$(basename "$experiment")" >> out/faststone-icon-cell/SOURCE.txt
-    (cd out/faststone-icon-cell && sha256sum *.dll > SHA256SUMS)
-fi

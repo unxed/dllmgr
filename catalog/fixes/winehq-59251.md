@@ -7,7 +7,7 @@ dlls: [comctl32, comctl32_v6]
 programs: [FSViewer.exe]
 wine: [wine-11.0]
 patch: https://raw.githubusercontent.com/unxed/dllmgr/main/patches/winehq-59251.patch
-patch_sha256: fcb139ca1d1db43ac2944b86a498fb5b04ec0a240802bd3bb4f626a5dd9ba6e2
+patch_sha256: 8eb2a421cb21cedfc4db8a5ec0fe3d4222799499079c0160b9fea34f13ae4403
 recipe: "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 comctl32 comctl32_v6"
 evidence: https://github.com/unxed/dllmgr/actions/workflows/faststone-research.yml
 license: LGPL-2.1-or-later

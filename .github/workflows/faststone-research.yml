@@ -187,24 +187,32 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
       - uses: actions/download-artifact@v4
         with:
           name: fixed-modules
+          path: built
       - name: Publish the Wine 11.0 profile
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if gh release view faststone-v1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo 'The immutable faststone-v1 preview is already published.'
+          # The bundle profile names the release; bump it when fixes change.
+          release=$(python3 src/scripts/catalog_fixes.py --release faststone wine-11.0)
+          if gh release view "$release" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "The immutable $release preview is already published."
             exit 0
           fi
-          source=$(find . -type f -path '*/out/faststone/SOURCE.txt')
+          fixes=$(python3 src/scripts/catalog_fixes.py faststone)
+          source=$(find built -type f -path '*/out/faststone/SOURCE.txt')
           test -f "$source"
           bundle=$(dirname "$source")
           (cd "$bundle" && sha256sum --check SHA256SUMS)
           grep -F 'wine-11.0 db11d0fe6a169c457e23d007e20404643d067aa8 ' "$bundle/SOURCE.txt"
-          gh release create faststone-v1 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+          grep -F " + $fixes" "$bundle/SOURCE.txt"
+          gh release create "$release" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
             --title 'FastStone 8.5 on Wine 11.0 (preview)' \
-            --notes "Four composed fixes for FastStone 8.5 portable x86 on Wine 11.0 x86_64. The recipe and its outstanding issues are documented in catalog/bundles/faststone-all.md at the tag. Source is Wine at the commit in SOURCE.txt plus the attached LGPL patches. Validation run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID." \
+            --notes "Composed fixes ($fixes) for FastStone 8.5 portable x86 on Wine 11.0 x86_64. The recipe and its outstanding issues are documented in catalog/bundles/faststone-all.md at the tag. Source is Wine at the commit in SOURCE.txt plus the attached LGPL patches. Validation run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID." \
             "$bundle"/*

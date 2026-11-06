@@ -207,7 +207,7 @@ func (v *validator) bundleProfiles(e *Entry) {
 	if !ok {
 		return
 	}
-	fields := set("version", "exe_sha256", "wine", "host_arch", "prefix_arch")
+	fields := set("version", "exe_sha256", "wine", "host_arch", "prefix_arch", "release")
 	seen := map[[4]string]bool{}
 	for i, profile := range e.Profiles {
 		if raw, ok := profiles[i].(map[string]any); ok {
@@ -221,6 +221,9 @@ func (v *validator) bundleProfiles(e *Entry) {
 			!strings.HasPrefix(profile.Wine, "wine-") || !verRe.MatchString(profile.Wine) ||
 			!nameRe.MatchString(profile.HostArch) || (profile.PrefixArch != "win32" && profile.PrefixArch != "win64") {
 			v.fail("profiles", "profile %d requires a version, executable SHA256, Wine tag, host architecture and win32 or win64 prefix", i+1)
+		}
+		if profile.Release != "" && !verRe.MatchString(profile.Release) {
+			v.fail("profiles", "profile %d has an invalid release tag %q", i+1, profile.Release)
 		}
 		key := [4]string{profile.ExeSHA256, profile.Wine, profile.HostArch, profile.PrefixArch}
 		if seen[key] {

@@ -8,10 +8,11 @@ profiles:
     wine: wine-11.0
     host_arch: x86_64
     prefix_arch: win64
+    release: faststone-v2
 title: "FastStone Image Viewer: composed application fixes"
 programs: [FSViewer.exe]
 wine: [wine-11.0]
-fixes: [winehq-48872, winehq-48874, winehq-59251, winehq-59609]
+fixes: [winehq-48872, winehq-48874, winehq-59251, winehq-59609, dllmgr-14]
 ---
 
 # FastStone Image Viewer

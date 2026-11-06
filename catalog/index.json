@@ -1,5 +1,27 @@
 [
   {
+    "id": "dllmgr-14",
+    "kind": "fix",
+    "title": "comctl32 v6: report the whole cell as the large-icon LVIR_ICON rectangle",
+    "license": "LGPL-2.1-or-later",
+    "bug": "https://github.com/unxed/dllmgr/issues/14",
+    "dlls": [
+      "comctl32_v6"
+    ],
+    "programs": [
+      "FSViewer.exe"
+    ],
+    "wine": [
+      "wine-11.0"
+    ],
+    "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/dllmgr-14.patch",
+    "patch_sha256": "45c03ad0daa0540ac9345155a83c07d0961ad555bd3dd7d48d74e2a286af133e",
+    "recipe": "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 comctl32_v6",
+    "evidence": "https://github.com/unxed/dllmgr/actions/runs/42256224744",
+    "ai_assisted": true,
+    "path": "fixes/dllmgr-14.md"
+  },
+  {
     "id": "faststone-all",
     "kind": "bundle",
     "title": "FastStone Image Viewer: composed application fixes",
@@ -13,7 +35,8 @@
       "winehq-48872",
       "winehq-48874",
       "winehq-59251",
-      "winehq-59609"
+      "winehq-59609",
+      "dllmgr-14"
     ],
     "application": "faststone",
     "profiles": [
@@ -22,7 +45,8 @@
         "exe_sha256": "05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621",
         "wine": "wine-11.0",
         "host_arch": "x86_64",
-        "prefix_arch": "win64"
+        "prefix_arch": "win64",
+        "release": "faststone-v2"
       }
     ],
     "path": "bundles/faststone-all.md"
@@ -89,7 +113,7 @@
       "wine-11.0"
     ],
     "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/winehq-59251.patch",
-    "patch_sha256": "fcb139ca1d1db43ac2944b86a498fb5b04ec0a240802bd3bb4f626a5dd9ba6e2",
+    "patch_sha256": "8eb2a421cb21cedfc4db8a5ec0fe3d4222799499079c0160b9fea34f13ae4403",
     "recipe": "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 comctl32 comctl32_v6",
     "evidence": "https://github.com/unxed/dllmgr/actions/workflows/faststone-research.yml",
     "ai_assisted": true,
