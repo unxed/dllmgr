@@ -191,6 +191,20 @@ pathlib.Path(sys.argv[sys.argv.index("-o") + 1]).write_bytes(data)
         self.assertEqual(json.loads((self.prefix / "fix-it-in-wine/state.json").read_bytes()), json.loads(state))
         self.assertEqual(json.loads((self.root / "registry.json").read_text()), {"comctl32": "native,builtin"})
 
+    def test_switching_from_bundle_to_single_fix_removes_unused_module(self):
+        result = self.run_script(fix="faststone")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotEqual(self.gdi.read_bytes(), self.gdi_original)
+        self.dll.write_bytes(pe(tail=b"single fix"))
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.gdi.read_bytes(), self.gdi_original)
+        self.assertEqual(json.loads((self.root / "registry.json").read_text()), {"comctl32": "native,builtin"})
+        result = self.run_script("undo")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.dest.read_bytes(), self.original)
+        self.assertFalse((self.root / "registry.json").exists())
+
     def test_reapplying_the_same_set_is_idempotent(self):
         self.assertEqual(self.run_script().returncode, 0)
         result = self.run_script()

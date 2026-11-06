@@ -37,8 +37,14 @@ FastStone defects. Bugzilla status alone does not establish reproducibility.
   byte-for-byte rollback. Check both common-controls v5 and v6 where relevant.
 - Preserve the user's original DLL and previous registry value when upgrading
   from the existing 59609 script to the combined set.
+- Applying an individual fix replaces the current selection. Switching from
+  the bundle to a single fix also restores any DLL and override that the
+  selected fix no longer needs.
 - Never install an unproven fix or replace a core/Unix-backed Wine DLL through
   the native-DLL installer. Keep unsupported mechanisms explicit.
+
+Only 59609 has published binaries. The other scripts and the bundle are for
+testing. Use `--build` with a disposable Wine prefix for candidate builds.
 
 ## Additional user-critical symptoms
 

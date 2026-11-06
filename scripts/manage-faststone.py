@@ -2,6 +2,7 @@
 """Switch verified FastStone fix sets, with one transaction across all modules."""
 import argparse
 import copy
+import fcntl
 import json
 import os
 from pathlib import Path
@@ -27,9 +28,10 @@ def installed_fix(entry):
 
 
 def snapshot(prefix, dest, name):
+    registry = override.reg_query(prefix, "FSViewer.exe", override.norm(name))
     return dict(dest=dest, name=name, raw=override.read_file(dest), mode=os.stat(dest).st_mode & 0o7777,
                 link=os.readlink(dest) if os.path.islink(dest) else None,
-                registry=override.reg_query(prefix,"FSViewer.exe",override.norm(name)))
+                registry=registry)
 
 
 def restore(prefix, files, state):
@@ -73,12 +75,23 @@ def main():
     parser.add_argument("--plan",type=Path)
     args = parser.parse_args()
     prefix = os.path.abspath(args.prefix)
+    override.prefix_arch(prefix)
+    # Lock the directory inode so different spellings of the same prefix serialize.
+    fd = os.open(prefix, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        return manage(args, parser, prefix)
+    finally:
+        os.close(fd)
+
+
+def manage(args, parser, prefix):
     state = override.load_state(prefix)
+    entries = [entry for entry in state["entries"]
+               if entry["exe"].lower() == "fsviewer.exe" and override.norm(entry["name"]) in NAMES]
     plan = []
     if args.command == "undo":
-        for entry in state["entries"]:
-            if entry["exe"].lower() != "fsviewer.exe" or override.norm(entry["name"]) not in NAMES:
-                continue
+        for entry in entries:
             if installed_fix(entry) == args.fix:
                 check_entry(state,entry,entry["dest"])
                 plan.append(dict(name=entry["name"],dest=entry["dest"],entry=entry))
@@ -99,10 +112,17 @@ def main():
             plan.append(dict(module,dest=dest,entry=entry,sha256=override.sha256(raw)))
         if not plan:
             parser.error("empty apply plan")
-        if all(item["entry"] and installed_fix(item["entry"]) == args.fix and
-               item["entry"]["new_sha256"] == item["sha256"] for item in plan):
+        removals = []
+        for entry in entries:
+            if override.norm(entry["name"]) in seen:
+                continue
+            check_entry(state, entry, entry["dest"])
+            removals.append(dict(name=entry["name"], dest=entry["dest"], entry=entry))
+        if not removals and all(item["entry"] and installed_fix(item["entry"]) == args.fix and
+                                item["entry"]["new_sha256"] == item["sha256"] for item in plan):
             print("%s is already enabled for FSViewer.exe" % args.fix)
             return 0
+        plan = removals + plan
 
     files = [snapshot(prefix,item["dest"],item["name"]) for item in plan]
     old_state = copy.deepcopy(state)
@@ -112,11 +132,13 @@ def main():
                 rc = override.main(["undo","--prefix",prefix,"--exe","FSViewer.exe","--name",item["name"]])
                 if rc:
                     raise override.OverrideError("could not remove the previous fix set")
-            if args.command == "apply":
+            if "dll" in item:
                 rc = override.main(["apply","--prefix",prefix,"--exe","FSViewer.exe","--dll",item["dll"],
                                     "--name",item["name"],"--slot",item["slot"]])
                 if rc:
                     raise override.OverrideError("could not apply %s" % args.fix)
+                if override.file_sha(item["dest"]) != item["sha256"]:
+                    raise override.OverrideError("Wine replaced the installed DLL at %s" % item["dest"])
                 updated = override.load_state(prefix)
                 override.find_entry(updated,"FSViewer.exe",item["name"])["dllmgr_fix"] = args.fix
                 override.save_state(prefix,updated)
