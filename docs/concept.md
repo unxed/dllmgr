@@ -583,9 +583,8 @@ ships small stand-in tools.
 
 ## 19. Exchanging fixes (concept, not planned yet)
 
-Wine does not accept LLM-generated code
-([Developer FAQ](https://gitlab.winehq.org/wine/wine/-/wikis/Developer-FAQ)). So a fix that an
-agent writes on a user's machine (see fix-it-in-wine) stays with that user. The next user of the
+A fix that an agent writes on a user's machine (see fix-it-in-wine) reaches Wine only as a text
+report; the patch itself stays with that user. The next user of the
 same program should not have to repeat the work. dllmgr can carry such fixes between users. How
 to host this and how to pay for it is not decided. This section only lists what the architecture
 must allow from the start.
@@ -604,8 +603,6 @@ Licensing limits:
   closed, paid binary of a changed Wine DLL is not possible. Selling can only be about the work
   (bounties, early access, support), not about exclusive rights.
 - Own libraries (such as cc580) may have their own license, which the manifest states.
-- The copyright status of LLM-generated code is unclear; the catalog shows the
-  `ai_assisted` flag, and a user or a catalog may refuse such packages.
 
 Hooks to keep in the design now:
 1. **Federated catalogs.** Any person or group can publish a catalog (a git repository with
