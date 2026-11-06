@@ -79,9 +79,15 @@ browser). Not a Wine bug so far.
   outlines, only wider; а с о р е are real bold. Reproduction:
   `docs/img/tahomabd-cyrillic.png`; details in
   https://github.com/unxed/dllmgr/issues/8#issuecomment-6693207972.
-  Next: decide the remedy (a corrected bold Tahoma as a catalog variant,
-  installed per prefix; a words-only WineHQ report about
-  `fonts/tahomabd.sfd`), and add a check that renders Cyrillic bold text.
+  Existing Wine bug: https://bugs.winehq.org/show_bug.cgi?id=26037 ("Tahoma
+  Bold is not bold", NEW since 2011; Latin was later reported fixed). A
+  words-only follow-up draft is in `docs/bugzilla/winehq-26037.md`; the owner
+  posts it. Workaround plan (needs FontForge, which the cloud sandbox could
+  not install): embolden the affected Cyrillic glyphs in Wine's
+  `fonts/tahomabd.sfd` while keeping their advance widths, rebuild the font,
+  ship it as a catalog variant; first test locally whether a `tahomabd.ttf`
+  in the prefix's `windows/Fonts` overrides Wine's own for "Tahoma" bold.
+  Add a check that renders Cyrillic bold text and compares ink with Latin.
 - FS-cursor (new, owner): the pointer moves very slowly over the FastStone
   window; the owner suspects HiDPI. Measure pointer motion over FastStone and
   over another Wine window at 96 and 192 DPI first.
