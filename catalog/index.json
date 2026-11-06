@@ -22,7 +22,7 @@
     "patch": "https://raw.githubusercontent.com/unxed/fix-it-in-wine/main/showcases/59609/fix.patch",
     "patch_sha256": "4c4e4672a06370e612f9305be7cab7a59c8dd7d8638297b1029831a4d0218295",
     "recipe": "fix-it-in-wine: tools/build_one_dll.sh <tag> comctl32 [comctl32_v6]",
-    "binaries": "https://github.com/unxed/fix-it-in-wine/releases/tag/fix-59609",
+    "binaries": "https://github.com/unxed/dllmgr/releases/tag/winehq-59609",
     "evidence": "https://github.com/unxed/fix-it-in-wine/actions/workflows/showcase-59609.yml",
     "path": "fixes/winehq-59609.md"
   }

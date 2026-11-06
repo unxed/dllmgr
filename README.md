@@ -41,6 +41,9 @@ Existing:
 - `catalog/`: the catalog. One Markdown file with YAML frontmatter per entry,
   `fixes/` (one file per bug) and `variants/` (whole-DLL alternatives),
   `index.json` compiled from the frontmatter. See `catalog/README.md`.
+- `scripts/apply-winehq-59609.sh` and `.github/workflows/release-winehq-59609.yml`: the
+  one-step apply and the release build of catalog fix `winehq-59609` (stand-ins until the
+  dllmgr CLI exists).
 - `cmd/dllmgr-catalog/`, `internal/catalog/`: the catalog validator and index
   compiler (Go). CI: `.github/workflows/catalog.yml`.
 - `spike/spike0.sh`: the manual spike of iteration 0.
