@@ -18,3 +18,8 @@ See [the audit and acceptance criteria](../../docs/faststone.md), including
 [the additional user reports](https://github.com/unxed/dllmgr/issues/8).
 The current temporary entry points are `scripts/apply-faststone.sh` and
 `scripts/undo-faststone.sh`. The GUI is planned; it has not been implemented.
+
+After applying or undoing a selection, close all Wine applications in the
+target prefix and wait for its Wine server to exit before relaunching FastStone.
+Wine 11 can keep the previous system DLL mapped in a KnownDLL section for the
+lifetime of that server.
