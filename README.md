@@ -39,6 +39,7 @@ Existing:
 - `docs/concept.md`: the concept (targets, model, checks, catalog, CLI, GUI,
   patches, diagnostics, iterations).
 - `docs/decisions.md`: the log of decisions (who, when, why).
+- `docs/handoff.md`: where the FastStone work stands and what needs a local machine.
 - `docs/data-model.md`: the catalog data model (fix files, recipe files, environment rows).
 - `catalog/`: the catalog. One Markdown file with YAML frontmatter per entry,
   `fixes/` (one file per bug) and `variants/` (whole-DLL alternatives),
