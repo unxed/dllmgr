@@ -61,12 +61,12 @@ if [ -z "$exe" ]; then
 fi
 arch=$(python3 -c 'import sys; sys.path.insert(0, sys.argv[1]); import pe_unmark; print(pe_unmark.pe_machine(open(sys.argv[2], "rb").read()))' "$tools" "$exe")
 case $arch in i386) sx=x86 ;; x86_64) sx=amd64 ;; *) echo "$exe: unsupported architecture $arch" >&2; exit 2 ;; esac
-tag=$(wine --version | cut -d' ' -f1)
+tag=$("$DLLMGR_WINE" --version | cut -d' ' -f1)
 
 # A program that asks for common controls 6 in its manifest loads the side-by-side copy from
 # winsxs; otherwise comctl32 comes from the system directory. Wine 11 builds v6 as a separate
 # module, comctl32_v6, whose winsxs copy is named comctl32.dll.
-if grep -a -q 'Microsoft.Windows.Common-Controls' "$exe"; then
+if [ "$fix" != winehq-48874 ] && grep -a -q 'Microsoft.Windows.Common-Controls' "$exe"; then
     slot="sxs:${sx}_microsoft.windows.common-controls_6595b64144ccf1df_6.*"
     # The file we replace tells which module it is: its export name is comctl32_v6.dll on Wine 11.
     cur=$(find "$WINEPREFIX"/drive_c/windows/winsxs -maxdepth 2 -ipath "*/${sx}_microsoft.windows.common-controls_6595b64144ccf1df_6.*/comctl32.dll" 2>/dev/null)
