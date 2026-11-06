@@ -30,9 +30,10 @@ results:                            # evidence rows; see "Environment" below
 - The change is a source `patch`, or a whole replacement `module` (a DLL from
   another Wine release, cc580). Same file kind either way.
 - Prose below the frontmatter is for people; scripts never read it. It
-  describes the change in words under three headings, `Behavior`, `Change`
-  and `Checks`, so that it can be implemented without the patch (D17,
-  `catalog/README.md`). This adds no key and no file kind.
+  describes the change in words under four headings, `Problem`,
+  `Windows behavior`, `The fix, in words` and `Results`, so that it can be
+  implemented without the patch (D17, `catalog/README.md`). This adds no key
+  and no file kind.
 
 ## Recipe: one file per application selection
 

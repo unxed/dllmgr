@@ -179,9 +179,10 @@ replaces an earlier one says so.
 
 - Date: 2026-11-06
 - Decided by: Claude (agent), pending the owner's review
-- Decision: the prose of a fix file has three headings, `Behavior`,
-  `Change` and `Checks`. Together they let someone implement the fix
-  without the patch. They are also the core of the WineHQ Bugzilla report,
+- Decision: the prose of a fix file has four headings, `Problem`,
+  `Windows behavior`, `The fix, in words` and `Results`, as first written in
+  `winehq-59251.md` on the FastStone branch. Together they let someone
+  implement the fix without the patch. They are also the core of the WineHQ Bugzilla report,
   so one text serves both. It is a convention inside the existing fix file,
   not a new file or key. Later `dllmgr-catalog check` may require the three
   headings for fixes that have `results`; not now, because existing entries

@@ -69,22 +69,25 @@ A source patch for one bug.
 
 The prose of a fix file is a product, not a comment. It is the part a Wine
 developer, another agent or a ReactOS porter can use without the patch (D16,
-D17). Write it under three headings, in this order:
+D17). Write it under four headings, in this order (`winehq-59251.md` is an
+example):
 
-- `## Behavior`: what the program shows, and what Windows does, as measured by
-  a test program (name the check from `results`). Black-box facts only.
-- `## Change`: what to change in Wine's behavior, in words: the module, the
-  function or message, the rule, and the edge cases that must not change.
-  Do not retell the patch line by line.
-- `## Checks`: how the change was tested and with what result. Point to the
+- `## Problem`: what the program shows, and which API behaves differently.
+- `## Windows behavior`: what Windows does, measured by a test program. Name
+  the check from `results`. Black-box facts only. A short note in
+  parentheses may follow the heading, such as "(measured)".
+- `## The fix, in words`: what to change in Wine: the module, the function
+  or message, the rule, and the cases that must not change. Do not retell
+  the patch line by line.
+- `## Results`: how the change was tested and with what result. Point to the
   `results` rows; add the visual check in the real application when there is
   one.
 
 A description is complete when someone given only the description and the
 Wine source tree, not the patch, can write a change that passes the same
-check. fix-it-in-wine runs this as its report self-check. The same three
-sections form the core of a WineHQ Bugzilla report. Other prose (how to apply,
-history) may follow under other headings. Scripts never read the prose.
+check. fix-it-in-wine runs this as its report self-check. The same parts form
+the core of a WineHQ Bugzilla report. Other prose (installation, history) may
+follow under other headings. Scripts never read the prose.
 
 ## Kind `variant`
 
