@@ -72,6 +72,20 @@ browser). Not a Wine bug so far.
 - Timings: no notable difference between the first and second start, and the
   number of files does not matter much.
 
+## FS-fonts: cause found; FS-cursor: new
+
+- FS-fonts: Wine 11.0's own `fonts/tahomabd.ttf` draws Cyrillic letters that
+  have no Latin look-alike (Ф й л д ш у П в т з м ы к …) with the regular
+  outlines, only wider; а с о р е are real bold. Reproduction:
+  `docs/img/tahomabd-cyrillic.png`; details in
+  https://github.com/unxed/dllmgr/issues/8#issuecomment-6693207972.
+  Next: decide the remedy (a corrected bold Tahoma as a catalog variant,
+  installed per prefix; a words-only WineHQ report about
+  `fonts/tahomabd.sfd`), and add a check that renders Cyrillic bold text.
+- FS-cursor (new, owner): the pointer moves very slowly over the FastStone
+  window; the owner suspects HiDPI. Measure pointer motion over FastStone and
+  over another Wine window at 96 and 192 DPI first.
+
 ## LOCAL work: not reproducible in the cloud
 
 1. **Acceptance of faststone-v2 on the owner's desktop.** Install with the
