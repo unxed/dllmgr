@@ -7,6 +7,10 @@ libraries and fixes. The manager is written in Go. Its GUI uses
 
 Working name: `dllmgr`. The owner picks the final name.
 
+`dllmgr fix --dry-run` previews the verified recipes for the current prefix.
+Normal output shows progress and the result; add `--verbose` for diagnostic
+details. Colour follows the terminal and respects `NO_COLOR`.
+
 ## What it does
 
 - Sets one DLL for one program. The module can come from another Wine

@@ -2,16 +2,27 @@
 set -euo pipefail
 here=$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")
 
+# Keep global presentation options out of subcommand argument parsers.
+args=()
+for arg in "$@"; do
+    if [ "$arg" = --verbose ]; then
+        export DLLMGR_VERBOSE=1
+    else
+        args+=("$arg")
+    fi
+done
+set -- "${args[@]}"
+
 usage() {
     cat <<'USAGE'
 Usage:
-  dllmgr fix [--exe PATH] [--yes] [--dry-run]
+  dllmgr [--verbose] fix [--exe PATH] [--yes] [--dry-run]
   dllmgr fix faststone [--exe PATH/FSViewer.exe] [--build]
   dllmgr uninstall faststone
   dllmgr share faststone
 Wine commands use WINEPREFIX (default: ~/.wine).
 'dllmgr fix' alone finds the programs with verified recipes and asks before
-applying each one.
+applying each one. Set DLLMGR_VERBOSE=1 or pass --verbose for detailed output.
 USAGE
 }
 

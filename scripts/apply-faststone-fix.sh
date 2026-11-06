@@ -16,6 +16,7 @@
 # not changed. Undo: apply.sh --undo.
 set -euo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+ui() { python3 "$here/ui.py" "$@"; }
 # Adapt OEM reg.exe output to UTF-8 for older fix-it-in-wine helpers.
 export DLLMGR_WINE=${FIW_WINE:-wine}
 export FIW_WINE=$here/wine-reg-utf8.py
@@ -75,7 +76,18 @@ else
 fi
 export DLLMGR_TOOLS=$tools
 if [ "$undo" = 1 ]; then
-    exec python3 "$here/manage-faststone.py" undo --fix "$fix" --prefix "$WINEPREFIX"
+    ui title
+    ui note "Prefix: $WINEPREFIX  ·  Recipe: $fix"
+    ui step "Restoring the original DLLs and registry settings"
+    if result=$(python3 "$here/manage-faststone.py" undo --fix "$fix" --prefix "$WINEPREFIX"); then
+        ui ok "Recipe removed; original files restored."
+        [ "${DLLMGR_VERBOSE:-0}" = 1 ] && printf '%s\n' "$result"
+        exit 0
+    else
+        status=$?
+        printf '%s\n' "$result" >&2
+        exit "$status"
+    fi
 fi
 
 arch=$(python3 -c 'import sys; sys.path.insert(0, sys.argv[1]); import pe_unmark; print(pe_unmark.pe_machine(open(sys.argv[2], "rb").read()))' "$tools" "$exe")
@@ -98,12 +110,15 @@ case $fix in
     faststone) modules="$mod gdiplus" ;;
     *) modules=$mod ;;
 esac
-echo "FastStone: $exe ($arch), $tag; fix set $fix"
+ui title
+ui note "FastStone Image Viewer  ·  $arch  ·  Wine ${tag#wine-}"
+ui note "Prefix: $WINEPREFIX"
 release_dir=$work/release/$fix
 mkdir -p "$release_dir"
 download=$(mktemp -d "$release_dir/.download.XXXXXX")
 trap 'rm -rf "$download"' EXIT
 if [ "$build" = 0 ]; then
+    ui step "Fetching verified DLLs for $tag"
     if ! curl -fsSL --retry 3 --connect-timeout 15 -o "$download/SHA256SUMS" "$release/SHA256SUMS"; then
         echo "could not download checksums from $release; retry later or pass --build" >&2
         exit 2
@@ -117,6 +132,7 @@ if [ "$build" = 0 ]; then
         (cd "$download" && awk -v file="$file" '$2 == file {print}' SHA256SUMS | sha256sum -c --quiet) || { echo "checksum mismatch for $file" >&2; exit 2; }
     done
 else
+    ui step "Building patched DLLs for $tag"
     # Separate revisions of the patch series cannot share a patched source tree.
     series=$(for patch_id in $fixes; do sha256sum <"$here/../patches/$patch_id.patch"; done | sha256sum | cut -d' ' -f1)
     export FIW_WORK=$work/sets/$fix/$series
@@ -153,6 +169,22 @@ with open(plan, 'w') as output:
                     name="comctl32.dll" if m.startswith("comctl32") else "gdiplus.dll",
                     slot=slot if m.startswith("comctl32") else "system") for m in modules], output)
 PLAN
-python3 "$here/manage-faststone.py" apply --fix "$fix" --prefix "$WINEPREFIX" --plan "$download/plan.json"
-echo "Done. Close all Wine apps in this prefix and wait for wineserver to exit before starting FastStone."
-echo "Undo: $here/undo-$fix.sh"
+ui step "Applying the recipe transaction"
+if result=$(python3 "$here/manage-faststone.py" apply --fix "$fix" --prefix "$WINEPREFIX" --plan "$download/plan.json"); then
+    if [[ $result == *"already enabled"* ]]; then
+        ui ok "Recipe already enabled for FSViewer.exe."
+    else
+        ui ok "Recipe enabled for FSViewer.exe."
+    fi
+    [ "${DLLMGR_VERBOSE:-0}" = 1 ] && printf '%s\n' "$result"
+    ui note "Close Wine apps in this prefix, then wait for wineserver to exit before relaunching FastStone."
+    if [ "$fix" = faststone ]; then
+        ui note "To undo: dllmgr uninstall faststone"
+    else
+        ui note "To undo: $here/undo-$fix.sh"
+    fi
+else
+    status=$?
+    printf '%s\n' "$result" >&2
+    exit "$status"
+fi

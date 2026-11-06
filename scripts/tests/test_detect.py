@@ -121,7 +121,7 @@ class FixPrefixTest(unittest.TestCase):
         result = self.fix("--yes")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.applied(), ["fix app"])
-        self.assertIn("app\tready", result.stderr)
+        self.assertIn("Verified recipes: app", result.stdout)
 
     def test_without_a_terminal_or_yes_nothing_is_applied(self):
         result = self.fix()
