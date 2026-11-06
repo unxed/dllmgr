@@ -190,6 +190,21 @@ replaces an earlier one says so.
   what we give to Wine and to other targets. A separate description file
   would duplicate the fix and drift from it.
 
+## D19 — Vendor kits: recipes shipped by software vendors (proposal)
+
+- Date: 2026-11-06
+- Decided by: owner (the idea), Claude (agent) for the design; pending the owner's review
+- Decision: a vendor kit is a folder made from one recipe at one commit: the
+  release modules for each `when` row, their checksums, the LGPL text and a
+  pointer to the corresponding source. It is active only under Wine, and only
+  on Wine releases it was measured on. It adds no catalog file kind or key.
+  How it is activated (at install, or by a launcher at each start) is left
+  to an experiment. See `docs/vendor-kits.md`.
+- Reason: the vision asks for programs that work out of the box. A vendor can
+  ship a fix to every user at once, without dllmgr. Tying the kit to `when`
+  rows keeps the same proof as `dllmgr fix`. "Kit" avoids a clash with
+  `catalog/bundles/`.
+
 ## Development note: CI paths and cancellation
 
 `faststone-research` runs on pushes that touch `tests/wine/`, `patches/`,
