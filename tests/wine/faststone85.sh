@@ -81,6 +81,10 @@ if [ "$TEST_DPI" = 192 ] && [ -z "$bundle" ]; then
 fi
 
 if [ -n "$bundle" ]; then
+    grep -q '^draw_1_to_first_wm_null_reply_ms=' snapshots85/draw/observations.txt ||
+        { echo 'FastStone did not reach a responsive Draw Board' >&2; exit 1; }
+    python3 "$GITHUB_WORKSPACE/tests/wine/check-faststone-grid.py" snapshots85/browser/observations.txt
+
     image=$(winepath -w "$work/images/white.bmp")
     mkdir -p snapshots85/load-trace
     (

@@ -146,6 +146,17 @@ the initial check rejected despite the successful load. Both files were
 restored byte for byte on undo. This run exercised opening Draw Board; the
 GDI+ pencil-color test remains a separate probe.
 
+On that runner at 192 DPI, startup reached the first `WM_NULL` response in
+730 ms with builtin Wine and 748 ms with the bundle (Draw Board scenario).
+Draw Board mapped in 823–957 ms across the first and second opens. These
+times do not reproduce the delays on the user's machine. Several fullscreen
+wheel events in the archived comparison reached the image viewer after the
+strip disappeared. The observer now reopens the strip when needed, sends
+input only to the list-view and records observed scrollbar positions and
+first change. The browser-origin middle-click capture was blocked by the
+first-run fullscreen notice. Its success requires a foreground fullscreen
+window before the click and a visible-window report after it.
+
 For the remaining overflow, Windows v6 reports an icon rectangle spanning the
 cell width in the FastStone probe. Wine reports only the centered image width
 (240 pixels inside a 276-pixel cell at 192 DPI). To test whether FastStone uses
