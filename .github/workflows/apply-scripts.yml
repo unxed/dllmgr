@@ -22,7 +22,9 @@ jobs:
           path: fiw
       - name: Apply the proposed upstream fix
         if: matrix.helper == 'patched'
-        run: git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
+        run: |
+          git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
+          git -C fiw apply ../contrib/fix-it-in-wine-learning.patch
       - name: Check apply, undo, downloads and locale decoding
         env:
           FIW_TOOLS: ${{ github.workspace }}/fiw/tools

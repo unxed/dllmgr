@@ -9,6 +9,7 @@ package catalog
 const (
 	KindFix     = "fix"
 	KindVariant = "variant"
+	KindBundle  = "bundle"
 )
 
 // Entry is the frontmatter of one catalog file. It is the union of the

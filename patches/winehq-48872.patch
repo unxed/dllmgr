@@ -1,0 +1,25 @@
+diff --git a/dlls/comctl32/listview.c b/dlls/comctl32/listview.c
+index f91e63f..2c9714e 100644
+--- a/dlls/comctl32/listview.c
++++ b/dlls/comctl32/listview.c
+@@ -7136,6 +7136,20 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
+         return FALSE;
+     }
+ 
++    /* An empty icon label still has a usable rectangle on Windows, although
++     * no selection background is painted for it. Keep this API geometry out
++     * of the painting metrics: applications may draw their own label here. */
++    if (infoPtr->uView == LV_VIEW_ICON &&
++        (mode == LVIR_LABEL || mode == LVIR_SELECTBOUNDS) &&
++        (!is_text(lvItem.pszText) || !lvItem.pszText[0]))
++    {
++        RECT label = {0, ICON_TOP_PADDING_HITABLE + infoPtr->iconSize.cy + ICON_BOTTOM_PADDING,
++                      infoPtr->nItemWidth, 0};
++        label.bottom = label.top + infoPtr->ntmHeight + HEIGHT_PADDING;
++        if (mode == LVIR_LABEL) *lprc = label;
++        else UnionRect(lprc, lprc, &label);
++    }
++
+     if (infoPtr->uView == LV_VIEW_DETAILS)
+     {
+ 	if (mode != LVIR_BOUNDS)

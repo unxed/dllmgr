@@ -33,6 +33,9 @@ var variantFields = set("id", "kind", "title", "summary", "dll", "file",
 
 var variantRequired = []string{"dll", "provider", "version", "arch", "license", "source", "sha256"}
 
+var bundleFields = set("id", "kind", "title", "programs", "wine", "fixes")
+var bundleRequired = []string{"title", "programs", "fixes"}
+
 var fetchFields = set("urls", "sha256", "format", "member")
 
 var fetchFormats = map[string]bool{"deb": true, "tar.xz": true, "tar.zst": true, "raw": true}
@@ -134,10 +137,12 @@ func (v *validator) entry(e *Entry) {
 		allowed, required = fixFields, fixRequired
 	case KindVariant:
 		allowed, required = variantFields, variantRequired
+	case KindBundle:
+		allowed, required = bundleFields, bundleRequired
 	case "":
-		v.fail("kind", "required; must be %q or %q", KindFix, KindVariant)
+		v.fail("kind", "required; must be %q, %q or %q", KindFix, KindVariant, KindBundle)
 	default:
-		v.fail("kind", "is %q; must be %q or %q", e.Kind, KindFix, KindVariant)
+		v.fail("kind", "is %q; must be %q, %q or %q", e.Kind, KindFix, KindVariant, KindBundle)
 	}
 
 	v.id(e)
@@ -156,7 +161,7 @@ func (v *validator) entry(e *Entry) {
 	}
 
 	if dir := filepath.Base(filepath.Dir(filepath.FromSlash(v.file))); e.Kind != "" {
-		if (dir == "fixes" && e.Kind != KindFix) || (dir == "variants" && e.Kind != KindVariant) {
+		if (dir == "fixes" && e.Kind != KindFix) || (dir == "variants" && e.Kind != KindVariant) || (dir == "bundles" && e.Kind != KindBundle) {
 			v.fail("kind", "is %q but the file is in the directory %q", e.Kind, dir)
 		}
 	}
@@ -166,6 +171,19 @@ func (v *validator) entry(e *Entry) {
 		v.fix(e)
 	case KindVariant:
 		v.variant(e)
+	case KindBundle:
+		v.nonEmptyItems("programs", e.Programs)
+		v.nonEmptyItems("wine", e.Wine)
+		seen := map[string]bool{}
+		for _, id := range e.Fixes {
+			if !fixIDRe.MatchString(id) {
+				v.fail("fixes", "%q is not a fix id", id)
+			}
+			if seen[id] {
+				v.fail("fixes", "%q is listed twice", id)
+			}
+			seen[id] = true
+		}
 	}
 }
 

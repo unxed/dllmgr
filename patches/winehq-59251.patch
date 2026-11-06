@@ -1,0 +1,29 @@
+diff --git a/dlls/comctl32/listview.c b/dlls/comctl32/listview.c
+index f91e63f..78dc8e2 100644
+--- a/dlls/comctl32/listview.c
++++ b/dlls/comctl32/listview.c
+@@ -10023,6 +10023,24 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
+     switch(infoPtr->uView)
+     {
+     case LV_VIEW_ICON:
++        /* Left-aligned icon layouts grow horizontally (e.g. FastStone's
++         * fullscreen strip). Windows sends the wheel to the horizontal bar
++         * when there is no vertical scrollbar. Preserve partial detents. */
++        if ((infoPtr->dwStyle & WS_HSCROLL) && !(infoPtr->dwStyle & WS_VSCROLL))
++        {
++            int detents;
++            if ((wheelDelta < 0 && infoPtr->cWheelRemainder > 0) ||
++                (wheelDelta > 0 && infoPtr->cWheelRemainder < 0))
++                infoPtr->cWheelRemainder = 0;
++            infoPtr->cWheelRemainder += wheelDelta;
++            detents = infoPtr->cWheelRemainder / WHEEL_DELTA;
++            infoPtr->cWheelRemainder %= WHEEL_DELTA;
++            SystemParametersInfoW(SPI_GETWHEELSCROLLLINES, 0, &pulScrollLines, 0);
++            if (detents && pulScrollLines)
++                LISTVIEW_HScroll(infoPtr, SB_INTERNAL, -detents * LISTVIEW_SCROLL_ICON_LINE_SIZE);
++            break;
++        }
++        /* fall through */
+     case LV_VIEW_SMALLICON:
+        /*
+         *  listview should be scrolled by a multiple of 37 dependently on its dimension or its visible item number

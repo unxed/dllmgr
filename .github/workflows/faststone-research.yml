@@ -1,0 +1,160 @@
+name: faststone-research
+on:
+  push:
+    branches: ['fix/faststone-suite']
+    paths: ['tests/wine/**', 'patches/*.patch', '.github/workflows/faststone-research.yml']
+  workflow_dispatch:
+    inputs:
+      deep:
+        description: Build all candidate modules and check apply/undo
+        type: boolean
+        default: false
+concurrency:
+  group: faststone-research-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq gcc-mingw-w64-x86-64
+      - working-directory: tests/wine
+        run: |
+          x86_64-w64-mingw32-gcc -O2 -Wall -o controls.exe faststone-controls.c -lcomctl32 -lgdi32
+          x86_64-w64-mingw32-windres controls.rc -O coff -o controls.res
+          x86_64-w64-mingw32-gcc -O2 -Wall -o controls6.exe faststone-controls.c controls.res -lcomctl32 -lgdi32
+          x86_64-w64-mingw32-gcc -O2 -Wall -o pencil.exe pencil.c -lgdiplus -lgdi32
+          x86_64-w64-mingw32-gcc -O2 -Wall -o app-observer.exe app-observer.c -lgdi32
+          x86_64-w64-mingw32-gcc -O2 -Wall -finput-charset=UTF-8 -o font-probe.exe font-probe.c -lgdi32
+      - uses: actions/upload-artifact@v4
+        with:
+          name: controls
+          path: tests/wine/*.exe
+  windows:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: controls
+      - shell: bash
+        run: |
+          ./controls.exe --check-label --check-wheel --check-position | tee windows-v5.txt
+          ./controls6.exe --check-label --check-wheel --check-position | tee windows-v6.txt
+          ./pencil.exe --check | tee windows-pencil.txt
+          ./font-probe.exe | tee windows-fonts.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-baseline
+          path: windows-*.txt
+  windows-app:
+    if: github.event_name == 'workflow_dispatch' && inputs.deep
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: controls
+      - shell: bash
+        run: |
+          curl -fsSL https://www.faststonesoft.net/DN/FSViewer85.zip -o fs85.zip
+          echo '685282a063b91daf4388b84be9e0daf3c5feed4073651137eb9fe9421cf39439  fs85.zip' | sha256sum -c
+          unzip -q fs85.zip
+          python tests/wine/make-images.py
+          mkdir -p observations
+          for action in middle enter draw; do
+            mkdir -p "observations/$action"
+            (cd "observations/$action" && ../../app-observer.exe "$(cygpath -w "$GITHUB_WORKSPACE/FSViewer85/FSViewer.exe")" "$(cygpath -w "$GITHUB_WORKSPACE/images/white.bmp")" "$action" | tee observations.txt)
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-faststone85
+          path: observations/
+  wine:
+    needs: build
+    runs-on: ubuntu-24.04
+    env:
+      WINEDEBUG: -all
+      WINEDLLOVERRIDES: mscoree,mshtml=
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: controls
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq wine wine64 xvfb
+      - run: |
+          export WINEPREFIX="$RUNNER_TEMP/dllmgr-research-prefix"
+          xvfb-run -a bash -e -o pipefail -c 'wineboot -u; wine controls.exe | tee wine-v5.txt; wine controls6.exe | tee wine-v6.txt; wine pencil.exe | tee wine-pencil.txt'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wine-baseline
+          path: wine-*.txt
+  faststone85:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        dpi: [96, 192]
+    env:
+      TEST_DPI: ${{ matrix.dpi }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Wine 11.0 and desktop test tools
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo mkdir -pm755 /etc/apt/keyrings
+          sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq-archive.key
+          sudo curl -fsSL https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources -o /etc/apt/sources.list.d/winehq-noble.sources
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --install-recommends winehq-stable xvfb xdotool scrot x11-utils openbox
+      - uses: actions/download-artifact@v4
+        with:
+          name: controls
+      - name: Capture the affected FastStone 8.5 controls
+        run: xvfb-run -a -s '-screen 0 3072x1728x24' bash -c 'openbox >/dev/null 2>&1 & bash tests/wine/faststone85.sh'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: faststone85-${{ matrix.dpi }}
+          path: snapshots85/
+  patched:
+    if: github.event_name == 'workflow_dispatch' && inputs.deep
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: unxed/fix-it-in-wine
+          ref: 0b37d498ef4fd4b1077421af62974a9b3587e80a
+          path: fiw
+      - uses: actions/download-artifact@v4
+        with:
+          name: controls
+      - name: Install Wine 11.0 and build packages
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo mkdir -pm755 /etc/apt/keyrings
+          sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq-archive.key
+          sudo curl -fsSL https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources -o /etc/apt/sources.list.d/winehq-noble.sources
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --install-recommends winehq-stable xvfb git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
+      - name: Check separate patches, composition and rollback
+        run: |
+          git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
+          git -C fiw apply ../contrib/fix-it-in-wine-learning.patch
+          xvfb-run -a python3 fiw/tools/record_attempt.py --root "$RUNNER_TEMP/attempts" --case faststone-suite --stage native-check --hypothesis 'composed modules preserve Windows behavior' --expected 'all enabled checks pass and undo restores bytes' --timeout 1200 -- bash tests/wine/check-fixes.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fixed-modules
+          path: |
+            out/
+            results/
+            ${{ runner.temp }}/attempts/

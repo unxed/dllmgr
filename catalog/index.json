@@ -1,5 +1,91 @@
 [
   {
+    "id": "faststone-all",
+    "kind": "bundle",
+    "title": "FastStone Image Viewer: composed application fixes",
+    "programs": [
+      "FSViewer.exe"
+    ],
+    "wine": [
+      "wine-11.0"
+    ],
+    "fixes": [
+      "winehq-48872",
+      "winehq-48874",
+      "winehq-59251",
+      "winehq-59609"
+    ],
+    "path": "bundles/faststone-all.md"
+  },
+  {
+    "id": "winehq-48872",
+    "kind": "fix",
+    "title": "comctl32: return a usable rectangle for an empty icon label",
+    "license": "LGPL-2.1-or-later",
+    "bug": "https://bugs.winehq.org/show_bug.cgi?id=48872",
+    "dlls": [
+      "comctl32",
+      "comctl32_v6"
+    ],
+    "programs": [
+      "FSViewer.exe"
+    ],
+    "wine": [
+      "wine-11.0"
+    ],
+    "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/winehq-48872.patch",
+    "patch_sha256": "5088c1e05ab76663cad8527a4b2d432d52557513762f74124da11af51027144e",
+    "recipe": "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 comctl32 comctl32_v6",
+    "evidence": "https://github.com/unxed/dllmgr/actions/workflows/faststone-research.yml",
+    "ai_assisted": true,
+    "path": "fixes/winehq-48872.md"
+  },
+  {
+    "id": "winehq-48874",
+    "kind": "fix",
+    "title": "gdiplus: ignore inherited ROP2 when drawing with a GDI pen",
+    "license": "LGPL-2.1-or-later",
+    "bug": "https://bugs.winehq.org/show_bug.cgi?id=48874",
+    "dlls": [
+      "gdiplus"
+    ],
+    "programs": [
+      "FSViewer.exe"
+    ],
+    "wine": [
+      "wine-11.0"
+    ],
+    "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/winehq-48874.patch",
+    "patch_sha256": "8a4379e7967b771bc8c2296dd2dd158b6acb6ee6e82abfbbf60fd628e28a5e68",
+    "recipe": "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 gdiplus",
+    "evidence": "https://github.com/unxed/dllmgr/actions/workflows/faststone-research.yml",
+    "ai_assisted": true,
+    "path": "fixes/winehq-48874.md"
+  },
+  {
+    "id": "winehq-59251",
+    "kind": "fix",
+    "title": "comctl32: scroll horizontal icon lists with the mouse wheel",
+    "license": "LGPL-2.1-or-later",
+    "bug": "https://bugs.winehq.org/show_bug.cgi?id=59251",
+    "dlls": [
+      "comctl32",
+      "comctl32_v6"
+    ],
+    "programs": [
+      "FSViewer.exe"
+    ],
+    "wine": [
+      "wine-11.0"
+    ],
+    "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/winehq-59251.patch",
+    "patch_sha256": "c40bf1874154147e14d89353d4d58d17b1f594234b35c1ea23568f7d504161cc",
+    "recipe": "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 comctl32 comctl32_v6",
+    "evidence": "https://github.com/unxed/dllmgr/actions/workflows/faststone-research.yml",
+    "ai_assisted": true,
+    "path": "fixes/winehq-59251.md"
+  },
+  {
     "id": "winehq-59609",
     "kind": "fix",
     "title": "comctl32: LVM_GETITEMPOSITION returns client coordinates instead of view coordinates in ICON/SMALLICON views (breaks FastStone Image Viewer)",

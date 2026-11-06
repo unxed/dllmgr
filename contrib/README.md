@@ -16,3 +16,9 @@ the DLL. The locale table retains its BSD license in `tools/localecp.LICENSE`.
 dllmgr's `apply-scripts` CI checks its scripts against both the unchanged
 helper and this patched helper, and runs the patched helper's test suite.
 The runtime adapter in dllmgr works before the upstream patch is applied.
+
+`fix-it-in-wine-learning.patch` is an independent patch for the skill. It adds
+private per-attempt records (raw output, command, context, exit status, elapsed
+time and timeout/interruption outcomes), guidance for retaining failure and
+recovery details, and a loop from evidence to tested skill improvements. It
+does not upload records or automatically change the skill from raw logs.

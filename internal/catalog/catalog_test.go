@@ -44,6 +44,15 @@ fetch:
 ---
 `
 
+const validBundle = `---
+id: faststone-all
+kind: bundle
+title: FastStone verified fixes
+programs: [FSViewer.exe]
+fixes: [winehq-59609]
+---
+`
+
 // without returns text with every line that starts with prefix removed.
 func without(text, prefix string) string {
 	var out []string
@@ -64,6 +73,10 @@ func TestParse(t *testing.T) {
 	}{
 		{"valid fix", "fixes/winehq-59609.md", validFix, ""},
 		{"valid variant", "variants/comctl32-wine-11.0.md", validVariant, ""},
+		{"valid bundle", "bundles/faststone-all.md", validBundle, ""},
+		{"bundle: empty fixes", "bundles/faststone-all.md", strings.Replace(validBundle, "fixes: [winehq-59609]", "fixes: []", 1), `field "fixes": required`},
+		{"bundle: duplicate fixes", "bundles/faststone-all.md", strings.Replace(validBundle, "fixes: [winehq-59609]", "fixes: [winehq-59609, winehq-59609]", 1), `listed twice`},
+		{"bundle: patch field forbidden", "bundles/faststone-all.md", strings.Replace(validBundle, "title:", "patch: https://example.org/combined.patch\ntitle:", 1), `field "patch": unknown field`},
 		{"fix: missing title", "fixes/winehq-59609.md", without(validFix, "title:"), `field "title": required`},
 		{"fix: missing bug", "fixes/winehq-59609.md", without(validFix, "bug:"), `field "bug": required`},
 		{"fix: missing dlls", "fixes/winehq-59609.md", without(validFix, "dlls:"), `field "dlls": required`},
@@ -239,6 +252,20 @@ func TestLoadDirErrors(t *testing.T) {
 func TestLoadDirMissingSubdir(t *testing.T) {
 	if _, err := LoadDir(t.TempDir()); err == nil {
 		t.Fatal("expected an error for a directory without fixes/ and variants/")
+	}
+}
+
+func TestBundleReferences(t *testing.T) {
+	dir := t.TempDir()
+	writeEntry(t, dir, "fixes", "winehq-59609.md", validFix)
+	writeEntry(t, dir, "variants", "README.md", "# variants")
+	writeEntry(t, dir, "bundles", "faststone-all.md", validBundle)
+	if _, err := LoadDir(dir); err != nil {
+		t.Fatal(err)
+	}
+	writeEntry(t, dir, "bundles", "faststone-all.md", strings.Replace(validBundle, "winehq-59609", "winehq-99999", 1))
+	if _, err := LoadDir(dir); err == nil || !strings.Contains(err.Error(), "does not name a catalog fix") {
+		t.Fatalf("expected an unknown fix error, got %v", err)
 	}
 }
 
