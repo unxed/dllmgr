@@ -48,11 +48,13 @@ Existing:
   Registry output uses the locale's OEM code page, following `unxed/localecp`.
 - `cmd/dllmgr-catalog/`, `internal/catalog/`: the catalog validator and index
   compiler (Go). CI: `.github/workflows/catalog.yml`.
+- `dllmgr` and `install.sh`: the CLI and per-user installer for the FastStone
+  preview. See [installation and recipe links](docs/recipes.md).
 - `spike/spike0.sh`: the manual spike of iteration 0.
 
 Planned:
 
-- `cmd/dllmgr/`: the CLI and the `gui` subcommand.
+- The Go manager and `gui` subcommand.
 - `internal/`: the other packages (PE parser, Wine lookup, state, checks and so on).
 - `libs/cc580/`: cc580, comctl32 5.80 written in Bp. Plan:
   https://github.com/unxed/dllmgr/issues/1
@@ -60,15 +62,10 @@ Planned:
 
 ## Status
 
-The only code so far is the catalog tool (`cmd/dllmgr-catalog`). The manager itself
-is not written yet. Work starts with iterations 0 and 1 of the concept
-(owner's decision, 2026-11-06).
-
-The planned default CLI and GUI action is **Fix**. `dllmgr fix faststone`
-will select compatible verified fixes for FastStone, and `dllmgr fix world`
-will do the same for detected apps throughout the selected prefix. `unfix`
-reverses a selection. Followed apps receive compatible fixes and revisions
-when the user runs `dllmgr update && dllmgr upgrade --yes`. See the
+The preview implements `dllmgr fix faststone`, `dllmgr uninstall faststone`
+and `dllmgr share faststone`. See the [FastStone recipe](catalog/bundles/faststone-all.md)
+for the supported configuration and measured results. The planned `fix world`,
+subscriptions, unattended updates and GUI are described in the
 [CLI and GUI design](docs/concept.md#10-cli).
 
 ## License

@@ -49,6 +49,10 @@ type Entry struct {
 	Fetch    *Fetch   `yaml:"fetch,omitempty" json:"fetch,omitempty"`
 	Fixes    []string `yaml:"fixes,omitempty" json:"fixes,omitempty"`
 
+	// Bundle.
+	Application string          `yaml:"application,omitempty" json:"application,omitempty"`
+	Profiles    []BundleProfile `yaml:"profiles,omitempty" json:"profiles,omitempty"`
+
 	// Path is the file's path relative to the catalog directory, with
 	// forward slashes. It is not part of the frontmatter; the loader sets it.
 	Path string `yaml:"-" json:"path"`
@@ -60,4 +64,13 @@ type Fetch struct {
 	SHA256 string   `yaml:"sha256" json:"sha256"`
 	Format string   `yaml:"format" json:"format"`
 	Member string   `yaml:"member,omitempty" json:"member,omitempty"`
+}
+
+// BundleProfile limits automatic installation to a measured combination.
+type BundleProfile struct {
+	Version    string `yaml:"version" json:"version"`
+	ExeSHA256  string `yaml:"exe_sha256" json:"exe_sha256"`
+	Wine       string `yaml:"wine" json:"wine"`
+	HostArch   string `yaml:"host_arch" json:"host_arch"`
+	PrefixArch string `yaml:"prefix_arch" json:"prefix_arch"`
 }

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+here=$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")
+
+usage() {
+    cat <<'USAGE'
+Usage:
+  dllmgr fix faststone [--exe PATH/FSViewer.exe] [--build]
+  dllmgr uninstall faststone
+  dllmgr share faststone
+Wine commands use WINEPREFIX (default: ~/.wine).
+USAGE
+}
+
+case ${1:-} in
+    fix)
+        [ "${2:-}" = faststone ] || { usage >&2; exit 2; }
+        shift 2
+        export DLLMGR_REQUIRE_PROFILE=1
+        exec "$here/scripts/apply-faststone.sh" "$@"
+        ;;
+    uninstall|unfix)
+        [ "$#" = 2 ] && [ "$2" = faststone ] || { usage >&2; exit 2; }
+        export DLLMGR_REQUIRE_PROFILE=1
+        exec "$here/scripts/undo-faststone.sh"
+        ;;
+    share)
+        shift
+        exec python3 "$here/scripts/share-recipe.py" "$@"
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        usage >&2
+        exit 2
+        ;;
+esac

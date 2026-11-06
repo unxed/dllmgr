@@ -31,38 +31,59 @@ esac
 release=https://github.com/unxed/dllmgr/releases/download/$fix
 export WINEPREFIX=${WINEPREFIX:-$HOME/.wine}
 work=${FIW_WORK:-$HOME/.cache/fix-it-in-wine}
-if [ -n "${FIW_TOOLS:-}" ]; then
-    tools=$FIW_TOOLS
-else
-    if [ -d "$work/fix-it-in-wine/.git" ]; then
-        git -C "$work/fix-it-in-wine" pull -q --ff-only || true
-    else
-        mkdir -p "$work" && git clone -q --depth 1 https://github.com/unxed/fix-it-in-wine "$work/fix-it-in-wine"
-    fi
-    tools=$work/fix-it-in-wine/tools
-fi
-export DLLMGR_TOOLS=$tools
-exe="" build=0
-
+[ -f "$WINEPREFIX/system.reg" ] || { echo "no Wine prefix at $WINEPREFIX (set WINEPREFIX)" >&2; exit 2; }
+exe="" build=0 undo=0
 while [ $# -gt 0 ]; do
     case $1 in
-        --undo) exec python3 "$here/manage-faststone.py" undo --fix "$fix" --prefix "$WINEPREFIX" ;;
+        --undo) undo=1 ;;
         --build) build=1 ;;
-        --exe) exe=$2; shift ;;
-        *) echo "usage: $0 [--exe PATH/FSViewer.exe] [--build] | --undo" >&2; exit 1 ;;
+        --exe)
+            [ "$#" -ge 2 ] || { echo "--exe needs a path" >&2; exit 2; }
+            exe=$2; shift ;;
+        *) echo "usage: $0 [--exe PATH/FSViewer.exe] [--build] | --undo" >&2; exit 2 ;;
     esac
     shift
 done
 
-[ -f "$WINEPREFIX/system.reg" ] || { echo "no Wine prefix at $WINEPREFIX (set WINEPREFIX)" >&2; exit 2; }
-if [ -z "$exe" ]; then
-    exe=$(find "$WINEPREFIX/drive_c" -iname FSViewer.exe -print -quit 2>/dev/null || true)
-    [ -n "$exe" ] || { echo "FSViewer.exe not found in $WINEPREFIX/drive_c; pass --exe PATH" >&2; exit 2; }
+if [ "$undo" = 0 ]; then
+    tag=$("$DLLMGR_WINE" --version | cut -d' ' -f1)
+    if [ "${DLLMGR_REQUIRE_PROFILE:-0}" = 1 ]; then
+        release=https://github.com/unxed/dllmgr/releases/download/faststone-v1
+        args=()
+        [ -z "$exe" ] || args+=("$exe")
+        exe=$(python3 "$here/select-faststone.py" "$here/../catalog/index.json" "$WINEPREFIX" "$tag" "${args[@]}")
+    elif [ -z "$exe" ]; then
+        exe=$(find "$WINEPREFIX/drive_c" -iname FSViewer.exe -print -quit 2>/dev/null || true)
+        [ -n "$exe" ] || { echo "FSViewer.exe not found in $WINEPREFIX/drive_c; pass --exe PATH" >&2; exit 2; }
+    fi
 fi
+
+# Match the Wine helper used by the rollback and native-load checks.
+helper=0b37d498ef4fd4b1077421af62974a9b3587e80a
+if [ -n "${FIW_TOOLS:-}" ]; then
+    tools=$FIW_TOOLS
+else
+    helper_dir=$work/helpers/$helper
+    if [ ! -d "$helper_dir/tools" ]; then
+        (
+            mkdir -p "$work/helpers"
+            checkout=$(mktemp -d "$work/helpers/.checkout.XXXXXX")
+            trap 'rm -rf -- "$checkout"' EXIT
+            git -C "$checkout" init -q
+            git -C "$checkout" fetch -q --depth 1 https://github.com/unxed/fix-it-in-wine.git "$helper"
+            git -C "$checkout" checkout -q --detach "$helper"
+            mv -T -- "$checkout" "$helper_dir" || [ -d "$helper_dir/tools" ]
+        )
+    fi
+    tools=$helper_dir/tools
+fi
+export DLLMGR_TOOLS=$tools
+if [ "$undo" = 1 ]; then
+    exec python3 "$here/manage-faststone.py" undo --fix "$fix" --prefix "$WINEPREFIX"
+fi
+
 arch=$(python3 -c 'import sys; sys.path.insert(0, sys.argv[1]); import pe_unmark; print(pe_unmark.pe_machine(open(sys.argv[2], "rb").read()))' "$tools" "$exe")
 case $arch in i386) sx=x86 ;; x86_64) sx=amd64 ;; *) echo "$exe: unsupported architecture $arch" >&2; exit 2 ;; esac
-tag=$("$DLLMGR_WINE" --version | cut -d' ' -f1)
-
 # A program that asks for common controls 6 in its manifest loads the side-by-side copy from
 # winsxs; otherwise comctl32 comes from the system directory. Wine 11 builds v6 as a separate
 # module, comctl32_v6, whose winsxs copy is named comctl32.dll.
@@ -99,16 +120,21 @@ if [ "$build" = 0 ]; then
         fi
         (cd "$download" && awk -v file="$file" '$2 == file {print}' SHA256SUMS | sha256sum -c --quiet) || { echo "checksum mismatch for $file" >&2; exit 2; }
     done
-    # Verify every module before committing any cache or prefix changes.
-    for module in $modules; do
-        file=$module-$tag-$arch.dll
-        mv "$download/$file" "$release_dir/$file"
-    done
 else
-    export FIW_WORK=$work/sets/$fix
+    # Separate revisions of the patch series cannot share a patched source tree.
+    series=$(for patch_id in $fixes; do sha256sum <"$here/../patches/$patch_id.patch"; done | sha256sum | cut -d' ' -f1)
+    export FIW_WORK=$work/sets/$fix/$series
+    mkdir -p "$FIW_WORK"
+    exec {build_lock}>"$FIW_WORK/build.lock"
+    flock "$build_lock"
     src=$FIW_WORK/src/$tag
     mkdir -p "$(dirname "$src")"
     [ -d "$src/.git" ] || git clone -q --depth 1 --branch "$tag" "${FIW_WINE_GIT:-https://gitlab.winehq.org/wine/wine.git}" "$src"
+    if [ "${DLLMGR_REQUIRE_PROFILE:-0}" = 1 ] &&
+       [ "$(git -C "$src" rev-parse HEAD)" != db11d0fe6a169c457e23d007e20404643d067aa8 ]; then
+        echo "unexpected Wine source commit for $tag" >&2
+        exit 2
+    fi
     for patch_id in $fixes; do
         patch=$here/../patches/$patch_id.patch
         if git -C "$src" apply --check "$patch" 2>/dev/null; then
@@ -117,12 +143,13 @@ else
             git -C "$src" apply --reverse --check "$patch" 2>/dev/null || { echo "$patch_id does not apply to $tag" >&2; exit 2; }
         fi
     done
+    bash "$tools/build_one_dll.sh" "$tag" $modules >"$download/built.txt"
     for module in $modules; do
-        dll=$(bash "$tools/build_one_dll.sh" "$tag" "$module" | grep "/$module/$arch-windows/")
-        cp "$dll" "$release_dir/$module-$tag-$arch.dll"
+        dll=$(grep "/$module/$arch-windows/" "$download/built.txt")
+        cp "$dll" "$download/$module-$tag-$arch.dll"
     done
 fi
-python3 - "$download/plan.json" "$release_dir" "$tag" "$arch" "$slot" $modules <<'PLAN'
+python3 - "$download/plan.json" "$download" "$tag" "$arch" "$slot" $modules <<'PLAN'
 import json, sys
 plan, directory, tag, arch, slot, *modules = sys.argv[1:]
 with open(plan, 'w') as output:
@@ -131,5 +158,5 @@ with open(plan, 'w') as output:
                     slot=slot if m.startswith("comctl32") else "system") for m in modules], output)
 PLAN
 python3 "$here/manage-faststone.py" apply --fix "$fix" --prefix "$WINEPREFIX" --plan "$download/plan.json"
-echo "Done. Restart FastStone to use the selected fixes."
+echo "Done. Close all Wine apps in this prefix and wait for wineserver to exit before starting FastStone."
 echo "Undo: $here/undo-$fix.sh"

@@ -145,3 +145,14 @@ loads of both DLLs. Wine reported the logical `system32` path for GDI+, which
 the initial check rejected despite the successful load. Both files were
 restored byte for byte on undo. This run exercised opening Draw Board; the
 GDI+ pencil-color test remains a separate probe.
+
+## Gate for Wine Bugzilla reports and follow-ups
+
+Before posting a report or a candidate fix to Wine, reproduce the behavior
+described in the relevant Wine report with a test that fails on the original
+Wine build and passes with only the proposed change. Record the application
+version, Wine build, architecture, display setup, exact command, and results.
+Also exercise the affected controls visually in the real application and
+record the steps and captures. A synthetic probe alone, an unverified app
+capture, or a bundled build with several changes cannot establish this gate.
+Existing reports get follow-ups when their original case meets the same gate.
