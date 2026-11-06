@@ -11,4 +11,10 @@ unzip -q fs85.zip
 python3 tests/wine/make-images.py
 mkdir -p images/folder
 cp images/white.bmp images/folder/portrait.bmp
-python3 tests/wine/faststone85.py
+app=$(winepath -w "$GITHUB_WORKSPACE/FSViewer85/FSViewer.exe")
+image=$(winepath -w "$GITHUB_WORKSPACE/images/white.bmp")
+for action in middle enter draw; do
+    mkdir -p "snapshots85/$action"
+    (cd "snapshots85/$action" && wine "$GITHUB_WORKSPACE/app-observer.exe" "$app" "$image" "$action" | tee observations.txt)
+done
+wineserver -k || true

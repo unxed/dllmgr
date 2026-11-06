@@ -17,6 +17,7 @@ that source, and the entry gives its checksum.
 catalog/
   fixes/<tracker>-<number>.md        one file per bug, for example winehq-59609.md
   variants/<dll>-<provider>-<version>.md   whole-DLL alternatives
+  bundles/<program>-all.md           a composition of fix IDs
   index.json                         compiled by CI, do not edit by hand
 ```
 
@@ -104,3 +105,11 @@ variant needs an open `license` and a `source`.
 
 `index.json` is a JSON array sorted by `id`. Each element holds the frontmatter
 fields of the entry and `path`, the file path relative to `catalog/`.
+
+## Kind `bundle`
+
+An application selection built from existing fixes. Fields: `id`, `kind: bundle`,
+`title`, non-empty `programs` and `fixes` lists, and optional `wine` tags.
+References must resolve to catalog fixes and cannot repeat. Bundle IDs are not
+Wine bug IDs. The installer must compose patches for shared modules and retain
+one original uninstall baseline.
