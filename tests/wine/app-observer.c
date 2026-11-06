@@ -412,6 +412,71 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     return 0;
 }
 
+/* Real pointer input in screen pixels; SetCursorPos alone may not produce
+ * WM_MOUSEMOVE under Wine's X11 driver. */
+static void pointer(int x, int y, DWORD buttons)
+{
+    INPUT input={0};
+    input.type=INPUT_MOUSE;
+    input.mi.dx=MulDiv(x,65535,GetSystemMetrics(SM_CXSCREEN)-1);
+    input.mi.dy=MulDiv(y,65535,GetSystemMetrics(SM_CYSCREEN)-1);
+    input.mi.dwFlags=MOUSEEVENTF_MOVE|MOUSEEVENTF_ABSOLUTE|buttons;
+    SendInput(1,&input,sizeof(input));
+    Sleep(15);
+}
+
+/* WineHQ 48874 in the real Draw Board: pick the pencil (second button of the
+ * third tool row), draw a stroke across the canvas and report its colour.
+ * Coordinates are client pixels at 96 DPI, scaled to the window's DPI. */
+static void pencil_stroke(HWND draw)
+{
+    RECT client;
+    POINT tool, from, to;
+    int dpi=GetDpiForWindow(draw), x, counts[3]={0};
+    COLORREF found[3]={0};
+    HDC screen;
+
+    if (!dpi) dpi=96;
+    GetClientRect(draw,&client);
+    tool.x=MulDiv(45,dpi,96); tool.y=MulDiv(140,dpi,96);
+    from.x=client.right*2/5; from.y=client.bottom*2/5;
+    to.x=client.right*3/5; to.y=client.bottom*2/5;
+    ClientToScreen(draw,&tool); ClientToScreen(draw,&from); ClientToScreen(draw,&to);
+    SetForegroundWindow(draw);
+    pointer(tool.x,tool.y,0);
+    pointer(tool.x,tool.y,MOUSEEVENTF_LEFTDOWN);
+    pointer(tool.x,tool.y,MOUSEEVENTF_LEFTUP);
+    Sleep(500);
+    snapshot("draw-pencil-tool.bmp");
+    pointer(from.x,from.y,0);
+    pointer(from.x,from.y,MOUSEEVENTF_LEFTDOWN);
+    for (x=from.x;x<=to.x;x+=MulDiv(8,dpi,96)) pointer(x,from.y,0);
+    pointer(to.x,to.y,MOUSEEVENTF_LEFTUP);
+    Sleep(500);
+    snapshot("draw-pencil-stroke.bmp");
+
+    /* Up to three distinct non-white, non-gray colours on the stroke row. */
+    screen=GetDC(NULL);
+    for (x=from.x+4;x<to.x-4;x++)
+    {
+        int dy;
+        for (dy=-3;dy<=3;dy++)
+        {
+            COLORREF c=GetPixel(screen,x,from.y+dy);
+            int r=GetRValue(c), g=GetGValue(c), b=GetBValue(c), k;
+            if (c==CLR_INVALID || (abs(r-g)<12 && abs(g-b)<12 && r>150)) continue;
+            for (k=0;k<3 && counts[k] && found[k]!=c;k++);
+            if (k<3) { found[k]=c; counts[k]++; }
+        }
+    }
+    ReleaseDC(NULL,screen);
+    printf("pencil tool=%ld,%ld stroke=%ld,%ld->%ld,%ld dpi=%d\n",tool.x,tool.y,from.x,from.y,to.x,to.y,dpi);
+    for (x=0;x<3;x++)
+        if (counts[x]) printf("pencil_stroke_color=%02x%02x%02x pixels=%d\n",
+                              GetRValue(found[x]),GetGValue(found[x]),GetBValue(found[x]),counts[x]);
+    if (!counts[0]) puts("pencil_stroke_color=none");
+}
+
 int main(int argc,char **argv)
 {
     STARTUPINFOA startup={sizeof(startup)}; PROCESS_INFORMATION process;
@@ -445,6 +510,7 @@ int main(int argc,char **argv)
             draw=wait_window("Draw Board","TDrawBoard");
             report_timing(stage,start,draw);Sleep(1000);snapshot(i?"draw-second.bmp":"draw-first.bmp");
             if(!draw)break;
+            if(i) pencil_stroke(draw); /* after the second open is timed */
             PostMessageA(draw,WM_CLOSE,0,0);
             close_start=GetTickCount();
             while (IsWindowVisible(draw) && GetTickCount()-close_start<5000) Sleep(20);
