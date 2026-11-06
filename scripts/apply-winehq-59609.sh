@@ -8,13 +8,18 @@
 #   WINEPREFIX: the prefix FastStone runs in (default ~/.wine).
 #   --exe:   FSViewer.exe to check (default: the first one found in the prefix's drive_c).
 #   --build: build the DLL here instead of downloading it (needs the packages listed by
-#            fix-it-in-wine's tools/build_one_dll.sh). Also used when the release has no file
-#            for your Wine.
+#            fix-it-in-wine's tools/build_one_dll.sh).
 #
 # The DLL comes from https://github.com/unxed/dllmgr/releases/tag/winehq-59609 for your
 # exact `wine --version`, checked against SHA256SUMS. Other programs and the system Wine are
 # not changed. Undo: apply.sh --undo.
 set -euo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# Adapt OEM reg.exe output to UTF-8 for older fix-it-in-wine helpers.
+export DLLMGR_WINE=${FIW_WINE:-wine}
+export FIW_WINE=$here/wine-reg-utf8.py
+export FIW_WINE_ENCODING=utf-8
+export PYTHONIOENCODING=utf-8
 
 release=https://github.com/unxed/dllmgr/releases/download/winehq-59609
 patch_url=https://raw.githubusercontent.com/unxed/fix-it-in-wine/main/showcases/59609/fix.patch
@@ -71,12 +76,16 @@ echo "FastStone: $exe ($arch), $tag, comctl32 $([ "$slot" = system ] && echo v5 
 mkdir -p "$work/release"
 dll=$work/release/$file
 if [ "$build" = 0 ]; then
-    if curl -fsSL -o "$dll" "$release/$file" && curl -fsSL -o "$work/release/SHA256SUMS" "$release/SHA256SUMS"; then
-        (cd "$work/release" && grep " $file\$" SHA256SUMS | sha256sum -c --quiet) || { echo "checksum mismatch for $file" >&2; exit 2; }
-    else
-        echo "no prebuilt $file in the release: building it here"
-        build=1
+    download=$(mktemp -d "$work/release/.download.XXXXXX")
+    trap 'rm -rf "$download"' EXIT
+    if ! curl -fsSL --retry 3 --connect-timeout 15 -o "$download/$file" "$release/$file" ||
+       ! curl -fsSL --retry 3 --connect-timeout 15 -o "$download/SHA256SUMS" "$release/SHA256SUMS"; then
+        echo "could not download prebuilt $file from $release" >&2
+        echo "Retry later, or pass --build to compile locally (requires Wine build packages)." >&2
+        exit 2
     fi
+    (cd "$download" && awk -v file="$file" '$2 == file {print}' SHA256SUMS | sha256sum -c --quiet) || { echo "checksum mismatch for $file" >&2; exit 2; }
+    mv "$download/$file" "$dll"
 fi
 if [ "$build" = 1 ]; then
     src=$work/src/$tag
@@ -93,4 +102,4 @@ python3 "$tools/override.py" apply --prefix "$WINEPREFIX" --exe FSViewer.exe --d
 echo
 echo "Done. Start FastStone, open a folder with many images, press F, move the mouse to the top"
 echo "of the screen and scroll the strip: the thumbnails must stay drawn."
-echo "Undo: $0 --undo"
+echo "Undo: $here/undo-winehq-59609.sh"

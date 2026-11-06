@@ -43,7 +43,8 @@ Existing:
   `index.json` compiled from the frontmatter. See `catalog/README.md`.
 - `scripts/apply-winehq-59609.sh` and `.github/workflows/release-winehq-59609.yml`: the
   one-step apply and the release build of catalog fix `winehq-59609` (stand-ins until the
-  dllmgr CLI exists).
+  dllmgr CLI exists). Undo with `scripts/undo-winehq-59609.sh`, using the same `WINEPREFIX`.
+  Registry output uses the locale's OEM code page, following `unxed/localecp`.
 - `cmd/dllmgr-catalog/`, `internal/catalog/`: the catalog validator and index
   compiler (Go). CI: `.github/workflows/catalog.yml`.
 - `spike/spike0.sh`: the manual spike of iteration 0.

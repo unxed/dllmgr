@@ -1,0 +1,55 @@
+name: apply-scripts
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        helper: [legacy, patched]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: unxed/fix-it-in-wine
+          ref: 0b37d498ef4fd4b1077421af62974a9b3587e80a
+          path: fiw
+      - name: Apply the proposed upstream fix
+        if: matrix.helper == 'patched'
+        run: git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
+      - name: Check apply, undo, downloads and locale decoding
+        env:
+          FIW_TOOLS: ${{ github.workspace }}/fiw/tools
+        run: |
+          bash -n scripts/*.sh scripts/tests/*.sh
+          python3 -m unittest discover -s scripts/tests -v
+      - name: Check the patched upstream helper
+        if: matrix.helper == 'patched'
+        working-directory: fiw
+        run: python3 -m unittest discover -s tests -v
+
+  real-wine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: unxed/fix-it-in-wine
+          ref: 0b37d498ef4fd4b1077421af62974a9b3587e80a
+          path: fiw
+      - name: Install Wine and the Russian locale
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq wine wine64 xvfb locales
+          sudo locale-gen ru_RU.UTF-8
+      - name: Apply and undo with real Wine registry commands
+        env:
+          FIW_TOOLS: ${{ github.workspace }}/fiw/tools
+        run: xvfb-run -a bash scripts/tests/real-wine.sh
