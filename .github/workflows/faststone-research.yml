@@ -8,6 +8,9 @@ on:
         description: Build all candidate modules and check apply/undo
         type: boolean
         default: false
+concurrency:
+  group: faststone-research-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -61,6 +64,7 @@ jobs:
           name: wine-baseline
           path: wine-*.txt
   faststone85:
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     strategy:
       matrix:

@@ -8,7 +8,7 @@ src=$FIW_WORK/src/$tag
 mkdir -p results out
 git clone -q --depth 1 --branch "$tag" "$FIW_WINE_GIT" "$src"
 wineboot -u
-wineserver -p
+wineserver -p || true
 for exe in controls.exe controls6.exe; do
     set +e
     wine "$exe" --check-label --check-wheel --check-position > "results/before-$exe.txt"
