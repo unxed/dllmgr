@@ -9,7 +9,7 @@
 
 static HWND parent;
 static HIMAGELIST images;
-static int check_label, check_wheel, failures;
+static int check_label, check_wheel, check_position, failures;
 
 static HWND listview(DWORD style, int width, int height, const char *text, int count)
 {
@@ -72,6 +72,18 @@ static void wheel_probe(DWORD view, DWORD align, int delta, int keys)
     DestroyWindow(lv);
 }
 
+static void position_probe(DWORD view)
+{
+    HWND lv = listview(view | LVS_ALIGNLEFT | LVS_AUTOARRANGE, 400, 150, "item", 200);
+    POINT before, after;
+    SendMessageA(lv, LVM_GETITEMPOSITION, 150, (LPARAM)&before);
+    SendMessageA(lv, LVM_SCROLL, 300, 0);
+    SendMessageA(lv, LVM_GETITEMPOSITION, 150, (LPARAM)&after);
+    printf("position view=%lu: (%ld,%ld)->(%ld,%ld)\n", view, before.x, before.y, after.x, after.y);
+    if (check_position && before.x != after.x) failures++;
+    DestroyWindow(lv);
+}
+
 int main(int argc, char **argv)
 {
     INITCOMMONCONTROLSEX init = {sizeof(init), ICC_LISTVIEW_CLASSES};
@@ -85,6 +97,7 @@ int main(int argc, char **argv)
     {
         if (!strcmp(argv[i], "--check-label")) check_label = 1;
         if (!strcmp(argv[i], "--check-wheel")) check_wheel = 1;
+        if (!strcmp(argv[i], "--check-position")) check_position = 1;
     }
     InitCommonControlsEx(&init);
     parent = CreateWindowA("STATIC", "FastStone controls probe", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -104,6 +117,7 @@ int main(int argc, char **argv)
         wheel_probe(LVS_ICON,LVS_ALIGNTOP,deltas[i],0);
     }
     wheel_probe(LVS_ICON,LVS_ALIGNLEFT,-120,MK_CONTROL);
+    position_probe(LVS_ICON); position_probe(LVS_SMALLICON);
     ImageList_Destroy(images); DestroyWindow(parent);
     printf("Failures: %d\n", failures);
     return !!failures;

@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Build each source fix and the combined set, then verify real Wine apply/undo.
+set -euo pipefail
+export FIW_WORK=$RUNNER_TEMP/fiw-build FIW_WINE_GIT=https://github.com/wine-mirror/wine.git
+export WINEPREFIX=$RUNNER_TEMP/fixes-prefix WINEDEBUG=-all WINEDLLOVERRIDES='mscoree,mshtml='
+tag=$(wine --version | cut -d' ' -f1)
+src=$FIW_WORK/src/$tag
+mkdir -p results out
+git clone -q --depth 1 --branch "$tag" "$FIW_WINE_GIT" "$src"
+wineboot -u
+for exe in controls.exe controls6.exe; do
+    set +e
+    wine "$exe" --check-label --check-wheel --check-position > "results/before-$exe.txt"
+    rc=$?
+    set -e
+    [ "$rc" = 1 ] || { echo "expected known unfixed failures, got $rc"; cat "results/before-$exe.txt"; exit 1; }
+done
+for selection in winehq-48872 winehq-59251 winehq-59609 faststone; do
+    git -C "$src" restore -- dlls/comctl32/listview.c
+    fixes=$selection
+    [ "$selection" != faststone ] || fixes='winehq-48872 winehq-59251 winehq-59609'
+    for fix in $fixes; do git -C "$src" apply "$GITHUB_WORKSPACE/patches/$fix.patch"; done
+    bash fiw/tools/build_one_dll.sh "$tag" comctl32 comctl32_v6 > built.txt
+    mkdir -p "out/$selection"
+    while read -r dll; do
+        mod=$(basename "$(dirname "$(dirname "$dll")")")
+        arch=$(basename "$(dirname "$dll")"); arch=${arch%-windows}
+        python3 fiw/tools/pe_unmark.py "$dll" "out/$selection/$mod-$tag-$arch.dll"
+    done < built.txt
+    case $selection in
+        winehq-48872) checks='--check-label' ;;
+        winehq-59251) checks='--check-wheel' ;;
+        winehq-59609) checks='--check-position' ;;
+        faststone) checks='--check-label --check-wheel --check-position' ;;
+    esac
+    original=$WINEPREFIX/drive_c/windows/system32/comctl32.dll
+    cp "$original" "$RUNNER_TEMP/original-v5.dll"
+    sxs=$(find "$WINEPREFIX/drive_c/windows/winsxs" -maxdepth 2 -ipath '*/amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.*/comctl32.dll')
+    [ -f "$sxs" ]; cp "$sxs" "$RUNNER_TEMP/original-v6.dll"
+    python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe controls.exe --dll "out/$selection/comctl32-$tag-x86_64.dll" --name comctl32.dll
+    python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe controls6.exe --dll "out/$selection/comctl32_v6-$tag-x86_64.dll" --name comctl32.dll --slot 'sxs:amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.*'
+    wine controls.exe $checks | tee "results/$selection-v5.txt"
+    wine controls6.exe $checks | tee "results/$selection-v6.txt"
+    python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls.exe --name comctl32
+    python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls6.exe --name comctl32
+    cmp "$original" "$RUNNER_TEMP/original-v5.dll"
+    cmp "$sxs" "$RUNNER_TEMP/original-v6.dll"
+    printf '%s %s + %s\n' "$tag" "$(git -C "$src" rev-parse HEAD)" "$fixes" > "out/$selection/SOURCE.txt"
+    for fix in $fixes; do cp "patches/$fix.patch" "out/$selection/"; done
+    (cd "out/$selection" && sha256sum *.dll > SHA256SUMS)
+done
