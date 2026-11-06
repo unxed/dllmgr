@@ -11,6 +11,10 @@ patch_sha256: 4c4e4672a06370e612f9305be7cab7a59c8dd7d8638297b1029831a4d0218295
 recipe: "fix-it-in-wine: tools/build_one_dll.sh <tag> comctl32 [comctl32_v6]"
 binaries: https://github.com/unxed/dllmgr/releases/tag/winehq-59609
 evidence: https://github.com/unxed/fix-it-in-wine/actions/workflows/showcase-59609.yml
+results:
+  - {check: fix-it-in-wine showcases/59609/lvpos.c, wine: wine-9.0, host_arch: x86_64, without: fail, with: pass, windows: pass, run: https://github.com/unxed/fix-it-in-wine/actions/runs/42156695927}
+  - {check: fix-it-in-wine showcases/59609/lvpos.c, wine: wine-11.0, host_arch: x86_64, without: fail, with: pass, windows: pass, run: https://github.com/unxed/fix-it-in-wine/actions/runs/42156695927}
+  - {check: fix-it-in-wine showcases/59609/lvpos.c, wine: wine-11.21, host_arch: x86_64, without: fail, with: pass, windows: pass, run: https://github.com/unxed/fix-it-in-wine/actions/runs/42156695927}
 license: LGPL-2.1-or-later
 authors: [T_Im]
 ---
