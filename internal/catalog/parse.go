@@ -46,6 +46,11 @@ var trackers = map[string]func(u *url.URL, num string) bool{
 	"winehq": func(u *url.URL, num string) bool {
 		return u.Host == "bugs.winehq.org" && u.Path == "/show_bug.cgi" && u.Query().Get("id") == num
 	},
+	// dllmgr issues hold fixes that have no upstream bug yet. Move the
+	// entry to its upstream id once a WineHQ report exists.
+	"dllmgr": func(u *url.URL, num string) bool {
+		return u.Scheme == "https" && u.Host == "github.com" && u.Path == "/unxed/dllmgr/issues/"+num && u.RawQuery == ""
+	},
 }
 
 func set(names ...string) map[string]bool {
