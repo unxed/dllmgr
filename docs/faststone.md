@@ -57,7 +57,7 @@ assigned Wine bug number yet. Use synthetic images for public evidence.
 | FS-draw-start | Opening Draw Board takes about 5 seconds (user timing). | Measure keypress-to-interactive-window time, first and subsequent opens, with tracing disabled. Then collect bounded font/GDI+/module traces to locate the delay; compare 7.5 and 8.5. |
 | FS-start | Startup takes about 2–3 seconds (user timing); faster startup is desired. | Measure process start to usable viewer/browser separately, cold and warm, with the same local synthetic image/folder. Separate Wine prefix initialization, font discovery, codecs, directory scanning and thumbnail database costs. Preserve correctness and user settings. |
 
-| FS-middle-button | Middle-button actions may differ between browser, windowed viewer and fullscreen modes; expected behavior has not been verified. | Check the official help and relevant mouse settings for each mode; compare press/release, short click and hold on Windows and Wine. Preserve configurable actions. |
+| FS-middle-button | Middle-button actions may differ between browser, windowed viewer and fullscreen modes; expected behavior has not been verified. | The bundled 8.5 help (ViewingImages.htm) specifies middle click as Full Screen ↔ Browser; Enter/F also cover Windowed View. Check the relevant mouse settings for each mode; compare press/release, short click and hold on Windows and Wine. Preserve configurable actions. |
 
 For FS-path, a short capture recipe is to run the app under the existing
 `wineprobe.py` load preset with a bounded timeout, keep the log local, and take

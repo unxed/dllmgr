@@ -60,8 +60,13 @@ jobs:
         with:
           name: wine-baseline
           path: wine-*.txt
-  faststone75:
+  faststone85:
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        dpi: [96, 192]
+    env:
+      TEST_DPI: ${{ matrix.dpi }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -73,13 +78,13 @@ jobs:
           sudo curl -fsSL https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources -o /etc/apt/sources.list.d/winehq-noble.sources
           sudo apt-get update -qq
           sudo apt-get install -y -qq --install-recommends winehq-stable xvfb xdotool scrot x11-utils openbox
-      - name: Capture the affected FastStone 7.5 controls
-        run: xvfb-run -a -s '-screen 0 1920x1080x24' bash -c 'openbox >/dev/null 2>&1 & bash tests/wine/faststone-app.sh'
+      - name: Capture the affected FastStone 8.5 controls
+        run: xvfb-run -a -s '-screen 0 3072x1728x24' bash -c 'openbox >/dev/null 2>&1 & bash tests/wine/faststone85.sh'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: faststone75
-          path: snapshots/
+          name: faststone85-${{ matrix.dpi }}
+          path: snapshots85/
   patched:
     if: github.event_name == 'workflow_dispatch' && inputs.deep
     needs: build
