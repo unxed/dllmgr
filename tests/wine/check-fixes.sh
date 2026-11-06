@@ -99,7 +99,10 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
     wine reg query 'HKCU\Software\Wine\AppDefaults\controls.exe\DllOverrides'
     sha256sum "$original" "out/$selection/comctl32-$tag-x86_64.dll"
     check_controls controls.exe v5 $checks
-    check_controls controls6.exe v6 $checks
+    case $selection in
+        winehq-59251|faststone) check_controls controls6.exe v6 $checks --check-icon-wheel-speed ;;
+        *) check_controls controls6.exe v6 $checks ;;
+    esac
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls.exe --name comctl32
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls6.exe --name comctl32
     cmp "$original" "$RUNNER_TEMP/original-v5.dll"

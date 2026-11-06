@@ -145,3 +145,26 @@ loads of both DLLs. Wine reported the logical `system32` path for GDI+, which
 the initial check rejected despite the successful load. Both files were
 restored byte for byte on undo. This run exercised opening Draw Board; the
 GDI+ pencil-color test remains a separate probe.
+
+On that runner at 192 DPI, startup reached the first `WM_NULL` response in
+730 ms with builtin Wine and 748 ms with the bundle (Draw Board scenario).
+Draw Board mapped in 823–957 ms across the first and second opens. These
+times do not reproduce the delays on the user's machine. Several fullscreen
+wheel events in the archived comparison reached the image viewer after the
+strip disappeared. The observer now reopens the strip when needed, sends
+input only to the list-view and records observed scrollbar positions and
+first change. The browser-origin middle-click capture was blocked by the
+first-run fullscreen notice. Its success requires a foreground fullscreen
+window before the click and a visible-window report after it.
+
+The [Windows controls baseline](https://github.com/unxed/dllmgr/actions/runs/42236384573/artifacts/13513065604)
+also exposes a wheel-speed mismatch in large-icon mode. At the default three
+wheel lines, v6 moves 111 pixels for one detent and 222 for two, on whichever
+axis scrolls the icons. The [previous bundle](https://github.com/unxed/dllmgr/actions/runs/42236384573/artifacts/13513256314)
+moved 37 and 74 pixels horizontally, and always moved 37 pixels vertically
+even for a zero delta. The wheel-speed candidate uses the configured line
+count and accumulates partial detents for v6. The strict v6 fixture checks both
+axes, zero and half-detent input, and the Ctrl modifier. Windows v5 horizontal
+measurements in the same fixture are 98 and 209 pixels. Its existing wheel
+behavior in the bundle is unchanged by this candidate. Check actual FastStone
+input and thumbnail painting separately before marking the wheel issue fixed.

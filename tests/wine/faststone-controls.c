@@ -8,7 +8,7 @@
 
 static HWND parent;
 static HIMAGELIST images;
-static int check_label, check_wheel, check_position, failures;
+static int check_label, check_wheel, check_icon_wheel_speed, check_position, failures;
 
 static HWND listview(DWORD style, int width, int height, const char *text, int count)
 {
@@ -73,12 +73,28 @@ static void wheel_probe(DWORD view, DWORD align, int delta, int keys)
     HWND lv = listview(view | align | LVS_AUTOARRANGE, 400, 150, "item", 200);
     DWORD scrollbars = GetWindowLongW(lv, GWL_STYLE);
     int h0 = GetScrollPos(lv, SB_HORZ), v0 = GetScrollPos(lv, SB_VERT);
+    int h1, v1;
+
     SendMessageA(lv, WM_MOUSEWHEEL, MAKEWPARAM(keys, delta), 0);
+    h1 = GetScrollPos(lv, SB_HORZ);
+    v1 = GetScrollPos(lv, SB_VERT);
     printf("wheel view=%lu align=%lu delta=%d keys=%d scrollbars=%#lx: h=%d->%d v=%d->%d\n",
            view, align, delta, keys, scrollbars & (WS_HSCROLL | WS_VSCROLL),
-           h0, GetScrollPos(lv, SB_HORZ), v0, GetScrollPos(lv, SB_VERT));
+           h0, h1, v0, v1);
     if (check_wheel && view == LVS_ICON && align == LVS_ALIGNLEFT && !keys && delta == -120 &&
-        GetScrollPos(lv, SB_HORZ) <= h0) failures++;
+        h1 <= h0) failures++;
+    if (check_icon_wheel_speed && view == LVS_ICON)
+    {
+        /* Observed in the native v6 fixture with three lines per detent. */
+        int expected = keys ? 0 : -delta / WHEEL_DELTA * 111;
+        int horizontal = align == LVS_ALIGNLEFT;
+        if (h1 - h0 != (horizontal ? expected : 0) ||
+            v1 - v0 != (horizontal ? 0 : expected))
+        {
+            printf("unexpected v6 icon wheel displacement, expected %d px\n", expected);
+            failures++;
+        }
+    }
     DestroyWindow(lv);
 }
 
@@ -107,7 +123,17 @@ int main(int argc, char **argv)
     {
         if (!strcmp(argv[i], "--check-label")) check_label = 1;
         if (!strcmp(argv[i], "--check-wheel")) check_wheel = 1;
+        if (!strcmp(argv[i], "--check-icon-wheel-speed")) check_icon_wheel_speed = 1;
         if (!strcmp(argv[i], "--check-position")) check_position = 1;
+    }
+    if (check_icon_wheel_speed)
+    {
+        UINT lines = 0;
+        if (!SystemParametersInfoA(SPI_GETWHEELSCROLLLINES, 0, &lines, 0) || lines != 3)
+        {
+            fprintf(stderr, "v6 icon wheel speed fixture requires three scroll lines, got %u\n", lines);
+            return 2;
+        }
     }
     InitCommonControlsEx(&init);
     parent = CreateWindowA("STATIC", "FastStone controls probe", WS_OVERLAPPEDWINDOW | WS_VISIBLE,

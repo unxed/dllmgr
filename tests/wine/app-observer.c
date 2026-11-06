@@ -155,7 +155,48 @@ static void observe_left_panel(const RECT *bounds)
     snapshot("fullscreen-left-panel.bmp");
 }
 
-static void wheel_series(const char *stage)
+struct wheel_target
+{
+    HWND hwnd;
+    char class_name[128];
+};
+
+static struct wheel_target wheel_target_at_cursor(void)
+{
+    struct wheel_target target={0};
+    POINT point;
+    HWND hwnd;
+    DWORD owner=0;
+
+    if (!GetCursorPos(&point)) return target;
+    hwnd=WindowFromPoint(point);
+    GetWindowThreadProcessId(hwnd,&owner);
+    GetClassNameA(hwnd,target.class_name,sizeof(target.class_name));
+    if (owner==pid && (!lstrcmpiA(target.class_name,"TTntListView.UnicodeClass") ||
+                       !lstrcmpiA(target.class_name,"TTntListView") ||
+                       !lstrcmpiA(target.class_name,"SysListView32")))
+        target.hwnd=hwnd;
+    return target;
+}
+
+static BOOL scroll_position(HWND hwnd, int bar, int *value)
+{
+    SCROLLINFO info={sizeof(info),SIF_POS};
+    if (!GetScrollInfo(hwnd,bar,&info)) return FALSE;
+    *value=info.nPos;
+    return TRUE;
+}
+
+static void reveal_fullscreen_strip(HWND fullscreen, const RECT *bounds)
+{
+    int middle=(bounds->left+bounds->right)/2;
+    SetCursorPos(middle,bounds->top);
+    Sleep(800);
+    SetCursorPos(middle,bounds->top+MulDiv(80,GetDpiForWindow(fullscreen),96));
+    Sleep(150);
+}
+
+static void wheel_series(const char *stage, HWND fullscreen, const RECT *bounds)
 {
     static const int deltas[]={-WHEEL_DELTA/2,-WHEEL_DELTA/2,-WHEEL_DELTA,-2*WHEEL_DELTA};
     unsigned i;
@@ -169,24 +210,44 @@ static void wheel_series(const char *stage)
     for (i=0;i<sizeof(deltas)/sizeof(deltas[0]);i++)
     {
         INPUT input={0};
-        POINT point={0};
-        HWND target;
-        DWORD owner=0, start;
-        char class_name[128]="";
+        struct wheel_target target=wheel_target_at_cursor();
+        DWORD start, moved=0;
+        int h_before=0, v_before=0, h_after=0, v_after=0;
+        BOOL h_ok, v_ok, shown;
         UINT sent=0;
 
-        target=GetCursorPos(&point) ? WindowFromPoint(point) : NULL;
-        GetWindowThreadProcessId(target,&owner);
-        GetClassNameA(target,class_name,sizeof(class_name));
+        if (!target.hwnd && fullscreen)
+        {
+            /* FastStone can hide the strip after a wheel event. Reopen it
+             * before the next event rather than scrolling the photo viewer. */
+            reveal_fullscreen_strip(fullscreen,bounds);
+            target=wheel_target_at_cursor();
+        }
+        h_ok=target.hwnd && scroll_position(target.hwnd,SB_HORZ,&h_before);
+        v_ok=target.hwnd && scroll_position(target.hwnd,SB_VERT,&v_before);
         input.type=INPUT_MOUSE;
         input.mi.dwFlags=MOUSEEVENTF_WHEEL;
         input.mi.mouseData=(DWORD)deltas[i];
         start=GetTickCount();
-        if (owner==pid) sent=SendInput(1,&input,sizeof(input));
-        Sleep(500);
+        if (target.hwnd) sent=SendInput(1,&input,sizeof(input));
+        h_after=h_before;
+        v_after=v_before;
+        do
+        {
+            Sleep(10);
+            if (h_ok) h_ok=scroll_position(target.hwnd,SB_HORZ,&h_after);
+            if (v_ok) v_ok=scroll_position(target.hwnd,SB_VERT,&v_after);
+            if (!moved && ((h_ok && h_after!=h_before) || (v_ok && v_after!=v_before)))
+                moved=GetTickCount()-start;
+        } while (GetTickCount()-start<500);
+        shown=target.hwnd && IsWindowVisible(target.hwnd);
         snprintf(filename,sizeof(filename),"%s-wheel-%u.bmp",stage,i+1);
-        printf("%s wheel_%u delta=%d input_queued=%u target='%s' app_window=%d capture_after_ms=%lu\n",
-               stage,i+1,deltas[i],sent,class_name,owner==pid,GetTickCount()-start);
+        printf("%s wheel_%u delta=%d input_queued=%u target='%s' listview_visible_after=%d capture_after_ms=%lu",
+               stage,i+1,deltas[i],sent,target.class_name,shown,GetTickCount()-start);
+        if (h_ok) printf(" horizontal=%d->%d",h_before,h_after);
+        if (v_ok) printf(" vertical=%d->%d",v_before,v_after);
+        if (moved) printf(" first_scroll_change_ms=%lu",moved);
+        putchar('\n');
         snapshot(filename);
     }
 }
@@ -233,22 +294,35 @@ static BOOL CALLBACK find_fullscreen_notice(HWND child, LPARAM data)
     return TRUE;
 }
 
-static void dismiss_fullscreen_notice(HWND fullscreen)
+static BOOL wait_for_fullscreen_input(HWND fullscreen)
 {
-    HWND foreground;
-    DWORD owner=0;
-    BOOL notice=FALSE;
+    DWORD start=GetTickCount();
+    BOOL dismissed=FALSE;
 
+    /* FastStone briefly focuses fullscreen before its first-run notice opens. */
     Sleep(500);
-    foreground=GetForegroundWindow();
-    if (foreground==fullscreen) return;
-    GetWindowThreadProcessId(foreground,&owner);
-    if (owner!=pid) return;
-    EnumChildWindows(foreground,find_fullscreen_notice,(LPARAM)&notice);
-    if (!notice) return;
-    snapshot("browser-origin-first-run-notice.bmp");
-    press_key(VK_RETURN);
-    Sleep(500);
+    do
+    {
+        HWND foreground=GetForegroundWindow();
+        DWORD owner=0;
+        BOOL notice=FALSE;
+
+        if (foreground==fullscreen && IsWindowEnabled(fullscreen)) return TRUE;
+        GetWindowThreadProcessId(foreground,&owner);
+        if (owner==pid && !dismissed)
+        {
+            EnumChildWindows(foreground,find_fullscreen_notice,(LPARAM)&notice);
+            if (notice && foreground==GetForegroundWindow())
+            {
+                snapshot("browser-origin-first-run-notice.bmp");
+                press_key(VK_RETURN);
+                dismissed=TRUE;
+            }
+        }
+        Sleep(50);
+    } while (GetTickCount()-start<3000);
+    EnumWindows(describe_visible_window,0);
+    return FALSE;
 }
 
 static int observe_browser(HWND fullscreen, HANDLE process)
@@ -262,11 +336,9 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     SetForegroundWindow(fullscreen);
     GetWindowRect(fullscreen,&bounds);
     observe_left_panel(&bounds);
-    SetCursorPos((bounds.left+bounds.right)/2,bounds.top);
-    Sleep(800);
-    SetCursorPos((bounds.left+bounds.right)/2,bounds.top+MulDiv(80,GetDpiForWindow(fullscreen),96));
+    reveal_fullscreen_strip(fullscreen,&bounds);
     observe_listviews("fullscreen-strip",process,pid);
-    wheel_series("fullscreen-strip");
+    wheel_series("fullscreen-strip",fullscreen,&bounds);
 
     SetCursorPos((bounds.left+bounds.right)/2,(bounds.top+bounds.bottom)/2);
     SetForegroundWindow(fullscreen);
@@ -278,7 +350,7 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     SetCursorPos(bounds.left+(bounds.right-bounds.left)*3/4,(bounds.top+bounds.bottom)/2);
     Sleep(1000);
     observe_listviews("browser-grid",process,pid);
-    wheel_series("browser");
+    wheel_series("browser",NULL,NULL);
     observe_address(browser);
 
     SetForegroundWindow(browser);
@@ -287,8 +359,7 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     dump("fullscreen from browser",fullscreen);
     snapshot("browser-origin-fullscreen.bmp");
     if (!fullscreen) return 0;
-    dismiss_fullscreen_notice(fullscreen);
-    if (GetForegroundWindow()!=fullscreen)
+    if (!wait_for_fullscreen_input(fullscreen))
     {
         puts("browser_origin_middle_skipped: fullscreen is not in the foreground");
         snapshot("browser-origin-blocked.bmp");
@@ -300,6 +371,7 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     middle_click();
     Sleep(1000);
     if (GetExitCodeProcess(process,&code)) printf("browser_origin_middle_process_code=%lu\n",code);
+    EnumWindows(describe_visible_window,0);
     snapshot("browser-origin-after-middle.bmp");
     return 0;
 }
