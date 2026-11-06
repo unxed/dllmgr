@@ -3,7 +3,6 @@
 #define _WIN32_WINNT 0x0600
 #include <windows.h>
 #include <commctrl.h>
-#include <uxtheme.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -17,7 +16,14 @@ static HWND listview(DWORD style, int width, int height, const char *text, int c
                             0, 0, width, height, parent, NULL, GetModuleHandleA(NULL), NULL);
     LVITEMA item = {0};
     int i;
-    SetWindowTheme(lv, L"", L"");
+    {
+        static int printed;
+        char path[MAX_PATH];
+        if (!printed++) {
+            GetModuleFileNameA((HMODULE)GetClassLongPtrA(lv,GCLP_HMODULE),path,sizeof(path));
+            printf("list-view class module: %s\n",path);
+        }
+    }
     SendMessageA(lv, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)images);
     SendMessageA(lv, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)images);
     SendMessageA(lv, LVM_SETBKCOLOR, 0, RGB(255,255,255));

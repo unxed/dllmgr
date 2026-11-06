@@ -13,9 +13,9 @@ jobs:
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq gcc-mingw-w64-x86-64
       - working-directory: tests/wine
         run: |
-          x86_64-w64-mingw32-gcc -O2 -Wall -o controls.exe faststone-controls.c -lcomctl32 -luxtheme -lgdi32
+          x86_64-w64-mingw32-gcc -O2 -Wall -o controls.exe faststone-controls.c -lcomctl32 -lgdi32
           x86_64-w64-mingw32-windres controls.rc -O coff -o controls.res
-          x86_64-w64-mingw32-gcc -O2 -Wall -o controls6.exe faststone-controls.c controls.res -lcomctl32 -luxtheme -lgdi32
+          x86_64-w64-mingw32-gcc -O2 -Wall -o controls6.exe faststone-controls.c controls.res -lcomctl32 -lgdi32
           x86_64-w64-mingw32-gcc -O2 -Wall -o pencil.exe pencil.c -lgdiplus -lgdi32
       - uses: actions/upload-artifact@v4
         with:

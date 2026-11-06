@@ -39,8 +39,8 @@ for selection in winehq-48872 winehq-59251 winehq-59609 faststone; do
     [ -f "$sxs" ]; cp "$sxs" "$RUNNER_TEMP/original-v6.dll"
     python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe controls.exe --dll "out/$selection/comctl32-$tag-x86_64.dll" --name comctl32.dll
     python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe controls6.exe --dll "out/$selection/comctl32_v6-$tag-x86_64.dll" --name comctl32.dll --slot 'sxs:amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.*'
-    wine controls.exe $checks | tee "results/$selection-v5.txt"
-    wine controls6.exe $checks | tee "results/$selection-v6.txt"
+    WINEDEBUG=+loaddll wine controls.exe $checks 2>"results/$selection-v5-load.txt" | tee "results/$selection-v5.txt"
+    WINEDEBUG=+loaddll wine controls6.exe $checks 2>"results/$selection-v6-load.txt" | tee "results/$selection-v6.txt"
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls.exe --name comctl32
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls6.exe --name comctl32
     cmp "$original" "$RUNNER_TEMP/original-v5.dll"
