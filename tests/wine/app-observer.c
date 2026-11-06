@@ -187,12 +187,33 @@ static BOOL scroll_position(HWND hwnd, int bar, int *value)
     return TRUE;
 }
 
+/* Real pointer input in screen pixels; SetCursorPos alone may not produce
+ * WM_MOUSEMOVE under Wine's X11 driver. */
+static void pointer(int x, int y, DWORD buttons)
+{
+    INPUT input={0};
+    input.type=INPUT_MOUSE;
+    input.mi.dx=MulDiv(x,65535,GetSystemMetrics(SM_CXSCREEN)-1);
+    input.mi.dy=MulDiv(y,65535,GetSystemMetrics(SM_CYSCREEN)-1);
+    input.mi.dwFlags=MOUSEEVENTF_MOVE|MOUSEEVENTF_ABSOLUTE|buttons;
+    SendInput(1,&input,sizeof(input));
+    Sleep(15);
+}
+
+
 static void reveal_fullscreen_strip(HWND fullscreen, const RECT *bounds)
 {
-    int middle=(bounds->left+bounds->right)/2;
-    SetCursorPos(middle,bounds->top);
+    int middle=(bounds->left+bounds->right)/2, y;
+    int below=bounds->top+MulDiv(80,GetDpiForWindow(fullscreen),96);
+
+    /* Move with real input: FastStone shows the strip on mouse motion, and
+     * SetCursorPos may not produce WM_MOUSEMOVE under Wine's X11 driver. */
+    pointer(middle,bounds->top+MulDiv(300,GetDpiForWindow(fullscreen),96),0);
+    for (y=bounds->top+MulDiv(300,GetDpiForWindow(fullscreen),96);y>bounds->top;y-=MulDiv(20,GetDpiForWindow(fullscreen),96))
+        pointer(middle,y,0);
+    pointer(middle,bounds->top,0);
     Sleep(800);
-    SetCursorPos(middle,bounds->top+MulDiv(80,GetDpiForWindow(fullscreen),96));
+    pointer(middle,below,0);
     Sleep(150);
 }
 
@@ -410,19 +431,6 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     EnumWindows(describe_visible_window,0);
     snapshot("browser-origin-after-middle.bmp");
     return 0;
-}
-
-/* Real pointer input in screen pixels; SetCursorPos alone may not produce
- * WM_MOUSEMOVE under Wine's X11 driver. */
-static void pointer(int x, int y, DWORD buttons)
-{
-    INPUT input={0};
-    input.type=INPUT_MOUSE;
-    input.mi.dx=MulDiv(x,65535,GetSystemMetrics(SM_CXSCREEN)-1);
-    input.mi.dy=MulDiv(y,65535,GetSystemMetrics(SM_CYSCREEN)-1);
-    input.mi.dwFlags=MOUSEEVENTF_MOVE|MOUSEEVENTF_ABSOLUTE|buttons;
-    SendInput(1,&input,sizeof(input));
-    Sleep(15);
 }
 
 /* WineHQ 48874 in the real Draw Board: pick the pencil (second button of the
