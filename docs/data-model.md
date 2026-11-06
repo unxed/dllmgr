@@ -67,6 +67,29 @@ system" against a recipe or against a fix's evidence is one comparison.
 - **Agent**: read one fix file top to bottom; add a row or a fix. A new kind of
   file needs an owner decision.
 
+## Built to grow
+
+The catalog should survive thousands of fixes, many applications, Wine
+releases every two weeks and other targets. What makes that safe:
+
+- **Ids never change meaning.** A renamed fix keeps its old id in `aka`; an
+  obsolete one stays with `status: obsolete` instead of being deleted, so old
+  recipe links and installed states still resolve.
+- **Content is addressed by hash.** Programs by `exe_sha256`, patches by
+  `patch_sha256`, binaries by `SHA256SUMS`. A name can be reused; a hash
+  cannot lie.
+- **Evidence is append-only.** New runs add rows; old rows stay as history.
+  A regression in a new Wine release is a new `fail` row, not an edit.
+- **The format is versioned.** `catalog/index.json` carries a `format` number;
+  a client refuses a newer format instead of guessing. Keys are only added,
+  never repurposed.
+- **Exact first, ranges later.** Rows name exact Wine tags today. When the same
+  fix is proven on many consecutive releases, a row may say
+  `wine: wine-11.0..wine-11.4`; a single release outside every row is not
+  covered. Wider claims always need evidence.
+- **Scale by files, not by schema.** Splitting `catalog/fixes/` into
+  subdirectories by DLL or sharding `index.json` changes no file format.
+
 ## Rules
 
 - One fact in one place: fix lists only in recipes, checksums next to their
