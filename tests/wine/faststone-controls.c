@@ -71,10 +71,12 @@ static void label_probe(const char *text)
 static void wheel_probe(DWORD view, DWORD align, int delta, int keys)
 {
     HWND lv = listview(view | align | LVS_AUTOARRANGE, 400, 150, "item", 200);
+    DWORD scrollbars = GetWindowLongW(lv, GWL_STYLE);
     int h0 = GetScrollPos(lv, SB_HORZ), v0 = GetScrollPos(lv, SB_VERT);
     SendMessageA(lv, WM_MOUSEWHEEL, MAKEWPARAM(keys, delta), 0);
-    printf("wheel view=%lu align=%lu delta=%d keys=%d: h=%d->%d v=%d->%d\n",
-           view, align, delta, keys, h0, GetScrollPos(lv, SB_HORZ), v0, GetScrollPos(lv, SB_VERT));
+    printf("wheel view=%lu align=%lu delta=%d keys=%d scrollbars=%#lx: h=%d->%d v=%d->%d\n",
+           view, align, delta, keys, scrollbars & (WS_HSCROLL | WS_VSCROLL),
+           h0, GetScrollPos(lv, SB_HORZ), v0, GetScrollPos(lv, SB_VERT));
     if (check_wheel && view == LVS_ICON && align == LVS_ALIGNLEFT && !keys && delta == -120 &&
         GetScrollPos(lv, SB_HORZ) <= h0) failures++;
     DestroyWindow(lv);
