@@ -580,3 +580,46 @@ The AI agent skill "fix my application under Wine" lives in
 https://github.com/unxed/fix-it-in-wine. It uses dllmgr to apply, undo, verify,
 collect diagnostics (`diag`) and install patches. Until dllmgr exists, the skill
 ships small stand-in tools.
+
+## 19. Exchanging fixes (concept, not planned yet)
+
+Wine does not accept LLM-generated code
+([Developer FAQ](https://gitlab.winehq.org/wine/wine/-/wikis/Developer-FAQ)). So a fix that an
+agent writes on a user's machine (see fix-it-in-wine) stays with that user. The next user of the
+same program should not have to repeat the work. dllmgr can carry such fixes between users. How
+to host this and how to pay for it is not decided. This section only lists what the architecture
+must allow from the start.
+
+What is exchanged — a **fix package**:
+- base: a Wine tag or commit, or a library from `libs/`;
+- the change as source (a patch), never only a binary;
+- the build recipe, so anyone can rebuild it and compare the hash with the published binary;
+- what it is for: program (exe name, version, sha256), DLL, symptom, WineHQ bug number;
+- the evidence: digests before and after, the reproducer described in words;
+- license and authorship, including whether it is AI-assisted (`ai_assisted = true`): some
+  maintainers ask for that note, for example in Baron-von-Riedesel/HX#76.
+
+Licensing limits:
+- A changed Wine DLL is LGPL; whoever distributes it must give the source under the LGPL. A
+  closed, paid binary of a changed Wine DLL is not possible. Selling can only be about the work
+  (bounties, early access, support), not about exclusive rights.
+- Own libraries (such as cc580) may have their own license, which the manifest states.
+- The copyright status of LLM-generated code is unclear; the catalog shows the
+  `ai_assisted` flag, and a user or a catalog may refuse such packages.
+
+Hooks to keep in the design now:
+1. **Federated catalogs.** Any person or group can publish a catalog (a git repository with
+   manifests) and dllmgr can add it, with an explicit trust warning. Our servers are not needed;
+   hosting costs fall on whoever publishes.
+2. **Content-addressed artifacts.** A manifest names files by sha256, so any mirror can serve them.
+3. **Reproducible builds.** A package without a recipe that reproduces its binary is not trusted
+   by default; a catalog's CI can rebuild packages itself.
+4. **Publisher identity.** An optional signature field in the manifest (a publisher key), checked
+   when present.
+5. **Reports from users.** An optional "works / does not work" record per program version and
+   Wine version, sent only with the user's consent, aggregated by the catalog.
+6. **Money stays outside dllmgr.** A manifest may carry a `funding` URL (a bounty or donation
+   page on an existing platform). dllmgr only shows the link; it never handles payments.
+7. **Requests.** fix-it-in-wine, when it cannot fix a problem, can draft a request ("this
+   program, this symptom, this digest") for a catalog, posted only with the user's approval —
+   the start point for a bounty.
