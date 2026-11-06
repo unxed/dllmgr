@@ -28,6 +28,20 @@ The patch changes only the public `LVIR_ICON` rectangle in v6 large-icon view
 with a normal image list and no state image list. Painting and hit-testing
 keep their image metrics.
 
+## The fix, in words
+
+In `LISTVIEW_GetItemRect`, case `LVIR_ICON`, comctl32 v6 only: when the view is
+`LV_VIEW_ICON`, the control has a normal image list and no state image list,
+return the rectangle from the item's left edge to `nItemWidth` wide and from
+its top to `iconSize.cy + ICON_TOP_PADDING` high, before the usual offset by
+the item position. All other cases keep the current metrics. Painting and
+hit-testing do not use this path, so only callers of `LVM_GETITEMRECT` see
+the change.
+
+Open question for a Wine report: the Windows measurement covers FastStone's
+owner-drawn cells; plain large-icon controls with default spacing should be
+compared on Windows before this is proposed as general behavior.
+
 ## Validation status
 
 Same runner, 192 DPI, FastStone 8.5 x86, Wine 11.0: with the four earlier
