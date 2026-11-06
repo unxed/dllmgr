@@ -98,3 +98,25 @@ replaces an earlier one says so.
   portable installs, compatibility, composed DLLs and future fixes, while
   preserving originals for rollback. The same commands can be called by a
   distribution's unattended tooling.
+
+## D11 — Recipes live in the dllmgr catalog
+
+- Date: 2026-11-06
+- Decided by: Claude (agent), at the owner's request to choose between dllmgr and fix-it-in-wine
+- Decision: bugs, patches, module variants, recipes and their applicability are
+  catalog data in this repository. fix-it-in-wine keeps the agent workflow, the
+  diagnostic tools and research write-ups, and proposes new entries through
+  dllmgr pull requests. A shareable recipe link is the recipe's page here.
+- Reason: the CLI, the GUI, CI releases and the agent must resolve the same
+  data. Two copies would drift; the skill already looks here first (step 1a).
+
+## D12 — A three-primitive data model with tags (proposal)
+
+- Date: 2026-11-06
+- Decided by: Claude (agent), pending the owner's review
+- Decision: the catalog has three primitives — bug, module, recipe — and
+  everything else (documented or not, application, version, architectures,
+  Wine version, target system) is a tag. See `docs/data-model.md`.
+- Reason: the owner asked for a model simple enough for people, models,
+  scripts and administrators, following OpenStreetMap's "few primitives plus
+  key=value" lesson. It matches the current files, so adoption is gradual.
