@@ -144,3 +144,22 @@ replaces an earlier one says so.
 - Reason: the owner set OpenStreetMap's model as the upper bound of
   complexity, not as a template. D13 had six concepts; this keeps its proof
   of correctness (evidence) within three.
+
+## D15 — Per-user installation under ~/.local
+
+- Date: 2026-11-06
+- Decided by: Claude (agent), at the owner's request to choose between ~/opt and ~/.local
+- Decision: `install.sh` puts each commit in `~/.local/lib/dllmgr/<commit>`
+  and links `~/.local/bin/dllmgr` to the current one. Generated one-line
+  commands install the exact commit that produced them.
+- Reason: `~/.local` is the XDG per-user prefix, needs no sudo, and
+  `~/.local/bin` is already on `PATH` in most distributions; `~/opt` is not a
+  convention for per-user software. Commit directories make upgrades atomic
+  and keep older versions for rollback.
+
+## Development note: CI paths and cancellation
+
+`faststone-research` runs on pushes that touch `tests/wine/`, `patches/`,
+`scripts/`, `catalog/`, `dllmgr` or the workflow, and a new push cancels the
+running one for the same branch. While a deep run is in progress, push only
+`docs/` changes, or batch code changes into one push.
