@@ -9,6 +9,9 @@ from pathlib import Path
 import platform
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import catalog_fixes  # noqa: E402
+
 
 def select(catalog, prefix, wine, requested):
     bundle = next(entry for entry in catalog if entry["id"] == "faststone-all")
@@ -66,7 +69,7 @@ def main():
     parser.add_argument("exe", type=Path, nargs="?")
     args = parser.parse_args()
     try:
-        print(select(json.loads(args.catalog.read_text()), args.prefix, args.wine, args.exe))
+        print(select(catalog_fixes.load_index(args.catalog), args.prefix, args.wine, args.exe))
     except (OSError, ValueError) as error:
         parser.exit(2, f"dllmgr: {error}\n")
 

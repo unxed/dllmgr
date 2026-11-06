@@ -80,7 +80,7 @@ releases every two weeks and other targets. What makes that safe:
   cannot lie.
 - **Evidence is append-only.** New runs add rows; old rows stay as history.
   A regression in a new Wine release is a new `fail` row, not an edit.
-- **The format is versioned.** `catalog/index.json` carries a `format` number;
+- **The format is versioned.** `catalog/index.json` is `{"format": 1, "entries": [...]}`;
   a client refuses a newer format instead of guessing. Keys are only added,
   never repurposed.
 - **Exact first, ranges later.** Rows name exact Wine tags today. When the same

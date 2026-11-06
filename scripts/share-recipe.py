@@ -6,6 +6,10 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import catalog_fixes  # noqa: E402
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -72,7 +76,7 @@ def main():
     if not RECIPE_ID.fullmatch(args.recipe):
         parser.error("expected a lowercase application or bundle ID")
     try:
-        index = json.loads((ROOT / "catalog" / "index.json").read_text())
+        index = catalog_fixes.load_index(ROOT / "catalog" / "index.json")
         app, path = find_recipe(index, args.recipe)
         command = None if args.url else install_command(source_revision(ROOT), app)
     except (KeyError, OSError, ValueError) as error:

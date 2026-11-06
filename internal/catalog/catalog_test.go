@@ -220,8 +220,11 @@ func TestIndexOrderAndContent(t *testing.T) {
 	if !strings.Contains(text, `"path": "fixes/winehq-9.md"`) || !strings.Contains(text, `"path": "variants/comctl32-wine-11.0.md"`) {
 		t.Fatalf("index lacks the paths:\n%s", text)
 	}
-	if !strings.HasSuffix(text, "]\n") {
+	if !strings.HasSuffix(text, "}\n") {
 		t.Fatalf("index must end with a newline")
+	}
+	if !strings.HasPrefix(text, "{\n  \"format\": 1,\n  \"entries\": [") {
+		t.Fatalf("index must start with its format number:\n%s", text)
 	}
 	// The same entries in another order give the same bytes.
 	rev := []Entry{entries[2], entries[1], entries[0]}

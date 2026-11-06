@@ -80,9 +80,14 @@ func LoadDir(dir string) ([]Entry, error) {
 	return entries, nil
 }
 
-// BuildIndex returns the content of catalog/index.json: a JSON array of the
-// entries sorted by id, two-space indented, ending with a newline. The same
-// entries always give the same bytes.
+// IndexFormat is the version of catalog/index.json. A client must refuse a
+// newer format. Adding a field keeps the number; changing the meaning of an
+// existing field or the layout raises it.
+const IndexFormat = 1
+
+// BuildIndex returns the content of catalog/index.json: {"format": N,
+// "entries": [...]} with the entries sorted by id, two-space indented, ending
+// with a newline. The same entries always give the same bytes.
 func BuildIndex(entries []Entry) ([]byte, error) {
 	sorted := make([]Entry, len(entries))
 	copy(sorted, entries)
@@ -91,7 +96,11 @@ func BuildIndex(entries []Entry) ([]byte, error) {
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", "  ")
-	if err := enc.Encode(sorted); err != nil {
+	doc := struct {
+		Format  int     `json:"format"`
+		Entries []Entry `json:"entries"`
+	}{IndexFormat, sorted}
+	if err := enc.Encode(doc); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil

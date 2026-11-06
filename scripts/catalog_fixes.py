@@ -13,10 +13,19 @@ from pathlib import Path
 import sys
 
 INDEX = Path(__file__).resolve().parent.parent / "catalog" / "index.json"
+FORMAT = 1
+
+
+def load_index(path=INDEX):
+    """Entries of catalog/index.json; refuses a format this copy cannot read."""
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(data, dict) or data.get("format") != FORMAT:
+        raise ValueError(f"{path}: unsupported catalog format; update dllmgr")
+    return data["entries"]
 
 
 def resolve(requested, index=None):
-    index = index if index is not None else json.loads(INDEX.read_text(encoding="utf-8"))
+    index = index if index is not None else load_index()
     for entry in index:
         if entry["kind"] == "fix" and entry["id"] == requested:
             return [requested]
@@ -27,7 +36,7 @@ def resolve(requested, index=None):
 
 def release(requested, wine, index=None):
     """The prebuilt-module release of the bundle profile for a Wine tag."""
-    index = index if index is not None else json.loads(INDEX.read_text(encoding="utf-8"))
+    index = index if index is not None else load_index()
     for entry in index:
         if entry["kind"] == "bundle" and requested in (entry["id"], entry.get("application")):
             for profile in entry.get("profiles", []):
@@ -38,7 +47,7 @@ def release(requested, wine, index=None):
 
 def known(index=None):
     """Every ID accepted by resolve() for installable application bundles."""
-    index = index if index is not None else json.loads(INDEX.read_text(encoding="utf-8"))
+    index = index if index is not None else load_index()
     ids = set()
     for entry in index:
         if entry["kind"] == "bundle" and entry.get("application"):

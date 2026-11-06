@@ -4,7 +4,8 @@ The catalog is a set of Markdown files in this directory. One file is one
 entry. The YAML frontmatter at the top of the file is read by the client; the
 prose below it is for people and is rendered by GitHub. There is no backend and
 no account: entries arrive through pull requests to this repository, and CI
-compiles the frontmatter into `index.json`, the file the client downloads.
+compiles the frontmatter into `index.json`, the file the client downloads:
+`{"format": 1, "entries": [...]}`. A client refuses a format it does not know.
 The same model is used by the f4 PlugRing catalog.
 
 The catalog carries source, not binaries. A fix is a patch with its sha256 and
