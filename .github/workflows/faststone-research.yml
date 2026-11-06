@@ -44,7 +44,7 @@ jobs:
       - shell: bash
         run: |
           ./controls.exe --check-label --check-wheel --check-position | tee windows-v5.txt
-          ./controls6.exe --check-label --check-wheel --check-position | tee windows-v6.txt
+          ./controls6.exe --check-label --check-wheel --check-position --check-icon-cell | tee windows-v6.txt
           ./pencil.exe --check | tee windows-pencil.txt
           ./font-probe.exe | tee windows-fonts.txt
       - uses: actions/upload-artifact@v4

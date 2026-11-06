@@ -52,7 +52,8 @@ wineboot -u
 timeout 30s wineserver -w || stop_server
 for exe in controls.exe controls6.exe; do
     set +e
-    wine "$exe" --check-label --check-wheel --check-position > "results/before-$exe.txt"
+    extra=; [ "$exe" != controls6.exe ] || extra=--check-icon-cell
+    wine "$exe" --check-label --check-wheel --check-position $extra > "results/before-$exe.txt"
     rc=$?
     set -e
     [ "$rc" = 1 ] || { echo "expected known unfixed failures, got $rc"; cat "results/before-$exe.txt"; exit 1; }
@@ -108,7 +109,9 @@ for selection in $bundle_fixes faststone; do
     sha256sum "$original" "out/$selection/comctl32-$tag-x86_64.dll"
     check_controls controls.exe v5 $checks
     case $selection in
-        winehq-59251|faststone) check_controls controls6.exe v6 $checks --check-icon-wheel-speed ;;
+        winehq-59251) check_controls controls6.exe v6 $checks --check-icon-wheel-speed ;;
+        dllmgr-14) check_controls controls6.exe v6 $checks --check-icon-cell ;;
+        faststone) check_controls controls6.exe v6 $checks --check-icon-wheel-speed --check-icon-cell ;;
         *) check_controls controls6.exe v6 $checks ;;
     esac
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls.exe --name comctl32

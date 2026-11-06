@@ -8,7 +8,7 @@
 
 static HWND parent;
 static HIMAGELIST images;
-static int check_label, check_wheel, check_icon_wheel_speed, check_position, failures;
+static int check_label, check_wheel, check_icon_wheel_speed, check_icon_cell, check_position, failures;
 
 static HWND listview(DWORD style, int width, int height, const char *text, int count)
 {
@@ -65,6 +65,16 @@ static void label_probe(const char *text)
     ReleaseDC(lv, dc);
     printf("label selected text='%s': painted pixels=%d\n", text, painted);
     if (check_label && !*text && (label.right <= label.left || painted)) failures++;
+    if (check_icon_cell)
+    {
+        /* Native v6 reports the whole cell, not the centered image (dllmgr-14). */
+        int cell = LOWORD(SendMessageA(lv, LVM_GETITEMSPACING, FALSE, 0));
+        if (icon.top != 0 || icon.left > 2 || icon.right - icon.left < cell - 4)
+        {
+            printf("icon text='%s': not the cell, expected width about %d\n", text, cell);
+            failures++;
+        }
+    }
     DestroyWindow(lv);
 }
 
@@ -125,6 +135,7 @@ int main(int argc, char **argv)
         if (!strcmp(argv[i], "--check-wheel")) check_wheel = 1;
         if (!strcmp(argv[i], "--check-icon-wheel-speed")) check_icon_wheel_speed = 1;
         if (!strcmp(argv[i], "--check-position")) check_position = 1;
+        if (!strcmp(argv[i], "--check-icon-cell")) check_icon_cell = 1;
     }
     if (check_icon_wheel_speed)
     {
