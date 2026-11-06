@@ -9,7 +9,7 @@ wine: [wine-9.0, wine-11.0]
 patch: https://raw.githubusercontent.com/unxed/fix-it-in-wine/main/showcases/59609/fix.patch
 patch_sha256: 4c4e4672a06370e612f9305be7cab7a59c8dd7d8638297b1029831a4d0218295
 recipe: "fix-it-in-wine: tools/build_one_dll.sh <tag> comctl32 [comctl32_v6]"
-binaries: https://github.com/unxed/fix-it-in-wine/releases/tag/fix-59609
+binaries: https://github.com/unxed/dllmgr/releases/tag/winehq-59609
 evidence: https://github.com/unxed/fix-it-in-wine/actions/workflows/showcase-59609.yml
 license: LGPL-2.1-or-later
 authors: [T_Im]
@@ -45,11 +45,12 @@ controls 6, so both are listed in `dlls`.
 
 ## How to apply
 
-With the fix-it-in-wine skill: `showcases/59609/apply.sh` in
-https://github.com/unxed/fix-it-in-wine. It finds `FSViewer.exe` in the prefix,
-chooses `comctl32` or `comctl32_v6` from the program's manifest, takes the
-module built for the exact `wine --version` (or builds it), and enables it for
-`FSViewer.exe` only. `apply.sh --undo` removes the rule.
+One step, for FastStone only: `scripts/apply-winehq-59609.sh` in this repository. It finds
+`FSViewer.exe` in `WINEPREFIX`, picks comctl32 v5 or v6 (on Wine 11 the v6 module is
+`comctl32_v6`, read from the export name of the file it replaces), downloads the DLL for the
+exact `wine --version` from the [release](https://github.com/unxed/dllmgr/releases/tag/winehq-59609)
+(checked against SHA256SUMS), and enables it for `FSViewer.exe` only. `--undo` removes the rule.
+The release is built by `.github/workflows/release-winehq-59609.yml`.
 
 To build the module yourself, apply the patch to the Wine source of your
 release and run `tools/build_one_dll.sh <tag> comctl32 [comctl32_v6]` from
