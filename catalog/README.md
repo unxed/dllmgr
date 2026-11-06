@@ -65,6 +65,27 @@ A source patch for one bug.
 | `ai_assisted` | no | `true` if an AI agent wrote the change |
 | `funding` | no | URL of a bounty or donation page; dllmgr only shows it |
 
+## The description in words
+
+The prose of a fix file is a product, not a comment. It is the part a Wine
+developer, another agent or a ReactOS porter can use without the patch (D16,
+D17). Write it under three headings, in this order:
+
+- `## Behavior`: what the program shows, and what Windows does, as measured by
+  a test program (name the check from `results`). Black-box facts only.
+- `## Change`: what to change in Wine's behavior, in words: the module, the
+  function or message, the rule, and the edge cases that must not change.
+  Do not retell the patch line by line.
+- `## Checks`: how the change was tested and with what result. Point to the
+  `results` rows; add the visual check in the real application when there is
+  one.
+
+A description is complete when someone given only the description and the
+Wine source tree, not the patch, can write a change that passes the same
+check. fix-it-in-wine runs this as its report self-check. The same three
+sections form the core of a WineHQ Bugzilla report. Other prose (how to apply,
+history) may follow under other headings. Scripts never read the prose.
+
 ## Kind `variant`
 
 A whole module, not tied to one bug: the module of another Wine release, or a

@@ -175,6 +175,21 @@ replaces an earlier one says so.
   these sources as unsafe. The catalog must stay usable as a source of
   descriptions for Wine developers. See the notes in `docs/vision.md`.
 
+## D17 — The description in words is part of every fix (proposal)
+
+- Date: 2026-11-06
+- Decided by: Claude (agent), pending the owner's review
+- Decision: the prose of a fix file has three headings, `Behavior`,
+  `Change` and `Checks`. Together they let someone implement the fix
+  without the patch. They are also the core of the WineHQ Bugzilla report,
+  so one text serves both. It is a convention inside the existing fix file,
+  not a new file or key. Later `dllmgr-catalog check` may require the three
+  headings for fixes that have `results`; not now, because existing entries
+  use other headings and are being edited on the FastStone branch.
+- Reason: the vision (`docs/vision.md`) makes the description, not the code,
+  what we give to Wine and to other targets. A separate description file
+  would duplicate the fix and drift from it.
+
 ## Development note: CI paths and cancellation
 
 `faststone-research` runs on pushes that touch `tests/wine/`, `patches/`,
