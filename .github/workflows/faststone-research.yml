@@ -3,6 +3,11 @@ on:
   push:
     branches: ['fix/faststone-suite']
   workflow_dispatch:
+    inputs:
+      deep:
+        description: Build all candidate modules and check apply/undo
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -76,6 +81,7 @@ jobs:
           name: faststone75
           path: snapshots/
   patched:
+    if: github.event_name == 'workflow_dispatch' && inputs.deep
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 25

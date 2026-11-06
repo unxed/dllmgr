@@ -42,12 +42,14 @@ static HWND listview(DWORD style, int width, int height, const char *text, int c
 static void label_probe(const char *text)
 {
     HWND lv = listview(LVS_ICON | LVS_AUTOARRANGE, 400, 300, text, 1);
-    RECT label = {LVIR_LABEL}, selection = {LVIR_SELECTBOUNDS};
+    RECT label = {LVIR_LABEL}, selection = {LVIR_SELECTBOUNDS}, icon = {LVIR_ICON};
     LVITEMA item = {0};
     HDC dc;
     int x, y, painted = 0;
     SendMessageA(lv, LVM_GETITEMRECT, 0, (LPARAM)&label);
     SendMessageA(lv, LVM_GETITEMRECT, 0, (LPARAM)&selection);
+    SendMessageA(lv, LVM_GETITEMRECT, 0, (LPARAM)&icon);
+    printf("icon text='%s': rect=(%ld,%ld,%ld,%ld)\n",text,icon.left,icon.top,icon.right,icon.bottom);
     printf("label text='%s': rect=(%ld,%ld,%ld,%ld) selection=(%ld,%ld,%ld,%ld)\n",
            text, label.left, label.top, label.right, label.bottom,
            selection.left, selection.top, selection.right, selection.bottom);
