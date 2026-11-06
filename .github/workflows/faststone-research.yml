@@ -2,6 +2,7 @@ name: faststone-research
 on:
   push:
     branches: ['fix/faststone-suite']
+    paths: ['tests/wine/**', 'patches/*.patch', '.github/workflows/faststone-research.yml']
   workflow_dispatch:
     inputs:
       deep:
@@ -145,7 +146,10 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq --install-recommends winehq-stable xvfb git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
       - name: Check separate patches, composition and rollback
-        run: xvfb-run -a bash tests/wine/check-fixes.sh
+        run: |
+          git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
+          git -C fiw apply ../contrib/fix-it-in-wine-learning.patch
+          xvfb-run -a python3 fiw/tools/record_attempt.py --root "$RUNNER_TEMP/attempts" --case faststone-suite --stage native-check --hypothesis 'composed modules preserve Windows behavior' --expected 'all enabled checks pass and undo restores bytes' --timeout 1200 -- bash tests/wine/check-fixes.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -153,3 +157,4 @@ jobs:
           path: |
             out/
             results/
+            ${{ runner.temp }}/attempts/

@@ -11,7 +11,7 @@ wine --version
 wineserver --version
 wineboot -u
 # Initialization can outlive wineboot.exe; settle it before replacing modules.
-wineserver -w
+timeout 30s wineserver -w || { wineserver -k; wineserver -w; }
 for exe in controls.exe controls6.exe; do
     set +e
     wine "$exe" --check-label --check-wheel --check-position > "results/before-$exe.txt"
