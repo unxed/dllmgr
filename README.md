@@ -36,6 +36,8 @@ Working name: `dllmgr`. The owner picks the final name.
 
 Existing:
 
+- `docs/vision.md`: why this exists and where it goes (the owner's text, with
+  editorial notes and a plan table).
 - `docs/concept.md`: the concept (targets, model, checks, catalog, CLI, GUI,
   patches, diagnostics, iterations).
 - `docs/decisions.md`: the log of decisions (who, when, why).

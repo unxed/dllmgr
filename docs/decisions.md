@@ -157,6 +157,24 @@ replaces an earlier one says so.
   convention for per-user software. Commit directories make upgrades atomic
   and keep older versions for rollback.
 
+## D16 — Clean-room rules for everything sent to Wine
+
+- Date: 2026-11-06
+- Decided by: owner (the vision in `docs/vision.md`), wording by Claude (agent); pending the owner's review
+- Decision: code written with AI help (patches, reproducers, tests) stays in
+  this catalog and on users' machines. It is never offered to Wine as code:
+  not as a merge request and not as a Bugzilla attachment. Wine gets text:
+  the observed behavior, the change described in words, and how it was
+  checked, labeled as AI-assisted. Windows behavior is learned only as a
+  black box (test programs run on Windows, Microsoft documentation). No
+  disassembly, no debug symbols, no `+relay` of native Microsoft components,
+  no Microsoft or ReactOS source. Work for ReactOS-based targets (issue 13)
+  flows one way: a Wine patch may be ported to ReactOS; ReactOS code is never
+  read in a session that writes text for Wine.
+- Reason: Wine's Clean Room Guidelines forbid LLM-generated code and list
+  these sources as unsafe. The catalog must stay usable as a source of
+  descriptions for Wine developers. See the notes in `docs/vision.md`.
+
 ## Development note: CI paths and cancellation
 
 `faststone-research` runs on pushes that touch `tests/wine/`, `patches/`,
