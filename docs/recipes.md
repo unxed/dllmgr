@@ -23,6 +23,24 @@ sudo and works with an existing dllmgr installation created by this installer.
 You can call `"$HOME/.local/bin/dllmgr"` directly when `~/.local/bin` is outside
 your `PATH`.
 
+## Fix the programs in a prefix
+
+```sh
+dllmgr fix
+```
+
+Without an application name, `dllmgr fix` looks through the prefix's
+`drive_c` for programs that have a recipe. It hashes each copy and compares
+it, the Wine release and the architectures with the recipe's verified rows.
+It never starts the programs. For each recipe that matches, it asks before
+applying it. When nothing matches, it says which key differs, for example
+the Wine release.
+
+- `--dry-run` only prints what was found.
+- `--yes` applies without asking, for scripts.
+- `--exe PATH` also checks a portable copy. When `WINEPREFIX` is unset and the
+  path is inside a prefix's `drive_c`, that prefix is used.
+
 ## Generate a link and an install command
 
 ```sh

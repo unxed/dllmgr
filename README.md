@@ -67,8 +67,9 @@ Planned:
 
 ## Status
 
-The preview implements `dllmgr fix faststone`, `dllmgr uninstall faststone`
-and `dllmgr share faststone`. See the [FastStone recipe](catalog/bundles/faststone-all.md)
+The preview implements `dllmgr fix` (find the programs with recipes in a
+prefix and apply them after a yes), `dllmgr fix faststone`,
+`dllmgr uninstall faststone` and `dllmgr share faststone`. See the [FastStone recipe](catalog/bundles/faststone-all.md)
 for the supported configuration and measured results. The planned `fix world`,
 subscriptions, unattended updates and GUI are described in the
 [CLI and GUI design](docs/concept.md#10-cli).

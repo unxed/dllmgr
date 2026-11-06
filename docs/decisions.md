@@ -190,6 +190,20 @@ replaces an earlier one says so.
   what we give to Wine and to other targets. A separate description file
   would duplicate the fix and drift from it.
 
+## D18 — `dllmgr fix` without a name finds what to fix
+
+- Date: 2026-11-06
+- Decided by: Claude (agent), following D10 and the owner's request for one-click use
+- Decision: `dllmgr fix` with no application scans the prefix's `drive_c`
+  for the programs of installable recipes, matches each copy by
+  `exe_sha256`, Wine release and architectures against the recipe rows, and
+  asks before applying each match. `--dry-run` only reports, `--yes` skips
+  the question. It is the first step of `fix world` (concept §10): it reads
+  only the catalog, never starts a program, and names the key that differs
+  when nothing matches.
+- Reason: the user should not need to know a recipe's name. Matching uses
+  the same rows as the per-application command, so it adds no new trust rule.
+
 ## D19 — Vendor kits: recipes shipped by software vendors (proposal)
 
 - Date: 2026-11-06
