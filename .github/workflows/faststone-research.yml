@@ -53,3 +53,23 @@ jobs:
         with:
           name: wine-baseline
           path: wine-*.txt
+  faststone75:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Wine 11.0 and desktop test tools
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo mkdir -pm755 /etc/apt/keyrings
+          sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq-archive.key
+          sudo curl -fsSL https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources -o /etc/apt/sources.list.d/winehq-noble.sources
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --install-recommends winehq-stable xvfb xdotool scrot x11-utils openbox
+      - name: Capture the affected FastStone 7.5 controls
+        run: xvfb-run -a -s '-screen 0 1920x1080x24' bash -c 'openbox >/dev/null 2>&1 & bash tests/wine/faststone-app.sh'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: faststone75
+          path: snapshots/
