@@ -145,3 +145,13 @@ loads of both DLLs. Wine reported the logical `system32` path for GDI+, which
 the initial check rejected despite the successful load. Both files were
 restored byte for byte on undo. This run exercised opening Draw Board; the
 GDI+ pencil-color test remains a separate probe.
+
+For the remaining overflow, Windows v6 reports an icon rectangle spanning the
+cell width in the FastStone probe. Wine reports only the centered image width
+(240 pixels inside a 276-pixel cell at 192 DPI). To test whether FastStone uses
+this API rectangle for its owner-drawn tiles, dispatch the workflow with both
+`deep=true` and `icon_cell_experiment=true`. It adds a third capture with a v6
+build that changes the public `LVIR_ICON` rectangle for ordinary large icons,
+while preserving internal paint and hit-test metrics. Compare `patched` and
+`icon-cell` in the same artifact. This experiment does not change the shipped
+bundle or claim Windows parity outside the observed case.

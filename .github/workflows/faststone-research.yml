@@ -9,6 +9,10 @@ on:
         description: Build fixes, check rollback, and compare FastStone with and without patches
         type: boolean
         default: false
+      icon_cell_experiment:
+        description: Also compare an experimental comctl32 v6 icon rectangle (requires deep)
+        type: boolean
+        default: false
 concurrency:
   group: faststone-research-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
@@ -149,6 +153,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq --install-recommends winehq-stable xvfb openbox git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
       - name: Check separate patches, composition and rollback
+        env:
+          FS85_ICON_CELL_EXPERIMENT: ${{ inputs.icon_cell_experiment }}
         run: |
           git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
           git -C fiw apply ../contrib/fix-it-in-wine-learning.patch
@@ -156,12 +162,18 @@ jobs:
       - name: Compare the FastStone 8.5 x86 browser at 192 DPI
         env:
           TEST_DPI: 192
+          FS85_ICON_CELL_EXPERIMENT: ${{ inputs.icon_cell_experiment }}
         run: |
           captures="$RUNNER_TEMP/fs85-compare"
-          mkdir -p "$captures/baseline" "$captures/patched"
-          for variant in baseline patched; do
+          variants=(baseline patched)
+          if [ "$FS85_ICON_CELL_EXPERIMENT" = true ]; then variants+=(icon-cell); fi
+          for variant in "${variants[@]}"; do
+            mkdir -p "$captures/$variant"
             args=()
-            if [ "$variant" = patched ]; then args+=("$GITHUB_WORKSPACE/out/faststone"); fi
+            case "$variant" in
+              patched) args+=("$GITHUB_WORKSPACE/out/faststone") ;;
+              icon-cell) args+=("$GITHUB_WORKSPACE/out/faststone-icon-cell") ;;
+            esac
             (cd "$captures/$variant" && xvfb-run -a -s '-screen 0 3072x1728x24' bash -c \
               'openbox >/dev/null 2>&1 & exec bash "$GITHUB_WORKSPACE/tests/wine/faststone85.sh" "$@"' _ "${args[@]}")
           done

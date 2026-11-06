@@ -35,6 +35,18 @@ check_controls() {
     return "$rc"
 }
 
+build_modules() {
+    local dest=$1 dll mod arch
+    shift
+    bash fiw/tools/build_one_dll.sh "$tag" "$@" > built.txt
+    mkdir -p "$dest"
+    while read -r dll; do
+        mod=$(basename "$(dirname "$(dirname "$dll")")")
+        arch=$(basename "$(dirname "$dll")"); arch=${arch%-windows}
+        python3 fiw/tools/pe_unmark.py "$dll" "$dest/$mod-$tag-$arch.dll"
+    done < built.txt
+}
+
 wineboot -u
 # Initialization can outlive wineboot.exe; settle it before replacing modules.
 timeout 30s wineserver -w || stop_server
@@ -55,13 +67,7 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
         faststone) modules='comctl32 comctl32_v6 gdiplus' ;;
         *) modules='comctl32 comctl32_v6' ;;
     esac
-    bash fiw/tools/build_one_dll.sh "$tag" $modules > built.txt
-    mkdir -p "out/$selection"
-    while read -r dll; do
-        mod=$(basename "$(dirname "$(dirname "$dll")")")
-        arch=$(basename "$(dirname "$dll")"); arch=${arch%-windows}
-        python3 fiw/tools/pe_unmark.py "$dll" "out/$selection/$mod-$tag-$arch.dll"
-    done < built.txt
+    build_modules "out/$selection" $modules
     case $selection in
         winehq-48872) checks='--check-label' ;;
         winehq-59251) checks='--check-wheel' ;;
@@ -110,3 +116,14 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
     for fix in $fixes; do cp "patches/$fix.patch" "out/$selection/"; done
     (cd "out/$selection" && sha256sum *.dll > SHA256SUMS)
 done
+
+if [ "${FS85_ICON_CELL_EXPERIMENT:-false}" = true ]; then
+    # The source tree still has the four patches from the last selection.
+    experiment="$GITHUB_WORKSPACE/tests/wine/faststone-icon-cell-experiment.patch"
+    git -C "$src" apply "$experiment"
+    cp -a out/faststone out/faststone-icon-cell
+    build_modules out/faststone-icon-cell comctl32_v6
+    cp "$experiment" out/faststone-icon-cell/
+    printf 'Experimental addition: %s\n' "$(basename "$experiment")" >> out/faststone-icon-cell/SOURCE.txt
+    (cd out/faststone-icon-cell && sha256sum *.dll > SHA256SUMS)
+fi
