@@ -32,6 +32,16 @@
           "with": "pass",
           "windows": "pass",
           "run": "https://github.com/unxed/dllmgr/actions/runs/42256224744"
+        },
+        {
+          "check": "owner's desktop: thumbnails and folder previews inside their tiles",
+          "wine": "wine-11.0",
+          "host_arch": "x86_64",
+          "prefix_arch": "win64",
+          "dpi": 192,
+          "without": "fail",
+          "with": "pass",
+          "run": "https://github.com/unxed/dllmgr/issues/8#issuecomment-6693158826"
         }
       ],
       "ai_assisted": true,
@@ -170,6 +180,16 @@
           "with": "pass",
           "windows": "pass",
           "run": "https://github.com/unxed/dllmgr/actions/runs/42263591184"
+        },
+        {
+          "check": "owner's desktop: fullscreen strip scrolls with the wheel",
+          "wine": "wine-11.0",
+          "host_arch": "x86_64",
+          "prefix_arch": "win64",
+          "dpi": 192,
+          "without": "fail",
+          "with": "pass",
+          "run": "https://github.com/unxed/dllmgr/issues/8#issuecomment-6693158826"
         }
       ],
       "ai_assisted": true,

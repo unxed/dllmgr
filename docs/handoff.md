@@ -16,8 +16,10 @@ Start by checking that nothing broke:
    run was cancelled by a later push). Read `pencil_stroke_color` from
    `faststone85-192-comparison/patched/snapshots85/draw/observations.txt`;
    expected `ff0000`. Then on the owner's machine.
-4. Install faststone-v2 on the owner's machine and run the acceptance in
-   "LOCAL work" below.
+4. Owner's acceptance so far (https://github.com/unxed/dllmgr/issues/8#issuecomment-6693158826):
+   tiles fit (dllmgr-14) and the fullscreen strip scrolls (59251) on the
+   owner's desktop. Still to check there: names, pencil colour, wheel speed
+   in the browser grid.
 
 Date: 2026-11-06. Written for the agent that continues on the owner's own
 computer. The cloud session had GitHub Actions (Windows runner, headless Wine
@@ -56,9 +58,11 @@ browser). Not a Wine bug so far.
 
 - Fonts: `FontSmoothing` = 2, `FontSmoothingType` = 1 (standard, not
   ClearType), and the host's `fc-match Tahoma` returns **Noto Sans**. CI used
-  winehq-stable, which ships Wine's own `tahoma.ttf`. Leading hypothesis:
-  the owner's Wine build lacks Wine's Tahoma and falls back to Noto Sans with
-  other metrics. Check first: `wine --version` and
+  winehq-stable, which ships Wine's own `tahoma.ttf`. Ruled out later: the owner's Wine is winehq-stable with
+  `/opt/wine-stable/share/wine/fonts/tahoma.ttf`, the same as CI. Remaining
+  differences to test: `FontSmoothingType` 1 (grayscale) versus the CI
+  prefix's value, and hinting. A cropped screenshot of the poor text is the
+  next input. Check first: `wine --version` and
   `find / -iname 'tahoma*.ttf'`, then run `tests/wine/font-probe.c` in the
   owner's prefix to see the face Wine actually selects.
 - Fullscreen strip on the real desktop: it appears at the edge and stays
