@@ -40,6 +40,33 @@ FastStone defects. Bugzilla status alone does not establish reproducibility.
 - Never install an unproven fix or replace a core/Unix-backed Wine DLL through
   the native-DLL installer. Keep unsupported mechanisms explicit.
 
+## Additional user-critical symptoms
+
+Reported on 2026-11-06, FastStone Image Viewer **8.5**, Wine **11.0**, i386
+program in a win64 prefix. The current prefix reports **192 DPI**. Keep these
+reports separate from the older FastStone 5.6/7.5 test cases. They have no
+assigned Wine bug number yet. Use synthetic images for public evidence.
+
+| Local ID | Symptom | Evidence needed / acceptance |
+| --- | --- | --- |
+| FS-geometry | File thumbnails and folder preview images extend outside their tiles; the format label at the bottom right also overflows. | Compare item, icon, label and select rectangles at 96/144/192 DPI and several thumbnail sizes. Include both folder and file tiles, portrait/landscape images and format text. Images and format labels must fit their assigned regions. Inspect MR 10017 as a hypothesis, not an accepted fix. |
+| FS-names | File and folder names under tiles are absent. | Check the application's display settings and compare with Windows. Names are normally displayed; missing names are not an expected consequence of HiDPI. Cross-check 48872 and include an actual 8.5 application test, not just a 5.6 result. |
+| FS-path | The folder-path field above the thumbnails showed transient drawing artifacts; reproduction is not known. | Keep this as intermittent, unresolved. Capture the screen immediately with a timestamp and note scrolling, resizing, DPI changes, folder changes and occlusion before it happened. Compare repaint/resize and invalidate behavior with generated folder names; absence in one run is not a fix. |
+| FS-fonts | The fullscreen left panel's “Rotation, sizes, text” heading and some other interface text render poorly. | Collect the actual fonts selected by Wine, font smoothing, logical/physical DPI and the affected controls. Compare Cyrillic and Latin text at the same DPI on Windows. Fontconfig's fallback result alone does not prove which font Wine used. |
+| FS-wheel-speed | Mouse-wheel scrolling is unacceptably slow. | Measure pixels and items per detent plus elapsed time with identical images and window size at 96/144/192 DPI. Separate the main thumbnail grid from the horizontal fullscreen strip. Compare configured wheel lines and fractional wheel events. HiDPI is a hypothesis, not an established cause. |
+| FS-draw-start | Opening Draw Board is slow. | Measure keypress-to-interactive-window time, first and subsequent opens, with tracing disabled. Then collect bounded font/GDI+/module traces to locate the delay; compare 7.5 and 8.5. |
+| FS-start | FastStone startup should be faster. | Measure process start to usable viewer/browser separately, cold and warm, with the same local synthetic image/folder. Separate Wine prefix initialization, font discovery, codecs, directory scanning and thumbnail database costs. Preserve correctness and user settings. |
+
+For FS-path, a short capture recipe is to run the app under the existing
+`wineprobe.py` load preset with a bounded timeout, keep the log local, and take
+a screenshot as soon as the artifact appears. Record the event timestamp and
+the immediately preceding actions next to that log. Enable narrower control
+or font tracing only for a follow-up attempt; heavy tracing distorts timing.
+
+Use the proposed skill recorder from `contrib/fix-it-in-wine-learning.patch`
+for experimental commands. Retain failed hypotheses and exact recovery details,
+including test-harness failures, rather than only the successful final run.
+
 ## Next: Far Manager
 
 After FastStone, perform the same audit and per-bug reproducer work for

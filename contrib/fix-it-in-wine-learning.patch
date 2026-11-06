@@ -1,0 +1,238 @@
+diff --git a/SKILL.md b/SKILL.md
+index 3fa374a..6523307 100644
+--- a/SKILL.md
++++ b/SKILL.md
+@@ -232,6 +232,19 @@ Tell the user:
+ 
+ ## Self-improvement
+ 
++Collect evidence during the work, especially failed attempts. Read
++[`references/learning-records.md`](references/learning-records.md) before the
++first experimental run. Use `tools/record_attempt.py` for commands whose
++failure, timing or raw output matters. Keep the hypothesis, exact command,
++environment, expected and actual result, error details, recovery and next
++decision together. An expected baseline failure is evidence, not a successful
++fix; a green pipeline is insufficient if the program never ran.
++
++At the end, turn supported lessons into a small proposed skill/tool change
++with a regression check. Record unresolved attempts too, so the next run does
++not repeat them without a reason. Keep raw records private; publish only
++reviewed, sanitized evidence under the user's existing authorization.
++
+ When your experience shows how to make this skill better, open a pull request to https://github.com/unxed/fix-it-in-wine right away. Cases:
+ 
+ - a step had to be invented;
+diff --git a/references/learning-records.md b/references/learning-records.md
+new file mode 100644
+index 0000000..1890487
+--- /dev/null
++++ b/references/learning-records.md
+@@ -0,0 +1,80 @@
++# Evidence for improving the skill
++
++Use a local case directory for each investigation. A useful record lets the
++next agent understand why an attempt failed without replaying the entire chat.
++
++## Capture an attempt
++
++```sh
++python3 tools/record_attempt.py --case CASE-ID --stage build \
++  --hypothesis 'The candidate module is the cause' \
++  --expected 'The module builds from the pinned source' \
++  --context-file case-context.json --timeout 600 -- COMMAND ARGUMENTS
++```
++
++The tool stores raw stdout/stderr, exit status, elapsed time, the command and
++selected locale variables. Non-UTF-8 output is retained byte for byte. Use
++`--expected-exit 1` for a reproducer that is supposed to demonstrate a bug.
++`--root DIRECTORY` selects another private record location; the default is
++`~/.local/share/fix-it-in-wine/cases`. Records are not uploaded automatically.
++
++The context JSON should contain the facts relevant to this attempt:
++
++- application version, executable path and architecture;
++- Wine command/version/tag, prefix architecture and whether it is disposable;
++- active DLLs, hashes, slots, overrides, source commit and patch hashes;
++- locale, DPI, screen dimensions, X11/Wayland and actual selected fonts;
++- baseline timings, cold/warm state and logging preset for performance work;
++- CI run, job and exact tested SHA when the experiment runs remotely.
++
++Do not guess missing values. State that they are unknown and collect only what
++the next decision needs. Keep unrelated environment variables and credentials
++out of the record. Exact arguments and raw output can still contain private
++paths or tokens; the directory is private and is not a publication artifact.
++
++## Record the outcome and recovery
++
++After each meaningful failure, add an observation next to its attempt record:
++
++1. Expected result and what actually happened. Include the exact error,
++   return code or signal; preserve the bytes and encoding for decoding errors.
++2. Which stage failed: download, checksum, source selection, patch application,
++   configure, compile, load, execution, visual behavior, timing or rollback.
++3. What was already changed. Record backup/state integrity, whether the DLL
++   and registry were restored, and the command that recovered the last good
++   state. Do not call an interrupted installation clean without checking.
++4. Evidence supporting or rejecting the hypothesis. Distinguish a product bug
++   from a test harness failure and “not reproduced” from “fixed.”
++5. The next experiment and why it adds information. Retain abandoned attempts
++   with a reason rather than quietly overwriting their evidence.
++
++For intermittent artifacts, record a timestamp, the preceding actions and the
++shortest bounded capture around the event. Preserve a screenshot and relevant
++log excerpt when available. A missing reproduction is not proof that the
++artifact is gone. Performance measurements should also run with verbose tracing
++disabled; a tracing slowdown is not a product benchmark.
++
++## Turn evidence into an improvement
++
++Propose one general correction supported by the failure and explain its
++limits. Add an observable regression check when appropriate. Examples from
++real workflow failures:
++
++- An OEM console message broke UTF-8 decoding after the DLL was replaced:
++  preserve raw bytes, decode with the right page, and query before mutation.
++- A pipeline ended in `tee` after Wine refused a prefix under a directory not
++  owned by the runner: use an owned work directory, `pipefail`, and verify the
++  expected program output/exit code before accepting green CI.
++- Destroying a test list-view also destroyed a shared image list: keep fixture
++  lifetimes explicit so later cases do not measure invalid resources.
++- An application key opened an exit confirmation instead of the desired view:
++  inspect the resulting window/screenshot before continuing the input sequence.
++
++Do not make an example into an unconditional rule for unrelated tasks. A
++proposed change still needs to be tried on the failing case. Follow the user's
++repository workflow: if they requested patches for another repository, deliver
++the patch instead of opening or merging a PR there.
++
++Raw logs, personal photos, full home paths and local account details stay in
++the private case directory. A public proposal uses synthetic fixtures and the
++smallest sanitized evidence that supports the change.
+diff --git a/tests/test_record_attempt.py b/tests/test_record_attempt.py
+new file mode 100644
+index 0000000..dd36a1e
+--- /dev/null
++++ b/tests/test_record_attempt.py
+@@ -0,0 +1,40 @@
++import json
++from pathlib import Path
++import subprocess
++import sys
++import tempfile
++import unittest
++
++TOOL = Path(__file__).resolve().parents[1]/"tools/record_attempt.py"
++
++
++class RecordTest(unittest.TestCase):
++    def run_attempt(self, code, *options):
++        temporary = tempfile.TemporaryDirectory()
++        self.addCleanup(temporary.cleanup)
++        root = Path(temporary.name)
++        result = subprocess.run([sys.executable,str(TOOL),"--root",str(root),"--case","case-1",
++                                 "--stage","reproduce","--hypothesis","test","--expected","test",
++                                 *options,"--",sys.executable,"-c",code],capture_output=True,timeout=10)
++        metadata = next(root.glob("case-1/*/attempt.json"))
++        return result, json.loads(metadata.read_text()), metadata.parent
++
++    def test_non_utf8_failure_is_preserved(self):
++        result, record, directory = self.run_attempt("import os; os.write(2,b'\\xad\\xa5'); raise SystemExit(7)")
++        self.assertEqual(result.returncode,7)
++        self.assertEqual(record["status"],"unexpected_exit")
++        self.assertEqual((directory/"stderr.bin").read_bytes(),b"\xad\xa5")
++        self.assertEqual(directory.stat().st_mode & 0o777,0o700)
++        self.assertEqual((directory/"attempt.json").stat().st_mode & 0o777,0o600)
++
++    def test_expected_baseline_exit_is_not_an_unexpected_failure(self):
++        result, record, _ = self.run_attempt("raise SystemExit(1)","--expected-exit","1")
++        self.assertEqual(result.returncode,1)
++        self.assertEqual(record["status"],"expected_exit")
++
++    def test_timeout_still_records_output_and_duration(self):
++        result, record, directory = self.run_attempt("import os,time; os.write(1,b'started'); time.sleep(30)","--timeout","0.2")
++        self.assertEqual(result.returncode,124)
++        self.assertEqual(record["status"],"timeout")
++        self.assertEqual((directory/"stdout.bin").read_bytes(),b"started")
++        self.assertGreaterEqual(record["elapsed_seconds"],0.2)
+diff --git a/tools/record_attempt.py b/tools/record_attempt.py
+new file mode 100644
+index 0000000..a88e460
+--- /dev/null
++++ b/tools/record_attempt.py
+@@ -0,0 +1,76 @@
++#!/usr/bin/env python3
++"""Run an experiment and retain failure evidence in a private case directory."""
++import argparse
++from datetime import datetime, timezone
++import hashlib
++import json
++import os
++from pathlib import Path
++import re
++import signal
++import subprocess
++import sys
++import time
++
++
++def main(argv=None):
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--case", required=True)
++    parser.add_argument("--stage", required=True)
++    parser.add_argument("--hypothesis", required=True)
++    parser.add_argument("--expected", required=True)
++    parser.add_argument("--expected-exit", type=int, default=0)
++    parser.add_argument("--context-file", type=Path)
++    parser.add_argument("--timeout", type=float)
++    parser.add_argument("--root", type=Path, default=Path.home()/".local/share/fix-it-in-wine/cases")
++    parser.add_argument("command", nargs=argparse.REMAINDER)
++    args = parser.parse_args(argv)
++    command = args.command[1:] if args.command[:1] == ["--"] else args.command
++    if not command or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", args.case):
++        parser.error("a safe case ID and a command after -- are required")
++    context = json.loads(args.context_file.read_text()) if args.context_file else {}
++    started = datetime.now(timezone.utc)
++    directory = args.root/args.case/(started.strftime("%Y%m%dT%H%M%S")+"-%d" % time.time_ns())
++    directory.mkdir(parents=True, mode=0o700)
++    directory.parent.chmod(0o700)
++    record = dict(case=args.case, stage=args.stage, hypothesis=args.hypothesis,
++                  expected=args.expected, expected_exit=args.expected_exit,
++                  command=command, cwd=os.getcwd(), started_at=started.isoformat(),
++                  context=context, locale={k: os.environ.get(k) for k in ("LC_ALL","LC_CTYPE","LANG","LANGUAGE")})
++    begin = time.monotonic()
++    status, rc = "launch_error", 127
++    with open(directory/"stdout.bin", "wb") as out, open(directory/"stderr.bin", "wb") as err:
++        try:
++            process = subprocess.Popen(command, stdout=out, stderr=err, start_new_session=True)
++            try:
++                rc = process.wait(timeout=args.timeout)
++                status = "expected_exit" if rc == args.expected_exit else "unexpected_exit"
++            except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
++                status = "timeout" if isinstance(error, subprocess.TimeoutExpired) else "interrupted"
++                os.killpg(process.pid, signal.SIGTERM)
++                try:
++                    process.wait(timeout=2)
++                except subprocess.TimeoutExpired:
++                    os.killpg(process.pid, signal.SIGKILL)
++                    process.wait()
++                rc = 124 if status == "timeout" else 130
++        except OSError as error:
++            record["error"] = str(error)
++    record.update(status=status, returncode=rc, elapsed_seconds=time.monotonic()-begin,
++                  finished_at=datetime.now(timezone.utc).isoformat())
++    for channel in ("stdout", "stderr"):
++        path = directory/(channel+".bin")
++        path.chmod(0o600)
++        data = path.read_bytes()
++        record[channel] = dict(file=path.name, bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
++        if status != "expected_exit" and data:
++            print(channel+" tail: "+data[-4096:].decode("utf-8", errors="backslashreplace"), file=sys.stderr)
++    metadata = directory/"attempt.json"
++    metadata.write_text(json.dumps(record, ensure_ascii=False, indent=2)+"\n")
++    metadata.chmod(0o600)
++    print("attempt: %s\nstatus: %s, exit: %d, elapsed: %.3fs" % (metadata,status,rc,record["elapsed_seconds"]))
++    return rc if rc >= 0 else 128-rc
++
++
++if __name__ == "__main__":
++    sys.exit(main())
