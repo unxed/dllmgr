@@ -7,8 +7,11 @@ tag=$(wine --version | cut -d' ' -f1)
 src=$FIW_WORK/src/$tag
 mkdir -p results out
 git clone -q --depth 1 --branch "$tag" "$FIW_WINE_GIT" "$src"
+wine --version
+wineserver --version
 wineboot -u
-wineserver -p || true
+# Initialization can outlive wineboot.exe; settle it before replacing modules.
+wineserver -w
 for exe in controls.exe controls6.exe; do
     set +e
     wine "$exe" --check-label --check-wheel --check-position > "results/before-$exe.txt"
@@ -42,6 +45,9 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
     if [[ " $modules " == *" gdiplus "* ]]; then
         cp "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "$RUNNER_TEMP/original-gdiplus.dll"
         python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe pencil.exe --dll "out/$selection/gdiplus-$tag-x86_64.dll" --name gdiplus.dll
+        sha256sum "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "out/$selection/gdiplus-$tag-x86_64.dll" >"results/$selection-immediate-hashes.txt"
+        stat "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" >"results/$selection-stat.txt"
+        cp "$WINEPREFIX/fix-it-in-wine/state.json" "results/$selection-state.json"
         wine reg query 'HKCU\Software\Wine\AppDefaults\pencil.exe\DllOverrides' > "results/$selection-registry.txt"
         sha256sum "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "out/$selection/gdiplus-$tag-x86_64.dll" >"results/$selection-hashes.txt"
         if ! WINEDEBUG=+loaddll,+module wine ./pencil.exe --check >"results/$selection-pencil.txt" 2>"results/$selection-pencil-load.txt"; then
