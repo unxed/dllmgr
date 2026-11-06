@@ -1,7 +1,8 @@
 diff --git a/dlls/comctl32/listview.c b/dlls/comctl32/listview.c
+index f91e63f..5228616 100644
 --- a/dlls/comctl32/listview.c
 +++ b/dlls/comctl32/listview.c
-@@ -10023,6 +10023,54 @@
+@@ -10023,6 +10023,58 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
      switch(infoPtr->uView)
      {
      case LV_VIEW_ICON:
@@ -35,11 +36,15 @@ diff --git a/dlls/comctl32/listview.c b/dlls/comctl32/listview.c
 +            {
 +                SCROLLINFO info = {sizeof(info), SIF_PAGE};
 +                ULONGLONG pixels;
++                int line = (horizontal ? infoPtr->nItemWidth : infoPtr->nItemHeight) / 2;
 +
 +                if (!GetScrollInfo(infoPtr->hwndSelf, horizontal ? SB_HORZ : SB_VERT, &info))
 +                    break;
-+                /* The native large-icon control moves by the configured
-+                 * number of 37-pixel lines per detent, up to one page. */
++                /* Native v6 moves a large-icon view by the configured number
++                 * of lines per detent, up to one page. A line is half the
++                 * item spacing on the scrolled axis: 37 pixels for default
++                 * 32x32 icons, 69/72 for FastStone's 138x144 cells. */
++                if (line > 0) scroll = line;
 +                pixels = min((ULONGLONG)lines * scroll, info.nPage);
 +                scroll = min(pixels * abs(detents), MAXLONG);
 +                if (detents > 0) scroll = -scroll;

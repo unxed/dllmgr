@@ -1,7 +1,7 @@
 name: faststone-research
 on:
   push:
-    branches: ['fix/faststone-suite', 'research/faststone85-wheel-speed']
+    branches: ['fix/faststone-suite', 'fix/faststone-wheel-cell']
     paths: ['tests/wine/**', 'patches/*.patch', '.github/workflows/faststone-research.yml']
   workflow_dispatch:
     inputs:
@@ -50,7 +50,7 @@ jobs:
           name: windows-baseline
           path: windows-*.txt
   windows-app:
-    if: (github.event_name == 'workflow_dispatch' && inputs.deep) || github.ref == 'refs/heads/research/faststone85-wheel-speed'
+    if: (github.event_name == 'workflow_dispatch' && inputs.deep) || github.ref == 'refs/heads/fix/faststone-wheel-cell'
     needs: build
     runs-on: windows-latest
     steps:
@@ -126,7 +126,7 @@ jobs:
           name: faststone85-${{ matrix.dpi }}
           path: snapshots85/
   patched:
-    if: (github.event_name == 'workflow_dispatch' && inputs.deep) || github.ref == 'refs/heads/research/faststone85-wheel-speed'
+    if: (github.event_name == 'workflow_dispatch' && inputs.deep) || github.ref == 'refs/heads/fix/faststone-wheel-cell'
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 25

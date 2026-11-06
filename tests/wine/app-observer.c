@@ -196,7 +196,7 @@ static void reveal_fullscreen_strip(HWND fullscreen, const RECT *bounds)
     Sleep(150);
 }
 
-static void wheel_series(const char *stage, HWND fullscreen, const RECT *bounds)
+static void wheel_series(const char *stage, HWND fullscreen, const RECT *bounds, HANDLE process)
 {
     static const int deltas[]={-WHEEL_DELTA/2,-WHEEL_DELTA/2,-WHEEL_DELTA,-2*WHEEL_DELTA};
     unsigned i;
@@ -213,7 +213,8 @@ static void wheel_series(const char *stage, HWND fullscreen, const RECT *bounds)
         struct wheel_target target=wheel_target_at_cursor();
         DWORD start, moved=0;
         int h_before=0, v_before=0, h_after=0, v_after=0;
-        BOOL h_ok, v_ok, shown;
+        BOOL h_ok, v_ok, shown, item_ok;
+        POINT item_before={0}, item_after={0};
         UINT sent=0;
 
         if (!target.hwnd && fullscreen)
@@ -225,6 +226,8 @@ static void wheel_series(const char *stage, HWND fullscreen, const RECT *bounds)
         }
         h_ok=target.hwnd && scroll_position(target.hwnd,SB_HORZ,&h_before);
         v_ok=target.hwnd && scroll_position(target.hwnd,SB_VERT,&v_before);
+        item_ok=target.hwnd && listview_item0_position(target.hwnd,process,&item_before);
+        item_after=item_before;
         input.type=INPUT_MOUSE;
         input.mi.dwFlags=MOUSEEVENTF_WHEEL;
         input.mi.mouseData=(DWORD)deltas[i];
@@ -237,7 +240,9 @@ static void wheel_series(const char *stage, HWND fullscreen, const RECT *bounds)
             Sleep(10);
             if (h_ok) h_ok=scroll_position(target.hwnd,SB_HORZ,&h_after);
             if (v_ok) v_ok=scroll_position(target.hwnd,SB_VERT,&v_after);
-            if (!moved && ((h_ok && h_after!=h_before) || (v_ok && v_after!=v_before)))
+            if (item_ok) item_ok=listview_item0_position(target.hwnd,process,&item_after);
+            if (!moved && ((h_ok && h_after!=h_before) || (v_ok && v_after!=v_before) ||
+                           (item_ok && (item_after.x!=item_before.x || item_after.y!=item_before.y))))
                 moved=GetTickCount()-start;
         } while (GetTickCount()-start<500);
         shown=target.hwnd && IsWindowVisible(target.hwnd);
@@ -246,6 +251,8 @@ static void wheel_series(const char *stage, HWND fullscreen, const RECT *bounds)
                stage,i+1,deltas[i],sent,target.class_name,shown,GetTickCount()-start);
         if (h_ok) printf(" horizontal=%d->%d",h_before,h_after);
         if (v_ok) printf(" vertical=%d->%d",v_before,v_after);
+        /* Scroll distance as the user sees it: item 0 moves opposite to the view. */
+        if (item_ok) printf(" item0=%ld,%ld->%ld,%ld",item_before.x,item_before.y,item_after.x,item_after.y);
         if (moved) printf(" first_scroll_change_ms=%lu",moved);
         putchar('\n');
         snapshot(filename);
@@ -338,7 +345,7 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     observe_left_panel(&bounds);
     reveal_fullscreen_strip(fullscreen,&bounds);
     observe_listviews("fullscreen-strip",process,pid);
-    wheel_series("fullscreen-strip",fullscreen,&bounds);
+    wheel_series("fullscreen-strip",fullscreen,&bounds,process);
 
     SetCursorPos((bounds.left+bounds.right)/2,(bounds.top+bounds.bottom)/2);
     SetForegroundWindow(fullscreen);
@@ -350,7 +357,7 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     SetCursorPos(bounds.left+(bounds.right-bounds.left)*3/4,(bounds.top+bounds.bottom)/2);
     Sleep(1000);
     observe_listviews("browser-grid",process,pid);
-    wheel_series("browser",NULL,NULL);
+    wheel_series("browser",NULL,NULL,process);
     observe_address(browser);
 
     SetForegroundWindow(browser);

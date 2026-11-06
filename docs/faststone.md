@@ -168,3 +168,28 @@ axes, zero and half-detent input, and the Ctrl modifier. Windows v5 horizontal
 measurements in the same fixture are 98 and 209 pixels. Its existing wheel
 behavior in the bundle is unchanged by this candidate. Check actual FastStone
 input and thumbnail painting separately before marking the wheel issue fixed.
+
+### Wheel speed: Windows scrolls by half an item per wheel line
+
+Measured in the real FastStone 8.5 on Windows (run 42256305651, 96 DPI,
+three wheel lines): one detent moves the browser grid 216 pixels with
+138×144 icon spacing, and the fullscreen strip 207 pixels. Both equal
+`lines × spacing / 2` on the scrolled axis (3 × 144 / 2, 3 × 138 / 2). The
+v6 controls fixture fits the same rule: 3 × 74 / 2 = 111, which is where
+Wine's fixed `LISTVIEW_SCROLL_ICON_LINE_SIZE` of 37 comes from.
+
+In the 192 DPI Wine captures of the same run, four detents moved the grid
+about 148 pixels with builtin Wine (roughly 12× slower than Windows) and
+444 pixels with the previous candidate (3 × 37 per detent, about 4× slower).
+The candidate in `patches/winehq-59251.patch` now uses half the item spacing
+on the scrolled axis for v6, falling back to 37. Default 32×32 icons keep the
+111-pixel step the fixture checks.
+
+`GetScrollInfo` on another process's window fails under Wine, so the earlier
+Wine observations have no scroll positions. The observer now also logs the
+position of item 0 (`item0=x,y->x,y`) through `LVM_GETITEMRECT` in the target
+process, which works on both systems.
+
+Wine also did not show the fullscreen thumbnail strip in these runs: every
+strip wheel event went to `TImageEnView` with the list-view hidden. Windows
+showed the strip. This is tracked as a separate symptom.
