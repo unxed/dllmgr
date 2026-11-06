@@ -69,7 +69,7 @@ class ShareTest(unittest.TestCase):
         revision = self.git("rev-parse", "HEAD")
         result = self.command(self.runtime, "share", "faststone-all")
         url, installer = result.stdout.splitlines()
-        self.assertEqual(url, f"{UPSTREAM}/blob/main/catalog/bundles/faststone-all.md")
+        self.assertEqual(url, f"{UPSTREAM}/blob/{revision}/catalog/bundles/faststone-all.md")
         self.assertIn(revision, installer)
 
         # Advance the source checkout to prove the command uses the old pin.

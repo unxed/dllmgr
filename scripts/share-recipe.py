@@ -78,11 +78,14 @@ def main():
     try:
         index = catalog_fixes.load_index(ROOT / "catalog" / "index.json")
         app, path = find_recipe(index, args.recipe)
-        command = None if args.url else install_command(source_revision(ROOT), app)
+        revision = source_revision(ROOT)
+        command = None if args.url else install_command(revision, app)
     except (KeyError, OSError, ValueError) as error:
         parser.error(str(error))
     if not args.command:
-        print(f"{REPOSITORY}/blob/main/catalog/{path}")
+        # Pin the page to the commit the command installs, so the link shows
+        # exactly what will be applied, before and after a merge to main.
+        print(f"{REPOSITORY}/blob/{revision}/catalog/{path}")
     if command is not None:
         print(command)
 

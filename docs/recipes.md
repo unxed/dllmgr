@@ -1,8 +1,10 @@
 # Install and share application recipes
 
 A recipe page is a catalog bundle, for example
-[FastStone Image Viewer](../catalog/bundles/faststone-all.md). Its URL is stable
-across revisions. Share it so someone can review the fixes and their scope.
+[FastStone Image Viewer](../catalog/bundles/faststone-all.md). `dllmgr share`
+prints the page at the same commit as the install command, so the link shows
+exactly what the command applies. Share both so someone can review the fixes
+and their scope before running anything.
 
 ## Install dllmgr for the current user
 
