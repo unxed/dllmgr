@@ -418,6 +418,10 @@ the one-step **Fix** action, with no DLL, slot or variant choices required.
 | `dllmgr update` | Refresh configured catalog indexes. Keep the previous index if validation fails. Alias for `index update`. |
 | `dllmgr upgrade` | Re-detect followed apps and reconcile their verified fix sets against the refreshed index. This can add new fixes, update old ones, and remove superseded or explicitly inapplicable rules as part of one compatible plan. |
 
+`dllmgr fix` without a name is implemented as the first step of `fix world`
+(D18): it scans `drive_c`, matches recipe rows and asks before each apply.
+The installer adds a menu entry that runs it, for use without a terminal.
+
 Discovery checks the selected prefix's Windows registry and scans its owned
 drive roots recursively, including portable apps outside Program Files. It
 also checks external roots the user explicitly adds. It deduplicates paths,
@@ -702,7 +706,9 @@ repro program supplied by the caller. Scenarios with xdotool come later.
 
 The AI agent skill "fix my application under Wine" lives in
 https://github.com/unxed/fix-it-in-wine. It uses dllmgr to apply, undo, verify,
-collect diagnostics (`diag`) and install patches. Until dllmgr exists, the skill
+collect diagnostics (`diag`) and install patches. What it may send to Wine is
+limited by the clean-room rules in D16; the reasons are in
+[vision.md](vision.md). Until dllmgr exists, the skill
 ships small stand-in tools.
 
 ## 19. Exchanging fixes (concept, not planned yet)
@@ -749,3 +755,6 @@ Hooks to keep in the design now:
 7. **Requests.** fix-it-in-wine, when it cannot fix a problem, can draft a request ("this
    program, this symptom, this digest") for a catalog, posted only with the user's approval —
    the start point for a bounty.
+8. **Vendor kits.** A software vendor can ship a recipe's modules inside its own package,
+   active only under the Wine releases they were measured on. See
+   [vendor-kits.md](vendor-kits.md) (D19).

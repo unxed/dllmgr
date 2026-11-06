@@ -67,6 +67,9 @@ system" against a recipe or against a fix's evidence is one comparison.
   A recipe's `when` should only list rows every one of its fixes has proven.
 - **WineHQ Bugzilla gate**: the same three results plus a visual check in the
   real application.
+- **Fixed upstream**: when a Wine release fixes the bug, its row reads
+  `without: pass`. The fix is then not needed on that release, and recipes
+  and vendor kits leave it out there. No extra key is needed.
 - **Agent**: read one fix file top to bottom; add a row or a fix. A new kind of
   file needs an owner decision.
 
