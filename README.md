@@ -11,8 +11,9 @@ Working name: `dllmgr`. The owner picks the final name.
 
 - Sets one DLL for one program. The module can come from another Wine
   release or from a third party, for example cc580.
-- Keys the rule by exe name. One rule covers every copy and every version
-  of the program in a prefix, installed or portable.
+- Keys Wine overrides by exe name, including copies installed outside Program
+  Files. Automatic selection checks the detected versions and architectures
+  before creating a rule shared by copies with that name.
 - Applies patches for DLLs that cannot be replaced (DLLs with a unix part
   and the system core).
 - Rolls back in one step. Removing a rule restores the prefix byte for byte.
@@ -62,6 +63,13 @@ Planned:
 The only code so far is the catalog tool (`cmd/dllmgr-catalog`). The manager itself
 is not written yet. Work starts with iterations 0 and 1 of the concept
 (owner's decision, 2026-11-06).
+
+The planned default CLI and GUI action is **Fix**. `dllmgr fix faststone`
+will select compatible verified fixes for FastStone, and `dllmgr fix world`
+will do the same for detected apps throughout the selected prefix. `unfix`
+reverses a selection. Followed apps receive compatible fixes and revisions
+when the user runs `dllmgr update && dllmgr upgrade --yes`. See the
+[CLI and GUI design](docs/concept.md#10-cli).
 
 ## License
 

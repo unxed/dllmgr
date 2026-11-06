@@ -84,3 +84,17 @@ replaces an earlier one says so.
 - Decision: exchanging fixes (concept §19) stays a design hook. Hosting and
   payment are undecided.
 - Reason: the architecture must allow it, but nothing is planned yet.
+
+## D10 — Automatic application fixes are the default
+
+- Date: 2026-11-06
+- Decided by: owner for the product behavior, Codex for applicability and
+  upgrade policy.
+- Decision: the CLI and GUI share an application-level planner for **Fix**,
+  **Fix all** and their reversals. Resolve verified applicability per app
+  version, PE machine and Wine version, with optional host constraints.
+  Followed apps are reconciled on a manual catalog refresh and upgrade.
+- Reason: the user chooses an app or a prefix once. The planner handles
+  portable installs, compatibility, composed DLLs and future fixes, while
+  preserving originals for rollback. The same commands can be called by a
+  distribution's unattended tooling.

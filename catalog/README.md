@@ -113,3 +113,13 @@ An application selection built from existing fixes. Fields: `id`, `kind: bundle`
 References must resolve to catalog fixes and cannot repeat. Bundle IDs are not
 Wine bug IDs. The installer must compose patches for shared modules and retain
 one original uninstall baseline.
+
+## Planned applicability for automatic fixes
+
+The planned application catalog will provide stable IDs such as `faststone`.
+Fixes and bundles will be able to qualify applicability by app version, PE
+machine and Wine version, and by host or backend constraints when needed.
+Alternative profiles allow one bug entry to cover different versions or
+platforms. `programs` remains a discovery hint. The automatic resolver will
+require explicit compatibility evidence before applying a profile. See
+[the resolver and one-step commands](../docs/concept.md#10-cli).
