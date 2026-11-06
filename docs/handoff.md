@@ -33,6 +33,22 @@ below marked **LOCAL** needs the owner's machine.
 Middle button (FS-middle-button): Wine matches Windows in CI (fullscreen →
 browser). Not a Wine bug so far.
 
+## Owner's answers (2026-11-06, evening)
+
+- Fonts: `FontSmoothing` = 2, `FontSmoothingType` = 1 (standard, not
+  ClearType), and the host's `fc-match Tahoma` returns **Noto Sans**. CI used
+  winehq-stable, which ships Wine's own `tahoma.ttf`. Leading hypothesis:
+  the owner's Wine build lacks Wine's Tahoma and falls back to Noto Sans with
+  other metrics. Check first: `wine --version` and
+  `find / -iname 'tahoma*.ttf'`, then run `tests/wine/font-probe.c` in the
+  owner's prefix to see the face Wine actually selects.
+- Fullscreen strip on the real desktop: it appears at the edge and stays
+  under a still mouse (so the headless reveal problem is a harness
+  artifact), but the wheel does not scroll it on stock Wine. That is the
+  59251 horizontal case; verify it after installing faststone-v2.
+- Timings: no notable difference between the first and second start, and the
+  number of files does not matter much.
+
 ## LOCAL work: not reproducible in the cloud
 
 1. **Acceptance of faststone-v2 on the owner's desktop.** Install with the
