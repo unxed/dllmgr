@@ -49,8 +49,13 @@ One step, for FastStone only: `scripts/apply-winehq-59609.sh` in this repository
 `FSViewer.exe` in `WINEPREFIX`, picks comctl32 v5 or v6 (on Wine 11 the v6 module is
 `comctl32_v6`, read from the export name of the file it replaces), downloads the DLL for the
 exact `wine --version` from the [release](https://github.com/unxed/dllmgr/releases/tag/winehq-59609)
-(checked against SHA256SUMS), and enables it for `FSViewer.exe` only. `--undo` removes the rule.
+(checked against SHA256SUMS), and enables it for `FSViewer.exe` only.
+`scripts/undo-winehq-59609.sh` restores the DLL and the previous registry value;
+`apply-winehq-59609.sh --undo` is also supported. Use the same `WINEPREFIX` for both.
 The release is built by `.github/workflows/release-winehq-59609.yml`.
+Download failures leave the prefix unchanged; retry later or explicitly pass `--build`
+to compile locally. Wine registry output is decoded using the OEM code page for
+`LC_ALL`, `LC_CTYPE` or `LANG`, following [localecp](https://github.com/unxed/localecp).
 
 To build the module yourself, apply the patch to the Wine source of your
 release and run `tools/build_one_dll.sh <tag> comctl32 [comctl32_v6]` from

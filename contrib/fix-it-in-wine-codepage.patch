@@ -1,0 +1,254 @@
+diff --git a/tests/test_override.py b/tests/test_override.py
+index da49236..59f553d 100644
+--- a/tests/test_override.py
++++ b/tests/test_override.py
+@@ -68,18 +68,23 @@ class OverrideTest(unittest.TestCase):
+             f.write(data)
+         return path
+ 
+-    def install_wine(self, query_output):
++    def install_wine(self, query_output, message_output=b"", command_rc=0, query_rc=None):
+         """Fake wine: logs its arguments; `reg query` prints query_output, exit 1 if empty."""
+         script = os.path.join(self.tmp.name, "fake-wine")
+-        qrc = 0 if query_output else 1
++        qrc = (0 if query_output else 1) if query_rc is None else query_rc
++        if isinstance(query_output, str):
++            query_output = query_output.encode("utf-8")
+         with open(script, "w") as f:
+-            f.write("#!/bin/sh\n"
+-                    "printf '%%s\\n' \"$*\" >> '%s'\n"
+-                    "if [ \"$1 $2\" = \"reg query\" ]; then\n"
+-                    "  printf '%%s' '%s'\n"
+-                    "  exit %d\n"
+-                    "fi\n"
+-                    "exit 0\n" % (self.log, query_output, qrc))
++            f.write("#!%s\n" % sys.executable)
++            f.write("import sys\n"
++                    "with open(%r, 'a') as f: f.write(' '.join(sys.argv[1:]) + '\\n')\n"
++                    "if sys.argv[1:3] == ['reg', 'query']:\n"
++                    "    sys.stdout.buffer.write(%r)\n"
++                    "    sys.exit(%d)\n"
++                    "sys.stdout.buffer.write(%r)\n"
++                    "sys.stderr.buffer.write(%r)\n"
++                    "sys.exit(%d)\n" % (self.log, query_output, qrc,
++                                             message_output, message_output, command_rc))
+         os.chmod(script, 0o755)
+         patcher = mock.patch.dict(os.environ, {"FIW_WINE": script})
+         patcher.start()
+@@ -145,6 +150,43 @@ class OverrideTest(unittest.TestCase):
+         self.assertNotEqual(rc, 0)
+         self.assertIn("already applied, undo first", err)
+ 
++    def test_russian_oem_messages_and_previous_value_round_trip(self):
++        self.install_wine(b"    comctl32    REG_SZ    builtin\r\n",
++                          "Операция успешно завершена\r\n".encode("cp866"))
++        with mock.patch.dict(os.environ, {"LC_ALL": "ru_RU.UTF-8"}):
++            self.assertEqual(self.apply()[0], 0)
++            self.assertEqual(self.undo()[0], 0)
++        self.assertEqual(self.read(self.dest), self.orig)
++        self.assertIn("reg add %s /v comctl32 /d builtin /f" % (KEY % "app.exe"), self.wine_calls())
++
++    def test_localized_missing_key_does_not_crash(self):
++        self.install_wine("reg: не удалось найти указанный ключ\r\n".encode("cp866"), query_rc=1)
++        # Missing-key diagnostics have exit 1, not a successful query.
++        with mock.patch.dict(os.environ, {"LC_ALL": "ru_RU.UTF-8"}):
++            result = override.run_wine(self.prefix, "reg", "query")
++        self.assertIn("не удалось", result.stdout)
++        self.assertEqual(result.returncode, 1)
++        with mock.patch.dict(os.environ, {"LC_ALL": "ru_RU.UTF-8"}):
++            self.assertEqual(self.apply()[0], 0)
++            self.assertEqual(self.undo()[0], 0)
++        self.assertEqual(self.read(self.dest), self.orig)
++
++    def test_registry_query_exception_leaves_original_untouched(self):
++        with mock.patch.object(override, "reg_query", side_effect=override.OverrideError("query failed")):
++            rc, _, err = self.apply()
++        self.assertNotEqual(rc, 0)
++        self.assertIn("query failed", err)
++        self.assertEqual(self.read(self.dest), self.orig)
++        self.assertFalse(os.path.exists(override.state_path(self.prefix)))
++
++    def test_localized_add_failure_restores_original(self):
++        self.install_wine(b"", "Отказано в доступе".encode("cp866"), 1)
++        with mock.patch.dict(os.environ, {"LC_ALL": "ru_RU.UTF-8"}):
++            rc, _, err = self.apply()
++        self.assertNotEqual(rc, 0)
++        self.assertIn("Отказано в доступе", err)
++        self.assertEqual(self.read(self.dest), self.orig)
++
+     def test_conflict_between_exes(self):
+         self.apply("one.exe")
+         other = self.make_file("other/comctl32.dll", fake_pe(I386, b"different"))
+diff --git a/tests/test_wine_codepage.py b/tests/test_wine_codepage.py
+new file mode 100644
+index 0000000..c9f8f51
+--- /dev/null
++++ b/tests/test_wine_codepage.py
+@@ -0,0 +1,36 @@
++import pathlib
++import sys
++import unittest
++
++sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "tools"))
++from wine_codepage import decode_stdout, decode_stderr, oem_codec
++
++
++class CodepageTest(unittest.TestCase):
++    def test_locale_precedence(self):
++        self.assertEqual(oem_codec({"LC_ALL": "ru_RU.UTF-8", "LC_CTYPE": "fr_FR", "LANG": "en_US"}), "cp866")
++        self.assertEqual(oem_codec({"LC_ALL": "", "LC_CTYPE": "fr_FR.UTF-8", "LANG": "ru_RU"}), "cp850")
++        self.assertEqual(oem_codec({"LANG": "ru_RU.UTF-8"}), "cp866")
++
++    def test_neutral_and_unknown_locale(self):
++        for locale in ("", "C", "C.UTF-8", "POSIX", "unknown"):
++            self.assertEqual(oem_codec({"LC_ALL": locale}), "cp437")
++
++    def test_oem_messages(self):
++        for locale, codec, message in (("ru_RU.UTF-8", "cp866", "не удалось найти ключ"),
++                                       ("fr_FR.UTF-8", "cp850", "opération terminée"),
++                                       ("ja_JP.UTF-8", "cp932", "レジストリ"),
++                                       ("zh_CN.UTF-8", "gbk", "注册表")):
++            self.assertEqual(decode_stdout(message.encode(codec), {"LANG": locale}), message)
++
++    def test_utf8_wine_diagnostics(self):
++        message = "wine: /tmp/папка"
++        self.assertEqual(decode_stderr(message.encode(), {"LANG": "ru_RU.UTF-8"}), message)
++
++    def test_oem_stderr(self):
++        message = "Отказано в доступе"
++        self.assertEqual(decode_stderr(message.encode("cp866"), {"LANG": "ru_RU.UTF-8"}), message)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tools/localecp.LICENSE b/tools/localecp.LICENSE
+new file mode 100644
+index 0000000..6391bca
+--- /dev/null
++++ b/tools/localecp.LICENSE
+@@ -0,0 +1,28 @@
++BSD 3-Clause License
++
++Copyright (c) 2026, unxed
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions are met:
++
++1. Redistributions of source code must retain the above copyright notice, this
++   list of conditions and the following disclaimer.
++
++2. Redistributions in binary form must reproduce the above copyright notice,
++   this list of conditions and the following disclaimer in the documentation
++   and/or other materials provided with the distribution.
++
++3. Neither the name of the copyright holder nor the names of its
++   contributors may be used to endorse or promote products derived from
++   this software without specific prior written permission.
++
++THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
++FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
++SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/tools/override.py b/tools/override.py
+index 20bf78a..7b7e333 100755
+--- a/tools/override.py
++++ b/tools/override.py
+@@ -27,6 +27,7 @@ import subprocess
+ import sys
+ 
+ from pe_unmark import mark_of, unmark, pe_machine, NotPE, Placeholder  # noqa: F401
++from wine_codepage import oem_codec, decode_stderr
+ 
+ STATE_DIR = "fix-it-in-wine"
+ OVERRIDE_VALUE = "native,builtin"
+@@ -166,7 +167,13 @@ def run_wine(prefix, *args):
+     env = dict(os.environ, WINEPREFIX=prefix)
+     wine = os.environ.get("FIW_WINE", "wine")
+     try:
+-        return subprocess.run([wine] + list(args), env=env, capture_output=True, text=True)
++        # reg.exe writes OEM bytes even on a UTF-8 Unix locale. A frontend
++        # such as dllmgr's may explicitly advertise converted UTF-8 output.
++        result = subprocess.run([wine] + list(args), env=env, capture_output=True)
++        codec = env.get("FIW_WINE_ENCODING") or oem_codec(env)
++        result.stdout = result.stdout.decode(codec, errors="replace")
++        result.stderr = decode_stderr(result.stderr, env)
++        return result
+     except OSError as e:
+         raise OverrideError("cannot run %r: %s (set FIW_WINE?)" % (wine, e.strerror or e))
+ 
+@@ -217,6 +224,8 @@ def cmd_apply(args):
+         if e["new_sha256"] != new_sha:
+             raise OverrideError("%s is already replaced by a different DLL for %s %s"
+                                 % (dest, e["exe"], e["name"]))
++    # Read the registry before touching the DLL, even if the query itself fails.
++    before = reg_query(prefix, args.exe, value)
+     print_lines = []
+     wrote = None                      # original bytes + mode if we replaced the file
+     if same:
+@@ -236,7 +245,6 @@ def cmd_apply(args):
+         print_lines.append("replaced %s" % dest)
+ 
+     try:
+-        before = reg_query(prefix, args.exe, value)
+         reg_add(prefix, args.exe, value, OVERRIDE_VALUE)
+     except OverrideError:
+         if wrote:
+diff --git a/tools/wine_codepage.py b/tools/wine_codepage.py
+new file mode 100644
+index 0000000..e614b83
+--- /dev/null
++++ b/tools/wine_codepage.py
+@@ -0,0 +1,47 @@
++"""Wine reg.exe OEM output, using unxed/localecp's Unix locale algorithm.
++
++Source: https://github.com/unxed/localecp/blob/43b67e27774605be8bf9783de6f5f793a0d8ab01/localecp.go
++See localecp.LICENSE for the table's BSD-3-Clause license.
++Python has native codecs for the OEM pages that Go's charmap approximates.
++"""
++import os
++
++OEM_LOCALES = {
++    'cp850': 'af_ZA ast_ES br_FR ca_ES kw_GB cy_GB da_DK de_AT de_LI de_LU de_CH de_DE en_AU en_CA en_GB en_IE en_JM en_BZ en_TT en_NZ es_PA es_BO es_CR es_DO es_SV es_EC es_GT es_HN es_NI es_CL es_MX es_ES es_CO es_PE es_AR es_PR es_VE es_UY es_PY eu_ES fi_FI fo_FO fr_FR fr_BE fr_CA fr_LU fr_MC fr_CH gd_GB gv_IM gl_ES id_ID is_IS it_IT it_CH ms_BN ms_MY nl_BE nl_NL nl_SR nn_NO nb_NO pt_BR pt_PT rm_CH sv_SE sv_FI wa_BE'.split(),
++    'cp720': 'ar_SA ar_LB ar_EG ar_DZ ar_BH ar_IQ ar_JO ar_KW ar_LY ar_MA ar_OM ar_QA ar_SY ar_TN ar_AE ar_YE fa_IR ur_PK'.split(),
++    'cp866': 'az_AZ@cyrillic be_BY bg_BG kk_KZ ky_KG mk_MK mn_MN ru_RU tt_RU uk_UA uz_UZ@cyrillic'.split(),
++    'cp857': 'az_AZ tr_TR uz_UZ'.split(),
++    'gbk': 'zh_CN zh_SG'.split(),
++    'big5': 'zh_TW zh_HK zh_MO'.split(),
++    'cp852': 'cs_CZ hr_HR hu_HU pl_PL ro_RO sk_SK sl_SI sq_AL sr_RS@latin'.split(),
++    'cp737': 'el_GR'.split(),
++    'cp437': 'en_PH en_ZA en_US en_ZW ga_IE iv_IV sw_KE'.split(),
++    'cp775': 'et_EE lt_LT lv_LV'.split(),
++    'cp862': 'he_IL'.split(),
++    'cp932': 'ja_JP'.split(),
++    'cp949': 'ko_KR'.split(),
++    'cp855': 'sr_RS'.split(),
++    'cp874': 'th_TH'.split(),
++    'cp1258': 'vi_VN'.split(),
++}
++OEM_BY_LOCALE = {loc: codec for codec, locales in OEM_LOCALES.items() for loc in locales}
++
++
++def oem_codec(env=None):
++    """LC_ALL > LC_CTYPE > LANG, drop charset suffix, default to CP437."""
++    env = os.environ if env is None else env
++    loc = env.get("LC_ALL") or env.get("LC_CTYPE") or env.get("LANG") or ""
++    return OEM_BY_LOCALE.get(loc.split(".", 1)[0], "cp437")
++
++
++def decode_stdout(data, env=None):
++    # reg.exe uses GetOEMCP even when the host locale says UTF-8.
++    return data.decode(oem_codec(env), errors="replace")
++
++
++def decode_stderr(data, env=None):
++    # Wine's Unix diagnostics use UTF-8; Windows diagnostics may use OEM.
++    try:
++        return data.decode("utf-8")
++    except UnicodeDecodeError:
++        return decode_stdout(data, env)
