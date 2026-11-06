@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       deep:
-        description: Build all candidate modules and check apply/undo
+        description: Build fixes, check rollback, and compare FastStone with and without patches
         type: boolean
         default: false
 concurrency:
@@ -147,12 +147,29 @@ jobs:
           sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq-archive.key
           sudo curl -fsSL https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources -o /etc/apt/sources.list.d/winehq-noble.sources
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --install-recommends winehq-stable xvfb git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
+          sudo apt-get install -y -qq --install-recommends winehq-stable xvfb openbox git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
       - name: Check separate patches, composition and rollback
         run: |
           git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
           git -C fiw apply ../contrib/fix-it-in-wine-learning.patch
           xvfb-run -a python3 fiw/tools/record_attempt.py --root "$RUNNER_TEMP/attempts" --case faststone-suite --stage native-check --hypothesis 'composed modules preserve Windows behavior' --expected 'all enabled checks pass and undo restores bytes' --timeout 1200 -- bash tests/wine/check-fixes.sh
+      - name: Compare the FastStone 8.5 x86 browser at 192 DPI
+        env:
+          TEST_DPI: 192
+        run: |
+          captures="$RUNNER_TEMP/fs85-compare"
+          mkdir -p "$captures/baseline" "$captures/patched"
+          for variant in baseline patched; do
+            args=()
+            if [ "$variant" = patched ]; then args+=("$GITHUB_WORKSPACE/out/faststone"); fi
+            (cd "$captures/$variant" && xvfb-run -a -s '-screen 0 3072x1728x24' bash -c \
+              'openbox >/dev/null 2>&1 & exec bash "$GITHUB_WORKSPACE/tests/wine/faststone85.sh" "$@"' _ "${args[@]}")
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: faststone85-192-comparison
+          path: ${{ runner.temp }}/fs85-compare/*/snapshots85/
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -128,3 +128,11 @@ in a separate left-panel run. The Draw Board check uses the Delphi form class
 as well as the caption. One earlier Wine run timed out looking for the
 caption while its screenshot already showed the board. Mapping and the
 first response to `WM_NULL` are recorded separately.
+
+The deep Wine run also compares the portable x86 application at 192 DPI in
+two disposable win64 prefixes. It uses the same fixture and observer in both,
+and applies the just-built i386 `comctl32_v6` and `gdiplus` through the bundle
+installer in the second prefix. The `faststone85-192-comparison` artifact
+contains the baseline and patched captures, the application-specific native
+load trace, and the byte-for-byte undo check. Compare the browser and strip
+captures before drawing conclusions about the remaining FastStone issues.

@@ -99,7 +99,8 @@ static BOOL CALLBACK inspect_control(HWND hwnd, LPARAM param)
     if (pid != probe->pid || !IsWindowVisible(hwnd)) return TRUE;
     if (!GetClassNameW(hwnd, name, ARRAYSIZE(name))) return TRUE;
     RealGetWindowClassW(hwnd, real_name, ARRAYSIZE(real_name));
-    if (lstrcmpiW(name, L"TTntListView") && lstrcmpiW(name, WC_LISTVIEWW) &&
+    if (lstrcmpiW(name, L"TTntListView") && lstrcmpiW(name, L"TTntListView.UnicodeClass") &&
+        lstrcmpiW(name, WC_LISTVIEWW) &&
         lstrcmpiW(real_name, WC_LISTVIEWW)) return TRUE;
     if (!GetWindowRect(hwnd, &rect)) return TRUE;
     ++probe->controls;

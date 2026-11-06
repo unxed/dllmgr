@@ -220,6 +220,37 @@ static void middle_click(void)
     mouse_event(MOUSEEVENTF_MIDDLEUP,0,0,0,0);
 }
 
+static BOOL CALLBACK find_fullscreen_notice(HWND child, LPARAM data)
+{
+    char text[512]="";
+    DWORD_PTR length;
+    if (SendMessageTimeoutA(child,WM_GETTEXT,sizeof(text),(LPARAM)text,SMTO_ABORTIFHUNG,200,&length) &&
+        strstr(text,"first time that you are viewing an image in Full Screen"))
+    {
+        *(BOOL *)data=TRUE;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static void dismiss_fullscreen_notice(HWND fullscreen)
+{
+    HWND foreground;
+    DWORD owner=0;
+    BOOL notice=FALSE;
+
+    Sleep(500);
+    foreground=GetForegroundWindow();
+    if (foreground==fullscreen) return;
+    GetWindowThreadProcessId(foreground,&owner);
+    if (owner!=pid) return;
+    EnumChildWindows(foreground,find_fullscreen_notice,(LPARAM)&notice);
+    if (!notice) return;
+    snapshot("browser-origin-first-run-notice.bmp");
+    press_key(VK_RETURN);
+    Sleep(500);
+}
+
 static int observe_browser(HWND fullscreen, HANDLE process)
 {
     RECT bounds;
@@ -233,6 +264,7 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     observe_left_panel(&bounds);
     SetCursorPos((bounds.left+bounds.right)/2,bounds.top);
     Sleep(800);
+    SetCursorPos((bounds.left+bounds.right)/2,bounds.top+MulDiv(80,GetDpiForWindow(fullscreen),96));
     observe_listviews("fullscreen-strip",process,pid);
     wheel_series("fullscreen-strip");
 
@@ -255,6 +287,13 @@ static int observe_browser(HWND fullscreen, HANDLE process)
     dump("fullscreen from browser",fullscreen);
     snapshot("browser-origin-fullscreen.bmp");
     if (!fullscreen) return 0;
+    dismiss_fullscreen_notice(fullscreen);
+    if (GetForegroundWindow()!=fullscreen)
+    {
+        puts("browser_origin_middle_skipped: fullscreen is not in the foreground");
+        snapshot("browser-origin-blocked.bmp");
+        return 0;
+    }
 
     GetWindowRect(fullscreen,&bounds);
     SetCursorPos((bounds.left+bounds.right)/2,(bounds.top+bounds.bottom)/2);
@@ -276,7 +315,9 @@ int main(int argc,char **argv)
     snprintf(command,sizeof(command),"\"%s\" \"%s\"",argv[1],argv[2]);
     start=GetTickCount();
     if(!CreateProcessA(NULL,command,NULL,NULL,FALSE,0,NULL,NULL,&startup,&process))return 3;
-    pid=process.dwProcessId; hwnd=wait_window(NULL,NULL);
+    pid=process.dwProcessId;
+    printf("app_pid=%04lx\n",pid);
+    hwnd=wait_window(NULL,NULL);
     report_timing("startup",start,hwnd); Sleep(2000); snapshot("initial.bmp");
     if(!hwnd) status=4;
     else if(!strcmp(argv[3],"browser")) status=observe_browser(hwnd,process.hProcess);
