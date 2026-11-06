@@ -193,3 +193,13 @@ process, which works on both systems.
 Wine also did not show the fullscreen thumbnail strip in these runs: every
 strip wheel event went to `TImageEnView` with the list-view hidden. Windows
 showed the strip. This is tracked as a separate symptom.
+## Gate for Wine Bugzilla reports and follow-ups
+
+Before posting a report or a candidate fix to Wine, reproduce the behavior
+described in the relevant Wine report with a test that fails on the original
+Wine build and passes with only the proposed change. Record the application
+version, Wine build, architecture, display setup, exact command, and results.
+Also exercise the affected controls visually in the real application and
+record the steps and captures. A synthetic probe alone, an unverified app
+capture, or a bundled build with several changes cannot establish this gate.
+Existing reports get follow-ups when their original case meets the same gate.

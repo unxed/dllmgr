@@ -33,7 +33,7 @@ var variantFields = set("id", "kind", "title", "summary", "dll", "file",
 
 var variantRequired = []string{"dll", "provider", "version", "arch", "license", "source", "sha256"}
 
-var bundleFields = set("id", "kind", "title", "programs", "wine", "fixes")
+var bundleFields = set("id", "kind", "title", "programs", "wine", "fixes", "application", "profiles")
 var bundleRequired = []string{"title", "programs", "fixes"}
 
 var fetchFields = set("urls", "sha256", "format", "member")
@@ -174,6 +174,7 @@ func (v *validator) entry(e *Entry) {
 	case KindBundle:
 		v.nonEmptyItems("programs", e.Programs)
 		v.nonEmptyItems("wine", e.Wine)
+		v.bundleProfiles(e)
 		seen := map[string]bool{}
 		for _, id := range e.Fixes {
 			if !fixIDRe.MatchString(id) {
@@ -184,6 +185,43 @@ func (v *validator) entry(e *Entry) {
 			}
 			seen[id] = true
 		}
+	}
+}
+
+func (v *validator) bundleProfiles(e *Entry) {
+	if e.Application != "" && !verRe.MatchString(e.Application) {
+		v.fail("application", "%q is not a valid application id", e.Application)
+	}
+	if len(e.Profiles) == 0 {
+		return
+	}
+	if e.Application == "" {
+		v.fail("application", "required when profiles are present")
+	}
+	profiles, ok := v.raw["profiles"].([]any)
+	if !ok {
+		return
+	}
+	fields := set("version", "exe_sha256", "wine", "host_arch", "prefix_arch")
+	seen := map[[4]string]bool{}
+	for i, profile := range e.Profiles {
+		if raw, ok := profiles[i].(map[string]any); ok {
+			for _, field := range sortedKeys(raw) {
+				if !fields[field] {
+					v.fail("profiles", "profile %d has unknown field %q", i+1, field)
+				}
+			}
+		}
+		if !verRe.MatchString(profile.Version) || !sha256Re.MatchString(profile.ExeSHA256) ||
+			!strings.HasPrefix(profile.Wine, "wine-") || !verRe.MatchString(profile.Wine) ||
+			!nameRe.MatchString(profile.HostArch) || (profile.PrefixArch != "win32" && profile.PrefixArch != "win64") {
+			v.fail("profiles", "profile %d requires a version, executable SHA256, Wine tag, host architecture and win32 or win64 prefix", i+1)
+		}
+		key := [4]string{profile.ExeSHA256, profile.Wine, profile.HostArch, profile.PrefixArch}
+		if seen[key] {
+			v.fail("profiles", "profile %d repeats an executable and platform combination", i+1)
+		}
+		seen[key] = true
 	}
 }
 

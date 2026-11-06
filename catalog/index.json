@@ -15,6 +15,16 @@
       "winehq-59251",
       "winehq-59609"
     ],
+    "application": "faststone",
+    "profiles": [
+      {
+        "version": "8.5",
+        "exe_sha256": "05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621",
+        "wine": "wine-11.0",
+        "host_arch": "x86_64",
+        "prefix_arch": "win64"
+      }
+    ],
     "path": "bundles/faststone-all.md"
   },
   {

@@ -114,12 +114,18 @@ References must resolve to catalog fixes and cannot repeat. Bundle IDs are not
 Wine bug IDs. The installer must compose patches for shared modules and retain
 one original uninstall baseline.
 
-## Planned applicability for automatic fixes
+## Applicability for automatic fixes
 
-The planned application catalog will provide stable IDs such as `faststone`.
-Fixes and bundles will be able to qualify applicability by app version, PE
-machine and Wine version, and by host or backend constraints when needed.
-Alternative profiles allow one bug entry to cover different versions or
-platforms. `programs` remains a discovery hint. The automatic resolver will
-require explicit compatibility evidence before applying a profile. See
-[the resolver and one-step commands](../docs/concept.md#10-cli).
+An installable application bundle has an `application` ID such as
+`faststone` and explicit `profiles`. Each profile records the application
+`version`, exact `exe_sha256`, `wine` tag, `host_arch` and `prefix_arch`.
+The hash identifies the measured executable, including its PE architecture.
+Profiles can cover separate app builds and hosts as evidence becomes available.
+`programs` is a discovery hint.
+
+Keep published recipes, applicability and source/asset references in the
+dllmgr catalog so the CLI and GUI share one resolution contract.
+[fix-it-in-wine](https://github.com/unxed/fix-it-in-wine) owns the agent
+workflow, diagnostic helpers and research writeups. It can propose a patch
+and recipe through a dllmgr pull request. A recipe link points to the
+dllmgr bundle page.
