@@ -366,7 +366,11 @@ static BOOL wait_for_fullscreen_input(HWND fullscreen)
         GetWindowThreadProcessId(foreground,&owner);
         if (owner==pid && !dismissed)
         {
+            /* Delphi message forms draw their text with TLabel, which is not a
+             * child window, so the text search can miss the notice. Any other
+             * window of the application in front of fullscreen is the notice. */
             EnumChildWindows(foreground,find_fullscreen_notice,(LPARAM)&notice);
+            if (!notice && foreground!=fullscreen && IsWindowVisible(foreground)) notice=TRUE;
             if (notice && foreground==GetForegroundWindow())
             {
                 snapshot("browser-origin-first-run-notice.bmp");
