@@ -29,7 +29,11 @@ results:                            # evidence rows; see "Environment" below
   `dllmgr-14`. Filing upstream renames the file.
 - The change is a source `patch`, or a whole replacement `module` (a DLL from
   another Wine release, cc580). Same file kind either way.
-- Prose below the frontmatter is for people; scripts never read it.
+- Prose below the frontmatter is for people; scripts never read it. It
+  describes the change in words under four headings, `Problem`,
+  `Windows behavior`, `The fix, in words` and `Results`, so that it can be
+  implemented without the patch (D17, `catalog/README.md`). This adds no key
+  and no file kind.
 
 ## Recipe: one file per application selection
 
@@ -64,6 +68,9 @@ system" against a recipe or against a fix's evidence is one comparison.
   A recipe's `when` should only list rows every one of its fixes has proven.
 - **WineHQ Bugzilla gate**: the same three results plus a visual check in the
   real application.
+- **Fixed upstream**: when a Wine release fixes the bug, its row reads
+  `without: pass`. The fix is then not needed on that release, and recipes
+  and vendor kits leave it out there. No extra key is needed.
 - **Agent**: read one fix file top to bottom; add a row or a fix. A new kind of
   file needs an owner decision.
 

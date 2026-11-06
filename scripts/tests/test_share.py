@@ -27,6 +27,7 @@ class ShareTest(unittest.TestCase):
             "GIT_CONFIG_GLOBAL": str(root / "gitconfig"),
             "GIT_CONFIG_NOSYSTEM": "1",
             "WINEPREFIX": str(root / "Wine prefix"),
+            "XDG_DATA_HOME": str(self.home / ".local" / "share"),
         }
         self.git("init", "-q")
         self.git("config", "user.name", "dllmgr test")
@@ -79,6 +80,9 @@ class ShareTest(unittest.TestCase):
         applied = self.command("sh", "-c", installer)
         self.assertIn(f"using {self.env['WINEPREFIX']}", applied.stdout)
         self.assertEqual(self.launcher.resolve().parent.name, revision)
+        entry = (self.home / ".local" / "share" / "applications" / "dllmgr-fix.desktop").read_text()
+        self.assertIn(f'Exec="{self.launcher}" fix --pause\n', entry)
+        self.assertIn("Terminal=true\n", entry)
         self.assertEqual(self.command(self.launcher, "share", "--command", "faststone").stdout.strip(), installer)
 
         self.command("bash", self.checkout / "install.sh")

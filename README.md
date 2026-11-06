@@ -36,6 +36,10 @@ Working name: `dllmgr`. The owner picks the final name.
 
 Existing:
 
+- `docs/vision.md`: why this exists and where it goes (the owner's text, with
+  editorial notes and a plan table).
+- `docs/vendor-kits.md`: the plan for vendors who ship fixed DLLs in their
+  own packages (proposal).
 - `docs/concept.md`: the concept (targets, model, checks, catalog, CLI, GUI,
   patches, diagnostics, iterations).
 - `docs/decisions.md`: the log of decisions (who, when, why).
@@ -64,8 +68,9 @@ Planned:
 
 ## Status
 
-The preview implements `dllmgr fix faststone`, `dllmgr uninstall faststone`
-and `dllmgr share faststone`. See the [FastStone recipe](catalog/bundles/faststone-all.md)
+The preview implements `dllmgr fix` (find the programs with recipes in a
+prefix and apply them after a yes), `dllmgr fix faststone`,
+`dllmgr uninstall faststone` and `dllmgr share faststone`. See the [FastStone recipe](catalog/bundles/faststone-all.md)
 for the supported configuration and measured results. The planned `fix world`,
 subscriptions, unattended updates and GUI are described in the
 [CLI and GUI design](docs/concept.md#10-cli).

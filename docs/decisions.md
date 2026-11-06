@@ -157,6 +157,69 @@ replaces an earlier one says so.
   convention for per-user software. Commit directories make upgrades atomic
   and keep older versions for rollback.
 
+## D16 — Clean-room rules for everything sent to Wine
+
+- Date: 2026-11-06
+- Decided by: owner (the vision in `docs/vision.md`), wording by Claude (agent); pending the owner's review
+- Decision: code written with AI help (patches, reproducers, tests) stays in
+  this catalog and on users' machines. It is never offered to Wine as code:
+  not as a merge request and not as a Bugzilla attachment. Wine gets text:
+  the observed behavior, the change described in words, and how it was
+  checked, labeled as AI-assisted. Windows behavior is learned only as a
+  black box (test programs run on Windows, Microsoft documentation). No
+  disassembly, no debug symbols, no `+relay` of native Microsoft components,
+  no Microsoft or ReactOS source. Work for ReactOS-based targets (issue 13)
+  flows one way: a Wine patch may be ported to ReactOS; ReactOS code is never
+  read in a session that writes text for Wine.
+- Reason: Wine's Clean Room Guidelines forbid LLM-generated code and list
+  these sources as unsafe. The catalog must stay usable as a source of
+  descriptions for Wine developers. See the notes in `docs/vision.md`.
+
+## D17 — The description in words is part of every fix (proposal)
+
+- Date: 2026-11-06
+- Decided by: Claude (agent), pending the owner's review
+- Decision: the prose of a fix file has four headings, `Problem`,
+  `Windows behavior`, `The fix, in words` and `Results`, as first written in
+  `winehq-59251.md` on the FastStone branch. Together they let someone
+  implement the fix without the patch. They are also the core of the WineHQ Bugzilla report,
+  so one text serves both. It is a convention inside the existing fix file,
+  not a new file or key. Later `dllmgr-catalog check` may require the three
+  headings for fixes that have `results`; not now, because existing entries
+  use other headings and are being edited on the FastStone branch.
+- Reason: the vision (`docs/vision.md`) makes the description, not the code,
+  what we give to Wine and to other targets. A separate description file
+  would duplicate the fix and drift from it.
+
+## D18 — `dllmgr fix` without a name finds what to fix
+
+- Date: 2026-11-06
+- Decided by: Claude (agent), following D10 and the owner's request for one-click use
+- Decision: `dllmgr fix` with no application scans the prefix's `drive_c`
+  for the programs of installable recipes, matches each copy by
+  `exe_sha256`, Wine release and architectures against the recipe rows, and
+  asks before applying each match. `--dry-run` only reports, `--yes` skips
+  the question. It is the first step of `fix world` (concept §10): it reads
+  only the catalog, never starts a program, and names the key that differs
+  when nothing matches.
+- Reason: the user should not need to know a recipe's name. Matching uses
+  the same rows as the per-application command, so it adds no new trust rule.
+
+## D19 — Vendor kits: recipes shipped by software vendors (proposal)
+
+- Date: 2026-11-06
+- Decided by: owner (the idea), Claude (agent) for the design; pending the owner's review
+- Decision: a vendor kit is a folder made from one recipe at one commit: the
+  release modules for each `when` row, their checksums, the LGPL text and a
+  pointer to the corresponding source. It is active only under Wine, and only
+  on Wine releases it was measured on. It adds no catalog file kind or key.
+  How it is activated (at install, or by a launcher at each start) is left
+  to an experiment. See `docs/vendor-kits.md`.
+- Reason: the vision asks for programs that work out of the box. A vendor can
+  ship a fix to every user at once, without dllmgr. Tying the kit to `when`
+  rows keeps the same proof as `dllmgr fix`. "Kit" avoids a clash with
+  `catalog/bundles/`.
+
 ## Development note: CI paths and cancellation
 
 `faststone-research` runs on pushes that touch `tests/wine/`, `patches/`,

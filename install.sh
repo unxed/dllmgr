@@ -32,9 +32,11 @@ fi
 
 stage=''
 link_dir=''
+entry=''
 cleanup() {
     [[ -z $stage ]] || rm -rf -- "$stage"
     [[ -z $link_dir ]] || rm -rf -- "$link_dir"
+    [[ -z $entry ]] || rm -f -- "$entry"
 }
 trap cleanup EXIT
 
@@ -57,3 +59,18 @@ link_dir=$(mktemp -d "$bin_dir/.dllmgr.XXXXXX")
 ln -s -- "$version_dir/dllmgr" "$link_dir/dllmgr"
 mv -Tf -- "$link_dir/dllmgr" "$launcher"
 printf 'Installed %s\n' "$launcher"
+
+# A menu entry for one click: `dllmgr fix` for the default prefix, in a terminal.
+# Skipped when the path needs Exec escaping (quotes, backquotes, $, \ or %).
+apps_dir=${XDG_DATA_HOME:-$HOME/.local/share}/applications
+if [[ $launcher != *[\"\`\$\\%]* ]]; then
+    mkdir -p -- "$apps_dir"
+    entry=$(mktemp "$apps_dir/.dllmgr-fix.XXXXXX")
+    printf '%s\n' '[Desktop Entry]' 'Type=Application' 'Name=Fix Windows programs' \
+        'Comment=Apply verified Wine fixes to the programs in the default prefix (dllmgr)' \
+        "Exec=\"$launcher\" fix --pause" 'Terminal=true' 'Categories=System;' >"$entry"
+    chmod 644 -- "$entry"
+    mv -f -- "$entry" "$apps_dir/dllmgr-fix.desktop"
+    entry=''
+    printf 'Added the menu entry "Fix Windows programs"\n'
+fi
