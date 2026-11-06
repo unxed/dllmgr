@@ -11,7 +11,9 @@ import sys
 sys.path.insert(0, os.environ["DLLMGR_TOOLS"])
 import override
 
-KNOWN = {"winehq-48872", "winehq-48874", "winehq-59251", "winehq-59609", "faststone"}
+import catalog_fixes
+
+KNOWN = catalog_fixes.known()
 NAMES = {"comctl32", "gdiplus"}
 
 

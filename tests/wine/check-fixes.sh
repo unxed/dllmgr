@@ -57,10 +57,11 @@ for exe in controls.exe controls6.exe; do
     set -e
     [ "$rc" = 1 ] || { echo "expected known unfixed failures, got $rc"; cat "results/before-$exe.txt"; exit 1; }
 done
-for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; do
+bundle_fixes=$(python3 scripts/catalog_fixes.py faststone)
+for selection in $bundle_fixes faststone; do
     git -C "$src" restore -- dlls/comctl32/listview.c dlls/gdiplus/graphics.c
     fixes=$selection
-    [ "$selection" != faststone ] || fixes='winehq-48872 winehq-48874 winehq-59251 winehq-59609'
+    [ "$selection" != faststone ] || fixes=$bundle_fixes
     for fix in $fixes; do git -C "$src" apply "$GITHUB_WORKSPACE/patches/$fix.patch"; done
     case $selection in
         winehq-48874) modules=gdiplus ;;
@@ -73,6 +74,7 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
         winehq-59251) checks='--check-wheel' ;;
         winehq-59609) checks='--check-position' ;;
         faststone) checks='--check-label --check-wheel --check-position' ;;
+        *) checks='' ;;
     esac
     if [[ " $modules " == *" gdiplus "* ]]; then
         cp "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "$RUNNER_TEMP/original-gdiplus.dll"

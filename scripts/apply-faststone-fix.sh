@@ -23,11 +23,7 @@ export FIW_WINE_ENCODING=utf-8
 export PYTHONIOENCODING=utf-8
 
 fix=${DLLMGR_FIX:-winehq-59609}
-case $fix in
-    winehq-48872|winehq-48874|winehq-59251|winehq-59609) fixes=$fix ;;
-    faststone) fixes='winehq-48872 winehq-48874 winehq-59251 winehq-59609' ;;
-    *) echo "unknown fix set: $fix" >&2; exit 2 ;;
-esac
+fixes=$(python3 "$here/catalog_fixes.py" "$fix") || exit 2
 release=https://github.com/unxed/dllmgr/releases/download/$fix
 export WINEPREFIX=${WINEPREFIX:-$HOME/.wine}
 work=${FIW_WORK:-$HOME/.cache/fix-it-in-wine}
