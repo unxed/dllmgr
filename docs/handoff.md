@@ -9,6 +9,9 @@ Start by checking that nothing broke:
    discover -s scripts/tests`, `go run ./cmd/dllmgr-catalog check catalog`.
 2. Read the latest `faststone-research` and `apply-scripts` runs on `main`
    (use fix-it-in-wine `tools/ci_wait.py`); fix what fails.
+   Normal job durations and the fail-fast limits (timeouts, bounded apt
+   installs, diagnostics on failure) are in `docs/ci-timing.md`; the CI
+   changes were merged untested.
 3. Pencil with the fix in the real Draw Board was never completed in CI (every
    run was cancelled by a later push). Read `pencil_stroke_color` from
    `faststone85-192-comparison/patched/snapshots85/draw/observations.txt`;
