@@ -1,7 +1,6 @@
 # CI timing
 
-Move into a "CI timing" subsection of `docs/handoff.md` once that file is on
-main (it is not there yet; creating it here would conflict).
+See also the current recovery steps in `docs/handoff.md`.
 
 ## Before (faststone-research, runs of 2026-11-06, Actions API)
 
@@ -27,3 +26,18 @@ windows-app 8, wine 11, faststone85 11, patched 20 (check step 12,
 record_attempt 600 s). Failures and timeouts dump `ps` and apt logs and kill a
 stuck wineserver. Anything above these is abnormal. After-timings were not
 measured (validation run skipped by owner decision).
+
+## Investigated failure after #17
+
+In run [42276979629](https://github.com/unxed/dllmgr/actions/runs/42276979629),
+`faststone85 (96)` failed before launching Wine or FastStone. Both APT install
+attempts reached exactly 150 seconds; the six-minute step timeout was not hit.
+Quiet APT output hid the active URL and no package configuration appeared in
+the first attempt's logs. The exact download/resolver stall is not established.
+The same 96-DPI job in run 42278157255 installed successfully in 76 seconds
+and completed its captures. This is not evidence of a DPI-specific app failure.
+
+The install helper now keeps download URLs and complete per-attempt logs,
+stops on repository setup/pipeline errors, passes package arguments literally,
+and bounds dpkg recovery. Failed jobs upload `ci-install-<job>` artifacts.
+The two 150-second attempt limits remain; raising them would hide the stall.

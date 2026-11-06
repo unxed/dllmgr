@@ -34,6 +34,12 @@ jobs:
         with:
           name: controls
           path: tests/wine/*.exe
+      - uses: actions/upload-artifact@v4
+        if: failure() || cancelled()
+        with:
+          name: ci-install-build
+          path: ${{ runner.temp }}/dllmgr-ci-install/
+
   windows:
     needs: build
     runs-on: windows-latest
@@ -108,6 +114,12 @@ jobs:
         with:
           name: wine-baseline
           path: wine-*.txt
+      - uses: actions/upload-artifact@v4
+        if: failure() || cancelled()
+        with:
+          name: ci-install-wine
+          path: ${{ runner.temp }}/dllmgr-ci-install/
+
   faststone85:
     needs: build
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deep)
@@ -141,6 +153,12 @@ jobs:
         with:
           name: faststone85-${{ matrix.dpi }}
           path: snapshots85/
+      - uses: actions/upload-artifact@v4
+        if: failure() || cancelled()
+        with:
+          name: ci-install-faststone85-${{ matrix.dpi }}
+          path: ${{ runner.temp }}/dllmgr-ci-install/
+
   patched:
     if: (github.event_name == 'workflow_dispatch' && inputs.deep) || startsWith(github.ref, 'refs/heads/fix/faststone-')
     needs: build
@@ -199,6 +217,11 @@ jobs:
             out/
             results/
             ${{ runner.temp }}/attempts/
+      - uses: actions/upload-artifact@v4
+        if: failure() || cancelled()
+        with:
+          name: ci-install-patched
+          path: ${{ runner.temp }}/dllmgr-ci-install/
 
   publish-faststone:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/fix/faststone-')

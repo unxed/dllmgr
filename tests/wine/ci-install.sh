@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Install CI packages with hard limits: every network call has a timeout and a
-# stalled apt/dpkg run is killed, dumped and retried once, so a bad mirror
-# costs minutes, not the job. Usage: ci-install.sh [--winehq] package...
-set -uo pipefail
-PS4='+ $(date +%T) '
+# Bound network/package operations and preserve the last URL/phase on failure.
+set -euo pipefail
+PS4='+ ${EPOCHREALTIME} '
+attempt_mode=0
+if [ "${1:-}" = --attempt ]; then attempt_mode=1; shift; fi
 winehq=0
 if [ "${1:-}" = --winehq ]; then winehq=1; shift; fi
+[ "$#" -gt 0 ] || { echo 'usage: ci-install.sh [--winehq] package...' >&2; exit 2; }
 apt_opts=(-o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 -o DPkg::Lock::Timeout=60)
 
 attempt() {
@@ -18,23 +19,41 @@ attempt() {
         curl -fsSL --retry 3 --connect-timeout 15 --max-time 60 https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources \
             | sudo tee /etc/apt/sources.list.d/winehq-noble.sources >/dev/null
     fi
-    sudo apt-get "${apt_opts[@]}" update -qq &&
-        sudo apt-get "${apt_opts[@]}" install -y -qq "$@"
+    sudo apt-get "${apt_opts[@]}" update -q
+    # One -q retains download URLs, unlike -qq; full output stays in the log.
+    sudo apt-get "${apt_opts[@]}" install -y -q "$@"
 }
 
-dump() {
-    echo "::group::diagnostics after stalled install"
-    ps -eo pid,ppid,etime,stat,wchan:20,args --forest | grep -E 'apt|dpkg|curl|http' | grep -v grep
-    tail -n 20 /var/log/apt/term.log /var/log/dpkg.log 2>/dev/null
-    echo "::endgroup::"
-}
-
+# A separate strict shell makes setup/pipeline errors fatal even though the
+# parent tests timeout's exit code. Package arguments never become shell code.
+if [ "$attempt_mode" = 1 ]; then attempt "$@"; exit; fi
+logs=${RUNNER_TEMP:-${TMPDIR:-/tmp}}/dllmgr-ci-install
+mkdir -p "$logs"
+setup=()
+[ "$winehq" = 0 ] || setup=(--winehq)
 for n in 1 2; do
-    # Normal install is 60-80 s; 150 s is about 2x that, two attempts.
-    if timeout -k 10 150 bash -c "$(declare -f attempt); $(declare -p apt_opts winehq); attempt $*"; then exit 0; fi
-    echo "::warning::install attempt $n failed or stalled"
-    dump
-    sudo pkill -9 -x -e 'apt-get|dpkg|apt' || true
-    sudo dpkg --configure -a || true
+    log=$logs/attempt-$n.log
+    if timeout -k 5 150 bash "${BASH_SOURCE[0]}" --attempt "${setup[@]}" "$@" >"$log" 2>&1; then
+        tail -n 12 "$log"
+        exit 0
+    else
+        rc=$?
+    fi
+    echo "::warning::install attempt $n failed (exit $rc); log: $log"
+    tail -n 40 "$log"
+    {
+        ps -eo pid,ppid,etime,stat,wchan:20,args --forest | grep -E 'apt|dpkg|curl|http' | grep -v grep || true
+        find /var/cache/apt/archives/partial -maxdepth 1 -type f -printf '%f %s bytes\n' 2>/dev/null || true
+        tail -n 20 /var/log/apt/term.log /var/log/dpkg.log 2>/dev/null || true
+    } | tee "$logs/diagnostics-$n.log"
+    if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
+        # CI runners are disposable; timeout may leave sudo's separate group.
+        sudo pkill -9 -x -e 'apt-get|dpkg|apt' || true
+        if ! timeout -k 2 12 sudo dpkg --configure -a >"$logs/recovery-$n.log" 2>&1; then
+            tail -n 20 "$logs/recovery-$n.log"
+            echo '::error::dpkg recovery failed; not retrying a broken package state'
+            exit 1
+        fi
+    fi
 done
 exit 1
