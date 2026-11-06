@@ -22,7 +22,7 @@ var (
 )
 
 var fixFields = set("id", "kind", "title", "bug", "dlls", "programs", "wine",
-	"patch", "patch_sha256", "recipe", "binaries", "evidence", "license",
+	"patch", "patch_sha256", "recipe", "binaries", "evidence", "results", "license",
 	"authors", "ai_assisted", "funding")
 
 var fixRequired = []string{"title", "bug", "dlls", "patch", "patch_sha256", "license"}
@@ -33,7 +33,7 @@ var variantFields = set("id", "kind", "title", "summary", "dll", "file",
 
 var variantRequired = []string{"dll", "provider", "version", "arch", "license", "source", "sha256"}
 
-var bundleFields = set("id", "kind", "title", "programs", "wine", "fixes")
+var bundleFields = set("id", "kind", "title", "programs", "wine", "fixes", "application", "profiles")
 var bundleRequired = []string{"title", "programs", "fixes"}
 
 var fetchFields = set("urls", "sha256", "format", "member")
@@ -45,6 +45,11 @@ var fetchFormats = map[string]bool{"deb": true, "tar.xz": true, "tar.zst": true,
 var trackers = map[string]func(u *url.URL, num string) bool{
 	"winehq": func(u *url.URL, num string) bool {
 		return u.Host == "bugs.winehq.org" && u.Path == "/show_bug.cgi" && u.Query().Get("id") == num
+	},
+	// dllmgr issues hold fixes that have no upstream bug yet. Move the
+	// entry to its upstream id once a WineHQ report exists.
+	"dllmgr": func(u *url.URL, num string) bool {
+		return u.Scheme == "https" && u.Host == "github.com" && u.Path == "/unxed/dllmgr/issues/"+num && u.RawQuery == ""
 	},
 }
 
@@ -174,6 +179,7 @@ func (v *validator) entry(e *Entry) {
 	case KindBundle:
 		v.nonEmptyItems("programs", e.Programs)
 		v.nonEmptyItems("wine", e.Wine)
+		v.bundleProfiles(e)
 		seen := map[string]bool{}
 		for _, id := range e.Fixes {
 			if !fixIDRe.MatchString(id) {
@@ -184,6 +190,46 @@ func (v *validator) entry(e *Entry) {
 			}
 			seen[id] = true
 		}
+	}
+}
+
+func (v *validator) bundleProfiles(e *Entry) {
+	if e.Application != "" && !verRe.MatchString(e.Application) {
+		v.fail("application", "%q is not a valid application id", e.Application)
+	}
+	if len(e.Profiles) == 0 {
+		return
+	}
+	if e.Application == "" {
+		v.fail("application", "required when profiles are present")
+	}
+	profiles, ok := v.raw["profiles"].([]any)
+	if !ok {
+		return
+	}
+	fields := set("version", "exe_sha256", "wine", "host_arch", "prefix_arch", "release")
+	seen := map[[4]string]bool{}
+	for i, profile := range e.Profiles {
+		if raw, ok := profiles[i].(map[string]any); ok {
+			for _, field := range sortedKeys(raw) {
+				if !fields[field] {
+					v.fail("profiles", "profile %d has unknown field %q", i+1, field)
+				}
+			}
+		}
+		if !verRe.MatchString(profile.Version) || !sha256Re.MatchString(profile.ExeSHA256) ||
+			!strings.HasPrefix(profile.Wine, "wine-") || !verRe.MatchString(profile.Wine) ||
+			!nameRe.MatchString(profile.HostArch) || (profile.PrefixArch != "win32" && profile.PrefixArch != "win64") {
+			v.fail("profiles", "profile %d requires a version, executable SHA256, Wine tag, host architecture and win32 or win64 prefix", i+1)
+		}
+		if profile.Release != "" && !verRe.MatchString(profile.Release) {
+			v.fail("profiles", "profile %d has an invalid release tag %q", i+1, profile.Release)
+		}
+		key := [4]string{profile.ExeSHA256, profile.Wine, profile.HostArch, profile.PrefixArch}
+		if seen[key] {
+			v.fail("profiles", "profile %d repeats an executable and platform combination", i+1)
+		}
+		seen[key] = true
 	}
 }
 
@@ -227,6 +273,39 @@ func (v *validator) fix(e *Entry) {
 	v.url("binaries", e.Binaries, false)
 	v.url("evidence", e.Evidence, false)
 	v.url("funding", e.Funding, false)
+	v.results(e)
+}
+
+var resultFields = set("check", "exe_sha256", "wine", "host_arch", "prefix_arch",
+	"dpi", "without", "with", "windows", "run")
+
+// results checks the evidence rows: closed keys, a named check, an exact Wine
+// tag, pass/fail outcomes and a link to the run.
+func (v *validator) results(e *Entry) {
+	raw, _ := v.raw["results"].([]any)
+	for i, r := range e.Results {
+		if i < len(raw) {
+			if m, ok := raw[i].(map[string]any); ok {
+				for _, k := range sortedKeys(m) {
+					if !resultFields[k] {
+						v.fail("results", "row %d has unknown field %q", i+1, k)
+					}
+				}
+			}
+		}
+		outcome := func(s string, optional bool) bool {
+			return s == "pass" || s == "fail" || (optional && s == "")
+		}
+		if r.Check == "" || !strings.HasPrefix(r.Wine, "wine-") || !verRe.MatchString(r.Wine) ||
+			!outcome(r.Without, false) || !outcome(r.With, false) || !outcome(r.Windows, true) ||
+			(r.ExeSHA256 != "" && !sha256Re.MatchString(r.ExeSHA256)) {
+			v.fail("results", "row %d needs a check, a Wine tag, pass/fail for without and with, and optional windows", i+1)
+		}
+		v.url("results", r.Run, true)
+		if r.Run == "" {
+			v.fail("results", "row %d needs the run URL", i+1)
+		}
+	}
 }
 
 func (v *validator) variant(e *Entry) {

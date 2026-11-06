@@ -1,4 +1,4 @@
-# dllmgr: manager of DLL variants for Wine and Marwin. Concept v0.3
+# dllmgr: manager of DLL variants for Wine and Marwin. Concept v0.4
 
 Working name: `dllmgr`. The owner picks the final name.
 Language: Go. GUI: `github.com/unxed/goWidgets`.
@@ -8,8 +8,11 @@ Code, catalog, libraries and patches live in this repository.
 
 The system Wine comes from the distribution repository (Mint 22 gives Wine 9.0).
 The user needs to say: "take comctl32 from Wine 11 and enable it **only for
-FastStone** (`FSViewer.exe`, any version, installed or portable) in the prefix
+FastStone** (`FSViewer.exe`, installed or portable) in the prefix
 `~/.wine`; roll back with one button".
+The default experience is `dllmgr fix faststone` or the GUI's **Fix FastStone**
+action. Both discover the app and apply a verified, compatible set. The manual
+DLL and slot controls remain available under advanced options (§10–11).
 The user also needs to publish own DLL implementations (for example cc580,
 comctl32 5.80 written in Bp) in a common catalog, so that others install them
 the same way.
@@ -140,8 +143,8 @@ A prefix is described by a set of rules (the desired state) and by the stored
 originals. Every action changes the set of rules and calls `reconcile()`.
 - Rollback means removing the rule. `reset` removes all rules, and the prefix
   returns byte for byte to its original state.
-- Crash safety needs no extra work: reconcile is idempotent, and a repeated run
-  completes an interrupted operation.
+- Reconcile is idempotent. Persist the transaction intent and originals before
+  changing files so a repeated run can recover an interrupted operation.
 - "Undo the last" takes the "before" snapshot from `history.jsonl` (snapshots of
   the set of rules before and after each change).
 
@@ -155,6 +158,7 @@ prefix):
     "variant": "comctl32@wine:11.0/i386", "sha256": "…",
     "wine_at_apply": "wine-9.0 (Ubuntu …)", "exe_paths": ["…"], "added": "…"
   }],
+  "subscriptions": [{"app_id": "faststone", "roots": [], "source": "fix"}],
   "originals": {
     "files": {"drive_c/windows/syswow64/comctl32.dll":
               {"sha256": "…", "backup": "dllmgr/backup/<sha256>", "symlink_to": null}},
@@ -187,6 +191,16 @@ Algorithm of `reconcile()`:
    directory), the link itself is replaced, and its target is stored in the
    original.
 6. `state.json` is saved atomically after each successful operation.
+
+Automatic selections persist the canonical app ID, matched installation paths,
+their observed versions and PE architectures, and the selected fix IDs and
+concrete artifact hashes. Subscriptions are separate desired policy. The app
+may be followed even when it has no compatible fix yet. On upgrade, resolve
+again against the current installations and catalog. Use a prefix lock and
+stage all downloads, compatibility checks and conflict checks before changing
+files. Commit interacting rules in one transaction and restore the previous
+files, registry values and state on failure. Keep the first original across
+all upgrades so unfix still restores it.
 
 ## 5. Checks before apply (all before the first change)
 
@@ -297,6 +311,35 @@ patch is known to apply to), `recipe`, `binaries`, `evidence`, `authors`,
 `ai_assisted`, `funding` are optional. A binary is built by CI from the patch
 and is listed with its sha256; it is never the only form.
 
+Automatic selection uses a planned application identity entry under
+`catalog/apps/<app-id>.md`, for example `faststone`. It declares the canonical
+ID, aliases, executable names and PE product or vendor identity when available.
+A fix or bundle may declare applicability as alternative profiles. All fields
+within a profile must match. Profiles can constrain the app ID, app version,
+PE machine, Wine target/version and, only where relevant, host architecture or
+a detectable backend or hardware capability. A single bug ID can carry several
+profiles and builds. A bundle is resolved per installation and may select a
+different compatible subset for a different app version or machine.
+
+Use exact app versions or documented numeric version intervals. Match a
+validated PE version resource or an explicit catalog identity signal, never a
+guess from the directory name. An unknown version matches only a profile that
+explicitly supports version-independent use. PE machine controls which DLL can
+be loaded. A 32-bit FastStone process needs `i386` DLLs on a 64-bit Wine host
+too. Host CPU, GPU and translation constraints are optional and belong in the
+profile only when they change the fix's applicability. Unknown constrained
+fields yield a skip with a reason. A legacy `programs` match remains useful for
+discovery, but is insufficient to declare a fix verified for automatic use.
+
+The resolver only auto-applies entries explicitly verified for the observed
+profile and allowed by the user's configured sources. Candidate fixes remain
+available for explicit manual testing. The concrete DLL must still pass the
+existing hash, architecture, Wine and import checks. Compatible patches to one
+DLL are composed on one Wine source base and resolved to one binary. When the
+catalog cannot prove a compatible composition, report the conflict instead of
+installing one patch over the other. A newer release can replace or supersede
+an older fix only through explicit catalog metadata and a compatible plan.
+
 **Kind `variant`**: a whole module not tied to one bug: a module from another
 Wine release, or a third-party library such as cc580.
 
@@ -361,6 +404,48 @@ Config: `wine.binary="wine"`, `wine.dll_dirs=[]`, `prefixes=[]`, `taps=[…]`,
 
 ## 10. CLI
 
+The commands below describe the planned manager. The default interaction is
+the one-step **Fix** action, with no DLL, slot or variant choices required.
+
+| Command | Behavior |
+| --- | --- |
+| `dllmgr fix faststone` | Discover FastStone in the selected prefix and apply its verified, compatible fixes as a set. Follow the app after a successful apply unless `--no-follow` is set. |
+| `dllmgr unfix faststone` | Remove the managed FastStone fix set and its subscription. Restore the original DLLs and override values where no other rule still needs them. |
+| `dllmgr fix world` | Discover all known apps in the selected prefix and apply each compatible fix set. Print unmatched, ambiguous or incompatible cases and continue with independent apps. Follow only the apps successfully fixed, without retaining a wildcard subscription. |
+| `dllmgr unfix world` | Remove app fix sets and their subscriptions in the selected prefix. Leave manually added DLL rules in place. |
+| `dllmgr follow faststone` | Subscribe to FastStone in this prefix, even before a compatible fix exists. |
+| `dllmgr unfollow faststone` | Stop updating this app automatically through `upgrade`. Keep the current fixes. |
+| `dllmgr update` | Refresh configured catalog indexes. Keep the previous index if validation fails. Alias for `index update`. |
+| `dllmgr upgrade` | Re-detect followed apps and reconcile their verified fix sets against the refreshed index. This can add new fixes, update old ones, and remove superseded or explicitly inapplicable rules as part of one compatible plan. |
+
+`dllmgr fix` without a name is implemented as the first step of `fix world`
+(D18): it scans `drive_c`, matches recipe rows and asks before each apply.
+The installer adds a menu entry that runs it, for use without a terminal.
+
+Discovery checks the selected prefix's Windows registry and scans its owned
+drive roots recursively, including portable apps outside Program Files. It
+also checks external roots the user explicitly adds. It deduplicates paths,
+never launches executables to identify them, and does not traverse links or
+drive mappings outside the allowed roots. In particular `Z:` is not a default
+scan root. If several installations share an executable basename, the planner
+checks all of them before setting a basename-wide Wine rule. A user-supplied
+path identifies the target installation but does not isolate the Wine override.
+If versions or architectures require incompatible effective rules, report the
+affected paths and require separate prefixes for those selections.
+
+`dllmgr update && dllmgr upgrade --yes` is the manual unattended-friendly
+flow. `--dry-run` prints the plan without writing files or registry values.
+`--yes` accepts the computed plan without interactive input. Conflicts,
+untrusted sources, missing verification and active target processes still block
+the affected changes. The command reports per-app outcomes and returns a
+failure status if a planned operation could not complete. A failed refresh
+keeps the previous index, and a failed upgrade transaction keeps the previous
+selection for the affected apps. Missing metadata alone is insufficient to
+remove a managed rule. A distro or external scheduler can invoke these commands
+later. Service and scheduling policy belong to that integration.
+
+Advanced commands remain available for authors and manual overrides.
+
 ```
 dllmgr index update
 dllmgr search <dll>            dllmgr info <variant>
@@ -386,12 +471,13 @@ Message/Confirm/Ask, file dialogs and a tray. It has a headless backend. Before
 work, read the README, `docs/disdoc.md`, `docs/adr/` and `AGENTS.md`.
 If a needed widget is missing, stop and ask. Do not write widgets inside dllmgr.
 
-One window:
-- ComboBox "Prefix".
-- Table of rules: "Program | DLL | Variant | State".
-- Buttons "Add…", "Remove", "Change variant", "Check by running", "Update
-  catalog".
-- TextView with the log.
+The default view is an application list for the selected prefix. The primary
+action is **Fix** for a selected app and **Fix all** for the whole prefix.
+Show the detected app version and architecture, available fixes, conflicts and
+follow status. Offer **Unfix**, **Unfix all**, **Follow**, **Unfollow**,
+**Refresh catalog** and **Apply updates** using the CLI policy from §10. Show
+the resolved plan and its result in the log. The advanced view exposes the
+program/DLL/variant/state table and manual rule editing.
 
 The "Add" scenario:
 1. A file dialog selects the exe.
@@ -468,7 +554,11 @@ everything else is the standard library.
 - **I3:** the catalog and download; `apply --app FSViewer.exe
   comctl32@wine:latest`. The first catalog content is comctl32 and comctl32_v6
   from Wine 11.0.
-- **I4:** GUI.
+- **I3a:** application discovery and applicability profiles. Implement `fix`,
+  `unfix`, `follow`, `unfollow`, `update` and `upgrade` on top of the same
+  planner and reconciler. Exercise FastStone as the first end-to-end app.
+- **I4:** GUI with **Fix** and **Fix all** as the primary actions, using the
+  same planner and subscriptions as the CLI.
 - **I5:** `pack`, `pack-wine`, catalog CI.
 - **I6:** patches (§16): the entry DLL, the loader `dmpatch.dll`, `dmpatch.h`,
   the first patch.
@@ -616,7 +706,9 @@ repro program supplied by the caller. Scenarios with xdotool come later.
 
 The AI agent skill "fix my application under Wine" lives in
 https://github.com/unxed/fix-it-in-wine. It uses dllmgr to apply, undo, verify,
-collect diagnostics (`diag`) and install patches. Until dllmgr exists, the skill
+collect diagnostics (`diag`) and install patches. What it may send to Wine is
+limited by the clean-room rules in D16; the reasons are in
+[vision.md](vision.md). Until dllmgr exists, the skill
 ships small stand-in tools.
 
 ## 19. Exchanging fixes (concept, not planned yet)
@@ -663,3 +755,6 @@ Hooks to keep in the design now:
 7. **Requests.** fix-it-in-wine, when it cannot fix a problem, can draft a request ("this
    program, this symptom, this digest") for a catalog, posted only with the user's approval —
    the start point for a bounty.
+8. **Vendor kits.** A software vendor can ship a recipe's modules inside its own package,
+   active only under the Wine releases they were measured on. See
+   [vendor-kits.md](vendor-kits.md) (D19).

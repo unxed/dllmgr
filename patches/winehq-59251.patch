@@ -1,30 +1,59 @@
 diff --git a/dlls/comctl32/listview.c b/dlls/comctl32/listview.c
-index f91e63f..c6afac6 100644
+index f91e63f..5228616 100644
 --- a/dlls/comctl32/listview.c
 +++ b/dlls/comctl32/listview.c
-@@ -10023,6 +10023,29 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
+@@ -10023,6 +10023,58 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
      switch(infoPtr->uView)
      {
      case LV_VIEW_ICON:
 +    {
 +        DWORD style = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
++        BOOL horizontal = (style & WS_HSCROLL) && !(style & WS_VSCROLL);
 +
 +        /* Left-aligned icon layouts grow horizontally (e.g. FastStone's
 +         * fullscreen strip). Windows sends the wheel to the horizontal bar
 +         * when there is no vertical scrollbar. Scrollbar visibility can
 +         * change without updating the list view's cached style. */
-+        if ((style & WS_HSCROLL) && !(style & WS_VSCROLL))
++        if (horizontal
++#if __WINE_COMCTL32_VERSION == 6
++            || (style & WS_VSCROLL)
++#endif
++           )
 +        {
-+            int detents;
++            int detents, scroll = LISTVIEW_SCROLL_ICON_LINE_SIZE;
++            UINT lines = 3;
++
 +            if ((wheelDelta < 0 && infoPtr->cWheelRemainder > 0) ||
 +                (wheelDelta > 0 && infoPtr->cWheelRemainder < 0))
 +                infoPtr->cWheelRemainder = 0;
 +            infoPtr->cWheelRemainder += wheelDelta;
 +            detents = infoPtr->cWheelRemainder / WHEEL_DELTA;
 +            infoPtr->cWheelRemainder %= WHEEL_DELTA;
-+            SystemParametersInfoW(SPI_GETWHEELSCROLLLINES, 0, &pulScrollLines, 0);
-+            if (detents && pulScrollLines)
-+                LISTVIEW_HScroll(infoPtr, SB_INTERNAL, -detents * LISTVIEW_SCROLL_ICON_LINE_SIZE);
++            if (!detents) break;
++            SystemParametersInfoW(SPI_GETWHEELSCROLLLINES, 0, &lines, 0);
++            if (!lines) break;
++#if __WINE_COMCTL32_VERSION == 6
++            {
++                SCROLLINFO info = {sizeof(info), SIF_PAGE};
++                ULONGLONG pixels;
++                int line = (horizontal ? infoPtr->nItemWidth : infoPtr->nItemHeight) / 2;
++
++                if (!GetScrollInfo(infoPtr->hwndSelf, horizontal ? SB_HORZ : SB_VERT, &info))
++                    break;
++                /* Native v6 moves a large-icon view by the configured number
++                 * of lines per detent, up to one page. A line is half the
++                 * item spacing on the scrolled axis: 37 pixels for default
++                 * 32x32 icons, 69/72 for FastStone's 138x144 cells. */
++                if (line > 0) scroll = line;
++                pixels = min((ULONGLONG)lines * scroll, info.nPage);
++                scroll = min(pixels * abs(detents), MAXLONG);
++                if (detents > 0) scroll = -scroll;
++            }
++#else
++            scroll *= -detents;
++#endif
++            if (horizontal) LISTVIEW_HScroll(infoPtr, SB_INTERNAL, scroll);
++            else LISTVIEW_VScroll(infoPtr, SB_INTERNAL, scroll);
 +            break;
 +        }
 +    }

@@ -11,8 +11,9 @@ Working name: `dllmgr`. The owner picks the final name.
 
 - Sets one DLL for one program. The module can come from another Wine
   release or from a third party, for example cc580.
-- Keys the rule by exe name. One rule covers every copy and every version
-  of the program in a prefix, installed or portable.
+- Keys Wine overrides by exe name, including copies installed outside Program
+  Files. Automatic selection checks the detected versions and architectures
+  before creating a rule shared by copies with that name.
 - Applies patches for DLLs that cannot be replaced (DLLs with a unix part
   and the system core).
 - Rolls back in one step. Removing a rule restores the prefix byte for byte.
@@ -35,9 +36,15 @@ Working name: `dllmgr`. The owner picks the final name.
 
 Existing:
 
+- `docs/vision.md`: why this exists and where it goes (the owner's text, with
+  editorial notes and a plan table).
+- `docs/vendor-kits.md`: the plan for vendors who ship fixed DLLs in their
+  own packages (proposal).
 - `docs/concept.md`: the concept (targets, model, checks, catalog, CLI, GUI,
   patches, diagnostics, iterations).
 - `docs/decisions.md`: the log of decisions (who, when, why).
+- `docs/handoff.md`: where the FastStone work stands and what needs a local machine.
+- `docs/data-model.md`: the catalog data model (fix files, recipe files, environment rows).
 - `catalog/`: the catalog. One Markdown file with YAML frontmatter per entry,
   `fixes/` (one file per bug) and `variants/` (whole-DLL alternatives),
   `index.json` compiled from the frontmatter. See `catalog/README.md`.
@@ -47,11 +54,13 @@ Existing:
   Registry output uses the locale's OEM code page, following `unxed/localecp`.
 - `cmd/dllmgr-catalog/`, `internal/catalog/`: the catalog validator and index
   compiler (Go). CI: `.github/workflows/catalog.yml`.
+- `dllmgr` and `install.sh`: the CLI and per-user installer for the FastStone
+  preview. See [installation and recipe links](docs/recipes.md).
 - `spike/spike0.sh`: the manual spike of iteration 0.
 
 Planned:
 
-- `cmd/dllmgr/`: the CLI and the `gui` subcommand.
+- The Go manager and `gui` subcommand.
 - `internal/`: the other packages (PE parser, Wine lookup, state, checks and so on).
 - `libs/cc580/`: cc580, comctl32 5.80 written in Bp. Plan:
   https://github.com/unxed/dllmgr/issues/1
@@ -59,9 +68,12 @@ Planned:
 
 ## Status
 
-The only code so far is the catalog tool (`cmd/dllmgr-catalog`). The manager itself
-is not written yet. Work starts with iterations 0 and 1 of the concept
-(owner's decision, 2026-11-06).
+The preview implements `dllmgr fix` (find the programs with recipes in a
+prefix and apply them after a yes), `dllmgr fix faststone`,
+`dllmgr uninstall faststone` and `dllmgr share faststone`. See the [FastStone recipe](catalog/bundles/faststone-all.md)
+for the supported configuration and measured results. The planned `fix world`,
+subscriptions, unattended updates and GUI are described in the
+[CLI and GUI design](docs/concept.md#10-cli).
 
 ## License
 

@@ -35,38 +35,47 @@ check_controls() {
     return "$rc"
 }
 
+build_modules() {
+    local dest=$1 dll mod arch
+    shift
+    bash fiw/tools/build_one_dll.sh "$tag" "$@" > built.txt
+    mkdir -p "$dest"
+    while read -r dll; do
+        mod=$(basename "$(dirname "$(dirname "$dll")")")
+        arch=$(basename "$(dirname "$dll")"); arch=${arch%-windows}
+        python3 fiw/tools/pe_unmark.py "$dll" "$dest/$mod-$tag-$arch.dll"
+    done < built.txt
+}
+
 wineboot -u
 # Initialization can outlive wineboot.exe; settle it before replacing modules.
 timeout 30s wineserver -w || stop_server
 for exe in controls.exe controls6.exe; do
     set +e
-    wine "$exe" --check-label --check-wheel --check-position > "results/before-$exe.txt"
+    extra=; [ "$exe" != controls6.exe ] || extra=--check-icon-cell
+    wine "$exe" --check-label --check-wheel --check-position $extra > "results/before-$exe.txt"
     rc=$?
     set -e
     [ "$rc" = 1 ] || { echo "expected known unfixed failures, got $rc"; cat "results/before-$exe.txt"; exit 1; }
 done
-for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; do
+bundle_fixes=$(python3 scripts/catalog_fixes.py faststone)
+for selection in $bundle_fixes faststone; do
     git -C "$src" restore -- dlls/comctl32/listview.c dlls/gdiplus/graphics.c
     fixes=$selection
-    [ "$selection" != faststone ] || fixes='winehq-48872 winehq-48874 winehq-59251 winehq-59609'
+    [ "$selection" != faststone ] || fixes=$bundle_fixes
     for fix in $fixes; do git -C "$src" apply "$GITHUB_WORKSPACE/patches/$fix.patch"; done
     case $selection in
         winehq-48874) modules=gdiplus ;;
         faststone) modules='comctl32 comctl32_v6 gdiplus' ;;
         *) modules='comctl32 comctl32_v6' ;;
     esac
-    bash fiw/tools/build_one_dll.sh "$tag" $modules > built.txt
-    mkdir -p "out/$selection"
-    while read -r dll; do
-        mod=$(basename "$(dirname "$(dirname "$dll")")")
-        arch=$(basename "$(dirname "$dll")"); arch=${arch%-windows}
-        python3 fiw/tools/pe_unmark.py "$dll" "out/$selection/$mod-$tag-$arch.dll"
-    done < built.txt
+    build_modules "out/$selection" $modules
     case $selection in
         winehq-48872) checks='--check-label' ;;
         winehq-59251) checks='--check-wheel' ;;
         winehq-59609) checks='--check-position' ;;
         faststone) checks='--check-label --check-wheel --check-position' ;;
+        *) checks='' ;;
     esac
     if [[ " $modules " == *" gdiplus "* ]]; then
         cp "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "$RUNNER_TEMP/original-gdiplus.dll"
@@ -99,7 +108,12 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
     wine reg query 'HKCU\Software\Wine\AppDefaults\controls.exe\DllOverrides'
     sha256sum "$original" "out/$selection/comctl32-$tag-x86_64.dll"
     check_controls controls.exe v5 $checks
-    check_controls controls6.exe v6 $checks
+    case $selection in
+        winehq-59251) check_controls controls6.exe v6 $checks --check-icon-wheel-speed ;;
+        dllmgr-14) check_controls controls6.exe v6 $checks --check-icon-cell ;;
+        faststone) check_controls controls6.exe v6 $checks --check-icon-wheel-speed --check-icon-cell ;;
+        *) check_controls controls6.exe v6 $checks ;;
+    esac
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls.exe --name comctl32
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls6.exe --name comctl32
     cmp "$original" "$RUNNER_TEMP/original-v5.dll"
@@ -110,3 +124,4 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
     for fix in $fixes; do cp "patches/$fix.patch" "out/$selection/"; done
     (cd "out/$selection" && sha256sum *.dll > SHA256SUMS)
 done
+

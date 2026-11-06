@@ -33,6 +33,7 @@ type Entry struct {
 	Recipe     string   `yaml:"recipe,omitempty" json:"recipe,omitempty"`
 	Binaries   string   `yaml:"binaries,omitempty" json:"binaries,omitempty"`
 	Evidence   string   `yaml:"evidence,omitempty" json:"evidence,omitempty"`
+	Results    []Result `yaml:"results,omitempty" json:"results,omitempty"`
 	AIAssisted *bool    `yaml:"ai_assisted,omitempty" json:"ai_assisted,omitempty"`
 	Funding    string   `yaml:"funding,omitempty" json:"funding,omitempty"`
 
@@ -49,6 +50,10 @@ type Entry struct {
 	Fetch    *Fetch   `yaml:"fetch,omitempty" json:"fetch,omitempty"`
 	Fixes    []string `yaml:"fixes,omitempty" json:"fixes,omitempty"`
 
+	// Bundle.
+	Application string          `yaml:"application,omitempty" json:"application,omitempty"`
+	Profiles    []BundleProfile `yaml:"profiles,omitempty" json:"profiles,omitempty"`
+
 	// Path is the file's path relative to the catalog directory, with
 	// forward slashes. It is not part of the frontmatter; the loader sets it.
 	Path string `yaml:"-" json:"path"`
@@ -60,4 +65,32 @@ type Fetch struct {
 	SHA256 string   `yaml:"sha256" json:"sha256"`
 	Format string   `yaml:"format" json:"format"`
 	Member string   `yaml:"member,omitempty" json:"member,omitempty"`
+}
+
+// BundleProfile limits automatic installation to a measured combination.
+type BundleProfile struct {
+	Version    string `yaml:"version" json:"version"`
+	ExeSHA256  string `yaml:"exe_sha256" json:"exe_sha256"`
+	Wine       string `yaml:"wine" json:"wine"`
+	HostArch   string `yaml:"host_arch" json:"host_arch"`
+	PrefixArch string `yaml:"prefix_arch" json:"prefix_arch"`
+	// Release is the GitHub release tag with prebuilt modules for this
+	// profile. Bump it whenever the bundle's fixes or patches change.
+	Release string `yaml:"release,omitempty" json:"release,omitempty"`
+}
+
+// Result is one evidence row of a fix: a check run in one environment
+// without and with the fix, and on Windows when available. Rows are only
+// added; a later regression is a new row.
+type Result struct {
+	Check      string `yaml:"check" json:"check"`
+	ExeSHA256  string `yaml:"exe_sha256,omitempty" json:"exe_sha256,omitempty"`
+	Wine       string `yaml:"wine" json:"wine"`
+	HostArch   string `yaml:"host_arch,omitempty" json:"host_arch,omitempty"`
+	PrefixArch string `yaml:"prefix_arch,omitempty" json:"prefix_arch,omitempty"`
+	DPI        int    `yaml:"dpi,omitempty" json:"dpi,omitempty"`
+	Without    string `yaml:"without" json:"without"`
+	With       string `yaml:"with" json:"with"`
+	Windows    string `yaml:"windows,omitempty" json:"windows,omitempty"`
+	Run        string `yaml:"run" json:"run"`
 }

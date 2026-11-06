@@ -4,7 +4,8 @@ The catalog is a set of Markdown files in this directory. One file is one
 entry. The YAML frontmatter at the top of the file is read by the client; the
 prose below it is for people and is rendered by GitHub. There is no backend and
 no account: entries arrive through pull requests to this repository, and CI
-compiles the frontmatter into `index.json`, the file the client downloads.
+compiles the frontmatter into `index.json`, the file the client downloads:
+`{"format": 1, "entries": [...]}`. A client refuses a format it does not know.
 The same model is used by the f4 PlugRing catalog.
 
 The catalog carries source, not binaries. A fix is a patch with its sha256 and
@@ -25,7 +26,9 @@ Fixes are catalogued by bug, not by program. DLLs are a field of an entry, not a
 directory level: one bug can need several modules. The client finds entries by
 DLL name or by program name through `index.json`.
 
-Trackers: `winehq` (WineHQ Bugzilla, `https://bugs.winehq.org/show_bug.cgi?id=N`).
+Trackers: `winehq` (WineHQ Bugzilla, `https://bugs.winehq.org/show_bug.cgi?id=N`) and
+`dllmgr` (`https://github.com/unxed/dllmgr/issues/N`, for a fix that has no
+upstream bug yet; rename the entry once a WineHQ report exists).
 
 ## Submitting an entry
 
@@ -61,6 +64,30 @@ A source patch for one bug.
 | `authors` | no | list of names |
 | `ai_assisted` | no | `true` if an AI agent wrote the change |
 | `funding` | no | URL of a bounty or donation page; dllmgr only shows it |
+
+## The description in words
+
+The prose of a fix file is a product, not a comment. It is the part a Wine
+developer, another agent or a ReactOS porter can use without the patch (D16,
+D17). Write it under four headings, in this order (`winehq-59251.md` is an
+example):
+
+- `## Problem`: what the program shows, and which API behaves differently.
+- `## Windows behavior`: what Windows does, measured by a test program. Name
+  the check from `results`. Black-box facts only. A short note in
+  parentheses may follow the heading, such as "(measured)".
+- `## The fix, in words`: what to change in Wine: the module, the function
+  or message, the rule, and the cases that must not change. Do not retell
+  the patch line by line.
+- `## Results`: how the change was tested and with what result. Point to the
+  `results` rows; add the visual check in the real application when there is
+  one.
+
+A description is complete when someone given only the description and the
+Wine source tree, not the patch, can write a change that passes the same
+check. fix-it-in-wine runs this as its report self-check. The same parts form
+the core of a WineHQ Bugzilla report. Other prose (installation, history) may
+follow under other headings. Scripts never read the prose.
 
 ## Kind `variant`
 
@@ -113,3 +140,19 @@ An application selection built from existing fixes. Fields: `id`, `kind: bundle`
 References must resolve to catalog fixes and cannot repeat. Bundle IDs are not
 Wine bug IDs. The installer must compose patches for shared modules and retain
 one original uninstall baseline.
+
+## Applicability for automatic fixes
+
+An installable application bundle has an `application` ID such as
+`faststone` and explicit `profiles`. Each profile records the application
+`version`, exact `exe_sha256`, `wine` tag, `host_arch` and `prefix_arch`.
+The hash identifies the measured executable, including its PE architecture.
+Profiles can cover separate app builds and hosts as evidence becomes available.
+`programs` is a discovery hint.
+
+Keep published recipes, applicability and source/asset references in the
+dllmgr catalog so the CLI and GUI share one resolution contract.
+[fix-it-in-wine](https://github.com/unxed/fix-it-in-wine) owns the agent
+workflow, diagnostic helpers and research writeups. It can propose a patch
+and recipe through a dllmgr pull request. A recipe link points to the
+dllmgr bundle page.

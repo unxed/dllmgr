@@ -19,6 +19,8 @@ patch list with the output.
   on 24-bit DIBs.
 - `winehq-59251.patch`: candidate horizontal icon-list wheel handling; separate
   from the thumbnail-drawing coordinate correction.
+- `dllmgr-14.patch`: the whole cell as the v6 large-icon `LVIR_ICON` rectangle;
+  keeps FastStone's owner-drawn tiles inside their frames (dllmgr issue 14).
 
 Candidate status and before/after/undo evidence are described in
 [the FastStone audit](../docs/faststone.md). A patch applying or compiling does

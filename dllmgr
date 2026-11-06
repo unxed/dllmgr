@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+here=$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")
+
+usage() {
+    cat <<'USAGE'
+Usage:
+  dllmgr fix [--exe PATH] [--yes] [--dry-run]
+  dllmgr fix faststone [--exe PATH/FSViewer.exe] [--build]
+  dllmgr uninstall faststone
+  dllmgr share faststone
+Wine commands use WINEPREFIX (default: ~/.wine).
+'dllmgr fix' alone finds the programs with verified recipes and asks before
+applying each one.
+USAGE
+}
+
+case ${1:-} in
+    fix)
+        if [ "${2:-}" = faststone ]; then
+            shift 2
+            export DLLMGR_REQUIRE_PROFILE=1
+            exec "$here/scripts/apply-faststone.sh" "$@"
+        fi
+        shift
+        exec "$here/scripts/fix-prefix.sh" "$@"
+        ;;
+    uninstall|unfix)
+        [ "$#" = 2 ] && [ "$2" = faststone ] || { usage >&2; exit 2; }
+        export DLLMGR_REQUIRE_PROFILE=1
+        exec "$here/scripts/undo-faststone.sh"
+        ;;
+    share)
+        shift
+        exec python3 "$here/scripts/share-recipe.py" "$@"
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        usage >&2
+        exit 2
+        ;;
+esac

@@ -99,7 +99,8 @@ static BOOL CALLBACK inspect_control(HWND hwnd, LPARAM param)
     if (pid != probe->pid || !IsWindowVisible(hwnd)) return TRUE;
     if (!GetClassNameW(hwnd, name, ARRAYSIZE(name))) return TRUE;
     RealGetWindowClassW(hwnd, real_name, ARRAYSIZE(real_name));
-    if (lstrcmpiW(name, L"TTntListView") && lstrcmpiW(name, WC_LISTVIEWW) &&
+    if (lstrcmpiW(name, L"TTntListView") && lstrcmpiW(name, L"TTntListView.UnicodeClass") &&
+        lstrcmpiW(name, WC_LISTVIEWW) &&
         lstrcmpiW(real_name, WC_LISTVIEWW)) return TRUE;
     if (!GetWindowRect(hwnd, &rect)) return TRUE;
     ++probe->controls;
@@ -165,4 +166,35 @@ void observe_listviews(const char *stage, HANDLE process, DWORD pid)
     EnumWindows(inspect_top_level, (LPARAM)&probe);
     printf("  visible listviews=%u\n", probe.controls);
     fflush(stdout);
+}
+
+BOOL listview_item0_position(HWND hwnd, HANDLE process, POINT *position)
+{
+    RECT rect = {LVIR_BOUNDS, 0, 0, 0}, *remote;
+    BOOL wow64 = FALSE, ok = FALSE;
+    DWORD_PTR result = 0;
+
+    if (!process) return FALSE;
+    remote = VirtualAllocEx(process, NULL, sizeof(rect), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    if (!remote) return FALSE;
+    IsWow64Process(process, &wow64);
+    if (sizeof(void *) == 4) wow64 = FALSE;
+    if (wow64 && (uintptr_t)(remote + 1) > UINT32_MAX)
+    {
+        VirtualFreeEx(process, remote, 0, MEM_RELEASE);
+        return FALSE;
+    }
+    if (WriteProcessMemory(process, remote, &rect, sizeof(rect), NULL))
+    {
+        /* On a timeout the target may still write the buffer; leak it then. */
+        if (!listview_message(hwnd, LVM_GETITEMRECT, 0, (LPARAM)remote, &result)) return FALSE;
+        if (result && ReadProcessMemory(process, remote, &rect, sizeof(rect), NULL))
+        {
+            position->x = rect.left;
+            position->y = rect.top;
+            ok = TRUE;
+        }
+    }
+    VirtualFreeEx(process, remote, 0, MEM_RELEASE);
+    return ok;
 }

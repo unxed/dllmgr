@@ -128,3 +128,106 @@ in a separate left-panel run. The Draw Board check uses the Delphi form class
 as well as the caption. One earlier Wine run timed out looking for the
 caption while its screenshot already showed the board. Mapping and the
 first response to `WM_NULL` are recorded separately.
+
+The deep Wine run also compares the portable x86 application at 192 DPI in
+two disposable win64 prefixes. It uses the same fixture and observer in both,
+and applies the just-built i386 `comctl32_v6` and `gdiplus` through the bundle
+installer in the second prefix. The `faststone85-192-comparison` artifact
+contains the baseline and patched captures, the application-specific native
+load trace, and the byte-for-byte undo check. Compare the browser and strip
+captures before drawing conclusions about the remaining FastStone issues.
+
+The [192 DPI comparison](https://github.com/unxed/dllmgr/actions/runs/42236384573/artifacts/13511857686)
+shows file and folder names (including Cyrillic) in the patched browser. The
+first label's width changed from 0 to 276 pixels. The folder preview and BMP
+badges still extend past their tile frames. The same x86 process logged native
+loads of both DLLs. Wine reported the logical `system32` path for GDI+, which
+the initial check rejected despite the successful load. Both files were
+restored byte for byte on undo. This run exercised opening Draw Board; the
+GDI+ pencil-color test remains a separate probe.
+
+On that runner at 192 DPI, startup reached the first `WM_NULL` response in
+730 ms with builtin Wine and 748 ms with the bundle (Draw Board scenario).
+Draw Board mapped in 823–957 ms across the first and second opens. These
+times do not reproduce the delays on the user's machine. Several fullscreen
+wheel events in the archived comparison reached the image viewer after the
+strip disappeared. The observer now reopens the strip when needed, sends
+input only to the list-view and records observed scrollbar positions and
+first change. The browser-origin middle-click capture was blocked by the
+first-run fullscreen notice. Its success requires a foreground fullscreen
+window before the click and a visible-window report after it.
+
+The [Windows controls baseline](https://github.com/unxed/dllmgr/actions/runs/42236384573/artifacts/13513065604)
+also exposes a wheel-speed mismatch in large-icon mode. At the default three
+wheel lines, v6 moves 111 pixels for one detent and 222 for two, on whichever
+axis scrolls the icons. The [previous bundle](https://github.com/unxed/dllmgr/actions/runs/42236384573/artifacts/13513256314)
+moved 37 and 74 pixels horizontally, and always moved 37 pixels vertically
+even for a zero delta. The wheel-speed candidate uses the configured line
+count and accumulates partial detents for v6. The strict v6 fixture checks both
+axes, zero and half-detent input, and the Ctrl modifier. Windows v5 horizontal
+measurements in the same fixture are 98 and 209 pixels. Its existing wheel
+behavior in the bundle is unchanged by this candidate. Check actual FastStone
+input and thumbnail painting separately before marking the wheel issue fixed.
+
+### Wheel speed: Windows scrolls by half an item per wheel line
+
+Measured in the real FastStone 8.5 on Windows (run 42256305651, 96 DPI,
+three wheel lines): one detent moves the browser grid 216 pixels with
+138×144 icon spacing, and the fullscreen strip 207 pixels. Both equal
+`lines × spacing / 2` on the scrolled axis (3 × 144 / 2, 3 × 138 / 2). The
+v6 controls fixture fits the same rule: 3 × 74 / 2 = 111, which is where
+Wine's fixed `LISTVIEW_SCROLL_ICON_LINE_SIZE` of 37 comes from.
+
+In the 192 DPI Wine captures of the same run, four detents moved the grid
+about 148 pixels with builtin Wine (roughly 12× slower than Windows) and
+444 pixels with the previous candidate (3 × 37 per detent, about 4× slower).
+The candidate in `patches/winehq-59251.patch` now uses half the item spacing
+on the scrolled axis for v6, falling back to 37. Default 32×32 icons keep the
+111-pixel step the fixture checks.
+
+`GetScrollInfo` on another process's window fails under Wine, so the earlier
+Wine observations have no scroll positions. The observer now also logs the
+position of item 0 (`item0=x,y->x,y`) through `LVM_GETITEMRECT` in the target
+process, which works on both systems.
+
+Wine also did not show the fullscreen thumbnail strip in these runs: every
+strip wheel event went to `TImageEnView` with the list-view hidden. Windows
+showed the strip. This is tracked as a separate symptom.
+
+## Gate for Wine Bugzilla reports and follow-ups
+
+Before posting a report or a candidate fix to Wine, reproduce the behavior
+described in the relevant Wine report with a test that fails on the original
+Wine build and passes with only the proposed change. Record the application
+version, Wine build, architecture, display setup, exact command, and results.
+Also exercise the affected controls visually in the real application and
+record the steps and captures. A synthetic probe alone, an unverified app
+capture, or a bundled build with several changes cannot establish this gate.
+Existing reports get follow-ups when their original case meets the same gate.
+For the remaining overflow, Windows v6 reports an icon rectangle spanning the
+cell width in the FastStone probe. Wine reports only the centered image width
+(240 pixels inside a 276-pixel cell at 192 DPI). To test whether FastStone uses
+this API rectangle for its owner-drawn tiles, dispatch the workflow with both
+`deep=true` and `icon_cell_experiment=true`. It adds a third capture with a v6
+build that changes the public `LVIR_ICON` rectangle for ordinary large icons,
+while preserving internal paint and hit-test metrics. Compare `patched` and
+`icon-cell` in the same artifact. This experiment does not change the shipped
+bundle or claim Windows parity outside the observed case.
+
+## Status with recipe faststone-v2 (2026-11-06)
+
+FastStone 8.5 x86, Wine 11.0, x86_64 host, win64 prefix. "CI" means the
+headless 192 DPI comparison on GitHub Actions; the user's desktop can differ.
+
+| Symptom | Fix | Status |
+| --- | --- | --- |
+| Names under thumbnails missing (FS-names, 48872) | winehq-48872 | fixed in CI at 192 DPI, Windows parity |
+| Thumbnails, folder preview, `BMP` badge, selection cross the tile (FS-geometry) | dllmgr-14 | fixed in CI at 192 DPI; other DPIs and thumbnail sizes not yet compared |
+| Fullscreen strip without thumbnails (59251/59609) | winehq-59609 | thumbnails shown in CI |
+| Wheel scrolls ~12× slower than Windows, ignores the wheel amount (FS-wheel-speed) | winehq-59251 (v6: half the item spacing per line) | fixed in CI: 0/426/426/852 px for ½,½,1,2 detents at 192 DPI; Windows 0/216/216/432 at 96 DPI |
+| Fullscreen strip hides before wheel input in CI | — | harness or Wine: measured by `strip_persistence` |
+| Pencil strokes stay black (48874) | winehq-48874 | fixed in the GDI+ probe; not yet clicked in Draw Board |
+| Poor text in the left panel (FS-fonts) | — | not reproduced in CI (Wine's Tahoma, antialiased); needs the user's settings |
+| Path field artifacts (FS-path) | — | not reproduced |
+| Draw Board ~5 s, startup 2–3 s (FS-draw-start, FS-start) | — | not reproduced: 0.8–1.0 s and 0.7 s in CI |
+| Middle button (FS-middle-button) | — | Windows behavior recorded; Wine comparison blocked by the first-run notice |

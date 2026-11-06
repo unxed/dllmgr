@@ -72,6 +72,11 @@ func TestParse(t *testing.T) {
 		wantErr string // substring of the error; empty means valid
 	}{
 		{"valid fix", "fixes/winehq-59609.md", validFix, ""},
+		{"fix with results", "fixes/winehq-59609.md", strings.Replace(validFix, "license:", "results:\n  - {check: controls6 --check-label, wine: wine-11.0, dpi: 96, without: fail, with: pass, windows: pass, run: https://github.com/unxed/dllmgr/actions/runs/1}\nlicense:", 1), ""},
+		{"fix: result with unknown key", "fixes/winehq-59609.md", strings.Replace(validFix, "license:", "results:\n  - {check: controls6 --check-label, wine: wine-11.0, dip: 96, without: fail, with: pass, windows: pass, run: https://github.com/unxed/dllmgr/actions/runs/1}\nlicense:", 1), `unknown field "dip"`},
+		{"fix: result with bad outcome", "fixes/winehq-59609.md", strings.Replace(validFix, "license:", "results:\n  - {check: controls6 --check-label, wine: wine-11.0, dpi: 96, without: fail, with: ok, windows: pass, run: https://github.com/unxed/dllmgr/actions/runs/1}\nlicense:", 1), `pass/fail`},
+		{"valid dllmgr fix", "fixes/dllmgr-14.md", strings.NewReplacer("winehq-59609", "dllmgr-14", "https://bugs.winehq.org/show_bug.cgi?id=59609", "https://github.com/unxed/dllmgr/issues/14").Replace(validFix), ""},
+		{"dllmgr fix: wrong issue", "fixes/dllmgr-14.md", strings.NewReplacer("winehq-59609", "dllmgr-14", "https://bugs.winehq.org/show_bug.cgi?id=59609", "https://github.com/unxed/dllmgr/issues/15").Replace(validFix), `bug`},
 		{"valid variant", "variants/comctl32-wine-11.0.md", validVariant, ""},
 		{"valid bundle", "bundles/faststone-all.md", validBundle, ""},
 		{"bundle: empty fixes", "bundles/faststone-all.md", strings.Replace(validBundle, "fixes: [winehq-59609]", "fixes: []", 1), `field "fixes": required`},
@@ -218,8 +223,11 @@ func TestIndexOrderAndContent(t *testing.T) {
 	if !strings.Contains(text, `"path": "fixes/winehq-9.md"`) || !strings.Contains(text, `"path": "variants/comctl32-wine-11.0.md"`) {
 		t.Fatalf("index lacks the paths:\n%s", text)
 	}
-	if !strings.HasSuffix(text, "]\n") {
+	if !strings.HasSuffix(text, "}\n") {
 		t.Fatalf("index must end with a newline")
+	}
+	if !strings.HasPrefix(text, "{\n  \"format\": 1,\n  \"entries\": [") {
+		t.Fatalf("index must start with its format number:\n%s", text)
 	}
 	// The same entries in another order give the same bytes.
 	rev := []Entry{entries[2], entries[1], entries[0]}

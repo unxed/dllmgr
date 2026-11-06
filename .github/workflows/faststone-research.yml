@@ -1,12 +1,12 @@
 name: faststone-research
 on:
   push:
-    branches: ['fix/faststone-suite']
-    paths: ['tests/wine/**', 'patches/*.patch', '.github/workflows/faststone-research.yml']
+    branches: ['fix/faststone-*']
+    paths: ['tests/wine/**', 'patches/*.patch', 'scripts/**', 'catalog/**', 'dllmgr', '.github/workflows/faststone-research.yml']
   workflow_dispatch:
     inputs:
       deep:
-        description: Build all candidate modules and check apply/undo
+        description: Build fixes, check rollback, and compare FastStone with and without patches
         type: boolean
         default: false
 concurrency:
@@ -17,6 +17,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    # A stalled apt mirror once held this job for over 30 minutes.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq gcc-mingw-w64-x86-64
@@ -42,7 +44,7 @@ jobs:
       - shell: bash
         run: |
           ./controls.exe --check-label --check-wheel --check-position | tee windows-v5.txt
-          ./controls6.exe --check-label --check-wheel --check-position | tee windows-v6.txt
+          ./controls6.exe --check-label --check-wheel --check-position --check-icon-cell | tee windows-v6.txt
           ./pencil.exe --check | tee windows-pencil.txt
           ./font-probe.exe | tee windows-fonts.txt
       - uses: actions/upload-artifact@v4
@@ -50,7 +52,7 @@ jobs:
           name: windows-baseline
           path: windows-*.txt
   windows-app:
-    if: github.event_name == 'workflow_dispatch' && inputs.deep
+    if: (github.event_name == 'workflow_dispatch' && inputs.deep) || startsWith(github.ref, 'refs/heads/fix/faststone-')
     needs: build
     runs-on: windows-latest
     steps:
@@ -126,7 +128,7 @@ jobs:
           name: faststone85-${{ matrix.dpi }}
           path: snapshots85/
   patched:
-    if: github.event_name == 'workflow_dispatch' && inputs.deep
+    if: (github.event_name == 'workflow_dispatch' && inputs.deep) || startsWith(github.ref, 'refs/heads/fix/faststone-')
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -147,12 +149,30 @@ jobs:
           sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq-archive.key
           sudo curl -fsSL https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources -o /etc/apt/sources.list.d/winehq-noble.sources
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --install-recommends winehq-stable xvfb git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
+          sudo apt-get install -y -qq --install-recommends winehq-stable xvfb openbox git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
       - name: Check separate patches, composition and rollback
         run: |
           git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
           git -C fiw apply ../contrib/fix-it-in-wine-learning.patch
+          test "$(wine --version | cut -d' ' -f1)" = wine-11.0
           xvfb-run -a python3 fiw/tools/record_attempt.py --root "$RUNNER_TEMP/attempts" --case faststone-suite --stage native-check --hypothesis 'composed modules preserve Windows behavior' --expected 'all enabled checks pass and undo restores bytes' --timeout 1200 -- bash tests/wine/check-fixes.sh
+      - name: Compare the FastStone 8.5 x86 browser at 192 DPI
+        env:
+          TEST_DPI: 192
+        run: |
+          captures="$RUNNER_TEMP/fs85-compare"
+          mkdir -p "$captures/baseline" "$captures/patched"
+          for variant in baseline patched; do
+            args=()
+            if [ "$variant" = patched ]; then args+=("$GITHUB_WORKSPACE/out/faststone"); fi
+            (cd "$captures/$variant" && xvfb-run -a -s '-screen 0 3072x1728x24' bash -c \
+              'openbox >/dev/null 2>&1 & exec bash "$GITHUB_WORKSPACE/tests/wine/faststone85.sh" "$@"' _ "${args[@]}")
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: faststone85-192-comparison
+          path: ${{ runner.temp }}/fs85-compare/*/snapshots85/
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -161,3 +181,40 @@ jobs:
             out/
             results/
             ${{ runner.temp }}/attempts/
+
+  publish-faststone:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/fix/faststone-')
+    needs: [windows, windows-app, patched]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+      - uses: actions/download-artifact@v4
+        with:
+          name: fixed-modules
+          path: built
+      - name: Publish the Wine 11.0 profile
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The bundle profile names the release; bump it when fixes change.
+          release=$(python3 src/scripts/catalog_fixes.py --release faststone wine-11.0)
+          if gh release view "$release" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "The immutable $release preview is already published."
+            exit 0
+          fi
+          fixes=$(python3 src/scripts/catalog_fixes.py faststone)
+          source=$(find built -type f -path '*/out/faststone/SOURCE.txt')
+          test -f "$source"
+          bundle=$(dirname "$source")
+          (cd "$bundle" && sha256sum --check SHA256SUMS)
+          grep -F 'wine-11.0 db11d0fe6a169c457e23d007e20404643d067aa8 ' "$bundle/SOURCE.txt"
+          grep -F " + $fixes" "$bundle/SOURCE.txt"
+          gh release create "$release" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title 'FastStone 8.5 on Wine 11.0 (preview)' \
+            --notes "Composed fixes ($fixes) for FastStone 8.5 portable x86 on Wine 11.0 x86_64. The recipe and its outstanding issues are documented in catalog/bundles/faststone-all.md at the tag. Source is Wine at the commit in SOURCE.txt plus the attached LGPL patches. Validation run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID." \
+            "$bundle"/*

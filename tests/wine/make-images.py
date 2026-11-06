@@ -22,7 +22,8 @@ preview = browser / "folder-preview"
 preview.mkdir(parents=True, exist_ok=True)
 write_bmp(folder / "white.bmp", 800, 600, (255, 255, 255))
 write_bmp(preview / "portrait.bmp", 90, 160, (235, 195, 100), (50, 35, 160))
-for i in range(60):
+# WineHQ 59251 reproduces with a directory of at least 164 images.
+for i in range(164):
     orientation = "portrait" if i % 2 else "landscape"
     width, height = (90, 160) if i % 2 else (160, 90)
     color = (90 + (i * 17) % 150, 205, 240 - (i * 11) % 140)

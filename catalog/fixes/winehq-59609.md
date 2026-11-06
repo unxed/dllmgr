@@ -11,6 +11,10 @@ patch_sha256: 4c4e4672a06370e612f9305be7cab7a59c8dd7d8638297b1029831a4d0218295
 recipe: "fix-it-in-wine: tools/build_one_dll.sh <tag> comctl32 [comctl32_v6]"
 binaries: https://github.com/unxed/dllmgr/releases/tag/winehq-59609
 evidence: https://github.com/unxed/fix-it-in-wine/actions/workflows/showcase-59609.yml
+results:
+  - {check: fix-it-in-wine showcases/59609/lvpos.c, wine: wine-9.0, host_arch: x86_64, without: fail, with: pass, windows: pass, run: https://github.com/unxed/fix-it-in-wine/actions/runs/42156695927}
+  - {check: fix-it-in-wine showcases/59609/lvpos.c, wine: wine-11.0, host_arch: x86_64, without: fail, with: pass, windows: pass, run: https://github.com/unxed/fix-it-in-wine/actions/runs/42156695927}
+  - {check: fix-it-in-wine showcases/59609/lvpos.c, wine: wine-11.21, host_arch: x86_64, without: fail, with: pass, windows: pass, run: https://github.com/unxed/fix-it-in-wine/actions/runs/42156695927}
 license: LGPL-2.1-or-later
 authors: [T_Im]
 ---
@@ -61,9 +65,10 @@ To build the module yourself, apply the patch to the Wine source of your
 release and run `tools/build_one_dll.sh <tag> comctl32 [comctl32_v6]` from
 fix-it-in-wine.
 
-## Status
+## Results
 
-Pending. The showcase workflow linked in `evidence` runs the reproducer on
-real Windows, on Wine 9.0 without the fix and on Wine 9.0 with the fix. Until
-that workflow is green the entry makes no claim about results. The `binaries`
-release is optional; the source of truth is the patch and its sha256.
+Showcase run https://github.com/unxed/fix-it-in-wine/actions/runs/42156695927,
+icon view, item 150, scrolled by 300 pixels: Windows keeps `(2171,2)`; stock
+Wine 9.0, 11.0 and 11.21 move it to client coordinates `(2155,4) -> (1855,4)`;
+with the patch it stays `(2155,4)` in v5 and v6, and undo brings the bug back.
+In FastStone 8.5 the fullscreen strip shows its thumbnails. See `results`.
