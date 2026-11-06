@@ -1,7 +1,7 @@
 name: faststone-research
 on:
   push:
-    branches: ['fix/faststone-suite']
+    branches: ['fix/faststone-suite', 'research/faststone85-icon-cell']
     paths: ['tests/wine/**', 'patches/*.patch', '.github/workflows/faststone-research.yml']
   workflow_dispatch:
     inputs:
@@ -54,7 +54,7 @@ jobs:
           name: windows-baseline
           path: windows-*.txt
   windows-app:
-    if: github.event_name == 'workflow_dispatch' && inputs.deep
+    if: (github.event_name == 'workflow_dispatch' && inputs.deep) || github.ref == 'refs/heads/research/faststone85-icon-cell'
     needs: build
     runs-on: windows-latest
     steps:
@@ -130,7 +130,7 @@ jobs:
           name: faststone85-${{ matrix.dpi }}
           path: snapshots85/
   patched:
-    if: github.event_name == 'workflow_dispatch' && inputs.deep
+    if: (github.event_name == 'workflow_dispatch' && inputs.deep) || github.ref == 'refs/heads/research/faststone85-icon-cell'
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -154,7 +154,7 @@ jobs:
           sudo apt-get install -y -qq --install-recommends winehq-stable xvfb openbox git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
       - name: Check separate patches, composition and rollback
         env:
-          FS85_ICON_CELL_EXPERIMENT: ${{ inputs.icon_cell_experiment }}
+          FS85_ICON_CELL_EXPERIMENT: ${{ inputs.icon_cell_experiment || github.ref == 'refs/heads/research/faststone85-icon-cell' }}
         run: |
           git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
           git -C fiw apply ../contrib/fix-it-in-wine-learning.patch
@@ -162,7 +162,7 @@ jobs:
       - name: Compare the FastStone 8.5 x86 browser at 192 DPI
         env:
           TEST_DPI: 192
-          FS85_ICON_CELL_EXPERIMENT: ${{ inputs.icon_cell_experiment }}
+          FS85_ICON_CELL_EXPERIMENT: ${{ inputs.icon_cell_experiment || github.ref == 'refs/heads/research/faststone85-icon-cell' }}
         run: |
           captures="$RUNNER_TEMP/fs85-compare"
           variants=(baseline patched)
