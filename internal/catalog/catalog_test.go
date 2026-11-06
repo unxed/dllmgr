@@ -72,6 +72,8 @@ func TestParse(t *testing.T) {
 		wantErr string // substring of the error; empty means valid
 	}{
 		{"valid fix", "fixes/winehq-59609.md", validFix, ""},
+		{"valid dllmgr fix", "fixes/dllmgr-14.md", strings.NewReplacer("winehq-59609", "dllmgr-14", "https://bugs.winehq.org/show_bug.cgi?id=59609", "https://github.com/unxed/dllmgr/issues/14").Replace(validFix), ""},
+		{"dllmgr fix: wrong issue", "fixes/dllmgr-14.md", strings.NewReplacer("winehq-59609", "dllmgr-14", "https://bugs.winehq.org/show_bug.cgi?id=59609", "https://github.com/unxed/dllmgr/issues/15").Replace(validFix), `bug`},
 		{"valid variant", "variants/comctl32-wine-11.0.md", validVariant, ""},
 		{"valid bundle", "bundles/faststone-all.md", validBundle, ""},
 		{"bundle: empty fixes", "bundles/faststone-all.md", strings.Replace(validBundle, "fixes: [winehq-59609]", "fixes: []", 1), `field "fixes": required`},

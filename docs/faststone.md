@@ -193,6 +193,7 @@ process, which works on both systems.
 Wine also did not show the fullscreen thumbnail strip in these runs: every
 strip wheel event went to `TImageEnView` with the list-view hidden. Windows
 showed the strip. This is tracked as a separate symptom.
+
 ## Gate for Wine Bugzilla reports and follow-ups
 
 Before posting a report or a candidate fix to Wine, reproduce the behavior
@@ -203,3 +204,12 @@ Also exercise the affected controls visually in the real application and
 record the steps and captures. A synthetic probe alone, an unverified app
 capture, or a bundled build with several changes cannot establish this gate.
 Existing reports get follow-ups when their original case meets the same gate.
+For the remaining overflow, Windows v6 reports an icon rectangle spanning the
+cell width in the FastStone probe. Wine reports only the centered image width
+(240 pixels inside a 276-pixel cell at 192 DPI). To test whether FastStone uses
+this API rectangle for its owner-drawn tiles, dispatch the workflow with both
+`deep=true` and `icon_cell_experiment=true`. It adds a third capture with a v6
+build that changes the public `LVIR_ICON` rectangle for ordinary large icons,
+while preserving internal paint and hit-test metrics. Compare `patched` and
+`icon-cell` in the same artifact. This experiment does not change the shipped
+bundle or claim Windows parity outside the observed case.

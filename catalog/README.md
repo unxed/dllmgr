@@ -25,7 +25,9 @@ Fixes are catalogued by bug, not by program. DLLs are a field of an entry, not a
 directory level: one bug can need several modules. The client finds entries by
 DLL name or by program name through `index.json`.
 
-Trackers: `winehq` (WineHQ Bugzilla, `https://bugs.winehq.org/show_bug.cgi?id=N`).
+Trackers: `winehq` (WineHQ Bugzilla, `https://bugs.winehq.org/show_bug.cgi?id=N`) and
+`dllmgr` (`https://github.com/unxed/dllmgr/issues/N`, for a fix that has no
+upstream bug yet; rename the entry once a WineHQ report exists).
 
 ## Submitting an entry
 

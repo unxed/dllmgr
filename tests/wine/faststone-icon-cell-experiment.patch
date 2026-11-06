@@ -1,0 +1,20 @@
+diff --git a/dlls/comctl32/listview.c b/dlls/comctl32/listview.c
+index f91e63f..60d58cd 100644
+--- a/dlls/comctl32/listview.c
++++ b/dlls/comctl32/listview.c
+@@ -7116,5 +7116,14 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
+     switch(lprc->left)
+     {
+     case LVIR_ICON:
+-	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, lprc, NULL, NULL);
++#if __WINE_COMCTL32_VERSION == 6
++        /* Native v6 reports the icon cell here. Keep the painting metrics
++         * unchanged while testing applications that owner-draw the cell. */
++        if (infoPtr->uView == LV_VIEW_ICON && infoPtr->himlNormal && !infoPtr->himlState)
++        {
++            SetRect(lprc, 0, 0, infoPtr->nItemWidth, infoPtr->iconSize.cy + ICON_TOP_PADDING);
++            break;
++        }
++#endif
++	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, lprc, NULL, NULL);
+         break;
