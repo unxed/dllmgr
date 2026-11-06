@@ -35,9 +35,9 @@ check that the rule really took effect.
 - **Slot**: where the module is loaded from in a prefix. `system` (system32 or
   syswow64, depending on bitness) or `sxs:<assembly>` (a directory in `winsxs`).
 - **Rule**: (prefix, exe name, dll, slot) -> variant.
-- **Catalog**: the set of TOML manifests that describe variants and patches.
-  The main catalog is `index/` in this repository. There can be several
-  catalogs.
+- **Catalog**: the set of Markdown entries (YAML frontmatter plus prose) that
+  describe fixes and variants. The main catalog is `catalog/` in this
+  repository (§8). There can be several catalogs.
 - **Local cache**: the checked DLL files on the local disk, addressed by
   sha256.
 - **Mismatch**: a file or a registry value changed outside dllmgr.
@@ -260,43 +260,75 @@ exit). The parser is tested on reference logs from the user's machine.
 
 ## 8. Catalog
 
-The catalog lives in this repository:
-- `index/`: manifests of variants.
-- `libs/`: libraries such as cc580 (comctl32 5.80 written in Bp; plan:
-  https://github.com/unxed/dllmgr/issues/1).
-- `patches/`: patches over DLLs that cannot be replaced (§16).
+The catalog lives in this repository, in the model of the f4 PlugRing catalog
+(decision D1, `docs/decisions.md`): one entry is one Markdown file. The YAML
+frontmatter is for the client; the prose below it is for people and is rendered
+by GitHub. CI compiles the frontmatter into `catalog/index.json`, the file the
+client downloads. There is no backend. Entries come through pull requests. The
+catalog carries source, not binaries (D4). The full format and the submission
+steps are in `catalog/README.md`.
 
-Layout of manifests: `index/dlls/<dll>/<provider>-<version>-<arch>.toml`.
-The catalog is downloaded as an archive over HTTPS; git is not needed. The
-config has `taps = [{name, url}]`, a list of additional catalogs. Adding an
-unofficial catalog gives an explicit warning.
-
-```toml
-schema   = 1
-dll      = "comctl32"
-file     = "comctl32.dll"               # file name in the slot
-provider = "wine"
-version  = "11.0"
-arch     = "i386"
-slot     = "system"                     # or "sxs:microsoft.windows.common-controls"
-license  = "LGPL-2.1-or-later"
-source   = "https://gitlab.winehq.org/wine/wine/-/tree/wine-11.0/dlls/comctl32"
-summary  = "comctl32 (v5) from Wine 11.0"
-fixes    = []                           # "winehq:NNNNN"
-[fetch]
-urls   = ["https://dl.winehq.org/wine-builds/ubuntu/pool/main/w/wine/wine-stable-i386_11.0.0.0~noble-1_i386.deb"]
-sha256 = "…"                            # of the archive
-format = "deb"                          # deb | tar.xz | tar.zst | raw
-member = "*/i386-windows/comctl32.dll"  # glob, exactly one match
-member_sha256 = "…"                     # of the extracted file before unmarking; the result is checked against it
+Layout:
+```
+catalog/fixes/<tracker>-<number>.md           one file per bug (D2), e.g. winehq-59609.md
+catalog/variants/<dll>-<provider>-<version>.md   whole-DLL alternatives
+catalog/index.json                            compiled index
+libs/                                         libraries such as cc580 (plan:
+                                              https://github.com/unxed/dllmgr/issues/1)
+patches/                                      patches over DLLs that cannot be replaced (§16)
 ```
 
-- The catalog does **not re-upload** Wine DLLs. The manifest points to the
+DLLs are a field of an entry, not a directory level (D3). The client finds
+entries by DLL name or by program name through `index.json`. The index is a
+JSON array sorted by `id`; each element is the frontmatter of one file plus its
+`path`. `index.json` is checked in (the client downloads it from the main
+branch), and CI fails a pull request in which it differs from the compiled
+entries. The tool is `cmd/dllmgr-catalog` (`check <dir>`, `build <dir>`);
+the code is `internal/catalog` (§12).
+
+The config has `taps = [{name, url}]`, a list of additional catalogs. Adding an
+unofficial catalog gives an explicit warning.
+
+**Kind `fix`**: a source patch for one bug, for example `winehq-59609`.
+Fields: `id`, `kind`, `title`, `bug`, `dlls` (a list: one bug can need several
+modules, such as comctl32 and comctl32_v6), `patch` (https URL), `patch_sha256`,
+`license` are required. `programs` (known affected exe names), `wine` (tags the
+patch is known to apply to), `recipe`, `binaries`, `evidence`, `authors`,
+`ai_assisted`, `funding` are optional. A binary is built by CI from the patch
+and is listed with its sha256; it is never the only form.
+
+**Kind `variant`**: a whole module not tied to one bug: a module from another
+Wine release, or a third-party library such as cc580.
+
+```yaml
+---
+id: comctl32-wine-11.0
+kind: variant
+dll: comctl32
+file: comctl32.dll                      # file name in the slot
+provider: wine
+version: "11.0"
+arch: i386
+slot: system                            # or sxs:microsoft.windows.common-controls
+license: LGPL-2.1-or-later
+source: https://gitlab.winehq.org/wine/wine/-/tree/wine-11.0/dlls/comctl32
+summary: comctl32 (v5) from Wine 11.0
+sha256: "…"                             # of the extracted file before unmarking; the result is checked against it
+fixes: []                               # ids of fixes the variant already contains, e.g. winehq-59609
+fetch:
+  urls: [https://dl.winehq.org/wine-builds/ubuntu/pool/main/w/wine/wine-stable-i386_11.0.0.0~noble-1_i386.deb]
+  sha256: "…"                           # of the archive
+  format: deb                           # deb | tar.xz | tar.zst | raw
+  member: "*/i386-windows/comctl32.dll" # glob, exactly one match; not needed for raw
+---
+```
+
+- The catalog does **not re-upload** Wine DLLs. The entry points to the
   official upstream build, and the file is extracted from it. License and trust
   stay with upstream.
-- Third-party providers (cc580): `format = "raw"`, a release asset. `source` and
+- Third-party providers (cc580): `format: raw`, a release asset. `source` and
   an open `license` are required. Without them the catalog CI rejects the
-  manifest. Microsoft DLLs are not accepted.
+  entry. Microsoft DLLs are not accepted.
 - Variant specification: `dll@provider:version[/arch]`. `latest` is the maximum
   version (compared by numeric components). The rule stores the concrete
   version.
@@ -305,14 +337,16 @@ member_sha256 = "…"                     # of the extracted file before unmarki
   `github.com/klauspost/compress/zstd` (pure Go).
 
 Publishing:
+- A pull request that adds a file to `catalog/fixes/` or `catalog/variants/`,
+  with the rebuilt `index.json`.
 - `dllmgr add-local <file.dll> --provider P --version V`: a local variant
   without the catalog (for DLL authors and for fix-it-in-wine).
 - `dllmgr pack <file.dll> --provider … --version … --url … --source … --license …`:
-  prints a TOML manifest with hashes, bitness and the result of the import check
-  against the local Wine.
-- Later: `pack-wine <archive> --version X`: manifests for all replaceable DLLs
-  of a Wine release. Catalog CI: schema check, hash check, and a matrix of
-  import compatibility over several Wine versions.
+  prints the frontmatter of a variant entry with hashes, bitness and the result
+  of the import check against the local Wine.
+- Later: `pack-wine <archive> --version X`: entries for all replaceable DLLs
+  of a Wine release. Catalog CI: format check (exists), hash check, and a matrix
+  of import compatibility over several Wine versions.
 
 ## 9. Local paths and config
 
@@ -337,7 +371,7 @@ dllmgr remove --app <exe> <dll>      dllmgr reset      dllmgr undo
 dllmgr status                        # rules, mismatches, "Wine changed since apply",
                                      # "the builtin is not older than the variant: the rule can be removed"
 dllmgr verify --app <exe-path>
-dllmgr add-local …   dllmgr pack …
+dllmgr add-local …   dllmgr pack …   # pack prints the frontmatter of a catalog entry
 dllmgr gui
 ```
 `--target wine|marwin` selects the target (§3). The default is `wine`.
@@ -374,25 +408,28 @@ the UI.
 
 ```
 cmd/dllmgr/        CLI + the gui subcommand
+cmd/dllmgr-catalog/  `check <dir>` and `build <dir>`: validate the catalog, compile index.json
 internal/pe/       PE parser: machine, imports (name/ordinal/delay), exports + forwarders,
                    builtin/placeholder marks, PREFER_NATIVE, Unmark()
 internal/wine/     Wine lookup, version, dll directories, unix part, run with WINEDEBUG
 internal/prefix/   prefix arch, slot resolution
 internal/reg/      Registry interface; implementation through `wine reg add/query/delete`; fake
-internal/index/    manifests, catalogs, variant specification parser, latest
+internal/catalog/  catalog entries: frontmatter parser, validator, index builder
+internal/index/    index.json reader, catalogs (taps), variant specification parser, latest
 internal/fetch/    download with cache, sha256, deb/tar.xz/tar.zst/raw
 internal/store/    local cache by sha256
 internal/compat/   import check
 internal/state/    state.json, history.jsonl, reconcile()
 internal/verify/   parser of +loaddll / warn+module
 ui/                goWidgets
-index/             catalog manifests
+catalog/           catalog entries (Markdown + frontmatter) and index.json
 libs/              libraries (cc580)
 patches/           patches over DLLs that cannot be replaced
 ```
 The code of the Marwin target is added next to `internal/wine/` when the target
 starts (§3).
-TOML: `github.com/BurntSushi/toml`; everything else is the standard library.
+TOML: `github.com/BurntSushi/toml`; YAML (catalog frontmatter): `gopkg.in/yaml.v3`;
+everything else is the standard library.
 
 ## 13. Tests
 
@@ -473,7 +510,7 @@ cannot be replaced. Their PE part is tied to the unix part and to wineserver by
 an internal protocol of a specific Wine version. For them there are **patches**:
 small DLLs that are loaded into the process of the program and replace the
 behavior of single functions. Patches live in the same catalog as variants
-(`patches/` and the manifests in `index/`), under the same rule model (§4) and
+(`patches/` and the entries in `catalog/`), under the same rule model (§4) and
 with the same rollback. Neither the exe of the program nor Wine is changed.
 
 How a patch gets into the process:
@@ -504,13 +541,14 @@ How a patch gets into the process:
    module loads, and a log in the Wine format (§17). Patches are written in C
    (mingw) or in Bp.
 
-The manifest of a patch is like that of a variant (§8), plus:
-```toml
-kind    = "patch"
-name    = "fsviewer-thumbstrip-scroll"
-targets = ["user32!GetScrollInfo"]   # what it hooks: for display and for finding conflicts
-apps    = ["FSViewer.exe"]           # the programs it was made for
+The catalog entry of a patch is a fix entry (D2): `catalog/fixes/<tracker>-<number>.md`,
+keyed by the bug it works around, with these extra frontmatter fields (added to
+`dllmgr-catalog` when I6 starts):
+```yaml
+method: patch                       # a patch over a DLL that cannot be replaced
+targets: ["user32!GetScrollInfo"]   # what it hooks: for display and for finding conflicts
 ```
+`programs` lists the programs it was made for; its source lives in `patches/`.
 `source` and `license` are required. The catalog CI builds patches from sources
 itself and does not accept binaries. Two patches on one function of one program
 give a warning; the order is by name.
@@ -589,6 +627,11 @@ same program should not have to repeat the work. dllmgr can carry such fixes bet
 to host this and how to pay for it is not decided. This section only lists what the architecture
 must allow from the start.
 
+Fixes are keyed by bug: the unit of exchange is the file `catalog/fixes/<tracker>-<number>.md`,
+for example `winehq-59609` (decision D2 in [decisions.md](decisions.md)). The program is a field
+of the entry, not its key. The catalog already carries this shape; the hooks below are what is
+still missing.
+
 What is exchanged — a **fix package**:
 - base: a Wine tag or commit, or a library from `libs/`;
 - the change as source (a patch), never only a binary;
@@ -602,20 +645,20 @@ Licensing limits:
 - A changed Wine DLL is LGPL; whoever distributes it must give the source under the LGPL. A
   closed, paid binary of a changed Wine DLL is not possible. Selling can only be about the work
   (bounties, early access, support), not about exclusive rights.
-- Own libraries (such as cc580) may have their own license, which the manifest states.
+- Own libraries (such as cc580) may have their own license, which the entry states.
 
 Hooks to keep in the design now:
 1. **Federated catalogs.** Any person or group can publish a catalog (a git repository with
-   manifests) and dllmgr can add it, with an explicit trust warning. Our servers are not needed;
+   entries) and dllmgr can add it, with an explicit trust warning. Our servers are not needed;
    hosting costs fall on whoever publishes.
-2. **Content-addressed artifacts.** A manifest names files by sha256, so any mirror can serve them.
+2. **Content-addressed artifacts.** An entry names files by sha256, so any mirror can serve them.
 3. **Reproducible builds.** A package without a recipe that reproduces its binary is not trusted
    by default; a catalog's CI can rebuild packages itself.
-4. **Publisher identity.** An optional signature field in the manifest (a publisher key), checked
+4. **Publisher identity.** An optional signature field in the entry (a publisher key), checked
    when present.
 5. **Reports from users.** An optional "works / does not work" record per program version and
    Wine version, sent only with the user's consent, aggregated by the catalog.
-6. **Money stays outside dllmgr.** A manifest may carry a `funding` URL (a bounty or donation
+6. **Money stays outside dllmgr.** An entry may carry a `funding` URL (a bounty or donation
    page on an existing platform). dllmgr only shows the link; it never handles payments.
 7. **Requests.** fix-it-in-wine, when it cannot fix a problem, can draft a request ("this
    program, this symptom, this digest") for a catalog, posted only with the user's approval —
