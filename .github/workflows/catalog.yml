@@ -1,0 +1,33 @@
+name: catalog
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: go vet
+        run: go vet ./...
+      - name: go test
+        run: go test ./...
+      - name: Check the catalog entries
+        run: go run ./cmd/dllmgr-catalog check catalog
+      # catalog/index.json is checked in, because the client downloads it from
+      # the main branch (the same way f4 serves plugring/index.yaml). A pull
+      # request must include the rebuilt file; this step fails if it does not.
+      - name: Check that catalog/index.json is up to date
+        run: |
+          go run ./cmd/dllmgr-catalog build catalog
+          git diff --exit-code -- catalog/index.json || {
+            echo "::error file=catalog/index.json::index.json is out of date. Run: go run ./cmd/dllmgr-catalog build catalog"
+            exit 1
+          }

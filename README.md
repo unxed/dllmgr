@@ -37,20 +37,26 @@ Existing:
 
 - `docs/concept.md`: the concept (targets, model, checks, catalog, CLI, GUI,
   patches, diagnostics, iterations).
+- `docs/decisions.md`: the log of decisions (who, when, why).
+- `catalog/`: the catalog. One Markdown file with YAML frontmatter per entry,
+  `fixes/` (one file per bug) and `variants/` (whole-DLL alternatives),
+  `index.json` compiled from the frontmatter. See `catalog/README.md`.
+- `cmd/dllmgr-catalog/`, `internal/catalog/`: the catalog validator and index
+  compiler (Go). CI: `.github/workflows/catalog.yml`.
 - `spike/spike0.sh`: the manual spike of iteration 0.
 
 Planned:
 
-- `cmd/`: the CLI and the `gui` subcommand.
-- `internal/`: packages (PE parser, Wine lookup, state, checks and so on).
-- `index/`: catalog manifests.
+- `cmd/dllmgr/`: the CLI and the `gui` subcommand.
+- `internal/`: the other packages (PE parser, Wine lookup, state, checks and so on).
 - `libs/cc580/`: cc580, comctl32 5.80 written in Bp. Plan:
   https://github.com/unxed/dllmgr/issues/1
 - `patches/`: patches over DLLs that cannot be replaced.
 
 ## Status
 
-There is no code yet. Work starts with iterations 0 and 1 of the concept
+The only code so far is the catalog tool (`cmd/dllmgr-catalog`). The manager itself
+is not written yet. Work starts with iterations 0 and 1 of the concept
 (owner's decision, 2026-11-06).
 
 ## License
