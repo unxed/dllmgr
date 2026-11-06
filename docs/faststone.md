@@ -213,3 +213,21 @@ build that changes the public `LVIR_ICON` rectangle for ordinary large icons,
 while preserving internal paint and hit-test metrics. Compare `patched` and
 `icon-cell` in the same artifact. This experiment does not change the shipped
 bundle or claim Windows parity outside the observed case.
+
+## Status with recipe faststone-v2 (2026-11-06)
+
+FastStone 8.5 x86, Wine 11.0, x86_64 host, win64 prefix. "CI" means the
+headless 192 DPI comparison on GitHub Actions; the user's desktop can differ.
+
+| Symptom | Fix | Status |
+| --- | --- | --- |
+| Names under thumbnails missing (FS-names, 48872) | winehq-48872 | fixed in CI at 192 DPI, Windows parity |
+| Thumbnails, folder preview, `BMP` badge, selection cross the tile (FS-geometry) | dllmgr-14 | fixed in CI at 192 DPI; other DPIs and thumbnail sizes not yet compared |
+| Fullscreen strip without thumbnails (59251/59609) | winehq-59609 | thumbnails shown in CI |
+| Wheel scrolls ~12× slower than Windows, ignores the wheel amount (FS-wheel-speed) | winehq-59251 (v6: half the item spacing per line) | candidate; measured in the v2 run |
+| Fullscreen strip hides before wheel input in CI | — | harness or Wine: measured by `strip_persistence` |
+| Pencil strokes stay black (48874) | winehq-48874 | fixed in the GDI+ probe; not yet clicked in Draw Board |
+| Poor text in the left panel (FS-fonts) | — | not reproduced in CI (Wine's Tahoma, antialiased); needs the user's settings |
+| Path field artifacts (FS-path) | — | not reproduced |
+| Draw Board ~5 s, startup 2–3 s (FS-draw-start, FS-start) | — | not reproduced: 0.8–1.0 s and 0.7 s in CI |
+| Middle button (FS-middle-button) | — | Windows behavior recorded; Wine comparison blocked by the first-run notice |
