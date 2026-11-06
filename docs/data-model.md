@@ -1,104 +1,84 @@
 # Data model
 
-Status: proposal for the owner's review, 2026-11-06 (second draft, replaces
-the tag-centric first draft; see D13).
+Status: proposal for the owner's review, 2026-11-06 (third draft; see D14).
 
-The model must be readable by a person, an AI agent, a shell script and a
-tired system administrator, and still answer hard questions. OpenStreetMap
-is the inspiration for the *spirit*: a model that is small, obvious and
-composes into something powerful. Its literal shape (points, lines,
-polygons, free tags) does not fit this domain and is not copied.
+Budget: no more complex than OpenStreetMap's model (three primitives plus
+tags), which people, scripts and tools have handled for twenty years. The
+budget is borrowed, not the shape. This model fits in **two kinds of file
+and one kind of row**.
 
-## The one question
+## Fix: one file per problem
 
-Everyone who touches the catalog asks the same thing:
+`catalog/fixes/<id>.md`. It says what is wrong, what changes it, and what
+proves that the change works.
 
-> Will this change make this program work on my system, and what proves it?
+```yaml
+id: dllmgr-14                       # where the problem is described:
+bug: https://github.com/unxed/dllmgr/issues/14   # winehq-N = WineHQ Bugzilla
+title: "comctl32 v6: report the whole cell as the LVIR_ICON rectangle"
+dlls: [comctl32_v6]
+patch: https://…/patches/dllmgr-14.patch          # or: module: <a ready DLL>
+patch_sha256: 2e63…
+evidence:                           # rows; see "Environment" below
+  - {check: faststone85.sh browser, exe_sha256: 05c8…, wine: wine-11.0,
+     host_arch: x86_64, prefix_arch: win64, dpi: 192,
+     without: fail, with: pass, run: https://github.com/…/runs/42256224744}
+```
 
-The model is built around that sentence. It has three things and one value.
+- Documented in Wine or not is only the id prefix: `winehq-59609` or
+  `dllmgr-14`. Filing upstream renames the file.
+- The change is a source `patch`, or a whole replacement `module` (a DLL from
+  another Wine release, cc580). Same file kind either way.
+- Prose below the frontmatter is for people; scripts never read it.
 
-## Problem, change, check — and an environment
+## Recipe: one file per application selection
 
-| | What it is | Example | File |
-| --- | --- | --- | --- |
-| **Problem** | Something a program does wrong under Wine | thumbnails overflow their tiles | `catalog/fixes/<id>.md` |
-| **Change** | A precise edit that fixes a problem: a source patch, or a whole replacement module | `patches/dllmgr-14.patch` | same file as its problem, or `catalog/variants/<id>.md` |
-| **Check** | A program or procedure whose result shows the problem present or absent | `tests/wine/faststone-controls.c --check-label` | listed in the problem file |
-| *Environment* | A value, not an entity: the exact program build, the target system and its version, host and prefix architectures, DPI when it matters | `FSViewer.exe sha256 05c8…, wine-11.0, x86_64, win64, 192 DPI` | written inline |
-
-How they relate:
-
-- A problem has an id from wherever it is described: `winehq-59609` (WineHQ
-  Bugzilla) or `dllmgr-14` (this repository, no upstream report yet).
-  "Documented in Wine" is not a different kind of thing, only a different
-  place. Filing it upstream renames the file and keeps the old id as `aka`.
-- A change belongs to one problem. The first draft of any fix is one change;
-  a competing approach is a second change on the same problem.
-- A check produces **evidence**: `check × environment × (without, with) change
-  → result`, with a link to the run. Evidence is what makes everything else
-  trustworthy:
-  - *the problem is real* — the check fails without the change;
-  - *the fix works* — it passes with only this change;
-  - *nothing broke* — the same check passes on Windows;
-  - *it applies to you* — the environment in the evidence matches yours.
-
-  This is also the WineHQ Bugzilla gate (docs/faststone.md): a report is
-  allowed once the evidence for its problem has all three of the first rows.
-
-## Recipes are a view
-
-A **recipe** is what a user installs: the changes chosen for one
-application. It is not a new kind of fact. It lists problem ids, and its
-applicability is the set of environments where every listed change has
-passing evidence (plus a visual check in the real application).
+`catalog/bundles/<id>.md`. The fixes to install together, and where they are
+known to work.
 
 ```yaml
 id: faststone-all
 application: faststone
 fixes: [winehq-48872, winehq-48874, winehq-59251, winehq-59609, dllmgr-14]
-when:                       # environments covered by the evidence
-  - exe_sha256: 05c877e5…
-    wine: wine-11.0
-    host_arch: x86_64
-    prefix_arch: win64
-    release: faststone-v2   # prebuilt modules for exactly this environment
+when:
+  - {exe_sha256: 05c8…, wine: wine-11.0, host_arch: x86_64, prefix_arch: win64,
+     release: faststone-v2}
 ```
 
-Today `when` is called `profiles` and is written by hand from the CI runs.
-Once evidence is recorded in the problem files, it can be computed.
+## Environment: one kind of row
 
-## How each reader uses it
+A flat `key: value` row: `exe_sha256`, `wine` (or later `target: reactos`),
+`host_arch`, `prefix_arch`, `dpi` when it matters, plus what the row is for
+(`release` in a recipe; `check`, `without`, `with`, `windows`, `run` in
+evidence). The same keys mean the same thing everywhere, so matching "my
+system" against a recipe or against a fix's evidence is one comparison.
 
-- **Administrator**: `dllmgr fix faststone`. The tool finds the `when` that
-  matches, or says which value differs (for example "Wine 11.2, measured on
-  11.0").
-- **Script**: resolve recipe → problem ids → changes; group patches by
-  module; apply them to one pristine tree per module; build once or download
-  `release` and check `SHA256SUMS`; install in one transaction with a
-  byte-exact undo. (`scripts/catalog_fixes.py`, `select-faststone.py`.)
-- **Agent**: read a problem file top to bottom: symptom, cause, change,
-  checks, evidence, what is still unknown. Add evidence or a change; never a
-  new kind of entity without an owner decision.
-- **Wine reviewer**: the problem file plus its evidence table is the report.
+## What falls out of it
 
-## Rules that keep it simple
+- **Install** (administrator, script): find the recipe, match the user's row
+  against `when`, compose the patches per module, build once or download
+  `release`, install in one transaction with a byte-exact undo. If nothing
+  matches, say which key differs.
+- **Trust**: a fix is proven for an environment when its evidence has
+  `without: fail, with: pass` there and `windows: pass` for the same check.
+  A recipe's `when` should only list rows every one of its fixes has proven.
+- **WineHQ Bugzilla gate**: the same three results plus a visual check in the
+  real application.
+- **Agent**: read one fix file top to bottom; add a row or a fix. A new kind of
+  file needs an owner decision.
 
-- One fact in one place. A fix list exists only in its recipe; a checksum only
-  next to its file; a release tag only in its `when` item.
-- Every file reads on its own. `catalog/index.json` is generated.
-- Prose is for people; scripts read only the frontmatter.
-- Closed vocabulary. Frontmatter keys are a fixed list checked by the
-  validator, because a misspelled applicability key must fail loudly, not
-  silently widen a recipe. Adding a key is a one-line change plus a row in
-  `catalog/README.md`.
+## Rules
+
+- One fact in one place: fix lists only in recipes, checksums next to their
+  files, release tags only in `when` rows.
+- `catalog/index.json` is generated, never edited.
+- Keys are a closed list checked by the validator: a misspelled
+  applicability key must fail, not silently widen a recipe.
 
 ## Gaps against the current catalog
 
-1. Checks and evidence live in CI logs and in `docs/faststone.md` prose. Next
-   step: an `evidence` list in each problem file — `check`, `environment`,
-   `without`, `with`, `windows`, `run` — filled from the existing runs.
-2. `profiles` → `when`, derived from evidence later.
-3. `kind: fix`/`bundle` read as problem/recipe; renaming can wait.
-4. Not modelled yet, by choice: dependencies between changes (none needed so
-   far) and per-Wine-version patch variants (add when a patch first fails to
-   apply on another tag).
+1. `evidence` rows do not exist yet; the results are in CI logs and
+   `docs/faststone.md`. Next step: add rows to the five FastStone fixes.
+2. Recipes call `when` `profiles`; rename together with step 1.
+3. `catalog/variants/` holds whole-module changes separately; they can become
+   fix files with `module:` when the first one is used by a recipe.

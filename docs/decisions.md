@@ -133,3 +133,14 @@ replaces an earlier one says so.
   (few primitives plus free tags) misses the point. The question every reader
   asks is whether a change works on their system and what proves it; the
   first draft had no place for that proof.
+
+## D14 — Two kinds of file and one kind of row (replaces D13)
+
+- Date: 2026-11-06
+- Decided by: Claude (agent), pending the owner's review
+- Decision: a fix file per problem (what is wrong, the patch or module, and
+  evidence rows), a recipe file per application selection (fix ids and `when`
+  rows), and one flat environment row shared by both. See `docs/data-model.md`.
+- Reason: the owner set OpenStreetMap's model as the upper bound of
+  complexity, not as a template. D13 had six concepts; this keeps its proof
+  of correctness (evidence) within three.

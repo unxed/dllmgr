@@ -39,7 +39,7 @@ Existing:
 - `docs/concept.md`: the concept (targets, model, checks, catalog, CLI, GUI,
   patches, diagnostics, iterations).
 - `docs/decisions.md`: the log of decisions (who, when, why).
-- `docs/data-model.md`: the catalog data model (problem, change, check; recipes as views).
+- `docs/data-model.md`: the catalog data model (fix files, recipe files, environment rows).
 - `catalog/`: the catalog. One Markdown file with YAML frontmatter per entry,
   `fixes/` (one file per bug) and `variants/` (whole-DLL alternatives),
   `index.json` compiled from the frontmatter. See `catalog/README.md`.
