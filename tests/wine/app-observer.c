@@ -11,6 +11,13 @@ static DWORD pid;
 static HWND found;
 static const char *wanted_title;
 static const char *wanted_class;
+/* Delphi's Unicode wrapper appends this suffix in localized installations. */
+static BOOL class_matches(const char *actual, const char *expected)
+{
+    size_t length=strlen(expected);
+    return !strncmp(actual,expected,length) &&
+           (!actual[length] || !strcmp(actual+length,".UnicodeClass"));
+}
 static BOOL CALLBACK find_window(HWND hwnd, LPARAM unused)
 {
     DWORD owner;
@@ -22,7 +29,7 @@ static BOOL CALLBACK find_window(HWND hwnd, LPARAM unused)
     GetWindowTextA(hwnd,title,sizeof(title));
     GetClassNameA(hwnd,class_name,sizeof(class_name));
     if ((!wanted_title && !wanted_class) ||
-        (wanted_class && !strcmp(class_name,wanted_class)) ||
+        (wanted_class && class_matches(class_name,wanted_class)) ||
         (wanted_title && strstr(title,wanted_title))) { found=hwnd; return FALSE; }
     return TRUE;
 }
@@ -91,6 +98,20 @@ static void press_key(BYTE key)
 {
     keybd_event(key,0,0,0);
     keybd_event(key,0,KEYEVENTF_KEYUP,0);
+}
+/* Never send desktop input to a window that lost focus or exited. */
+static BOOL activate_owned_window(HWND hwnd)
+{
+    DWORD owner;
+    if (!IsWindow(hwnd)) return FALSE;
+    GetWindowThreadProcessId(hwnd,&owner);
+    if (owner!=pid) return FALSE;
+    SetForegroundWindow(hwnd);
+    Sleep(100);
+    if (GetForegroundWindow()==hwnd) return TRUE;
+    puts("input_aborted: application window is not foreground");
+    fflush(stdout);
+    return FALSE;
 }
 
 /* The portable browser's address row contains a TTntEdit and an owner-drawn
@@ -440,7 +461,7 @@ static int observe_browser(HWND fullscreen, HANDLE process)
 /* WineHQ 48874 in the real Draw Board: pick the pencil (second button of the
  * third tool row), draw a stroke across the canvas and report its colour.
  * Coordinates are client pixels at 96 DPI, scaled to the window's DPI. */
-static void pencil_stroke(HWND draw)
+static BOOL pencil_stroke(HWND draw)
 {
     RECT client;
     POINT tool, from, to;
@@ -454,7 +475,7 @@ static void pencil_stroke(HWND draw)
     from.x=client.right*2/5; from.y=client.bottom*2/5;
     to.x=client.right*3/5; to.y=client.bottom*2/5;
     ClientToScreen(draw,&tool); ClientToScreen(draw,&from); ClientToScreen(draw,&to);
-    SetForegroundWindow(draw);
+    if (!activate_owned_window(draw)) return FALSE;
     pointer(tool.x,tool.y,0);
     pointer(tool.x,tool.y,MOUSEEVENTF_LEFTDOWN);
     pointer(tool.x,tool.y,MOUSEEVENTF_LEFTUP);
@@ -487,6 +508,7 @@ static void pencil_stroke(HWND draw)
         if (counts[x]) printf("pencil_stroke_color=%02x%02x%02x pixels=%d\n",
                               GetRValue(found[x]),GetGValue(found[x]),GetBValue(found[x]),counts[x]);
     if (!counts[0]) puts("pencil_stroke_color=none");
+    return TRUE;
 }
 
 int main(int argc,char **argv)
@@ -508,8 +530,8 @@ int main(int argc,char **argv)
     else if(!strcmp(argv[3],"browser")) status=observe_browser(hwnd,process.hProcess);
     else if(!strcmp(argv[3],"panel"))
     {
-        SetForegroundWindow(hwnd);
-        if (GetWindowRect(hwnd,&rect)) observe_left_panel(&rect);
+        if (!activate_owned_window(hwnd)) status=7;
+        else if (GetWindowRect(hwnd,&rect)) observe_left_panel(&rect);
     }
     else if(!strcmp(argv[3],"draw"))
     {
@@ -517,20 +539,22 @@ int main(int argc,char **argv)
             char stage[16];
             DWORD close_start;
             snprintf(stage,sizeof(stage),"draw_%d",i+1);
-            SetForegroundWindow(hwnd); start=GetTickCount(); press_key('D');
+            if (!activate_owned_window(hwnd)) { status=7; break; }
+            start=GetTickCount(); press_key('D');
             /* The Delphi form can paint a caption without exposing it as window text. */
             draw=wait_window("Draw Board","TDrawBoard");
             report_timing(stage,start,draw);Sleep(1000);snapshot(i?"draw-second.bmp":"draw-first.bmp");
-            if(!draw)break;
-            if(i) pencil_stroke(draw); /* after the second open is timed */
+            if(!draw) { status=5; break; }
+            if(i && !pencil_stroke(draw)) { status=7; break; } /* after timing */
             PostMessageA(draw,WM_CLOSE,0,0);
             close_start=GetTickCount();
             while (IsWindowVisible(draw) && GetTickCount()-close_start<5000) Sleep(20);
-            if (IsWindowVisible(draw)) { printf("%s_close_timeout\n",stage); break; }
+            if (IsWindowVisible(draw)) { printf("%s_close_timeout\n",stage); status=6; break; }
         }
     }
     else for(i=0;i<2;i++){
-        SetForegroundWindow(hwnd);GetWindowRect(hwnd,&rect);SetCursorPos((rect.left+rect.right)/2,(rect.top+rect.bottom)/2);
+        if (!activate_owned_window(hwnd)) { status=7; break; }
+        GetWindowRect(hwnd,&rect);SetCursorPos((rect.left+rect.right)/2,(rect.top+rect.bottom)/2);
         if(!strcmp(argv[3],"middle")) middle_click();
         else press_key(VK_RETURN);
         Sleep(1000);GetExitCodeProcess(process.hProcess,&code);printf("after_%d_process_code=%lu\n",i+1,code);

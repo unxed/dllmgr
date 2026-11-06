@@ -1,4 +1,34 @@
-# Handoff: FastStone work, from the cloud session to a local agent
+# Handoff: FastStone work
+
+## Latest local checkpoint (2026-11-06)
+
+- Deep research run **42278157255** at `255f086` completed successfully.
+  The patched real Draw Board stroke is red (`ff0000`, 3642 pixels);
+  native module loads and byte-exact DLL undo both passed. The earlier
+  five-minute failure was two APT timeouts before the application started.
+  Commit `2db204d` preserves download/setup failure evidence and passed
+  catalog/apply-scripts CI. See `docs/ci-timing.md`.
+- The installed `faststone-v2` recipe also draws red on the owner's laptop:
+  FastStone 8.5 x86, Wine 11.0, win64 prefix, 192 DPI, synthetic white image.
+  Startup mapping/first WM_NULL reply: **1462/1473 ms**. Draw Board first
+  open: **6108/6457 ms**; second open: **6329/6342 ms**. These are window
+  readiness proxies, not a claim that all pixels are painted. Traced runs
+  are kept separate from timing evidence.
+- Localized Draw Board uses `TDrawBoard.UnicodeClass`; the observer must
+  accept that suffix and fail on missing windows. Foreground checks prevent
+  shortcut injection into an unrelated application.
+- Font workaround is **not accepted or installed permanently**. Emboldening
+  66 Cyrillic glyphs fixes mixed weight, but the owner still sees uneven
+  positioning. A higher `head.fontRevision` makes a temporary prefix font
+  take precedence; removing it restores the original. Hinting investigation
+  continues. Preserve original advances and unrelated outlines.
+- CLI presentation passed 38 script tests and was installed locally at
+  `bc1dbd9`: concise progress/result, `--verbose` for details, `NO_COLOR`.
+  D22 records the vtui TUI as a future plan only. Far3 was assigned to
+  Lunobot in issue 322; this session continues FastStone.
+- The owner is away. Continue independent work and collect any questions
+  for one later batch. Physical mouse speed and final visual font acceptance
+  still need the owner; no synthetic motion proves physical mouse behavior.
 
 ## Cloud sessions
 
@@ -7,8 +37,7 @@ owner's desktop, switch to Far Manager 3: `docs/far3.md` (D21).
 
 ## First steps for the next session
 
-Everything was merged without waiting for CI, at the owner's request.
-Start by checking that nothing broke:
+Read the latest checkpoint above, then validate any newer commits:
 
 1. `go test ./...`, `FIW_TOOLS=<fix-it-in-wine>/tools python3 -m unittest
    discover -s scripts/tests`, `go run ./cmd/dllmgr-catalog check catalog`.
@@ -17,13 +46,13 @@ Start by checking that nothing broke:
    Normal job durations and the fail-fast limits (timeouts, bounded apt
    installs, diagnostics on failure) are in `docs/ci-timing.md`; the CI
    changes were merged untested.
-3. Pencil with the fix in the real Draw Board was never completed in CI (every
-   run was cancelled by a later push). Read `pencil_stroke_color` from
+3. Pencil with the fix passed both CI and the local desktop. Evidence is in
    `faststone85-192-comparison/patched/snapshots85/draw/observations.txt`;
-   expected `ff0000`. Then on the owner's machine.
+   expected `ff0000` (3642 pixels). Avoid repeating the deep run unless a
+   relevant change requires it.
 4. Owner's acceptance so far (https://github.com/unxed/dllmgr/issues/8#issuecomment-6693158826):
    tiles fit (dllmgr-14) and the fullscreen strip scrolls (59251) on the
-   owner's desktop. Still to check there: names, pencil colour, wheel speed
+  owner's desktop. Still to check visually there: names and wheel speed
    in the browser grid.
 
 Date: 2026-11-06. Written for the agent that continues on the owner's own
@@ -33,8 +62,7 @@ below marked **LOCAL** needs the owner's machine.
 
 ## Where things are
 
-- Branch `fix/faststone-v2`, pull request https://github.com/unxed/dllmgr/pull/15
-  into `main` (supersedes the closed PR 12).
+- Work is merged into `main`; PRs 15 and 17 are closed.
 - Recipe `catalog/bundles/faststone-all.md`: five fixes, prebuilt in the
   prerelease https://github.com/unxed/dllmgr/releases/tag/faststone-v2.
 - Status table of every known symptom: `docs/faststone.md`, section
@@ -54,7 +82,7 @@ below marked **LOCAL** needs the owner's machine.
 | dllmgr-14 LVIR_ICON cell | tiles, folder preview, `BMP` badges, selection inside frames; fixture `--check-icon-cell` fails on stock Wine, Windows v6 returns the whole 74 px cell |
 | winehq-59251 wheel | 0/426/426/852 px for ½,½,1,2 detents; Windows 0/216/216/432 at 96 DPI; stock Wine 37 px per event |
 | winehq-59609 positions | thumbnails in the fullscreen strip |
-| winehq-48874 pencil | GDI+ probe fixed. Real Draw Board: Windows draws red, stock Wine black. The patched Draw Board run was not finished when the session ended: read `pencil_stroke_color` in the `faststone85-192-comparison` artifact (`patched/snapshots85/draw/observations.txt`) of the latest `faststone-research` run on this branch. Expected `ff0000`. |
+| winehq-48874 pencil | GDI+ probe fixed. Real Draw Board: Windows draws red, stock Wine black; patched Wine draws red in CI and on the owner's laptop (`ff0000`, 3642 pixels). |
 
 Middle button (FS-middle-button): Wine matches Windows in CI (fullscreen →
 browser). Not a Wine bug so far.
