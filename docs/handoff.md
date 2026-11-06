@@ -1,5 +1,21 @@
 # Handoff: FastStone work, from the cloud session to a local agent
 
+## First steps for the next session
+
+Everything was merged without waiting for CI, at the owner's request.
+Start by checking that nothing broke:
+
+1. `go test ./...`, `FIW_TOOLS=<fix-it-in-wine>/tools python3 -m unittest
+   discover -s scripts/tests`, `go run ./cmd/dllmgr-catalog check catalog`.
+2. Read the latest `faststone-research` and `apply-scripts` runs on `main`
+   (use fix-it-in-wine `tools/ci_wait.py`); fix what fails.
+3. Pencil with the fix in the real Draw Board was never completed in CI (every
+   run was cancelled by a later push). Read `pencil_stroke_color` from
+   `faststone85-192-comparison/patched/snapshots85/draw/observations.txt`;
+   expected `ff0000`. Then on the owner's machine.
+4. Install faststone-v2 on the owner's machine and run the acceptance in
+   "LOCAL work" below.
+
 Date: 2026-11-06. Written for the agent that continues on the owner's own
 computer. The cloud session had GitHub Actions (Windows runner, headless Wine
 under Xvfb) but no real desktop, no real mouse and no browser. Everything

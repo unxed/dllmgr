@@ -226,3 +226,21 @@ replaces an earlier one says so.
 `scripts/`, `catalog/`, `dllmgr` or the workflow, and a new push cancels the
 running one for the same branch. While a deep run is in progress, push only
 `docs/` changes, or batch code changes into one push.
+
+## D20 — Owner's decisions on D14, D17, D19, Bugzilla and kit activation
+
+- Date: 2026-11-06
+- Decided by: owner (D17, D19, Bugzilla); Claude (agent) at the owner's
+  request for D14 and kit activation
+- Decision:
+  - D14 (two file kinds and one row kind) and D17 (four headings in every fix
+    file) are accepted; D19 (vendor kits) is accepted as the plan.
+  - WineHQ Bugzilla receives descriptions in words only: no code written by
+    the agent and no links to such code. The owner posts the text.
+  - Vendor kit activation is a setting of the kit, `activate: install` (enable
+    once when the program is installed) or `activate: launch` (a small
+    launcher checks for Wine and the measured environment at every start).
+    Default `launch`: it follows Wine upgrades safely and does nothing on
+    Windows or on an unmeasured Wine.
+- Reason: owner's answers on 2026-11-06. `launch` costs a few milliseconds per
+  start but never leaves a stale fix active after a Wine upgrade.
