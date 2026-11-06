@@ -12,7 +12,9 @@ def main(observations, trace):
     prefix = process[1].lower() + ":"
     expected = {
         "comctl32.dll": r"\\winsxs\\x86_microsoft.windows.common-controls_6595b64144ccf1df_6\.",
-        "gdiplus.dll": r"\\syswow64\\gdiplus\.dll\"",
+        # The x86 process can log the logical system32 path even though
+        # WoW64 resolves it to the physical syswow64 DLL in the prefix.
+        "gdiplus.dll": r"\\(?:system32|syswow64)\\gdiplus\.dll\"",
     }
     for line in trace.read_text(errors="replace").splitlines():
         entry = line.lower()

@@ -136,3 +136,12 @@ installer in the second prefix. The `faststone85-192-comparison` artifact
 contains the baseline and patched captures, the application-specific native
 load trace, and the byte-for-byte undo check. Compare the browser and strip
 captures before drawing conclusions about the remaining FastStone issues.
+
+The [192 DPI comparison](https://github.com/unxed/dllmgr/actions/runs/42236384573/artifacts/13511857686)
+shows file and folder names (including Cyrillic) in the patched browser. The
+first label's width changed from 0 to 276 pixels. The folder preview and BMP
+badges still extend past their tile frames. The same x86 process logged native
+loads of both DLLs. Wine reported the logical `system32` path for GDI+, which
+the initial check rejected despite the successful load. Both files were
+restored byte for byte on undo. This run exercised opening Draw Board; the
+GDI+ pencil-color test remains a separate probe.

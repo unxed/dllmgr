@@ -90,4 +90,6 @@ if [ -n "$bundle" ]; then
     )
     python3 "$GITHUB_WORKSPACE/tests/wine/check-faststone-loads.py" \
         snapshots85/load-trace/{observations.txt,modules.log}
+    cmp "$bundle/comctl32_v6-$tag-i386.dll" "${controls[0]}"
+    cmp "$bundle/gdiplus-$tag-i386.dll" "$WINEPREFIX/drive_c/windows/syswow64/gdiplus.dll"
 fi
