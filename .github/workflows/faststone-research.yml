@@ -17,11 +17,11 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    # A stalled apt mirror once held this job for over 30 minutes.
-    timeout-minutes: 10
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq gcc-mingw-w64-x86-64
+      - run: bash tests/wine/ci-install.sh gcc-mingw-w64-x86-64
+        timeout-minutes: 6
       - working-directory: tests/wine
         run: |
           x86_64-w64-mingw32-gcc -O2 -Wall -o controls.exe faststone-controls.c -lcomctl32 -lgdi32
@@ -37,6 +37,7 @@ jobs:
   windows:
     needs: build
     runs-on: windows-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -55,6 +56,7 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' && inputs.deep) || startsWith(github.ref, 'refs/heads/fix/faststone-')
     needs: build
     runs-on: windows-latest
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -81,6 +83,7 @@ jobs:
   wine:
     needs: build
     runs-on: ubuntu-24.04
+    timeout-minutes: 11
     env:
       WINEDEBUG: -all
       WINEDLLOVERRIDES: mscoree,mshtml=
@@ -88,10 +91,18 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: controls
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq wine wine64 xvfb
+      - run: bash tests/wine/ci-install.sh wine wine64 xvfb
+        timeout-minutes: 6
       - run: |
           export WINEPREFIX="$RUNNER_TEMP/dllmgr-research-prefix"
           xvfb-run -a bash -e -o pipefail -c 'wineboot -u; wine controls.exe | tee wine-v5.txt; wine controls6.exe | tee wine-v6.txt; wine pencil.exe | tee wine-pencil.txt'
+      - name: Diagnostics on failure or timeout
+        if: failure() || cancelled()
+        run: |
+          ps -eo pid,ppid,etime,stat,args --forest | grep -vE 'ps -eo|grep' | tail -n 60
+          pgrep -a wineserver && timeout 20 wineserver -k || true
+          df -h "$RUNNER_TEMP" | tail -n 2
+          tail -n 20 /var/log/apt/term.log /var/log/dpkg.log 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         with:
           name: wine-baseline
@@ -106,22 +117,24 @@ jobs:
         dpi: [96, 144, 192]
     env:
       TEST_DPI: ${{ matrix.dpi }}
-    timeout-minutes: 15
+    timeout-minutes: 11
     steps:
       - uses: actions/checkout@v4
       - name: Install Wine 11.0 and desktop test tools
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo mkdir -pm755 /etc/apt/keyrings
-          sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq-archive.key
-          sudo curl -fsSL https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources -o /etc/apt/sources.list.d/winehq-noble.sources
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq --install-recommends winehq-stable xvfb xdotool scrot x11-utils openbox
+        timeout-minutes: 6
+        run: bash tests/wine/ci-install.sh --winehq --install-recommends winehq-stable xvfb xdotool scrot x11-utils openbox
       - uses: actions/download-artifact@v4
         with:
           name: controls
       - name: Capture the affected FastStone 8.5 controls
         run: xvfb-run -a -s '-screen 0 3072x1728x24' bash -c 'openbox >/dev/null 2>&1 & bash tests/wine/faststone85.sh'
+      - name: Diagnostics on failure or timeout
+        if: failure() || cancelled()
+        run: |
+          ps -eo pid,ppid,etime,stat,args --forest | grep -vE 'ps -eo|grep' | tail -n 60
+          pgrep -a wineserver && timeout 20 wineserver -k || true
+          df -h "$RUNNER_TEMP" | tail -n 2
+          tail -n 20 /var/log/apt/term.log /var/log/dpkg.log 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -131,7 +144,7 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' && inputs.deep) || startsWith(github.ref, 'refs/heads/fix/faststone-')
     needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -143,20 +156,17 @@ jobs:
         with:
           name: controls
       - name: Install Wine 11.0 and build packages
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo mkdir -pm755 /etc/apt/keyrings
-          sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq-archive.key
-          sudo curl -fsSL https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources -o /etc/apt/sources.list.d/winehq-noble.sources
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq --install-recommends winehq-stable xvfb openbox git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
+        timeout-minutes: 6
+        run: bash tests/wine/ci-install.sh --winehq --install-recommends winehq-stable xvfb openbox git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
       - name: Check separate patches, composition and rollback
+        timeout-minutes: 12
         run: |
           git -C fiw apply ../contrib/fix-it-in-wine-codepage.patch
           git -C fiw apply ../contrib/fix-it-in-wine-learning.patch
           test "$(wine --version | cut -d' ' -f1)" = wine-11.0
-          xvfb-run -a python3 fiw/tools/record_attempt.py --root "$RUNNER_TEMP/attempts" --case faststone-suite --stage native-check --hypothesis 'composed modules preserve Windows behavior' --expected 'all enabled checks pass and undo restores bytes' --timeout 1200 -- bash tests/wine/check-fixes.sh
+          xvfb-run -a python3 fiw/tools/record_attempt.py --root "$RUNNER_TEMP/attempts" --case faststone-suite --stage native-check --hypothesis 'composed modules preserve Windows behavior' --expected 'all enabled checks pass and undo restores bytes' --timeout 600 -- bash tests/wine/check-fixes.sh
       - name: Compare the FastStone 8.5 x86 browser at 192 DPI
+        timeout-minutes: 8
         env:
           TEST_DPI: 192
         run: |
@@ -168,6 +178,13 @@ jobs:
             (cd "$captures/$variant" && xvfb-run -a -s '-screen 0 3072x1728x24' bash -c \
               'openbox >/dev/null 2>&1 & exec bash "$GITHUB_WORKSPACE/tests/wine/faststone85.sh" "$@"' _ "${args[@]}")
           done
+      - name: Diagnostics on failure or timeout
+        if: failure() || cancelled()
+        run: |
+          ps -eo pid,ppid,etime,stat,args --forest | grep -vE 'ps -eo|grep' | tail -n 60
+          pgrep -a wineserver && timeout 20 wineserver -k || true
+          df -h "$RUNNER_TEMP" | tail -n 2
+          tail -n 20 /var/log/apt/term.log /var/log/dpkg.log 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
