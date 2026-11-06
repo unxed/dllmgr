@@ -26,7 +26,7 @@ jobs:
           x86_64-w64-mingw32-windres controls.rc -O coff -o controls.res
           x86_64-w64-mingw32-gcc -O2 -Wall -o controls6.exe faststone-controls.c controls.res -lcomctl32 -lgdi32
           x86_64-w64-mingw32-gcc -O2 -Wall -o pencil.exe pencil.c -lgdiplus -lgdi32
-          x86_64-w64-mingw32-gcc -O2 -Wall -o app-observer.exe app-observer.c -lgdi32
+          x86_64-w64-mingw32-gcc -O2 -Wall -o app-observer.exe app-observer.c listview-probe.c -lgdi32
           x86_64-w64-mingw32-gcc -O2 -Wall -finput-charset=UTF-8 -o font-probe.exe font-probe.c -lgdi32
       - uses: actions/upload-artifact@v4
         with:
@@ -65,9 +65,11 @@ jobs:
           unzip -q fs85.zip
           python tests/wine/make-images.py
           mkdir -p observations
-          for action in middle enter draw; do
+          for action in middle enter draw browser; do
             mkdir -p "observations/$action"
-            (cd "observations/$action" && ../../app-observer.exe "$(cygpath -w "$GITHUB_WORKSPACE/FSViewer85/FSViewer.exe")" "$(cygpath -w "$GITHUB_WORKSPACE/images/white.bmp")" "$action" | tee observations.txt)
+            image=images/white.bmp
+            if [ "$action" = browser ]; then image=images/browser/00-landscape.bmp; fi
+            (cd "observations/$action" && ../../app-observer.exe "$(cygpath -w "$GITHUB_WORKSPACE/FSViewer85/FSViewer.exe")" "$(cygpath -w "$GITHUB_WORKSPACE/$image")" "$action" | tee observations.txt)
           done
       - uses: actions/upload-artifact@v4
         if: always()
@@ -94,11 +96,12 @@ jobs:
           path: wine-*.txt
   faststone85:
     needs: build
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deep)
     runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
-        dpi: [96, 192]
+        dpi: [96, 144, 192]
     env:
       TEST_DPI: ${{ matrix.dpi }}
     timeout-minutes: 15

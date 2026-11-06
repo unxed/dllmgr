@@ -110,3 +110,21 @@ bug. The bundled help's Browser ↔ Full Screen description needs to be checked
 from browser mode as well. Enter kept the process alive in this experiment.
 Draw Board mapped in about 0.45/0.39 seconds on that Windows runner; hardware,
 fonts, image size and cache state differ from the user's machine.
+
+The earlier 192 DPI Wine capture returned a 1536×864 bitmap on a 3072×1728
+Xvfb screen. It shows a folder preview extending past its tile and a missing
+folder name. The right-hand grid is clipped, so file previews and their
+format labels cannot be assessed from that capture.
+
+The observer now captures the whole screen. The browser scenario includes
+named portrait and landscape fixtures and a folder preview, logs list-view
+rectangles, records wheel input on the fullscreen strip and thumbnail grid,
+and tries a middle click after entering fullscreen from the browser. It also
+captures the address field before and after an explicit repaint. The path
+artifact still needs a repeatable sequence of view changes.
+
+The 96/144/192 DPI Wine jobs run independently. The 192 DPI job traces fonts
+in a separate left-panel run. The Draw Board check uses the Delphi form class
+as well as the caption. One earlier Wine run timed out looking for the
+caption while its screenshot already showed the board. Mapping and the
+first response to `WM_NULL` are recorded separately.

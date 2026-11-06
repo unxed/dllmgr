@@ -9,9 +9,35 @@ mkdir -p results out
 git clone -q --depth 1 --branch "$tag" "$FIW_WINE_GIT" "$src"
 wine --version
 wineserver --version
+
+stop_server() {
+    # This prefix is disposable. Wineboot caches KnownDLLs as image sections
+    # for the lifetime of the server, so changing the files is not enough.
+    # -k returns nonzero when the server has already exited.
+    timeout 30s wineserver -k || true
+    timeout 30s wineserver -w
+}
+
+require_native_load() {
+    local module=$1 trace=$2
+    if ! grep -iE ":loaddll:.*\\\\$module[.]dll\" .*: native$" "$trace"; then
+        echo "expected native $module.dll in $trace" >&2
+        return 1
+    fi
+}
+
+check_controls() {
+    local exe=$1 version=$2
+    shift 2
+    local log="results/$selection-$version" rc=0
+    WINEDEBUG=+loaddll,+module wine "./$exe" "$@" 2>"$log-load.txt" | tee "$log.txt" || rc=$?
+    require_native_load comctl32 "$log-load.txt"
+    return "$rc"
+}
+
 wineboot -u
 # Initialization can outlive wineboot.exe; settle it before replacing modules.
-timeout 30s wineserver -w || { wineserver -k; wineserver -w; }
+timeout 30s wineserver -w || stop_server
 for exe in controls.exe controls6.exe; do
     set +e
     wine "$exe" --check-label --check-wheel --check-position > "results/before-$exe.txt"
@@ -45,6 +71,7 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
     if [[ " $modules " == *" gdiplus "* ]]; then
         cp "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "$RUNNER_TEMP/original-gdiplus.dll"
         python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe pencil.exe --dll "out/$selection/gdiplus-$tag-x86_64.dll" --name gdiplus.dll
+        stop_server
         sha256sum "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "out/$selection/gdiplus-$tag-x86_64.dll" >"results/$selection-immediate-hashes.txt"
         stat "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" >"results/$selection-stat.txt"
         cp "$WINEPREFIX/fix-it-in-wine/state.json" "results/$selection-state.json"
@@ -56,6 +83,7 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
             sha256sum "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" >>"results/$selection-hashes.txt"
             exit 1
         fi
+        require_native_load gdiplus "results/$selection-pencil-load.txt"
         cat "results/$selection-pencil.txt"
         python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe pencil.exe --name gdiplus
         cmp "$WINEPREFIX/drive_c/windows/system32/gdiplus.dll" "$RUNNER_TEMP/original-gdiplus.dll"
@@ -67,15 +95,17 @@ for selection in winehq-48874 winehq-48872 winehq-59251 winehq-59609 faststone; 
     [ -f "$sxs" ]; cp "$sxs" "$RUNNER_TEMP/original-v6.dll"
     python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe controls.exe --dll "out/$selection/comctl32-$tag-x86_64.dll" --name comctl32.dll
     python3 fiw/tools/override.py apply --prefix "$WINEPREFIX" --exe controls6.exe --dll "out/$selection/comctl32_v6-$tag-x86_64.dll" --name comctl32.dll --slot 'sxs:amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.*'
+    stop_server
     wine reg query 'HKCU\Software\Wine\AppDefaults\controls.exe\DllOverrides'
     sha256sum "$original" "out/$selection/comctl32-$tag-x86_64.dll"
-    WINEDEBUG=+loaddll,+module wine ./controls.exe $checks 2>"results/$selection-v5-load.txt" | tee "results/$selection-v5.txt"
-    WINEDEBUG=+loaddll wine ./controls6.exe $checks 2>"results/$selection-v6-load.txt" | tee "results/$selection-v6.txt"
+    check_controls controls.exe v5 $checks
+    check_controls controls6.exe v6 $checks
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls.exe --name comctl32
     python3 fiw/tools/override.py undo --prefix "$WINEPREFIX" --exe controls6.exe --name comctl32
     cmp "$original" "$RUNNER_TEMP/original-v5.dll"
     cmp "$sxs" "$RUNNER_TEMP/original-v6.dll"
     fi
+    stop_server
     printf '%s %s + %s\n' "$tag" "$(git -C "$src" rev-parse HEAD)" "$fixes" > "out/$selection/SOURCE.txt"
     for fix in $fixes; do cp "patches/$fix.patch" "out/$selection/"; done
     (cd "out/$selection" && sha256sum *.dll > SHA256SUMS)
