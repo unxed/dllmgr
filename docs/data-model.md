@@ -100,8 +100,7 @@ releases every two weeks and other targets. What makes that safe:
 
 ## Gaps against the current catalog
 
-1. `results` rows exist for winehq-48872, winehq-48874, winehq-59609 and
-   dllmgr-14. Rows for winehq-59251 wait for a run of the current patch.
+1. `results` rows exist for all five FastStone fixes.
    (`evidence` keeps its older meaning: a link to the workflow.)
 2. Recipes call `when` `profiles`; rename together with step 1.
 3. `catalog/variants/` holds whole-module changes separately; they can become

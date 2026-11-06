@@ -158,6 +158,20 @@
       "patch_sha256": "8eb2a421cb21cedfc4db8a5ec0fe3d4222799499079c0160b9fea34f13ae4403",
       "recipe": "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 comctl32 comctl32_v6",
       "evidence": "https://github.com/unxed/dllmgr/actions/workflows/faststone-research.yml",
+      "results": [
+        {
+          "check": "tests/wine/faststone85.sh browser wheel (item0 px per detent)",
+          "exe_sha256": "05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621",
+          "wine": "wine-11.0",
+          "host_arch": "x86_64",
+          "prefix_arch": "win64",
+          "dpi": 192,
+          "without": "fail",
+          "with": "pass",
+          "windows": "pass",
+          "run": "https://github.com/unxed/dllmgr/actions/runs/42263591184"
+        }
+      ],
       "ai_assisted": true,
       "path": "fixes/winehq-59251.md"
     },

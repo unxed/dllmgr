@@ -224,7 +224,7 @@ headless 192 DPI comparison on GitHub Actions; the user's desktop can differ.
 | Names under thumbnails missing (FS-names, 48872) | winehq-48872 | fixed in CI at 192 DPI, Windows parity |
 | Thumbnails, folder preview, `BMP` badge, selection cross the tile (FS-geometry) | dllmgr-14 | fixed in CI at 192 DPI; other DPIs and thumbnail sizes not yet compared |
 | Fullscreen strip without thumbnails (59251/59609) | winehq-59609 | thumbnails shown in CI |
-| Wheel scrolls ~12× slower than Windows, ignores the wheel amount (FS-wheel-speed) | winehq-59251 (v6: half the item spacing per line) | candidate; measured in the v2 run |
+| Wheel scrolls ~12× slower than Windows, ignores the wheel amount (FS-wheel-speed) | winehq-59251 (v6: half the item spacing per line) | fixed in CI: 0/426/426/852 px for ½,½,1,2 detents at 192 DPI; Windows 0/216/216/432 at 96 DPI |
 | Fullscreen strip hides before wheel input in CI | — | harness or Wine: measured by `strip_persistence` |
 | Pencil strokes stay black (48874) | winehq-48874 | fixed in the GDI+ probe; not yet clicked in Draw Board |
 | Poor text in the left panel (FS-fonts) | — | not reproduced in CI (Wine's Tahoma, antialiased); needs the user's settings |
