@@ -86,9 +86,8 @@ written with AI help is their decision. We label such text as AI-assisted.
 
 **[Note 4]** "Build it" means one or a few DLLs, not all of Wine. In the
 fix-it-in-wine check (its concept, §5.2) comctl32 and comctl32_v6 built in
-39 seconds after configure. The code an
-agent writes this way is for the user's own machine and our catalog. It is
-never sent to Wine.
+39 seconds after configure. The code an agent writes this way is for the
+user's own machine and our catalog. It is never sent to Wine.
 
 **[Note 5]** The owner's hypothesis. Wine's guideline gives two reasons:
 unknown training material, and unknown license compatibility of the output.
@@ -97,8 +96,8 @@ clear that it addresses the second.
 
 **[Note 6]** An illustration of the delay, not a measurement.
 
-**[Note 7]** The owner's draft said the original "can be studied". Under Wine's
-clean-room rules this means **only as a black box**: test programs that call
+**[Note 7]** Edited. The owner's wording allowed studying the original in any
+way. Under Wine's clean-room rules it may be studied **only as a black box**: test programs that call
 the API and check the results, run on real Windows (for example GitHub's
 Windows runners). Not allowed: disassembling Microsoft code, examining its
 debug symbols, `+relay` traces of native Microsoft components, test programs
@@ -116,7 +115,7 @@ program is preferred.
 | Clean-room rules for everything sent to Wine | D16 | decided by this text, pending review |
 | Bugzilla posting gate | [faststone.md](faststone.md#gate-for-wine-bugzilla-reports-and-follow-ups) | documented; nothing posted yet |
 | Binary or build from source | `release` in `when` rows; `--build` | exists for FastStone |
-| One click for the user | `dllmgr fix` finds the apps in a prefix, D18 | first step in this change |
+| One click for the user | `dllmgr fix` finds the apps in a prefix; a menu entry runs it; D18 | first step done |
 | Vendor kits | [vendor-kits.md](vendor-kits.md), D19 | proposal |
 | Short feedback loop for new Wine releases | CI re-runs the checks on each release; an upstream fix shows up as `without: pass` | planned |
 | Other targets (ReactOS, LiberNT, CusDeb OS) | [issue 13](https://github.com/unxed/dllmgr/issues/13); environment key `target` | design input |
