@@ -36,7 +36,34 @@ installer, registry override or catalog entry is provided.
 
 Harness history: run 42413875048 found that Wine does not expose the Windows
 executable path in the app process's Linux command line, so command-line based
-PID discovery failed after the benchmark completed. Run 42414249062 tests the
-corrected approach: find the live PID by the expected `win32u.so` mapping
-itself, then record that mapping and the same PID's resident memory. Its result
-is pending; no performance conclusion is drawn from these harness runs.
+PID discovery failed after the benchmark completed. Run 42414249062 passed with
+the corrected approach: find the live PID by the expected `win32u.so` mapping
+itself, then record that mapping and the same PID's resident memory.
+
+Hosted evidence for harness commit `bddd53857fb0eb9440e6d403269f0b112033fc73`:
+[CI run 42414361269](https://github.com/unxed/dllmgr/actions/runs/42414361269)
+passed, including the stock and enlarged-cache module builds and the external
+Linux `/proc/<pid>/maps` proof for both phases. Both enumeration phases saw
+2112 callbacks, zero operation errors, and matching checksums in every mode:
+mode 0 `cbf29ce484222325`, mode 1 `d5a6a3d12297d91c`, mode 2
+`cbf29ce484222325`, and mode 3 `02650aa22492332d`. Mode 1's wall times
+(stock/cache4096) were 977/1088 ms cold and 945/161 ms warm; mode 0 was
+105/125 ms cold and 1/1 ms warm; mode 2 was 209/147 and 207/147 ms; mode 3
+was 216/148 and 216/149 ms. These are standalone enumeration and measurement
+results, not real-app startup timings.
+
+In the separate cache benchmark, repeated time per pass for 4, 8, 12, 16, 32,
+and 128 fonts was 0.047, 0.092, 2.150, 2.842, 6.578, and 40.149 ms on stock,
+versus 0.047, 0.094, 0.138, 0.185, 0.377, and 1.596 ms with the enlarged
+cache. First-pass times for the same sizes were 0.996, 0.903, 1.057, 2.943,
+6.760, and 40.364 ms on stock, versus 1.019, 0.879, 1.070, 1.069, 4.342,
+and 37.626 ms with the enlarged cache. This supports the cache hypothesis for
+this synthetic repeated-measurement workload only; real-app A/B evidence is
+still required.
+
+At the explicit post-`GetDC` ready pause, process RSS was 25996 kB on stock and
+26256 kB with the enlarged cache. This snapshot is before the benchmark fills
+font-cache entries, so it does not measure retained-font memory cost. The
+`/usr/bin/time -v` wrapper reported 18324/18144 kB maximum RSS for the Wine
+launcher command, but may miss the Wine child process peak; it is not a
+reliable child-process peak-memory comparison.
