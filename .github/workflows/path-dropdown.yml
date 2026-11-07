@@ -1,0 +1,89 @@
+name: Path dropdown research
+on:
+  push:
+    branches: ['research/faststone-path']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: path-dropdown-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tests/wine/ci-install.sh gcc-mingw-w64-x86-64
+        timeout-minutes: 6
+      - run: x86_64-w64-mingw32-gcc -O2 -Wall -o path-observer.exe tests/wine/path-observer.c tests/wine/listview-probe.c -lgdi32
+      - uses: actions/upload-artifact@v4
+        with:
+          name: path-observer
+          path: path-observer.exe
+  windows:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: path-observer
+      - shell: bash
+        run: |
+          set -euo pipefail
+          curl --max-time 90 -fsSL https://www.faststonesoft.net/DN/FSViewer85.zip -o fs85.zip
+          echo '685282a063b91daf4388b84be9e0daf3c5feed4073651137eb9fe9421cf39439  fs85.zip' | sha256sum -c
+          mkdir -p /c/dllmgr-path-test
+          unzip -q fs85.zip -d /c/dllmgr-path-test
+          (cd /c/dllmgr-path-test && python "$GITHUB_WORKSPACE/tests/wine/make-images.py")
+          mkdir captures
+          cd captures
+          ../path-observer.exe 'C:\dllmgr-path-test\FSViewer85\FSViewer.exe' 'C:\dllmgr-path-test\images\browser\00-landscape.bmp' > observations.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: path-windows
+          path: captures/
+  wine:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        dpi: [96, 192]
+    env:
+      WINEDEBUG: -all
+      WINEDLLOVERRIDES: mscoree,mshtml=
+      WINEPREFIX: /home/runner/dllmgr-path-prefix
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: path-observer
+      - run: bash tests/wine/ci-install.sh --winehq --install-recommends winehq-stable xvfb openbox
+        timeout-minutes: 6
+      - shell: bash
+        run: |
+          set -euo pipefail
+          curl --max-time 90 -fsSL https://www.faststonesoft.net/DN/FSViewer85.zip -o fs85.zip
+          echo '685282a063b91daf4388b84be9e0daf3c5feed4073651137eb9fe9421cf39439  fs85.zip' | sha256sum -c
+          mkdir -p "$WINEPREFIX/drive_c/dllmgr-path-test" captures
+          unzip -q fs85.zip -d "$WINEPREFIX/drive_c/dllmgr-path-test"
+          (cd "$WINEPREFIX/drive_c/dllmgr-path-test" && python3 "$GITHUB_WORKSPACE/tests/wine/make-images.py")
+          export TEST_DPI=${{ matrix.dpi }}
+          xvfb-run -a -s '-screen 0 3072x1728x24' bash -e -o pipefail -c '
+            openbox >captures/openbox.txt 2>&1 &
+            timeout 90 wineboot -u >captures/wineboot.txt 2>&1
+            wine reg add "HKCU\Control Panel\Desktop" /v LogPixels /t REG_DWORD /d "$TEST_DPI" /f
+            timeout 60 wineserver -w
+            cd captures
+            timeout 75 wine ../path-observer.exe "C:\dllmgr-path-test\FSViewer85\FSViewer.exe" "C:\dllmgr-path-test\images\browser\00-landscape.bmp" >observations.txt 2>errors.txt
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: path-wine-${{ matrix.dpi }}
+          path: captures/
