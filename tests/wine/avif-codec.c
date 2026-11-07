@@ -282,6 +282,24 @@ int wmain(int argc, WCHAR **argv) {
         REL(component, IWICComponentInfo);
     }
     path_join(file, argv[3], L"rgba.avif"); HR_OK(generic_file(factory, file, TRUE));
+    {
+        IWICComponentInfo *component = NULL; IWICBitmapDecoderInfo *info = NULL;
+        IStream *stream = NULL; UINT count = 0, size = 0; BOOL matches = FALSE; GUID id;
+        HR_OK(IWICImagingFactory_CreateComponentInfo(factory, &CLSID_DllmgrAvifDecoder, &component));
+        if (component) HR_OK(IWICComponentInfo_QueryInterface(component, &IID_IWICBitmapDecoderInfo, (void **)&info));
+        if (info) {
+            hr = IWICBitmapDecoderInfo_GetVendorGUID(info, &id); printf("Info vendor: %08lx\n", (unsigned long)hr); HR_OK(hr);
+            hr = IWICBitmapDecoderInfo_GetContainerFormat(info, &id); printf("Info container: %08lx\n", (unsigned long)hr); HR_OK(hr);
+            hr = IWICBitmapDecoderInfo_GetPixelFormats(info, 0, NULL, &count); printf("Info pixel formats: %08lx, count=%u\n", (unsigned long)hr, count);
+            hr = IWICBitmapDecoderInfo_GetPatterns(info, 0, NULL, &count, &size); printf("Info patterns: %08lx, count=%u bytes=%u\n", (unsigned long)hr, count, size);
+            HR_OK(open_stream(file, &stream));
+            if (stream) {
+                hr = IWICBitmapDecoderInfo_MatchesPattern(info, stream, &matches);
+                printf("Info signature match: %08lx, matches=%d\n", (unsigned long)hr, matches); HR_OK(hr); CHECK(matches);
+            }
+        }
+        REL(stream, IStream); REL(info, IWICBitmapDecoderInfo); REL(component, IWICComponentInfo);
+    }
     unregister_test(); CHECK(absent(decoder_key)); CHECK(absent(instance_key));
     CHECK(enumerate_ours(factory) == 0);
     // Discovery after undo must not return this decoder (a system decoder may exist).
