@@ -21,6 +21,8 @@ int main(void)
 {
     const unsigned limits[]={4,8,12,16,32,128};HDC dc=GetDC(NULL);LOGFONTW lf={0};unsigned i,round;
     {LARGE_INTEGER f;QueryPerformanceFrequency(&f);frequency=f.QuadPart;}
+    if(!dc)return 3;
+    puts("benchmark_ready");fflush(stdout);Sleep(5000);
     lf.lfCharSet=DEFAULT_CHARSET;
     for(i=0;i<sizeof(limits)/sizeof(limits[0]);i++){
         double start,first,warm;limit=limits[i];count=0;

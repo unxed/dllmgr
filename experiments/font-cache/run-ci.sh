@@ -33,10 +33,31 @@ for phase in stock cache4096; do
     xvfb-run -a bash -e -o pipefail -c '
         wineboot -u >"$1/$2-boot.txt" 2>&1
         /usr/bin/time -v wine "$3/enum-cpu.exe" >"$1/$2-enum.txt" 2>"$1/$2-memory.txt"
-        wine "$3/cache-bench.exe" >"$1/$2-cache.txt" 2>"$1/$2-cache-errors.txt"
+        wine "$3/cache-bench.exe" >"$1/$2-cache.txt" 2>"$1/$2-cache-errors.txt" &
+        bench=$!
+        for attempt in $(seq 1 100); do
+            grep -q benchmark_ready "$1/$2-cache.txt" && break
+            sleep 0.1
+        done
+        grep -q benchmark_ready "$1/$2-cache.txt"
+        app_pid=
+        for attempt in $(seq 1 100); do
+            for proc in /proc/[0-9]*; do
+                [ -r "$proc/cmdline" ] || continue
+                tr "\\0" " " <"$proc/cmdline" | grep -Fq "$3/cache-bench.exe" || continue
+                app_pid=${proc##*/}
+                break
+            done
+            [ -n "$app_pid" ] && break
+            sleep 0.05
+        done
+        test -n "$app_pid"
+        grep -F "$4/lib/wine/x86_64-unix/win32u.so" "/proc/$app_pid/maps" >"$1/$2-module-map.txt"
+        awk "/^VmRSS:/ {print \$2, \$3}" "/proc/$app_pid/status" >"$1/$2-app-rss.txt"
+        test -s "$1/$2-app-rss.txt"
+        wait "$bench"
         timeout 60 wineserver -w
-    ' bash "$out/artifact" "$phase" "$out"
-    grep -F "$runtime/lib/wine/x86_64-unix/win32u.so" "$out/artifact/$phase-enum.txt"
+    ' bash "$out/artifact" "$phase" "$out" "$runtime"
 done
 python3 "$here/compare.py" "$out/artifact/stock-enum.txt" "$out/artifact/cache4096-enum.txt"
 (cd "$out/artifact" && sha256sum *-win32u.so > SHA256SUMS.txt)

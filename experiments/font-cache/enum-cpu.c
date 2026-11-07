@@ -6,13 +6,6 @@ static int mode;
 static unsigned errors;
 static unsigned long long checksum;
 static void mix(unsigned value){checksum=(checksum^value)*1099511628211ULL;}
-static void unix_module(void)
-{
-    FILE *input=fopen("Z:\\proc\\self\\maps","r");char line[4096];
-    if(!input)return;
-    while(fgets(line,sizeof(line),input))if(strstr(line,"win32u.so"))printf("unix_module %s",line);
-    fclose(input);
-}
 static ULONGLONG cpu_time(void)
 {
     FILETIME created,exited,kernel,user;ULARGE_INTEGER k,u;
@@ -35,7 +28,7 @@ static int CALLBACK visit(const LOGFONTW *lf,const TEXTMETRICW *tm,DWORD type,LP
 int main(void)
 {
     HDC dc=GetDC(NULL);LOGFONTW lf={0};int round;
-    if(!dc)return 3;unix_module();lf.lfCharSet=DEFAULT_CHARSET;
+    if(!dc)return 3;lf.lfCharSet=DEFAULT_CHARSET;
     for(mode=0;mode<4;mode++)for(round=0;round<2;round++)
     {
         DWORD start=GetTickCount();ULONGLONG cpu=cpu_time();count=0;checksum=14695981039346656037ULL;

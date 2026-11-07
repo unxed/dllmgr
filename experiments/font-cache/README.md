@@ -26,7 +26,10 @@ startup. No complete explanation of the six-second delay is claimed.
 
 The branch CI builds baseline and patched win32u Unix modules from the exact
 source, uses each only in its own disposable copy of Wine 11.0, and initializes
-separate prefixes with the same font inventory. It verifies the actual ELF module
-path, font counts/text-metric checksums, wall/CPU time and process peak memory.
-The user's installed Wine is not touched. This mechanism is confined to the
-research runner; no installer, registry override or catalog entry is provided.
+separate prefixes with the same font inventory. While the benchmark is paused
+after acquiring its display context, the Linux runner finds the benchmark's
+own PID, requires its `/proc/<pid>/maps` to contain the expected ELF module, and
+records that process's resident memory. It also records font counts,
+text-metric checksums, wall/CPU time and peak memory. The user's installed Wine
+is not touched. This mechanism is confined to the research runner; no
+installer, registry override or catalog entry is provided.
