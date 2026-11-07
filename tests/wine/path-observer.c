@@ -85,7 +85,7 @@ static int observe_path(HWND first)
     }
     if(!GetComboBoxInfo(combo,&ci) || !GetWindowRect(combo,&r)) return 6;
     if(classic) {
-        HRESULT hr=SetWindowTheme(combo,L"",L"");
+        HRESULT hr=SetWindowTheme(combo,L" ",L" ");
         printf("classic_theme_result=%08lx\n",(unsigned long)hr);
         if(FAILED(hr))return 10;
         RedrawWindow(combo,NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_UPDATENOW|RDW_ALLCHILDREN);

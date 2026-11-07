@@ -35,3 +35,12 @@ differs substantially, but the initial window widths and OS themes also differ;
 these images do not isolate a Wine defect. Next capture fixes the client area
 at 900x600 logical pixels and separately disables theming on the combo with
 public SetWindowTheme; each mode starts from a fresh portable profile.
+
+Run 42414539727 at 7c94278: matched client size gives the **same 481x24 px
+combo size** on native Windows and Wine96. The eight themed-state transitions
+still agree. Windows uses NormalColor; Wine uses Blue, so themed pixel colors
+are not an identical baseline. Native classic capture succeeded, but Wine's
+SetWindowTheme(combo, L"", L"") returned 0x8007007b (invalid name), aborting
+that mode safely. Wine uxtheme's property setter calls GlobalAddAtomW on the
+empty value. The next probe uses nonempty, nonexistent space class names to
+disable theming on both systems; no prefix-wide theme setting is changed.
