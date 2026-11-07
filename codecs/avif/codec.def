@@ -1,0 +1,4 @@
+LIBRARY dllmgr-avif
+EXPORTS
+    DllGetClassObject PRIVATE
+    DllCanUnloadNow PRIVATE

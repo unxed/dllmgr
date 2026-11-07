@@ -1,0 +1,93 @@
+name: AVIF WIC codec
+on:
+  workflow_dispatch:
+  push:
+    branches: ['codec/faststone-avif*']
+    paths:
+      - 'codecs/avif/**'
+      - 'tests/wine/avif-codec.c'
+      - '.github/workflows/avif-codec.yml'
+permissions:
+  contents: read
+jobs:
+  x86:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact official dependency sources
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sources = Join-Path $env:RUNNER_TEMP 'avif-sources'
+          New-Item -ItemType Directory -Force $sources | Out-Null
+          function Get-Source($name, $url, $commit) {
+            $dir = Join-Path $sources $name
+            git init $dir
+            if ($LASTEXITCODE) { throw 'git init failed' }
+            git -C $dir remote add origin $url
+            if ($LASTEXITCODE) { throw 'git remote failed' }
+            git -C $dir fetch --depth=1 origin $commit
+            if ($LASTEXITCODE) { throw 'git fetch failed' }
+            git -C $dir checkout --detach FETCH_HEAD
+            if ($LASTEXITCODE) { throw 'git checkout failed' }
+            if ((git -C $dir rev-parse HEAD) -ne $commit) { throw 'Source pin mismatch' }
+          }
+          Get-Source 'libavif' 'https://github.com/AOMediaCodec/libavif.git' 'c5240fc79fe5c2407e10afd35f5505ef6333ea49'
+          Get-Source 'aom' 'https://aomedia.googlesource.com/aom' '03087864cf4bea6abb0d28f95cf7843511413d8f'
+          "AVIF_SOURCES=$sources" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Build test fixture encoder (separate from shipped DLL)
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+          if errorlevel 1 exit /b 1
+          cmake -S codecs/avif -B build-fixtures -G Ninja -DCMAKE_BUILD_TYPE=Release -DDLLMGR_AVIF_FIXTURE_ONLY=ON "-DDLLMGR_LIBAVIF_SOURCE=%AVIF_SOURCES%\libavif" "-DDLLMGR_AOM_SOURCE=%AVIF_SOURCES%\aom"
+          if errorlevel 1 exit /b 1
+          cmake --build build-fixtures --target avif-fixtures --parallel 4
+          if errorlevel 1 exit /b 1
+          build-fixtures\avif-fixtures.exe fixtures
+          if errorlevel 1 exit /b 1
+      - name: Build decoder-only DLL and WIC probe
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+          if errorlevel 1 exit /b 1
+          cmake -S codecs/avif -B build-avif -G Ninja -DCMAKE_BUILD_TYPE=Release "-DDLLMGR_LIBAVIF_SOURCE=%AVIF_SOURCES%\libavif" "-DDLLMGR_AOM_SOURCE=%AVIF_SOURCES%\aom"
+          if errorlevel 1 exit /b 1
+          cmake --build build-avif --target dllmgr-avif avif-codec --parallel 4
+          if errorlevel 1 exit /b 1
+          cmake --install build-avif --prefix artifact
+          if errorlevel 1 exit /b 1
+          dumpbin /headers artifact\dllmgr-avif.dll > artifact\pe-headers.txt
+          dumpbin /dependents artifact\dllmgr-avif.dll > artifact\dependencies.txt
+          dumpbin /exports artifact\dllmgr-avif.dll > artifact\exports.txt
+      - name: Test WIC pixels, discovery and undo
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & .\artifact\avif-codec.exe --self-test "$pwd\artifact\dllmgr-avif.dll" "$pwd\fixtures" 2>&1 | Tee-Object -FilePath artifact\test-results.txt
+          if ($LASTEXITCODE -ne 0) { throw "WIC self-test failed: $LASTEXITCODE" }
+          $deps = Get-Content artifact\dependencies.txt -Raw
+          if ($deps -match '(?i)(vcruntime|msvcp|avif|aom)\w*\.dll') { throw 'Unexpected non-system dynamic dependency' }
+      - name: Package source identity and fixtures
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifact | Out-Null
+          @(
+            "dllmgr ${{ github.sha }}",
+            'libavif c5240fc79fe5c2407e10afd35f5505ef6333ea49',
+            'aom 03087864cf4bea6abb0d28f95cf7843511413d8f',
+            'MSVC x86 /MT, AOM_TARGET_CPU=generic, production AOM encoder disabled'
+          ) | Set-Content artifact\source-revisions.txt
+          if (Test-Path fixtures) { Copy-Item -Recurse fixtures artifact\fixtures }
+          Get-ChildItem artifact -Recurse -File | Sort-Object FullName | ForEach-Object {
+            $hash = Get-FileHash $_.FullName -Algorithm SHA256
+            "$($hash.Hash.ToLower())  $([IO.Path]::GetRelativePath("$pwd\artifact", $_.FullName))"
+          } | Set-Content artifact\SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dllmgr-avif-x86
+          path: artifact/
+          if-no-files-found: error
