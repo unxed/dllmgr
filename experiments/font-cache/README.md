@@ -67,3 +67,41 @@ font-cache entries, so it does not measure retained-font memory cost. The
 `/usr/bin/time -v` wrapper reported 18324/18144 kB maximum RSS for the Wine
 launcher command, but may miss the Wine child process peak; it is not a
 reliable child-process peak-memory comparison.
+
+## Actual FastStone: this candidate did not help
+
+Local A/B/B/A on 2026-11-07 used official FastStone 8.5 x86, synthetic white
+800x600 BMP, a fresh portable profile per launch, a disposable win64 prefix
+at 192 DPI and the same host font inventory. The private runtime materialized
+its Unix modules and launchers; unchanged PE/data files were read through
+symlinks. The installed system win32u.so hash was identical before/after.
+The original FastStone profile/default Wine prefix were not used.
+
+The first default-mode attempt ran to Draw readiness but **failed the expected
+x86_64 Unix-module mapping proof**: it used the other architecture. These
+initial timings (startup reply 2116 ms, Draw reply 6373 ms) are not an A/B
+comparison. The retry forced `WINEARCH=wow64` in the owned runtime/prefix and
+required the FSViewer.exe process's Linux maps to contain the exact private
+x86_64 win32u.so on every run. This does not establish parity with the owner's
+ordinary Wine loader mode.
+
+`local-faststone-abba.json` records the four valid runs. Draw mapping/reply:
+stock 7119/7120 and 7013/7323 ms; cache4096 6844/6850 and 7636/7640 ms.
+Mean reply: **7221.5 ms stock versus 7245 ms candidate**. Startup reply was
+1556/1661 ms stock and 1690/1572 ms candidate. There is **no demonstrated
+application speedup**; do not install this cache enlargement for FastStone.
+Two samples per variant cannot establish a small improvement/regression.
+
+Unlike the earlier microbenchmark's pre-cache RSS, these are samples of the
+actual FSViewer.exe Linux process after Draw mapped: stock 160440/160528 kB,
+candidate 161304/163108 kB. Sampled process peaks were 189784/193024 kB stock
+and 184052/183400 kB candidate; 50 ms polling can miss the true peak. These
+figures do not isolate retained font-cache memory. WM_NULL reply remains a
+readiness proxy, not proof of final painting or all input handling.
+
+The focused public-API observer is `app-observer.c`; compile it with the
+existing tests/wine include path and listview-probe.c. It launches its own
+process, measures startup and one Draw open, pauses for external memory/maps
+sampling, then terminates only that owned process. No synthetic input is sent
+unless that application's window is foreground. Next profiling should find
+actual Draw cost rather than extrapolating from repeated text measurement.
