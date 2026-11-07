@@ -8,11 +8,11 @@ profiles:
     wine: wine-11.0
     host_arch: x86_64
     prefix_arch: win64
-    release: faststone-v2
+    release: faststone-v3
 title: "FastStone Image Viewer: composed application fixes"
 programs: [FSViewer.exe]
 wine: [wine-11.0]
-fixes: [winehq-48872, winehq-48874, winehq-59251, winehq-59609, dllmgr-14]
+fixes: [winehq-48872, winehq-48874, winehq-59251, winehq-59609, dllmgr-14, dllmgr-21]
 ---
 
 # FastStone Image Viewer
@@ -35,9 +35,11 @@ dllmgr share faststone
 
 See [installation and sharing](../../docs/recipes.md). The profile restores
 missing names under the browser thumbnails in the 192 DPI app comparison.
-The four-patch build passed the native controls and GDI+ tests. The profile
-still has open app-specific issues including tile overflow, path-field
-repainting, fonts and performance. See [the audit](../../docs/faststone.md)
+The composed DLL set also keeps the themed path dropdown button visually
+pressed while its list remains open. Tile fit, names, pencil color and
+scrolling have passed their checks and the owner's desktop acceptance.
+Intermittent path-field corruption and performance remain open. Corrected
+fonts and AVIF support are separately managed workarounds for now (#23). See [the audit](../../docs/faststone.md)
 and [the remaining reports](https://github.com/unxed/dllmgr/issues/8).
 
 After applying or undoing a selection, close all Wine applications in the

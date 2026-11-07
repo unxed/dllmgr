@@ -48,6 +48,42 @@
       "path": "fixes/dllmgr-14.md"
     },
     {
+      "id": "dllmgr-21",
+      "kind": "fix",
+      "title": "comctl32 v6: keep the themed combo button visually pressed while its list is open",
+      "license": "LGPL-2.1-or-later",
+      "bug": "https://github.com/unxed/dllmgr/issues/21",
+      "dlls": [
+        "comctl32_v6"
+      ],
+      "programs": [
+        "FSViewer.exe"
+      ],
+      "wine": [
+        "wine-11.0"
+      ],
+      "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/dllmgr-21.patch",
+      "patch_sha256": "90a9c5f74b6efc0339afb2dbfbb38cb9d750ff7a80be32426513450e87bc6375",
+      "recipe": "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 comctl32_v6",
+      "binaries": "https://github.com/unxed/dllmgr/releases/tag/dllmgr-21",
+      "evidence": "https://github.com/unxed/dllmgr/actions/runs/42415777621",
+      "results": [
+        {
+          "check": "tests/wine/check-path-dropdown.py actual FastStone themed path button",
+          "exe_sha256": "05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621",
+          "wine": "wine-11.0",
+          "host_arch": "x86_64",
+          "prefix_arch": "win64",
+          "dpi": 192,
+          "without": "fail",
+          "with": "pass",
+          "run": "https://github.com/unxed/dllmgr/actions/runs/42415777621"
+        }
+      ],
+      "ai_assisted": true,
+      "path": "fixes/dllmgr-21.md"
+    },
+    {
       "id": "faststone-all",
       "kind": "bundle",
       "title": "FastStone Image Viewer: composed application fixes",
@@ -62,7 +98,8 @@
         "winehq-48874",
         "winehq-59251",
         "winehq-59609",
-        "dllmgr-14"
+        "dllmgr-14",
+        "dllmgr-21"
       ],
       "application": "faststone",
       "profiles": [
@@ -72,7 +109,7 @@
           "wine": "wine-11.0",
           "host_arch": "x86_64",
           "prefix_arch": "win64",
-          "release": "faststone-v2"
+          "release": "faststone-v3"
         }
       ],
       "path": "bundles/faststone-all.md"

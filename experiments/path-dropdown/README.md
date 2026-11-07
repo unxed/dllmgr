@@ -65,3 +65,22 @@ the theme in its **disposable prefix only** before launching that mode. Native
 Windows disables it on the specific combo. No owner's theme settings change.
 Local Xvfb testing was unavailable (`xvfb-run: command not found`); the owned
 96-DPI prefix test instead used the real desktop, without starting another WM.
+
+Run **42415777621** at **28104a395829d73702649920f4009bdb0a24c9b0** passed
+all jobs: Windows96, stock Wine96/192, isolated patch at192, composed four
+list-view fixes + this patch at192, native load and exact original-DLL undo.
+The stdlib BMP checker verifies the actual public button rectangle, list
+visibility, pressed state and stable held pixels; a constant blank capture
+cannot satisfy its distinct hover-to-down check.
+
+The same composed DLL passed temporarily on the owner's ordinary Wine/prefix
+at192 DPI: hover/down1242 different pixels; held/down0; release/down0.
+Its native load was confirmed. Original two DLLs, managed journal and installed
+FastStone profile hashes were restored; the corrected font and AVIF codec
+were untouched. The owner's eye check is pending. A single portable-profile
+run still did not reproduce the severe old path artifact.
+
+The local catalog generator could not start with system Go1.22:
+`go: download go1.24 for linux/amd64: toolchain not available`.
+The JSON update uses the existing entry field order locally; hosted catalog CI
+regenerates with the project's Go version and requires byte-for-byte equality.
