@@ -11,7 +11,7 @@ registration; the CI probe can temporarily register its own two HKLM subtrees.
 - Category: `CATID_WICBitmapDecoders`, instance key named by the decoder CLSID.
 - Pixel format: `GUID_WICPixelFormat32bppBGRA` (straight alpha).
 - Two patterns: offset 4, length 8, bytes `ftypavif` and `ftypavis`, masks all
-  `ff`, EndOfStream=0. Position is a registry QWORD; Length is a DWORD.
+  `ff`, EndOfStream=0. Position and Length are registry DWORDs.
 - MIME `image/avif`, extension `.avif`. SupportAnimation=0,
   SupportMultiframe=0, SupportChromakey=0, SupportLossless=1.
 

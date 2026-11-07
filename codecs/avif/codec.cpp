@@ -243,8 +243,8 @@ public:
         if (!out) return E_INVALIDARG; *out = nullptr; return WINCODEC_ERR_CODECNOTHUMBNAIL;
     }
     HRESULT STDMETHODCALLTYPE GetFrameCount(UINT *out) override {
-        trace("GetFrameCount initialized", frame ? S_OK : WINCODEC_ERR_NOTINITIALIZED);
         if (!out) return E_INVALIDARG; *out = 0; SharedLock guard(&lock);
+        trace("GetFrameCount initialized", frame ? S_OK : WINCODEC_ERR_NOTINITIALIZED);
         if (!frame) return WINCODEC_ERR_NOTINITIALIZED; *out = 1; return S_OK;
     }
     HRESULT STDMETHODCALLTYPE GetFrame(UINT index, IWICBitmapFrameDecode **out) override {

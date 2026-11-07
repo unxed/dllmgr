@@ -46,7 +46,7 @@ static void unregister_test(void) {
 }
 static LONG register_test(const WCHAR *dll) {
     HKEY key = NULL, sub = NULL;
-    LONG err; DWORD zero = 0, one = 1, length = 8; ULONGLONG position = 4;
+    LONG err; DWORD zero = 0, one = 1, length = 8, position = 4;
     BYTE mask[8] = {255,255,255,255,255,255,255,255};
     unsigned i;
 #define REG(expr) do { err = (expr); if (err) goto done; } while (0)
@@ -73,7 +73,7 @@ static LONG register_test(const WCHAR *dll) {
         const WCHAR *path = i ? L"Patterns\\1" : L"Patterns\\0";
         const char *pattern = i ? "ftypavis" : "ftypavif";
         REG(RegCreateKeyExW(key, path, 0, NULL, 0, KEY_WRITE, NULL, &sub, NULL));
-        REG(value(sub, L"Position", REG_QWORD, &position, sizeof(position)));
+        REG(value(sub, L"Position", REG_DWORD, &position, sizeof(position)));
         REG(value(sub, L"Length", REG_DWORD, &length, 4));
         REG(value(sub, L"Pattern", REG_BINARY, pattern, 8));
         REG(value(sub, L"Mask", REG_BINARY, mask, 8));

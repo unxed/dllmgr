@@ -57,7 +57,7 @@ def registration():
              f'[{root}\\InprocServer32]', '@="C:\\\\dllmgr\\\\codecs\\\\avif\\\\dllmgr-avif.dll"',
              '"ThreadingModel"="Both"', '', f'[{root}\\Formats\\{BGRA}]', '']
     for i, signature in enumerate((b'ftypavif', b'ftypavis')):
-        rows += [f'[{root}\\Patterns\\{i}]', '"Position"=hex(b):04,00,00,00,00,00,00,00',
+        rows += [f'[{root}\\Patterns\\{i}]', '"Position"=dword:00000004',
                  '"Length"=dword:00000008', '"Pattern"=hex:'+','.join(f'{c:02x}' for c in signature),
                  '"Mask"=hex:ff,ff,ff,ff,ff,ff,ff,ff', '"EndOfStream"=dword:00000000', '']
     rows += [f'[{instance}]', f'"CLSID"="{CLSID}"', '"FriendlyName"="dllmgr AVIF decoder"', '']
@@ -121,7 +121,7 @@ class WineRegistry:
 
 
 def validate_state(state):
-    if state.get('format') != 1 or state.get('dll') != str(DLL):
+    if state.get('format') != 1 or state.get('dll') != str(DLL) or state.get('phase') not in ('pending', 'installed'):
         raise Error('Unrecognized AVIF state; refusing to change it')
 
 
@@ -152,7 +152,7 @@ def apply(prefix, source, registry):
     digest = sha(data)
     if path.exists():
         state = json.loads(path.read_text()); validate_state(state)
-        if state['phase'] == 'installed' and state['sha256'] == digest and target.exists() and sha(target.read_bytes()) == digest and [registry.snapshot(k) for k in ROOTS] == state['registry']:
+        if state['phase'] == 'installed' and state.get('registration_sha256') == sha(registration()) and state['sha256'] == digest and target.exists() and sha(target.read_bytes()) == digest and [registry.snapshot(k) for k in ROOTS] == state['registry']:
             return 'already installed'
         raise Error('Existing AVIF state differs; undo it before installing another build')
     if target.exists():
@@ -160,7 +160,7 @@ def apply(prefix, source, registry):
     merged = [root.replace('HKLM\\Software\\Classes', 'HKCR', 1) for root in ROOTS]
     if any(registry.exists(root) for root in (*ROOTS, *merged)):
         raise Error('Decoder registration already exists; refusing to overwrite it')
-    state = dict(format=1, phase='pending', dll=str(DLL), sha256=digest, registry=[])
+    state = dict(format=1, phase='pending', dll=str(DLL), sha256=digest, registration_sha256=sha(registration()), registry=[])
     atomic(path, json.dumps(state, indent=2).encode())
     try:
         atomic(target, data, 0o644)
