@@ -33,3 +33,10 @@ records that process's resident memory. It also records font counts,
 text-metric checksums, wall/CPU time and peak memory. The user's installed Wine
 is not touched. This mechanism is confined to the research runner; no
 installer, registry override or catalog entry is provided.
+
+Harness history: run 42413875048 found that Wine does not expose the Windows
+executable path in the app process's Linux command line, so command-line based
+PID discovery failed after the benchmark completed. Run 42414249062 tests the
+corrected approach: find the live PID by the expected `win32u.so` mapping
+itself, then record that mapping and the same PID's resident memory. Its result
+is pending; no performance conclusion is drawn from these harness runs.

@@ -43,8 +43,8 @@ for phase in stock cache4096; do
         app_pid=
         for attempt in $(seq 1 100); do
             for proc in /proc/[0-9]*; do
-                [ -r "$proc/cmdline" ] || continue
-                tr "\\0" " " <"$proc/cmdline" | grep -Fq "$3/cache-bench.exe" || continue
+                [ -r "$proc/maps" ] || continue
+                grep -Fq "$4/lib/wine/x86_64-unix/win32u.so" "$proc/maps" || continue
                 app_pid=${proc##*/}
                 break
             done
