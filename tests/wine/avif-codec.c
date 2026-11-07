@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: BSD-3-Clause
- * --file is read-only. --self-test creates only two decoder-owned HKCU registry
+ * --file is read-only. --self-test creates only two decoder-owned HKLM registry
  * subtrees, refuses to overwrite existing ones, and removes them on every exit.
  */
 #define COBJMACROS
@@ -29,20 +29,20 @@ static LONG string_value(HKEY key, const WCHAR *name, const WCHAR *s) {
 }
 static LONG new_key(const WCHAR *path, HKEY *key, BOOL *owned) {
     DWORD disposition;
-    LONG err = RegCreateKeyExW(HKEY_CURRENT_USER, path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, key, &disposition);
+    LONG err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, key, &disposition);
     if (!err && disposition != REG_CREATED_NEW_KEY) { RegCloseKey(*key); *key = NULL; return ERROR_ALREADY_EXISTS; }
     if (!err) *owned = TRUE;
     return err;
 }
 static BOOL absent(const WCHAR *path) {
     HKEY key;
-    LONG err = RegOpenKeyExW(HKEY_CURRENT_USER, path, 0, KEY_READ, &key);
+    LONG err = RegOpenKeyExW(HKEY_LOCAL_MACHINE, path, 0, KEY_READ, &key);
     if (!err) RegCloseKey(key);
     return err == ERROR_FILE_NOT_FOUND;
 }
 static void unregister_test(void) {
-    if (own_instance) { CHECK(RegDeleteTreeW(HKEY_CURRENT_USER, instance_key) == ERROR_SUCCESS); own_instance = FALSE; }
-    if (own_decoder) { CHECK(RegDeleteTreeW(HKEY_CURRENT_USER, decoder_key) == ERROR_SUCCESS); own_decoder = FALSE; }
+    if (own_instance) { CHECK(RegDeleteTreeW(HKEY_LOCAL_MACHINE, instance_key) == ERROR_SUCCESS); own_instance = FALSE; }
+    if (own_decoder) { CHECK(RegDeleteTreeW(HKEY_LOCAL_MACHINE, decoder_key) == ERROR_SUCCESS); own_decoder = FALSE; }
 }
 static LONG register_test(const WCHAR *dll) {
     HKEY key = NULL, sub = NULL;
@@ -247,7 +247,7 @@ int wmain(int argc, WCHAR **argv) {
     HRESULT (WINAPI *can_unload)(void);
     WCHAR dll[2048], file[2048]; LONG reg_error;
     if (argc == 2 && !wcscmp(argv[1], L"--help")) {
-        puts("avif-codec --file IMAGE (read-only installed WIC probe)\navif-codec --self-test DLL FIXTURES (temporary test-owned HKCU registration)"); return 0;
+        puts("avif-codec --file IMAGE (read-only installed WIC probe)\navif-codec --self-test DLL FIXTURES (temporary test-owned HKLM registration)"); return 0;
     }
     if (!((argc == 3 && !wcscmp(argv[1], L"--file")) || (argc == 4 && !wcscmp(argv[1], L"--self-test")))) return 2;
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED); if (FAILED(hr)) return 1;

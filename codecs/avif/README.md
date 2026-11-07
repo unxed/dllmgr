@@ -2,7 +2,7 @@
 
 A native x86 WIC COM decoder for AVIF still-image display. The DLL has no
 registration exports or process-start side effects. dllmgr owns reversible
-registration; the CI probe can temporarily register its own two HKCU subtrees.
+registration; the CI probe can temporarily register its own two HKLM subtrees.
 
 - Decoder CLSID: `{13B0A525-1176-4B40-8134-D72A67B16BE8}` (permanent).
 - Vendor: `{E2491A3D-B71A-4C4D-85D1-C8DAFB6AF011}`.
@@ -67,7 +67,7 @@ avif-codec.exe --self-test C:\build\dllmgr-avif.dll C:\build\fixtures
 ```
 
 The self-test refuses existing registrations under this CLSID; it creates and
-then deletes only its decoder CLSID and its category instance subtrees in HKCU.
+then deletes only its decoder CLSID and its category instance subtrees in HKLM.
 It does not change another codec's registration. It checks lossless RGBA pixels,
 alpha premultiplication through the system WIC FormatConverter, source lifetime,
 rectangle/stride/buffer bounds, malformed/truncated/foreign-brand input,
@@ -77,3 +77,9 @@ prefix automatically. Read-only `--file` never registers or unregisters anything
 
 CI proves the standalone COM/WIC behavior on Windows. Wine 11 and the actual
 FastStone image/panel require separate local checks before calling this a fix.
+
+Wine 11 maps HKCR directly to the machine Classes branch; it does not merge
+per-user HKCU Classes registrations. The registration therefore uses HKLM
+Classes in the 32-bit view **inside the selected Wine prefix**, affecting WIC
+clients in that prefix. This needs no Linux administrator privileges. The
+Windows CI self-test runs in its disposable administrator runner account.
