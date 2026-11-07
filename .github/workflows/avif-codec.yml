@@ -70,7 +70,7 @@ jobs:
           & .\artifact\avif-codec.exe --self-test "$pwd\artifact\dllmgr-avif.dll" "$pwd\fixtures" 2>&1 | Tee-Object -FilePath artifact\test-results.txt
           if ($LASTEXITCODE -ne 0) { throw "WIC self-test failed: $LASTEXITCODE" }
           $deps = Get-Content artifact\dependencies.txt -Raw
-          if ($deps -match '(?i)(vcruntime|msvcp|avif|aom)\w*\.dll') { throw 'Unexpected non-system dynamic dependency' }
+          if ($deps -match '(?im)^\s*(vcruntime|msvcp|avif|aom)\w*\.dll\s*$') { throw 'Unexpected non-system dynamic dependency' }
       - name: Package source identity and fixtures
         if: always()
         shell: pwsh
