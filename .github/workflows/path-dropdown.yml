@@ -46,6 +46,8 @@ jobs:
             args=(); if [ "$mode" = classic ]; then args+=(classic); fi
             (cd "captures/$mode" && ../../path-observer.exe 'C:\dllmgr-path-test\FSViewer85\FSViewer.exe' 'C:\dllmgr-path-test\images\browser\00-landscape.bmp' "${args[@]}" >observations.txt)
           done
+      - shell: bash
+        run: python tests/wine/check-path-dropdown.py captures/themed
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -92,8 +94,36 @@ jobs:
               (cd "captures/$mode" && timeout 75 wine ../../path-observer.exe "C:\dllmgr-path-test\FSViewer85\FSViewer.exe" "C:\dllmgr-path-test\images\browser\00-landscape.bmp" "${args[@]}" >observations.txt 2>errors.txt)
             done
           '
+      - run: python3 tests/wine/check-path-dropdown.py captures/themed --expect-release-change
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: path-wine-${{ matrix.dpi }}
           path: captures/
+
+  patched:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      WINEDEBUG: -all
+      WINEDLLOVERRIDES: mscoree,mshtml=
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: unxed/fix-it-in-wine
+          ref: 5d2b8fa80071fc9ce6ce5b655bf143d6a00c6d7d
+          path: fiw
+      - uses: actions/download-artifact@v4
+        with:
+          name: path-observer
+      - run: bash tests/wine/ci-install.sh --winehq --install-recommends winehq-stable xvfb openbox gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
+        timeout-minutes: 6
+      - run: xvfb-run -a -s '-screen 0 2048x1536x24' bash -c 'openbox >/dev/null 2>&1 & exec bash tests/wine/path-patched.sh'
+        timeout-minutes: 12
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: path-patched
+          path: ${{ runner.temp }}/path-patched/

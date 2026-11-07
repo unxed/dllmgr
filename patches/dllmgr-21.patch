@@ -1,0 +1,13 @@
+diff --git a/dlls/comctl32_v6/combo.c b/dlls/comctl32_v6/combo.c
+index a8ecf9f..9e742db 100644
+--- a/dlls/comctl32_v6/combo.c
++++ b/dlls/comctl32_v6/combo.c
+@@ -775,7 +775,7 @@ static LRESULT COMBO_ThemedPaint(HTHEME theme, HEADCOMBO *lphc, HDC hdc)
+     {
+         if (!IsWindowEnabled(lphc->self))
+             button_state = CBXS_DISABLED;
+-        else if (lphc->wState & CBF_BUTTONDOWN)
++        else if (lphc->wState & (CBF_BUTTONDOWN | CBF_DROPPED))
+             button_state = CBXS_PRESSED;
+         else if (lphc->wState & CBF_HOT)
+             button_state = CBXS_HOT;
