@@ -266,7 +266,21 @@ int wmain(int argc, WCHAR **argv) {
     direct_tests(class_factory, factory, argv[3]);
     REL(class_factory, IClassFactory); CHECK(can_unload() == S_OK);
     reg_error = register_test(dll); CHECK(reg_error == ERROR_SUCCESS); if (reg_error) goto done;
+    /* A real client starts after installation. Do not reuse a factory which
+     * enumerated the registry before this new component existed. */
+    REL(factory, IWICImagingFactory); factory = new_factory(); if (!factory) goto done;
     CHECK(enumerate_ours(factory) == 1);
+    {
+        IWICBitmapDecoder *registered = NULL;
+        IWICComponentInfo *component = NULL;
+        hr = CoCreateInstance(&CLSID_DllmgrAvifDecoder, NULL, CLSCTX_INPROC_SERVER,
+                              &IID_IWICBitmapDecoder, (void **)&registered);
+        printf("Registered COM activation: %08lx\n", (unsigned long)hr); HR_OK(hr);
+        REL(registered, IWICBitmapDecoder);
+        hr = IWICImagingFactory_CreateComponentInfo(factory, &CLSID_DllmgrAvifDecoder, &component);
+        printf("Registered WIC component info: %08lx\n", (unsigned long)hr); HR_OK(hr);
+        REL(component, IWICComponentInfo);
+    }
     path_join(file, argv[3], L"rgba.avif"); HR_OK(generic_file(factory, file, TRUE));
     unregister_test(); CHECK(absent(decoder_key)); CHECK(absent(instance_key));
     CHECK(enumerate_ours(factory) == 0);
