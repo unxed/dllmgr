@@ -1,0 +1,45 @@
+Copyright (c) 2000-2024. See AUTHORS for Contributors.
+ License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+ with many parts BSD <http://fontforge.org/license.html>. Please read LICENSE.
+ Version: 20230101
+ Based on sources from 2024-03-31 07:36 UTC-ML-D-GDK3.
+PythonUI_Init()
+copyUIMethodsToBaseTable()
+Program root: /usr
+The following table(s) in the font have been ignored by FontForge
+  Ignoring 'VDMX' vertical device metrics table
+The following table(s) in the font have been ignored by FontForge
+  Ignoring 'VDMX' vertical device metrics table
+FontForge checked 66 affected glyphs; vertical bbox mismatches >0.01 font unit=2; max delta=0.152220
+('U+042D', (43.0, -28.697674418604652, 1173.0, 1518.025), (58.0, -28.545454545454547, 1308.0, 1518.025))
+('U+0431', (67.91836734693878, -31.239202657807308, 1060.391304347826, 1495.0), (88.51851851851852, -31.161290322580644, 1200.6153846153845, 1495.0))
+FontForge self-intersection bit 0x04: before=2, after=0, newly flagged=0 -
+FontForge wrong contour winding bit 0x08: before=24, after=0, newly flagged=0 -
+FontForge other validation bit 0x00020: before=25, after=25
+  U+0414: before=0x0008, after=0x0000
+  U+0416: before=0x0008, after=0x0000
+  U+0418: before=0x0008, after=0x0000
+  U+0419: before=0x0008, after=0x0000
+  U+0424: before=0x0028, after=0x0020
+  U+0426: before=0x0008, after=0x0000
+  U+0427: before=0x0028, after=0x0020
+  U+042A: before=0x0028, after=0x0020
+  U+042B: before=0x0028, after=0x0020
+  U+042C: before=0x0028, after=0x0020
+  U+042D: before=0x0028, after=0x0020
+  U+042F: before=0x0008, after=0x0020
+  U+0432: before=0x0020, after=0x0000
+  U+0434: before=0x0008, after=0x0000
+  U+0436: before=0x0008, after=0x0000
+  U+0438: before=0x0008, after=0x0000
+  U+0439: before=0x0008, after=0x0000
+  U+043C: before=0x0008, after=0x0000
+  U+043D: before=0x0008, after=0x0000
+  U+043F: before=0x0008, after=0x0000
+  U+0446: before=0x0008, after=0x0000
+  U+0447: before=0x0028, after=0x0020
+  U+0449: before=0x0008, after=0x0000
+  U+0454: before=0x0028, after=0x0020
+  U+04A3: before=0x0008, after=0x0000
+  U+04D8: before=0x0024, after=0x0020
+  U+04E9: before=0x0024, after=0x0020

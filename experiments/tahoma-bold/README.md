@@ -4,7 +4,7 @@ Checkpoint: 2026-11-07. **Not an installable recipe or an accepted fix.**
 The owner rejected the first outline-only candidate: mixed bold/regular weight
 improved, but letter positioning still looked uneven. The hinted candidate
 has been rendered in actual Wine and FastStone; owner acceptance is pending.
-Neither candidate is left installed. Original prefix fonts/settings are restored.
+No candidate is left installed. Original prefix fonts/settings are restored.
 
 This archive preserves the work and failures so the next session can continue
 without reconstructing it from chat. Font-derived files remain under
@@ -96,3 +96,20 @@ font-lab/render.c. Build it with x86_64-w64-mingw32-gcc -municode and -lgdi32.
 It takes a candidate font path (or `-` for the existing face) and an output BMP
 path, loads a private font only for its own process, reports actual selection,
 and removes that private resource before exit. The raw BMP is local output.
+
+## Cleaned candidate 0.007 (latest)
+
+[freetype/README.md](freetype/README.md) records a different emboldening method,
+fast overlap cleanup and whole-font hinting. It removes the new contour
+self-intersections instead of hinting the previous malformed geometry. The
+complete build script was run successfully on the laptop (FontForge and an
+unpacked ttfautohint 1.8.4); an initial retry failed because ttfautohint was not
+on PATH, before supplying its explicit executable/library paths. No package
+installation was needed. The rebuilt font is not claimed byte-identical.
+
+Actual FastStone comparison: original left, cleaned/hinted 0.007 right. The
+font was temporarily selected in the prefix and removed afterwards, with
+settings restored. Owner acceptance is still pending; it is outside the
+verified catalog and is not installed permanently.
+
+![Actual FastStone, original and candidate 0.007](freetype/comparison-faststone007.png)
