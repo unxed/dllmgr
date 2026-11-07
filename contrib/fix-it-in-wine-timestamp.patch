@@ -1,0 +1,42 @@
+diff --git a/tests/test_wineprobe.py b/tests/test_wineprobe.py
+index 5519cf5..0ef8c70 100644
+--- a/tests/test_wineprobe.py
++++ b/tests/test_wineprobe.py
+@@ -41,6 +41,19 @@ class DigestTest(unittest.TestCase):
+         self.assertIn("modules: 3 loaded (1 native)", out)
+         self.assertIn("native: comctl32.dll", out)
+ 
++    def test_timestamped_module_loads(self):
++        lines = [
++            r'6347.483:012c:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\comctl32.dll" at 000000007A000000: native',
++            r'6347.484:012c:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\kernel32.dll" at 00006FFFFFE40000: builtin',
++            r'6347.485:012c:0028:trace:loaddll:build_module Loaded L"C:\\windows\\syswow64\\gdiplus.dll" at 000000007B000000: native',
++        ]
++        out = self.digest(lines, dlls=["comctl32", "kernel32.dll", "gdiplus"])
++        self.assertIn(r"dll comctl32: native C:\windows\system32\comctl32.dll", out)
++        self.assertIn(r"dll kernel32.dll: builtin C:\windows\system32\kernel32.dll", out)
++        self.assertIn(r"dll gdiplus: native C:\windows\syswow64\gdiplus.dll", out)
++        self.assertIn("modules: 3 loaded (2 native)", out)
++        self.assertIn("native: comctl32.dll, gdiplus.dll", out)
++
+     def test_missing_imports_deduplicated(self):
+         out = self.digest()
+         self.assertEqual(out.count("  foo.dll.Bar (from baz.dll)"), 1)
+diff --git a/tools/wineprobe.py b/tools/wineprobe.py
+index 9a09b45..efb352f 100755
+--- a/tools/wineprobe.py
++++ b/tools/wineprobe.py
+@@ -15,9 +15,11 @@ import re
+ import subprocess
+ import sys
+ 
+-# Wine may prefix the debug class with pid and tid ("0024:0028:trace:...").
++# Wine may prefix the debug class with a timestamp and pid/tid, e.g.
++# "6347.483:012c:trace:..." or "0024:0028:trace:...".
+ DEBUG_RE = re.compile(
+-    r"^(?:[0-9a-f]{4}:){0,2}(trace|warn|err|fixme):([\w.-]+):(\S+) ?(.*)$")
++    r"^(?:\d+(?:\.\d+)?:)?(?:[0-9a-f]{4}:){0,2}"
++    r"(trace|warn|err|fixme):([\w.-]+):(\S+) ?(.*)$")
+ # trace:loaddll prints: Loaded L"C:\\windows\\...\\x.dll" at 7B000000: native
+ # (debugstr_w doubles the backslashes).
+ LOAD_RE = re.compile(r'Loaded L"(.*?)" at [0-9a-fA-F]+: (native|builtin)')

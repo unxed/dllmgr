@@ -1,6 +1,7 @@
 /* Observe the official portable application with synthetic images on Windows/Wine.
  * Window mapping/WM_NULL round trips are proxies, not full paint/interaction proofs. */
 #include <windows.h>
+#include <shellapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 #include "listview-probe.h"
 
 static DWORD pid;
+static HANDLE app_process;
 static HWND found;
 static const char *wanted_title;
 static const char *wanted_class;
@@ -38,7 +40,11 @@ static HWND wait_window(const char *title, const char *class_name)
     DWORD start=GetTickCount();
     wanted_title=title;
     wanted_class=class_name;
-    do { found=NULL; EnumWindows(find_window,0); if(found) return found; Sleep(20); } while(GetTickCount()-start<20000);
+    do {
+        found=NULL; EnumWindows(find_window,0); if(found) return found;
+        if (app_process && WaitForSingleObject(app_process,0)==WAIT_OBJECT_0) return NULL;
+        Sleep(20);
+    } while(GetTickCount()-start<20000);
     return NULL;
 }
 static void describe(const char *stage, HWND hwnd)
@@ -70,7 +76,9 @@ static void report_timing(const char *stage, DWORD start, HWND hwnd)
     DWORD mapped=GetTickCount()-start;
     DWORD_PTR result;
     if (!hwnd) {
+        DWORD code;
         printf("%s_detection_timeout_ms=%lu\n",stage,mapped);
+        if (app_process && GetExitCodeProcess(app_process,&code)) printf("%s_process_code=%lu\n",stage,code);
         EnumWindows(describe_visible_window,0);
     } else {
         BOOL responding=!!SendMessageTimeoutA(hwnd,WM_NULL,0,0,SMTO_ABORTIFHUNG,1000,&result);
@@ -513,20 +521,31 @@ static BOOL pencil_stroke(HWND draw)
 
 int main(int argc,char **argv)
 {
-    STARTUPINFOA startup={sizeof(startup)}; PROCESS_INFORMATION process;
+    STARTUPINFOW startup={sizeof(startup)}; PROCESS_INFORMATION process;
     DWORD start,code; HWND hwnd,draw; RECT rect; int i,status=0;
-    char command[2048];
-    if(argc!=4){fprintf(stderr,"app-observer.exe FSViewer.exe image.bmp action(middle|enter|draw|browser|panel)\n");return 2;}
+    WCHAR command[2048], **wide_argv;
+    int wide_argc;
+    if(argc!=4){fprintf(stderr,"app-observer.exe FSViewer.exe image action(inspect|middle|enter|draw|browser|panel)\n");return 2;}
+    if (strcmp(argv[3],"inspect") && strcmp(argv[3],"middle") && strcmp(argv[3],"enter") &&
+        strcmp(argv[3],"draw") && strcmp(argv[3],"browser") && strcmp(argv[3],"panel"))
+    { fprintf(stderr,"Unknown observer action: %s\n",argv[3]); return 2; }
     SetProcessDPIAware();
     printf("capture_screen=%dx%d\n",GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN));
-    snprintf(command,sizeof(command),"\"%s\" \"%s\"",argv[1],argv[2]);
+    wide_argv=CommandLineToArgvW(GetCommandLineW(),&wide_argc);
+    if (!wide_argv || wide_argc!=4) return 2;
+    if (wcslen(wide_argv[1])+wcslen(wide_argv[2])+6>=ARRAYSIZE(command))
+    { LocalFree(wide_argv); fputs("Application/image command is too long\n",stderr); return 2; }
+    swprintf(command,ARRAYSIZE(command),L"\"%ls\" \"%ls\"",wide_argv[1],wide_argv[2]);
+    LocalFree(wide_argv);
     start=GetTickCount();
-    if(!CreateProcessA(NULL,command,NULL,NULL,FALSE,0,NULL,NULL,&startup,&process))return 3;
+    if(!CreateProcessW(NULL,command,NULL,NULL,FALSE,0,NULL,NULL,&startup,&process))return 3;
     pid=process.dwProcessId;
+    app_process=process.hProcess;
     printf("app_pid=%04lx\n",pid);
     hwnd=wait_window(NULL,NULL);
     report_timing("startup",start,hwnd); Sleep(2000); snapshot("initial.bmp");
     if(!hwnd) status=4;
+    else if(!strcmp(argv[3],"inspect")) { /* Capture only: no desktop input. */ }
     else if(!strcmp(argv[3],"browser")) status=observe_browser(hwnd,process.hProcess);
     else if(!strcmp(argv[3],"panel"))
     {

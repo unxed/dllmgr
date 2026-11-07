@@ -1,0 +1,13 @@
+diff --git a/SKILL.md b/SKILL.md
+index 010d296..dfa143a 100644
+--- a/SKILL.md
++++ b/SKILL.md
+@@ -208,6 +208,8 @@ tools/wineprobe.py run --prefix PREFIX --preset load --dll comctl32 -- EXE.exe
+ 
+ The digest must show `dll comctl32: native <path in the slot>`. If it shows `builtin`, the DLL is not in use: check the slot, the name and the architecture, or undo. Then ask the user to repeat the steps and say, by eye, whether the problem is gone.
+ 
++After changing or undoing a DLL override, close all Wine applications in the target prefix and wait for that prefix's Wine server to exit before the next verification run (`WINEPREFIX=PREFIX wineserver -w`). Wine 11 creates image sections for its configured KnownDLLs from the system-directory files and marks those section objects permanent; the loader opens the KnownDLL section. Replacing a DLL on disk does not refresh a section already held by a live server, so the next process can still map the earlier image. This restart boundary applies to KnownDLLs; check the actual load path for other DLLs.
++
+ - Fixed: go to step 9.
+ - Not fixed, or worse: run the undo command, or iterate (another tag, another patch, another DLL). Do not leave a failed change in place.
+ 
