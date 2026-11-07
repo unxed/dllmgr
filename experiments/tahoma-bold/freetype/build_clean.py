@@ -13,12 +13,15 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('wine_source',type=Path)
 parser.add_argument('output',type=Path)
 parser.add_argument('--ttfautohint',default='ttfautohint')
+parser.add_argument('--counter-safe', action='store_true',
+                    help='Resolve overlaps before correcting direction (candidate .008)')
 args=parser.parse_args()
 source=args.wine_source.resolve()/'fonts/tahomabd.ttf'
 out=args.output.resolve();out.mkdir(exist_ok=True,parents=True)
 raw=out/'raw005.ttf';clean=out/'clean006.ttf';generated=out/'hinted-generated.ttf'
 subprocess.run([sys.executable,str(here/'build_candidate.py'),str(source),str(here/'affected.json'),str(raw)],check=True,timeout=20)
-subprocess.run(['fontforge','-lang=py','-script',str(here/'cleanup.py'),str(raw),str(here/'affected.json'),str(out)],check=True,timeout=20)
+cleanup = 'cleanup-counter-safe.py' if args.counter_safe else 'cleanup.py'
+subprocess.run(['fontforge','-lang=py','-script',str(here/cleanup),str(raw),str(here/'affected.json'),str(out)],check=True,timeout=20)
 rows=json.loads((out/'progress.json').read_text())
 if len(rows)!=66 or any(r['after']&12 for r in rows):raise SystemExit('Outline cleanup did not pass')
 b=TTFont(raw);n=TTFont(out/'generated.ttf');original=TTFont(source)
@@ -31,10 +34,17 @@ for name in set(b.getGlyphOrder())-names:
 assert all(b['hmtx'][name][0]==original['hmtx'][name][0] for name in b.getGlyphOrder())
 b['head'].fontRevision=.006;b.recalcTimestamp=False;b.save(clean)
 subprocess.run([args.ttfautohint,str(clean),str(generated)],check=True,timeout=30)
-f=TTFont(generated);f['head'].fontRevision=.007
-values={3:'WineTahomaBold-Cyrillic-clean-hints-7',5:'Version 0.007; cleaned FreeType bold and ttfautohint',6:'WineTahomaBoldCyrillicCleanHints007'}
+revision = '008' if args.counter_safe else '007'
+f=TTFont(generated);f['head'].fontRevision=int(revision)/1000
+values={3:'WineTahomaBold-Cyrillic-clean-hints-'+revision,
+        5:'Version 0.'+revision+'; cleaned FreeType bold and ttfautohint',
+        6:'WineTahomaBoldCyrillicCleanHints'+revision}
 for item in f['name'].names:
  if item.nameID in values:item.string=values[item.nameID].encode(item.getEncoding())
-f.recalcTimestamp=False;f.save(out/'tahomabd-revision-007.ttf')
+f.recalcTimestamp=False;f.save(out/('tahomabd-revision-'+revision+'.ttf'))
 assert f['hmtx'].metrics==b['hmtx'].metrics
+if args.counter_safe:
+ subprocess.run([sys.executable,str(here/'validate_counters.py'),str(source),
+                 str(out/('tahomabd-revision-'+revision+'.ttf')),str(here/'affected.json')],
+                check=True,timeout=20)
 print('Experimental font built; not installed. Visual acceptance is still required.')

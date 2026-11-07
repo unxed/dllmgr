@@ -12,6 +12,11 @@ including failures, are in `experiments/local-validation/README.md` and
   reported 626x417 file and generated 320x192 image in actual FastStone on this
   laptop (fullscreen, thumbnail, preview). See docs/avif.md for experimental
   install/undo, prefix-wide 32-bit WIC scope and deliberate format limits.
+  Release winehq-60703-v1 is published. The owner's CLI is updated to 108641a
+  and the codec is now installed in the default prefix; status and a subsequent
+  WIC sample decode pass. A one-off post-install registry-export timeout was
+  followed by successful read-only query/export/status; no server was killed.
+  FastStone must be restarted to discover the newly installed decoder.
 - **Isolated GDI+ discrepancy resolved:** an old KnownDLL image survived the
   disk/registry change in the same wineserver. A new server gives stock black
   versus GDI+-only red (3642 pixels), with native GDI+ / builtin comctl32
@@ -22,7 +27,9 @@ including failures, are in `experiments/local-validation/README.md` and
   accepted fix. The culprit is correctDirection before removeOverlap on
   crossing contours: it selects the wrong filled regions. Counter-safe .008
   resolves overlaps first, then direction, and rechecks after rounding.
-  Local application validation and owner acceptance are still required.
+  .008 passes the counter regression check for all 66 glyphs (.007 fails on
+  ten), Wine GDI selection and actual FastStone panel capture. Owner visual
+  acceptance is pending. All temporary font/settings changes were restored.
   All earlier failures remain archived; no temporary font remains installed.
 - Far3/hiew backlog is visible in dllmgr issue 18 and docs/console-apps.md;
   the new terminal-protocol scope is documentation only for now. Far3's

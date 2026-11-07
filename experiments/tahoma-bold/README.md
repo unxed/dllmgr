@@ -2,8 +2,10 @@
 
 Checkpoint: 2026-11-07. **Not an installable recipe or an accepted fix.**
 The owner rejected the first outline-only candidate: mixed bold/regular weight
-improved, but letter positioning still looked uneven. The hinted candidate
+improved, but letter positioning still looked uneven. The latest .008 candidate
 has been rendered in actual Wine and FastStone; owner acceptance is pending.
+The owner rejected .007 because several counters were filled; see the new
+counter-safe cleanup and regression check below.
 No candidate is left installed. Original prefix fonts/settings are restored.
 
 This archive preserves the work and failures so the next session can continue
@@ -113,3 +115,10 @@ settings restored. Owner acceptance is still pending; it is outside the
 verified catalog and is not installed permanently.
 
 ![Actual FastStone, original and candidate 0.007](freetype/comparison-faststone007.png)
+
+The owner identified filled counters in the .007 comparison above. This is now
+a recorded failure: absence of self-intersection flags did not establish that
+counter shapes survived cleanup. [Candidate .008](freetype/README.md#counter-safe-candidate-008)
+changes cleanup order and passes a topology check that fails on .007. It has
+been checked through Wine GDI and in FastStone, with temporary installation
+fully removed. Do not install .007 or describe it as accepted.

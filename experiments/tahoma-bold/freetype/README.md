@@ -1,7 +1,8 @@
 # Point-preserving emboldening and fast cleanup
 
-Experimental continuation, 2026-11-07. **Not installed permanently; owner
-visual acceptance is pending.** The earlier .002/.003 candidates are retained
+Experimental continuation, 2026-11-07. **Not installed permanently.**
+The owner found filled counters in .007; it is rejected. .008 fixes the cleanup
+order and is awaiting visual acceptance. The earlier .002/.003 candidates are retained
 only as failed/unfinished experiments.
 
 Starting from pristine Wine 11.0 Tahoma Bold, FreeType FT_Outline_EmboldenXY
@@ -49,3 +50,36 @@ raw .005 stage; cleanup deliberately changes point counts, and whole-font
 hinting changes glyph programs, so that check is not a .007 acceptance test.
 
 ![Original left, candidate .007 right in FastStone](comparison-faststone007.png)
+
+## Counter-safe candidate .008
+
+Owner feedback: .007 was much better than the original, but the counters in
+в, д, ы were partially or completely filled. The zero-self-intersection check
+had passed, so that check alone was insufficient. .007 remains archived as a
+failed intermediate candidate, not an accepted fix.
+
+The raw FreeType outlines retain the counters. FontForge correctDirection
+cannot reliably orient a self-crossing contour: calling it before
+removeOverlap chose the wrong filled regions. In .008, removeOverlap runs
+first, followed by correctDirection and rounding. A bounded second cleanup
+handles a tiny U+04E9 crossing introduced by rounding. The saved outlines are
+then hinted as before; advances and unrelated outlines are preserved.
+
+Rebuild with the additional `--counter-safe` option to build_clean.py. The new
+validate_counters.py renders all 66 affected glyphs at 256 ppem without hinting,
+counts enclosed background components of at least four pixels, and rejects
+lost/extra counters or near-collapse below 10% of the corresponding original
+area. .007 fails on ten glyphs; .008 passes all 66, with minimum retained
+counter area 37.33%. This high-resolution topology check is a regression guard,
+not proof of aesthetic quality or small-size legibility.
+
+The first .008 cleanup attempt still flagged U+04E9 after rounding and stopped;
+it was not installed. The bounded second cleanup resolved it. An early private
+raster diagnostic accidentally counted ink components instead of background;
+it was corrected before these recorded results. No Wine/font-setting change
+was retained. Wine GDI confirms selection, and the actual FastStone panel was
+captured with a temporary prefix font, removed in finally with settings restored.
+
+![Wine GDI: rejected .007 above, counter-safe .008 below](counters007-008.png)
+
+![Actual FastStone: original left, .008 right](comparison-faststone008.png)
