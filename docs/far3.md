@@ -2,12 +2,19 @@
 
 Status: plan, 2026-11-06. Written so that a smaller model (Sonnet) can pick up
 any step. Work in small atomic commits; push each one; KISS; fail fast.
-Lunobot tracking issue: https://github.com/unxed/lunobot/issues/322.
+Project tracking: https://github.com/unxed/dllmgr/issues/18.
+Lunobot assignment: https://github.com/unxed/lunobot/issues/322.
+
+The shared Far3/hiew backlog and the owner's 2026-11-07 keyboard/clipboard
+requirements are in [console-apps.md](console-apps.md). hiew, win32-input-mode,
+OSC52 write and possible far2l extensions are documented plans, not work to
+start during the current FastStone investigation.
 
 ## Why Far3, and who works on it
 
-Far Manager 3 is a console file manager. It needs no fonts, no GPU, no X11
-and no real mouse, so a headless cloud runner reproduces what a user sees.
+Far Manager 3 is a console file manager. Many functional checks can run in a
+headless terminal; physical keyboard/mouse, clipboard and host-terminal parity
+still require the corresponding environment and cannot be inferred from CI.
 Rule (D21): when a GUI task (FastStone and similar) is blocked on the owner's
 desktop, cloud sessions work on Far3 instead.
 

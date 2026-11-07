@@ -269,3 +269,14 @@ running one for the same branch. While a deep run is in progress, push only
   transaction/rollback operations as the CLI.
 - Scope: plan only. Do not implement the TUI during the current FastStone
   debugging work. Improving today's CLI presentation is a separate current task.
+
+## D23 — Far3/hiew and terminal-protocol backlog
+
+- Date: 2026-11-07
+- Decided by: owner
+- Decision: track hiew alongside Far3, including WineHQ 57281. For advanced
+  console keyboard input (57078), prefer win32-input-mode from ConPTY first;
+  add OSC52 clipboard write, and ideally relevant far2l extensions later.
+  Keep a visible dllmgr tracking issue as well as the standing Lunobot task.
+- Scope: record requirements only; do not start the new hiew/protocol work
+  during the active FastStone investigation. See `docs/console-apps.md`.
