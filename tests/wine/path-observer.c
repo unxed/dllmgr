@@ -49,15 +49,28 @@ static int capture_state(const char *stage, HWND browser)
     r.bottom=min(r.bottom+MulDiv(320,GetDpiForWindow(combo),96),GetSystemMetrics(SM_CYSCREEN));
     snprintf(name,sizeof(name),"%s.bmp",stage);fflush(stdout);return crop(name,r);
 }
+static BOOL CALLBACK child_geometry(HWND child, LPARAM unused)
+{
+    char cls[128]; RECT r;
+    if(IsWindowVisible(child) && GetClassNameA(child,cls,sizeof(cls)) && GetWindowRect(child,&r))
+        printf("child class=%s rect=%ld,%ld,%ld,%ld\n",cls,r.left,r.top,r.right,r.bottom);
+    return TRUE;
+}
 static int observe_path(HWND first)
 {
     HWND browser; RECT r; POINT p; COMBOBOXINFO ci={sizeof(ci)}; INPUT event={0}; int ok=1,held=0;
     if(!activate_owned_window(first)) return 7;
+    describe("initial_window",first);
+    GetWindowRect(first,&r);crop("initial-window.bmp",r);
     press_key(VK_RETURN); Sleep(1200);
     browser=wait_window("FastStone Image Viewer","FastStoneImageViewerMainForm");
     if(!browser || !activate_owned_window(browser)) return 4;
     EnumChildWindows(browser,find_combo,0);
-    if(!combo) {puts("synthetic_path_combo_not_found");return 5;}
+    if(!combo) {
+        puts("synthetic_path_combo_not_found");describe("after_enter",browser);
+        EnumWindows(describe_visible_window,0);EnumChildWindows(browser,child_geometry,0);
+        GetWindowRect(browser,&r);crop("missing-combo-window.bmp",r);return 5;
+    }
     if(!GetComboBoxInfo(combo,&ci) || !GetWindowRect(combo,&r)) return 6;
     describe("path_combo",combo);
     printf("combo_style=%08lx dpi=%u\n",GetWindowLongA(combo,GWL_STYLE),GetDpiForWindow(combo));
