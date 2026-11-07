@@ -10,6 +10,13 @@
 #include <new>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
+
+static void trace(const char *method, HRESULT value) {
+    char enabled[2];
+    if (GetEnvironmentVariableA("DLLMGR_AVIF_TRACE", enabled, sizeof(enabled)))
+        fprintf(stderr, "dllmgr-avif %s: %08lx\n", method, static_cast<unsigned long>(value));
+}
 
 static LONG objects, serverLocks;
 static const UINT MAX_DIMENSION = 16384;
@@ -59,6 +66,7 @@ class Frame final : public IWICBitmapFrameDecode {
     LONG refs = 1;
 public:
     UINT width = 0, height = 0;
+    bool allFrames = true;
     Bytes pixels;
     Frame() { InterlockedIncrement(&objects); }
     ~Frame() { InterlockedDecrement(&objects); }
@@ -154,6 +162,7 @@ static HRESULT decode(IStream *stream, Frame **out) {
             if (!f || !f->pixels.alloc(static_cast<size_t>(im->width) * im->height * 4)) hr = E_OUTOFMEMORY;
             else {
                 f->width = im->width; f->height = im->height;
+                f->allFrames = d->imageCount <= 1;
                 avifRGBImage rgb;
                 avifRGBImageSetDefaults(&rgb, im);
                 rgb.depth = 8; rgb.format = AVIF_RGB_FORMAT_BGRA;
@@ -189,22 +198,25 @@ public:
         ULARGE_INTEGER old;
         HRESULT hr = stream->Seek(zero, STREAM_SEEK_CUR, &old);
         if (FAILED(hr)) return hr;
-        hr = stream->Seek(zero, STREAM_SEEK_SET, nullptr);
-        BYTE header[16]; ULONG got = 0;
-        if (SUCCEEDED(hr)) hr = stream->Read(header, sizeof(header), &got);
+        Frame *candidate = nullptr;
+        hr = decode(stream, &candidate);
         saved.QuadPart = old.QuadPart;
         HRESULT restore = stream->Seek(saved, STREAM_SEEK_SET, nullptr);
+        if (candidate) {
+            if (SUCCEEDED(hr) && SUCCEEDED(restore))
+                *capability = candidate->allFrames ? WICBitmapDecoderCapabilityCanDecodeAllImages : WICBitmapDecoderCapabilityCanDecodeSomeImages;
+            candidate->Release();
+        }
+        trace("QueryCapability", FAILED(restore) ? restore : hr);
         if (FAILED(restore)) return restore;
         if (FAILED(hr)) return hr;
-        if (!brand(header, got)) return WINCODEC_ERR_UNKNOWNIMAGEFORMAT;
-        *capability = WICBitmapDecoderCapabilityCanDecodeSomeImages;
         return S_OK;
     }
     HRESULT STDMETHODCALLTYPE Initialize(IStream *stream, WICDecodeOptions options) override {
         if (!stream || (options != WICDecodeMetadataCacheOnDemand && options != WICDecodeMetadataCacheOnLoad)) return E_INVALIDARG;
         ExclusiveLock guard(&lock);
         if (frame) return WINCODEC_ERR_WRONGSTATE;
-        return decode(stream, &frame);
+        HRESULT hr = decode(stream, &frame); trace("Initialize", hr); return hr;
     }
     HRESULT STDMETHODCALLTYPE GetContainerFormat(GUID *out) override {
         if (!out) return E_INVALIDARG; *out = GUID_DllmgrAvifContainer; return S_OK;
@@ -231,6 +243,7 @@ public:
         if (!out) return E_INVALIDARG; *out = nullptr; return WINCODEC_ERR_CODECNOTHUMBNAIL;
     }
     HRESULT STDMETHODCALLTYPE GetFrameCount(UINT *out) override {
+        trace("GetFrameCount initialized", frame ? S_OK : WINCODEC_ERR_NOTINITIALIZED);
         if (!out) return E_INVALIDARG; *out = 0; SharedLock guard(&lock);
         if (!frame) return WINCODEC_ERR_NOTINITIALIZED; *out = 1; return S_OK;
     }

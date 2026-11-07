@@ -62,6 +62,8 @@ jobs:
           dumpbin /dependents artifact\dllmgr-avif.dll > artifact\dependencies.txt
           dumpbin /exports artifact\dllmgr-avif.dll > artifact\exports.txt
       - name: Test WIC pixels, discovery and undo
+        env:
+          DLLMGR_AVIF_TRACE: '1'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'

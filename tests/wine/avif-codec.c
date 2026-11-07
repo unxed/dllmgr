@@ -174,7 +174,7 @@ static void direct_tests(IClassFactory *class_factory, IWICImagingFactory *facto
     if (!stream || !decoder) goto done;
     CHECK(IWICBitmapDecoder_GetFrameCount(decoder, &count) == WINCODEC_ERR_NOTINITIALIZED);
     offset.QuadPart = 12; HR_OK(IStream_Seek(stream, offset, STREAM_SEEK_SET, NULL));
-    HR_OK(IWICBitmapDecoder_QueryCapability(decoder, stream, &capabilities)); CHECK(capabilities & WICBitmapDecoderCapabilityCanDecodeSomeImages);
+    HR_OK(IWICBitmapDecoder_QueryCapability(decoder, stream, &capabilities)); CHECK(capabilities == WICBitmapDecoderCapabilityCanDecodeAllImages);
     offset.QuadPart = 0; HR_OK(IStream_Seek(stream, offset, STREAM_SEEK_CUR, &current)); CHECK(current.QuadPart == 12);
     HR_OK(IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad));
     CHECK(IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad) == WINCODEC_ERR_WRONGSTATE);
