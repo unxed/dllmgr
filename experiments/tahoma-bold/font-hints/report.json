@@ -1,0 +1,43 @@
+{
+  "source_sha256": "fe9a8aae7f5076cc5c957b90da7cb63e52355b5346446529597ecc0d42f81ca7",
+  "output": "<experiment-workspace>/font-hints/tahomabd-all-hints.ttf",
+  "sha256": "fab1200551fd06c207e091928bb033a1bf4507d502b939f874431d003abb8684",
+  "command": [
+    "<experiment-workspace>/font-hints/runtime/usr/bin/ttfautohint",
+    "--detailed-info",
+    "<experiment-workspace>/font-lab/candidate/tahomabd.ttf",
+    "<experiment-workspace>/font-hints/ttfautohint-generated.ttf"
+  ],
+  "revision": 0.0030059814453125,
+  "original_hinted_glyphs": 0,
+  "source_hinted_glyphs": 0,
+  "output_hinted_glyphs": 861,
+  "affected_hinted_glyphs": 50,
+  "original_tables": {
+    "cvt ": 4,
+    "fpgm": 0,
+    "prep": 0
+  },
+  "output_tables": {
+    "cvt ": 156,
+    "fpgm": 3596,
+    "prep": 214
+  },
+  "original_cvt": [
+    68,
+    1297
+  ],
+  "glyph_count": 979,
+  "all_decomposed_contours_exact": true,
+  "all_hmtx_exact": true,
+  "source_gasp": {
+    "8": 0,
+    "16": 1,
+    "65535": 3
+  },
+  "output_gasp": {
+    "65535": 15
+  },
+  "requires_real_GDI_check": true,
+  "tradeoff": "Whole-font instructions and gasp change Latin and all other scripts too; default x-height boost applies up to 14 ppem."
+}

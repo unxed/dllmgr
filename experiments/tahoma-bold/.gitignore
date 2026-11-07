@@ -1,0 +1,5 @@
+font-hints/runtime/
+*.deb
+font-hints/*generated.ttf
+font-lab/candidate/generated.ttf
+font-hints/*.bmp

@@ -1,0 +1,6 @@
+{
+  "success": false,
+  "source_sha256": "fe9a8aae7f5076cc5c957b90da7cb63e52355b5346446529597ecc0d42f81ca7",
+  "error": "Command '['fontforge', '-lang', 'py', '-script', '<experiment-workspace>/font-hints/cleanup-worker.py', '<experiment-workspace>/font-lab/candidate/tahomabd.ttf', '<experiment-workspace>/wine-11.0/fonts/tahomabd.ttf', '<experiment-workspace>/font-lab/candidate/affected.json', '<experiment-workspace>/font-hints']' timed out after 119.9999814570183 seconds",
+  "elapsed_seconds": 120.00544561701827
+}

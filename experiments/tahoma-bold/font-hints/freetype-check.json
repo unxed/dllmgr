@@ -1,0 +1,26 @@
+{
+  "<experiment-workspace>/font-lab/candidate/tahomabd.ttf": {
+    "load_errors": [],
+    "glyphs": 979,
+    "sizes": [
+      12,
+      14,
+      16,
+      24,
+      28,
+      32
+    ]
+  },
+  "<experiment-workspace>/font-hints/tahomabd-all-hints.ttf": {
+    "load_errors": [],
+    "glyphs": 979,
+    "sizes": [
+      12,
+      14,
+      16,
+      24,
+      28,
+      32
+    ]
+  }
+}

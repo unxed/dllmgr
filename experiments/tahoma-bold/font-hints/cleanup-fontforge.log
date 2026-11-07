@@ -1,0 +1,605 @@
+Copyright (c) 2000-2024. See AUTHORS for Contributors.
+ License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+ with many parts BSD <http://fontforge.org/license.html>. Please read LICENSE.
+ Version: 20230101
+ Based on sources from 2024-03-31 07:36 UTC-ML-D-GDK3.
+PythonUI_Init()
+copyUIMethodsToBaseTable()
+Program root: /usr
+The following table(s) in the font have been ignored by FontForge
+  Ignoring 'VDMX' vertical device metrics table
+The following table(s) in the font have been ignored by FontForge
+  Ignoring 'VDMX' vertical device metrics table
+U+0404 removeOverlap
+U+0404 correctDirection
+U+0404 addExtrema
+U+0404 done
+U+040E removeOverlap
+U+040E correctDirection
+U+040E addExtrema
+U+040E retryRemoveOverlap
+U+040E done
+U+0411 removeOverlap
+U+0411 correctDirection
+U+0411 addExtrema
+U+0411 done
+U+0413 addExtrema
+U+0413 done
+U+0414 removeOverlap
+U+0414 correctDirection
+U+0414 addExtrema
+U+0414 done
+U+0416 removeOverlap
+U+0416 correctDirection
+U+0416 addExtrema
+U+0416 done
+U+0417 removeOverlap
+U+0417 correctDirection
+U+0417 done
+U+0418 removeOverlap
+U+0418 correctDirection
+U+0418 addExtrema
+U+0418 done
+U+0419 removeOverlap
+U+0419 correctDirection
+U+0419 addExtrema
+U+0419 done
+U+041B addExtrema
+U+041B done
+U+041F done
+U+0423 removeOverlap
+U+0423 correctDirection
+U+0423 addExtrema
+U+0423 done
+U+0424 removeOverlap
+U+0424 correctDirection
+U+0424 addExtrema
+U+0424 done
+U+0426 removeOverlap
+U+0426 correctDirection
+U+0426 addExtrema
+U+0426 retryRemoveOverlap
+U+0426 done
+U+0427 addExtrema
+U+0427 retryRemoveOverlap
+U+0427 done
+U+0428 removeOverlap
+U+0428 correctDirection
+U+0428 addExtrema
+U+0428 done
+U+0429 removeOverlap
+U+0429 correctDirection
+U+0429 addExtrema
+U+0429 retryRemoveOverlap
+U+0429 done
+U+042A removeOverlap
+U+042A correctDirection
+U+042A addExtrema
+U+042A done
+U+042B done
+U+042C done
+U+042D removeOverlap
+U+042D correctDirection
+U+042D addExtrema
+U+042D done
+U+042E done
+U+042F addExtrema
+U+042F done
+U+0431 done
+U+0432 addExtrema
+U+0432 done
+U+0433 addExtrema
+U+0433 done
+U+0434 removeOverlap
+U+0434 correctDirection
+U+0434 addExtrema
+U+0434 done
+U+0436 removeOverlap
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1048)->(1042,1046). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1047.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1047.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1050)->(1042,1049). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1049.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1049.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1053)->(1042,1051). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1051.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1051.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1055)->(1042,1054). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1054.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1054.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1056)->(1042,1055). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1055.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1059)->(1042,1057). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1057.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1060)->(1042,1059). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1059.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1061)->(1042,1060). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1060.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1060.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1048)->(1042,1046). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1047.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1047.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1050)->(1042,1049). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1049.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1049.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1053)->(1042,1051). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1051.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1051.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1055)->(1042,1054). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1054.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1054.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1056)->(1042,1055). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1055.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1059)->(1042,1057). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1057.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1060)->(1042,1059). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1059.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1061)->(1042,1060). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1060.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1060.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1048)->(1042,1046). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1047.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1047.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1050)->(1042,1049). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1049.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1049.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1053)->(1042,1051). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1051.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1051.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1055)->(1042,1054). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1054.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1054.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1056)->(1042,1055). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1055.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1059)->(1042,1057). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1057.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1060)->(1042,1059). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1059.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1061)->(1042,1060). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1060.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1060.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1048)->(1042,1046). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1047.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1047.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1050)->(1042,1049). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1049.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1049.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1053)->(1042,1051). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1051.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1051.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1055)->(1042,1054). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1054.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1054.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1056)->(1042,1055). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1055.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1059)->(1042,1057). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1057.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1060)->(1042,1059). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1059.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1061)->(1042,1060). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1060.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1060.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1048)->(1042,1046). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1047.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1047.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1047.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1050)->(1042,1049). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1049.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1049.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1049.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1053)->(1042,1051). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1051.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1051.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1051.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1055)->(1042,1054). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1054.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1054.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1054.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1056)->(1042,1055). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1055.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1055.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1059)->(1042,1057). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1057.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1057.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1060)->(1042,1059). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1059.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1059.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1042,1061)->(1042,1060). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1340.5,985.5)->(1440,1120). y=1060.5 (prev=1114.5)
+Internal Error (overlap) in afii10072: monotonic is both needed and unneeded (1783.01,1111.88)->(1669.5,966). y=1060.5 (prev=601.963)
+Internal Error (overlap) in afii10072: Winding number did not return to 0 when y=1060.5
+U+0436 correctDirection
+U+0436 addExtrema
+U+0436 done
+U+0437 removeOverlap
+U+0437 correctDirection
+U+0437 done
+U+0438 removeOverlap
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1062.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1062.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1062.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1062.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10074: Winding number did not return to 0 when y=1062.5
+U+0438 correctDirection
+U+0438 addExtrema
+U+0438 done
+U+0439 removeOverlap
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1062.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1062.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1062.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1062.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1053)->(428,1052). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1052.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1052.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1056)->(428,1055). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1055.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1055.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1058)->(428,1057). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1057.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1057.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1060)->(428,1059). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1059.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1059.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1062)->(428,1061). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1061.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1061.5
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (428,1063)->(428,1062). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (851,951)->(948,1118). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: monotonic is both needed and unneeded (1224,1121)->(1224,0). y=1062.5 (prev=104)
+Internal Error (overlap) in afii10075: Winding number did not return to 0 when y=1062.5
+U+0439 correctDirection
+U+0439 addExtrema
+U+0439 done
+U+043A removeOverlap
+U+043A correctDirection
+U+043A addExtrema
+U+043A done
+U+043B removeOverlap
+U+043B correctDirection
+U+043B addExtrema
+U+043B done
+U+043C removeOverlap
+U+043C correctDirection
+U+043C addExtrema
+U+043C done
+U+043D addExtrema
+U+043D done
+U+043F addExtrema
+U+043F done
+U+0442 removeOverlap
+U+0442 correctDirection
+U+0442 addExtrema
+U+0442 done
+U+0443 removeOverlap
+U+0443 correctDirection
+U+0443 addExtrema
+U+0443 done
+U+0444 removeOverlap
+U+0444 correctDirection
+U+0444 done
+U+0446 addExtrema
+U+0446 retryRemoveOverlap
+U+0446 done
+U+0447 removeOverlap
+U+0447 correctDirection
+U+0447 addExtrema
+U+0447 retryRemoveOverlap
+U+0447 done
+U+0448 addExtrema
+U+0448 done
+U+0449 addExtrema
+U+0449 retryRemoveOverlap
+U+0449 done
+U+044A removeOverlap
+U+044A correctDirection
+U+044A addExtrema
+U+044A retryRemoveOverlap
+U+044A done
+U+044B removeOverlap
+U+044B correctDirection
+U+044B addExtrema
+U+044B done
+U+044C removeOverlap
+U+044C correctDirection
+U+044C addExtrema
+U+044C retryRemoveOverlap
+U+044C done
+U+044D removeOverlap
+U+044D correctDirection
+U+044D done
+U+044E removeOverlap
+U+044E correctDirection
+U+044E addExtrema
+U+044E retryRemoveOverlap
+U+044E done
+U+044F removeOverlap
+U+044F correctDirection
+U+044F addExtrema
+U+044F retryRemoveOverlap
+U+044F done
+U+0454 addExtrema
+U+0454 done
+U+0456 removeOverlap
+U+0456 correctDirection
+U+0456 done
+U+0457 removeOverlap
+U+0457 correctDirection
+U+0457 done
+U+045E removeOverlap
+U+045E correctDirection
+U+045E addExtrema
+U+045E retryRemoveOverlap
+U+045E done
+U+0490 removeOverlap
+U+0490 correctDirection
+U+0490 addExtrema
+U+0490 done
+U+0491 removeOverlap
+U+0491 correctDirection
+U+0491 addExtrema
+U+0491 retryRemoveOverlap
+U+0491 done
+U+0492 addExtrema
+U+0492 done
+U+0493 addExtrema
+U+0493 done
+U+049A removeOverlap

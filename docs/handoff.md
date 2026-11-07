@@ -2,6 +2,20 @@
 
 ## Latest local checkpoint (2026-11-06)
 
+Saved on GitHub at the owner's request on **2026-11-07**. Detailed attempts,
+including failures, are in `experiments/local-validation/README.md` and
+`experiments/tahoma-bold/README.md`; start there before repeating experiments.
+
+- **New unresolved finding:** an actual-app run with only the GDI+ candidate
+  drew black, unlike the full bundle. It lacks a loader trace. Check effective
+  loading first; do not claim the individual real-app gate passed. Both DLLs,
+  override registry values and full managed state were restored and verified.
+- Whole-font ttfautohint candidate 0.003 was tested through Wine GDI and
+  FastStone, but has no owner acceptance. It preserves the previous candidate's
+  self-intersections. Cleanup stopped after its 120-second bound at U+049A;
+  no cleaned 0.004 exists. All scripts, source, candidates and sanitized failure
+  evidence are archived in experiments/tahoma-bold, outside the verified catalog.
+
 - Deep research run **42278157255** at `255f086` completed successfully.
   The patched real Draw Board stroke is red (`ff0000`, 3642 pixels);
   native module loads and byte-exact DLL undo both passed. The earlier

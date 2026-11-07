@@ -1,0 +1,13 @@
+capture_screen=3072x1728
+app_pid=0128
+startup_to_mapped_ms=1445
+startup_to_first_wm_null_reply_ms=1479
+startup hwnd=0000000000070146 class='TFullScreenWindow' title='' rect=0,0,3072,1728 dpi=192
+draw_1_to_mapped_ms=5778
+draw_1_to_first_wm_null_reply_ms=6102
+draw_1 hwnd=00000000000601d8 class='TDrawBoard.UnicodeClass' title='?????????  -  white.bmp  (800 x 600 = 0.48MP)    100%' rect=-3,-3,3075,1731 dpi=192
+draw_2_to_mapped_ms=6392
+draw_2_to_first_wm_null_reply_ms=6393
+draw_2 hwnd=0000000000050180 class='TDrawBoard.UnicodeClass' title='?????????  -  white.bmp  (800 x 600 = 0.48MP)    100%' rect=-3,-3,3075,1731 dpi=192
+pencil tool=90,336 stroke=1228,692->1843,692 dpi=192
+pencil_stroke_color=000000 pixels=3642

@@ -43,8 +43,8 @@ FastStone defects. Bugzilla status alone does not establish reproducibility.
 - Never install an unproven fix or replace a core/Unix-backed Wine DLL through
   the native-DLL installer. Keep unsupported mechanisms explicit.
 
-Only 59609 has published binaries. The other scripts and the bundle are for
-testing. Use `--build` with a disposable Wine prefix for candidate builds.
+The five-fix combined build is published as `faststone-v2`. Individual entries
+and scripts remain separate; use a disposable prefix for experimental builds.
 
 ## Additional user-critical symptoms
 
@@ -226,8 +226,8 @@ headless 192 DPI comparison on GitHub Actions; the user's desktop can differ.
 | Fullscreen strip without thumbnails (59251/59609) | winehq-59609 | thumbnails shown in CI |
 | Wheel scrolls ~12× slower than Windows, ignores the wheel amount (FS-wheel-speed) | winehq-59251 (v6: half the item spacing per line) | fixed in CI: 0/426/426/852 px for ½,½,1,2 detents at 192 DPI; Windows 0/216/216/432 at 96 DPI |
 | Fullscreen strip hides before wheel input in CI | — | harness or Wine: measured by `strip_persistence` |
-| Pencil strokes stay black (48874) | winehq-48874 | fixed in the GDI+ probe; not yet clicked in Draw Board |
-| Poor text in the left panel (FS-fonts) | — | not reproduced in CI (Wine's Tahoma, antialiased); needs the user's settings |
+| Pencil strokes stay black (48874) | winehq-48874 | probe passes; full bundle draws red in CI and locally. A later local GDI+-only attempt drew black without a load trace: per-fix real-app gate remains unresolved; see experiments/local-validation |
+| Poor text in the left panel (FS-fonts) | — | reproduced in Wine Tahoma Bold; outline-only workaround rejected for uneven positioning. Hinted candidate awaits geometry cleanup and owner acceptance; see experiments/tahoma-bold |
 | Path field artifacts (FS-path) | — | not reproduced |
-| Draw Board ~5 s, startup 2–3 s (FS-draw-start, FS-start) | — | not reproduced: 0.8–1.0 s and 0.7 s in CI |
-| Middle button (FS-middle-button) | — | Windows behavior recorded; Wine comparison blocked by the first-run notice |
+| Draw Board ~5 s, startup 2–3 s (FS-draw-start, FS-start) | — | reproduced locally: Draw ~6.1–6.3 s, startup mapping/reply ~1.5–1.8 s; investigation open |
+| Middle button (FS-middle-button) | — | Wine matches Windows fullscreen → browser in CI; no Wine defect established |
