@@ -6,14 +6,23 @@ Saved on GitHub at the owner's request on **2026-11-07**. Detailed attempts,
 including failures, are in `experiments/local-validation/README.md` and
 `experiments/tahoma-bold/README.md`; start there before repeating experiments.
 
+- **Wine feedback already posted:** 48872, 48874, 59251, 59609, 60703 and
+  26037. Exact verified comment URLs, publication times, report texts and
+  fix/workaround links are in `docs/bugzilla/submissions.json`; the readable
+  problem map is `docs/faststone.md#published-wine-feedback`. Check these before
+  preparing further reports. D24 and `docs/bugzilla/README.md` record the
+  owner's conditional AI-disclosure instruction. Tile overflow still uses
+  dllmgr-14; no Wine bug has been filed for it.
+
 - **AVIF / Wine 60703:** the native x86 WIC decoder passes Windows CI
   [42402910201](https://github.com/unxed/dllmgr/actions/runs/42402910201) at
   72310aced08b695d7750dabbba7af49b834a734d. The exact DLL also displays the
   reported 626x417 file and generated 320x192 image in actual FastStone on this
   laptop (fullscreen, thumbnail, preview). See docs/avif.md for experimental
   install/undo, prefix-wide 32-bit WIC scope and deliberate format limits.
-  Release winehq-60703-v1 is published. The owner's CLI is updated to 108641a
-  and the codec is now installed in the default prefix; status and a subsequent
+  Release winehq-60703-v1 is published. The owner confirmed that AVIF opens
+  after restarting FastStone. The codec is installed in the default prefix;
+  status and a subsequent
   WIC sample decode pass. A one-off post-install registry-export timeout was
   followed by successful read-only query/export/status; no server was killed.
   FastStone must be restarted to discover the newly installed decoder.
@@ -29,8 +38,15 @@ including failures, are in `experiments/local-validation/README.md` and
   horizontal component gaps. All 66 glyphs pass counter/component checks;
   .007/.008 fail the expanded regression guard. Actual Wine GDI and FastStone
   panel checks pass. Install/undo and source packaging: docs/fonts.md.
-  The reversible manager also passed an apply/status/undo cycle on the real
-  prefix. Experimental candidates are not silently added to faststone-v2.
+  The reversible manager passed a real-prefix apply/status/undo cycle. Release
+  winehq-26037-font-v1 is published and .009 is now installed permanently via
+  dllmgr, with managed state. The ordinary GDI renderer (no private font load)
+  confirms selection and the .009 metrics. Do not delete
+  windows/Fonts/dllmgr-tahomabd.ttf as a leftover experiment: it is now managed;
+  use `dllmgr uninstall faststone-fonts`. It remains separate from faststone-v2.
+- CLI installed from ec13a14; catalog/apply-scripts CI passed at that exact SHA.
+  Font reproduction 42407262615 passed at 35349c6 (same runtime/font sources).
+  Native AVIF CI is the exact binary source at 72310ac, checked above.
 - Far3/hiew backlog is visible in dllmgr issue 18 and docs/console-apps.md;
   the new terminal-protocol scope is documentation only for now. Far3's
   existing Lunobot assignment remains issue 322. Do not start hiew/protocols
@@ -51,18 +67,15 @@ including failures, are in `experiments/local-validation/README.md` and
 - Localized Draw Board uses `TDrawBoard.UnicodeClass`; the observer must
   accept that suffix and fail on missing windows. Foreground checks prevent
   shortcut injection into an unrelated application.
-- Font workaround is **not accepted or installed permanently**. Emboldening
-  66 Cyrillic glyphs fixes mixed weight, but the owner still sees uneven
-  positioning. A higher `head.fontRevision` makes a temporary prefix font
-  take precedence; removing it restores the original. Hinting investigation
-  continues. Preserve original advances and unrelated outlines.
-- CLI presentation passed 38 script tests and was installed locally at
-  `bc1dbd9`: concise progress/result, `--verbose` for details, `NO_COLOR`.
-  D22 records the vtui TUI as a future plan only. Far3 was assigned to
-  Lunobot in issue 322; this session continues FastStone.
-- The owner is away. Continue independent work and collect any questions
-  for one later batch. Physical mouse speed and final visual font acceptance
-  still need the owner; no synthetic motion proves physical mouse behavior.
+- CLI presentation is installed: concise progress/result, --verbose and
+  NO_COLOR. TUI is the top UI/project priority in
+  https://github.com/unxed/dllmgr/issues/19: bare dllmgr → detect prefix/scan
+  apps → checked fixes and default-on upkeep → Enter to install. Owner explicitly
+  says **planning only, do not implement UI yet**. vtui first, goWidgets later;
+  automation CLI can be operated by agents meanwhile.
+- Still open: startup/Draw delay, transient path artifacts and measured physical
+  cursor behavior. The owner is currently replying; coordinate any physical
+  sample, keep raw input traces private and collect remaining questions together.
 
 ## Cloud sessions
 
@@ -78,8 +91,7 @@ Read the latest checkpoint above, then validate any newer commits:
 2. Read the latest `faststone-research` and `apply-scripts` runs on `main`
    (use fix-it-in-wine `tools/ci_wait.py`); fix what fails.
    Normal job durations and the fail-fast limits (timeouts, bounded apt
-   installs, diagnostics on failure) are in `docs/ci-timing.md`; the CI
-   changes were merged untested.
+   installs, diagnostics on failure) are in `docs/ci-timing.md`; the setup failures and their fixes are already verified.
 3. Pencil with the fix passed both CI and the local desktop. Evidence is in
    `faststone85-192-comparison/patched/snapshots85/draw/observations.txt`;
    expected `ff0000` (3642 pixels). Avoid repeating the deep run unless a
@@ -148,9 +160,11 @@ browser). Not a Wine bug so far.
   https://github.com/unxed/dllmgr/issues/8#issuecomment-6693207972.
   Existing Wine bug: https://bugs.winehq.org/show_bug.cgi?id=26037 ("Tahoma
   Bold is not bold", NEW since 2011; Latin was later reported fixed). A
-  words-only follow-up draft is in `docs/bugzilla/winehq-26037.md`; the owner
-  posts it. Workaround plan (needs FontForge, which the cloud sandbox could
-  not install): embolden the affected Cyrillic glyphs in Wine's
+  words-only follow-up was posted at
+  https://bugs.winehq.org/show_bug.cgi?id=26037#c14; see the feedback ledger.
+  Current workaround: `docs/fonts.md`. Historical workaround plan below
+  (FontForge was unavailable in the cloud sandbox):
+  embolden the affected Cyrillic glyphs in Wine's
   `fonts/tahomabd.sfd` while keeping their advance widths, rebuild the font,
   ship it as a catalog variant; first test locally whether a `tahomabd.ttf`
   in the prefix's `windows/Fonts` overrides Wine's own for "Tahoma" bold.
@@ -193,7 +207,9 @@ browser). Not a Wine bug so far.
   reproducing the reported behavior fails on stock Wine and passes with only
   the change, plus a visual check in the real app). The fix file itself is the
   draft: Problem, Windows behavior, The fix in words, Results. Done for
-  winehq-59251 and dllmgr-14; still to write for 48874, 48872, 59609.
+  winehq-59251 and dllmgr-14. Published follow-ups now cover 48872, 48874,
+  59251, 59609, 60703 and 26037; consult `docs/bugzilla/submissions.json`.
+  The dllmgr-14 Wine report remains separate and has not been filed.
 - Showcase app for lunobot (https://github.com/unxed/lunobot/issues/323): not
   tax software and not defense; prefer electronic identification.
 - KISS: the data model must be no more complex than OpenStreetMap's (a budget,
