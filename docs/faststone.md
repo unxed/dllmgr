@@ -232,7 +232,7 @@ headless 192 DPI comparison on GitHub Actions; the user's desktop can differ.
 | Wheel scrolls ~12× slower than Windows, ignores the wheel amount (FS-wheel-speed) | winehq-59251 (v6: half the item spacing per line) | fixed in CI: 0/426/426/852 px for ½,½,1,2 detents at 192 DPI; Windows 0/216/216/432 at 96 DPI |
 | Fullscreen strip hides before wheel input in CI | — | harness or Wine: measured by `strip_persistence` |
 | Pencil strokes stay black (48874) | winehq-48874 | probe passes; full bundle draws red in CI and locally. Fresh-server GDI+-only actual-app run also draws red with native loading confirmed; prior stale-server failure explained in experiments/local-validation |
-| Poor text in the left panel (FS-fonts) | — | reproduced in Wine Tahoma Bold; outline-only workaround rejected for uneven positioning. Owner found filled counters in cleaned/hinted .007. Cleanup order is being corrected; no candidate installed permanently; see experiments/tahoma-bold |
+| Poor text in the left panel (FS-fonts) | — | reproduced in Wine Tahoma Bold; outline-only workaround rejected for uneven positioning. Corrected .009 passes counter/component regression checks and actual FastStone/GDI tests; owner says nearly ideal (original capital В slightly heavier). Separate reversible installation: docs/fonts.md; see experiments/tahoma-bold for failed .007/.008 |
 | Path field artifacts (FS-path) | — | not reproduced |
 | Draw Board ~5 s, startup 2–3 s (FS-draw-start, FS-start) | — | reproduced locally: Draw ~6.1–6.3 s, startup mapping/reply ~1.5–1.8 s; investigation open |
 | Middle button (FS-middle-button) | — | Wine matches Windows fullscreen → browser in CI; no Wine defect established |

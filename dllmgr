@@ -19,8 +19,10 @@ Usage:
   dllmgr [--verbose] fix [--exe PATH] [--yes] [--dry-run]
   dllmgr fix faststone [--exe PATH/FSViewer.exe] [--build]
   dllmgr fix faststone-avif [--prefix PATH]
+  dllmgr fix faststone-fonts [--prefix PATH]
   dllmgr uninstall faststone
   dllmgr uninstall faststone-avif [--prefix PATH]
+  dllmgr uninstall faststone-fonts [--prefix PATH]
   dllmgr share faststone
 Wine commands use WINEPREFIX (default: ~/.wine).
 'dllmgr fix' alone finds the programs with verified recipes and asks before
@@ -30,6 +32,10 @@ USAGE
 
 case ${1:-} in
     fix)
+        if [ "${2:-}" = faststone-fonts ]; then
+            shift 2
+            exec "$here/scripts/apply-winehq-26037.sh" "$@"
+        fi
         if [ "${2:-}" = faststone-avif ]; then
             shift 2
             exec "$here/scripts/apply-winehq-60703.sh" "$@"
@@ -43,6 +49,10 @@ case ${1:-} in
         exec "$here/scripts/fix-prefix.sh" "$@"
         ;;
     uninstall|unfix)
+        if [ "${2:-}" = faststone-fonts ]; then
+            shift 2
+            exec "$here/scripts/undo-winehq-26037.sh" "$@"
+        fi
         if [ "${2:-}" = faststone-avif ]; then
             shift 2
             exec "$here/scripts/undo-winehq-60703.sh" "$@"

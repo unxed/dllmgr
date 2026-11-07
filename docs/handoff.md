@@ -1,6 +1,6 @@
 # Handoff: FastStone work
 
-## Latest local checkpoint (2026-11-06)
+## Latest local checkpoint (2026-11-07)
 
 Saved on GitHub at the owner's request on **2026-11-07**. Detailed attempts,
 including failures, are in `experiments/local-validation/README.md` and
@@ -22,15 +22,15 @@ including failures, are in `experiments/local-validation/README.md` and
   versus GDI+-only red (3642 pixels), with native GDI+ / builtin comctl32
   loading confirmed. Full bundle, registry, managed state and settings restored.
   See experiments/local-validation; no server was killed.
-- **Font .007 owner feedback:** much better weight/positioning, but counters
-  in в, д, ы are filled. This is a real remaining defect, so .007 is not an
-  accepted fix. The culprit is correctDirection before removeOverlap on
-  crossing contours: it selects the wrong filled regions. Counter-safe .008
-  resolves overlaps first, then direction, and rechecks after rounding.
-  .008 passes the counter regression check for all 66 glyphs (.007 fails on
-  ten), Wine GDI selection and actual FastStone panel capture. Owner visual
-  acceptance is pending. All temporary font/settings changes were restored.
-  All earlier failures remain archived; no temporary font remains installed.
+- **Font .009:** the owner says nearly ideal; capital В seems a little
+  heavier than its neighbors (its original bold outline is untouched).
+  .007 had filled counters; .008 fixed those but had a thin Ы stem and merged
+  ы parts. .009 normalizes source winding before offsetting and preserves
+  horizontal component gaps. All 66 glyphs pass counter/component checks;
+  .007/.008 fail the expanded regression guard. Actual Wine GDI and FastStone
+  panel checks pass. Install/undo and source packaging: docs/fonts.md.
+  The reversible manager also passed an apply/status/undo cycle on the real
+  prefix. Experimental candidates are not silently added to faststone-v2.
 - Far3/hiew backlog is visible in dllmgr issue 18 and docs/console-apps.md;
   the new terminal-protocol scope is documentation only for now. Far3's
   existing Lunobot assignment remains issue 322. Do not start hiew/protocols
