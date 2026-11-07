@@ -19,7 +19,7 @@ Use pristine Wine 11.0 source at
 https://github.com/wine-mirror/wine. The input `fonts/tahomabd.ttf` SHA256 is
 `508a2acc88cd6abdd399ae79c9965db43fba75a46bb115117b55d2be2272d889`.
 Dependencies used: FontForge 20230101, fontTools 4.46, ttfautohint 1.8.4.
-Commands below run from this directory; set WINE_SOURCE to that checkout.
+Commands below run from this directory; export WINE_SOURCE pointing to that checkout.
 
 ```sh
 fontforge -lang py -script font-lab/build.py \
@@ -90,3 +90,9 @@ experimental, never silently add them to the verified FastStone recipe.
 ![Outline-only comparison](comparison-unhinted.png)
 
 ![Hinted comparison](comparison-hinted.png)
+
+The read-only GDI renderer used for the pixel/advance check is archived as
+font-lab/render.c. Build it with x86_64-w64-mingw32-gcc -municode and -lgdi32.
+It takes a candidate font path (or `-` for the existing face) and an output BMP
+path, loads a private font only for its own process, reports actual selection,
+and removes that private resource before exit. The raw BMP is local output.
