@@ -22,12 +22,25 @@ for readiness, not completed painting or a full responsiveness benchmark.
 | Only GDI+ candidate, stock comctl32 | 1466 / 1489 | 5752 / 5772 | 6104 / 6106 | 000000, 3642 pixels |
 | Bundle, scoped Fontconfig experiment | 1937 / 1973 | 12142 / 12182 | 12387 / 12427 | ff0000, 3642 pixels |
 
-**Unresolved discrepancy:** the isolated GDI+ attempt did not reproduce the
-red stroke of the full bundle. The pencil button was selected and its colour
-control was red in the capture. This attempt has no loader trace, so effective
-native/builtin loading is not established. Do not declare the per-fix real-app
-gate complete until this is explained. The synthetic GDI+ reproducer and the
-full-bundle CI/local results remain separate evidence.
+**Resolved discrepancy:** the earlier GDI+-only attempt reused the same
+wineserver after replacing the stock DLL. Wine 11 retains an existing KnownDLL
+image section until the server exits; GDI+ is listed in this prefix's KnownDLLs.
+Bytes on disk and registry overrides alone did not prove the executing image.
+After closing apps and waiting with `wineserver -w` between phases, stock drew
+black and **GDI+ alone drew red**, with a native GDI+ / builtin comctl32 load
+trace. No server was killed. New first-open measurements (one pencil stroke
+on the first Draw open, to avoid an unrelated second-open focus failure):
+
+| Configuration, fresh server | Startup | Draw | Stroke |
+| --- | --- | --- | --- |
+| Stock DLLs | 1982 / 1984 | 6580 / 6597 | 000000, 3642 pixels |
+| GDI+ only, stock comctl32 | 1451 / 1486 | 5629 / 5949 | ff0000, 3642 pixels |
+
+The earlier black result is retained above as a failed experiment, not as an
+unresolved defect in the candidate. Both DLLs, override values, complete state
+and settings were restored and verified afterwards. A first cold attempt lost
+foreground after closing Draw; the successful bounded probe used one open.
+User visual acceptance and any Wine-report review remain separate gates.
 
 The scoped Fontconfig exposed 78 files to fc-list instead of the host's 2543,
 but did not isolate the Wine font universe: the API benchmark callback count
@@ -51,7 +64,8 @@ requires FIW_TOOLS pointing at the pristine fix-it-in-wine tools checkout and
 an already-managed, two-module faststone-v2 installation. It temporarily undoes
 the bundle, tests stock, tests the current GDI+ file alone, then restores both
 files/registry/state in finally and verifies restoration. It also checkpoints
-and restores the supplied settings directory. Run only with no existing
+and restores the supplied settings directory. It now waits for wineserver to
+exit between phases and logs native module loading. Run only with no existing
 FastStone process and no other prefix writer. Supply explicit --prefix, --exe,
 --image, --settings, --observer and a new --output directory. The generalized
 archive is syntax checked; the recorded run used this procedure locally before
@@ -65,9 +79,8 @@ cost separately, with two passes each. It does not reproduce Draw Board.
 
 ## Next steps
 
-1. Trace actual GDI+ loading in the isolated attempt before changing the fix.
-2. Resolve new self-intersections in the experimental font, then get the owner's
-   visual acceptance. See ../tahoma-bold/README.md for successful and failed steps.
+1. Preserve the fresh-server requirement when checking replacement system DLLs.
+2. Obtain the owner's visual acceptance of cleaned/hinted candidate .007. See ../tahoma-bold/README.md for successful and failed steps.
 3. Collect a real physical mouse sample when the owner returns; passive tools
    are ready in tools/cursor-sample.py and tests/wine/cursor-probe.c.
 4. Reproduce transient path-field artifacts; view switches clearing an artifact

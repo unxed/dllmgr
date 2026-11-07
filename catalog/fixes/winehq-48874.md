@@ -44,8 +44,13 @@ value, so the application's own GDI state is untouched.
 
 Probe: 0 failures with the fix, as on Windows. Real FastStone 8.5 Draw Board,
 default pencil, one stroke across the canvas: Windows red (`ff0000`), stock
-Wine 11.0 black (`000000`). The patched Draw Board run is recorded in
-`docs/faststone.md` when it completes.
+Wine 11.0 black (`000000`). The full bundle draws red in CI and on the
+owner's laptop. A separate actual-app run with **only** the GDI+ candidate,
+stock comctl32 and a freshly started wineserver draws red (`ff0000`, 3642
+pixels), with native GDI+ / builtin comctl32 load evidence. Undo restored the
+installed bundle, override values, managed state and settings. See
+`experiments/local-validation/README.md` for the earlier stale-server failure
+and the successful cold comparison. User visual acceptance remains pending.
 
 ## Installation
 

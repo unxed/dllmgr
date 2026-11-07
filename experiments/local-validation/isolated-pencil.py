@@ -24,12 +24,15 @@ for e in entries:
 gdi=next(e for e in entries if o.norm(e['name'])=='gdiplus')
 shutil.copy2(gdi['dest'],root/'gdiplus.dll')
 plan=root/'gdiplus-only.json';plan.write_text(json.dumps([dict(dll=str(root/'gdiplus.dll'),name='gdiplus.dll',slot='system')]))
-env=dict(os.environ,WINEPREFIX=str(prefix),WINEDEBUG='-all')
+env=dict(os.environ,WINEPREFIX=str(prefix),WINEDEBUG='-all,+timestamp,+loaddll')
 helper=[sys.executable,str(repo/'scripts/manage-faststone.py')]
 app=args.exe.resolve()
 observer=args.observer.resolve()
 image=args.image.resolve()
 def run(stage):
+ for p in (root/'settings-before').iterdir():
+  if p.is_file():shutil.copy2(p,config/p.name)
+ subprocess.run(['wineserver','-w'],env=env,check=True,timeout=45)
  out=root/stage;out.mkdir()
  with (out/'observations.txt').open('wb') as stdout,(out/'stderr.txt').open('wb') as stderr:
   subprocess.run(['wine',str(observer),str(app),str(image),'draw'],env=env,cwd=out,stdout=stdout,stderr=stderr,timeout=75,check=True)
@@ -48,4 +51,5 @@ finally:
   assert o.reg_query(str(prefix),'FSViewer.exe',o.norm(f['name']))==f['registry']
  assert o.load_state(str(prefix))==state
  (root/'restored.txt').write_text('Both installed DLLs, override registry values, managed state and original settings restored.\n')
+ subprocess.run(['wineserver','-w'],env=env,check=True,timeout=45)
  print('Original faststone-v2 state restored and verified.',flush=True)
