@@ -24,6 +24,11 @@ FastStone defects. Bugzilla status alone does not establish reproducibility.
 | [60301](https://bugs.winehq.org/show_bug.cgi?id=60301) | RMB hold sends an early release since Wine 11.17, with duplicate input reported by another user. Wine 11.16 is the reported good version. Candidate change: [44a822d2374c](https://github.com/wine-mirror/wine/commit/44a822d2374c71ee74fa8dc930b63f5a8e9ae256), raw XInput2 button handling. Requires real-input regression evidence. `winex11.drv` has a Unix component and cannot be installed as an ordinary native DLL. This fix does not apply to Wine 11.0. |
 | [5129](https://bugs.winehq.org/show_bug.cgi?id=5129) | Historical main-window thumbnail issue. Reporter no longer reproduced that symptom in Wine 11 with FastStone 5.6 (comments 43-44); comment 45 explicitly separates the remaining fullscreen strip problem as 59251. No additional patch justified yet. |
 
+Additional report: [60703](https://bugs.winehq.org/show_bug.cgi?id=60703),
+AVIF display in FastStone 8.5. The x86 WIC decoder preview passes native Windows
+and actual Wine/FastStone checks; install/undo and format limits are described
+in [AVIF workaround](avif.md). It is separate from faststone-v2.
+
 ## Packaging and acceptance
 
 - Individual entries remain keyed by Wine bug, with source, base Wine tag,
@@ -226,8 +231,8 @@ headless 192 DPI comparison on GitHub Actions; the user's desktop can differ.
 | Fullscreen strip without thumbnails (59251/59609) | winehq-59609 | thumbnails shown in CI |
 | Wheel scrolls ~12× slower than Windows, ignores the wheel amount (FS-wheel-speed) | winehq-59251 (v6: half the item spacing per line) | fixed in CI: 0/426/426/852 px for ½,½,1,2 detents at 192 DPI; Windows 0/216/216/432 at 96 DPI |
 | Fullscreen strip hides before wheel input in CI | — | harness or Wine: measured by `strip_persistence` |
-| Pencil strokes stay black (48874) | winehq-48874 | probe passes; full bundle draws red in CI and locally. A later local GDI+-only attempt drew black without a load trace: per-fix real-app gate remains unresolved; see experiments/local-validation |
-| Poor text in the left panel (FS-fonts) | — | reproduced in Wine Tahoma Bold; outline-only workaround rejected for uneven positioning. Hinted candidate awaits geometry cleanup and owner acceptance; see experiments/tahoma-bold |
+| Pencil strokes stay black (48874) | winehq-48874 | probe passes; full bundle draws red in CI and locally. Fresh-server GDI+-only actual-app run also draws red with native loading confirmed; prior stale-server failure explained in experiments/local-validation |
+| Poor text in the left panel (FS-fonts) | — | reproduced in Wine Tahoma Bold; outline-only workaround rejected for uneven positioning. Owner found filled counters in cleaned/hinted .007. Cleanup order is being corrected; no candidate installed permanently; see experiments/tahoma-bold |
 | Path field artifacts (FS-path) | — | not reproduced |
 | Draw Board ~5 s, startup 2–3 s (FS-draw-start, FS-start) | — | reproduced locally: Draw ~6.1–6.3 s, startup mapping/reply ~1.5–1.8 s; investigation open |
 | Middle button (FS-middle-button) | — | Wine matches Windows fullscreen → browser in CI; no Wine defect established |

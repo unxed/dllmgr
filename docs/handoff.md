@@ -6,15 +6,28 @@ Saved on GitHub at the owner's request on **2026-11-07**. Detailed attempts,
 including failures, are in `experiments/local-validation/README.md` and
 `experiments/tahoma-bold/README.md`; start there before repeating experiments.
 
-- **New unresolved finding:** an actual-app run with only the GDI+ candidate
-  drew black, unlike the full bundle. It lacks a loader trace. Check effective
-  loading first; do not claim the individual real-app gate passed. Both DLLs,
-  override registry values and full managed state were restored and verified.
-- Whole-font ttfautohint candidate 0.003 was tested through Wine GDI and
-  FastStone, but has no owner acceptance. It preserves the previous candidate's
-  self-intersections. Cleanup stopped after its 120-second bound at U+049A;
-  no cleaned 0.004 exists. All scripts, source, candidates and sanitized failure
-  evidence are archived in experiments/tahoma-bold, outside the verified catalog.
+- **AVIF / Wine 60703:** the native x86 WIC decoder passes Windows CI
+  [42402910201](https://github.com/unxed/dllmgr/actions/runs/42402910201) at
+  72310aced08b695d7750dabbba7af49b834a734d. The exact DLL also displays the
+  reported 626x417 file and generated 320x192 image in actual FastStone on this
+  laptop (fullscreen, thumbnail, preview). See docs/avif.md for experimental
+  install/undo, prefix-wide 32-bit WIC scope and deliberate format limits.
+- **Isolated GDI+ discrepancy resolved:** an old KnownDLL image survived the
+  disk/registry change in the same wineserver. A new server gives stock black
+  versus GDI+-only red (3642 pixels), with native GDI+ / builtin comctl32
+  loading confirmed. Full bundle, registry, managed state and settings restored.
+  See experiments/local-validation; no server was killed.
+- **Font .007 owner feedback:** much better weight/positioning, but counters
+  in в, д, ы are filled. This is a real remaining defect, so .007 is not an
+  accepted fix. The culprit is correctDirection before removeOverlap on
+  crossing contours: it selects the wrong filled regions. Counter-safe .008
+  resolves overlaps first, then direction, and rechecks after rounding.
+  Local application validation and owner acceptance are still required.
+  All earlier failures remain archived; no temporary font remains installed.
+- Far3/hiew backlog is visible in dllmgr issue 18 and docs/console-apps.md;
+  the new terminal-protocol scope is documentation only for now. Far3's
+  existing Lunobot assignment remains issue 322. Do not start hiew/protocols
+  while continuing this FastStone session.
 
 - Deep research run **42278157255** at `255f086` completed successfully.
   The patched real Draw Board stroke is red (`ff0000`, 3642 pixels);

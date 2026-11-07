@@ -23,6 +23,7 @@ ROOTS = (rf'HKLM\Software\Classes\CLSID\{CLSID}',
          rf'HKLM\Software\Classes\CLSID\{CATEGORY}\Instance\{CLSID}')
 STATE = Path('.dllmgr/avif-codec.json')
 DLL = Path('drive_c/dllmgr/codecs/avif/dllmgr-avif.dll')
+NOTICES = DLL.with_name('THIRD-PARTY-NOTICES.txt')
 
 
 class Error(RuntimeError):
@@ -133,17 +134,25 @@ def undo(prefix, registry):
     target = prefix/DLL
     if target.exists() and sha(target.read_bytes()) != state['sha256']:
         raise Error('AVIF DLL changed outside dllmgr; nothing removed')
+    notices = prefix/NOTICES
+    if state.get('notices_sha256') and notices.exists() and sha(notices.read_bytes()) != state['notices_sha256']:
+        raise Error('AVIF notices changed outside dllmgr; nothing removed')
     if state['phase'] == 'installed':
         if [registry.snapshot(root) for root in ROOTS] != state['registry']:
             raise Error('AVIF registration changed outside dllmgr; nothing removed')
     registry.remove()
     target.unlink(missing_ok=True)
+    if state.get('notices_sha256'):
+        notices.unlink(missing_ok=True)
     path.unlink()
 
 
 def apply(prefix, source, registry):
     path, target = prefix/STATE, prefix/DLL
     data = source.read_bytes()
+    notices = source.with_name(NOTICES.name).read_bytes()
+    if not notices.strip():
+        raise Error('The codec package must include third-party license notices')
     if len(data) < 64 or data[:2] != b'MZ':
         raise Error('Expected an x86 PE DLL')
     offset = struct.unpack_from('<I', data, 60)[0]
@@ -152,17 +161,18 @@ def apply(prefix, source, registry):
     digest = sha(data)
     if path.exists():
         state = json.loads(path.read_text()); validate_state(state)
-        if state['phase'] == 'installed' and state.get('registration_sha256') == sha(registration()) and state['sha256'] == digest and target.exists() and sha(target.read_bytes()) == digest and [registry.snapshot(k) for k in ROOTS] == state['registry']:
+        if state['phase'] == 'installed' and state.get('registration_sha256') == sha(registration()) and state.get('notices_sha256') == sha(notices) and (prefix/NOTICES).is_file() and sha((prefix/NOTICES).read_bytes()) == sha(notices) and state['sha256'] == digest and target.exists() and sha(target.read_bytes()) == digest and [registry.snapshot(k) for k in ROOTS] == state['registry']:
             return 'already installed'
         raise Error('Existing AVIF state differs; undo it before installing another build')
-    if target.exists():
+    if target.exists() or (prefix/NOTICES).exists():
         raise Error('The codec target exists without managed state')
     merged = [root.replace('HKLM\\Software\\Classes', 'HKCR', 1) for root in ROOTS]
     if any(registry.exists(root) for root in (*ROOTS, *merged)):
         raise Error('Decoder registration already exists; refusing to overwrite it')
-    state = dict(format=1, phase='pending', dll=str(DLL), sha256=digest, registration_sha256=sha(registration()), registry=[])
+    state = dict(format=1, phase='pending', dll=str(DLL), sha256=digest, notices_sha256=sha(notices), registration_sha256=sha(registration()), registry=[])
     atomic(path, json.dumps(state, indent=2).encode())
     try:
+        atomic(prefix/NOTICES, notices, 0o644)
         atomic(target, data, 0o644)
         registry.install()
         state.update(phase='installed', registry=[registry.snapshot(root) for root in ROOTS])
@@ -170,7 +180,7 @@ def apply(prefix, source, registry):
             raise Error('AVIF registration was not created')
         atomic(path, json.dumps(state, indent=2).encode())
     except BaseException:
-        registry.remove(); target.unlink(missing_ok=True); path.unlink(missing_ok=True)
+        registry.remove(); target.unlink(missing_ok=True); (prefix/NOTICES).unlink(missing_ok=True); path.unlink(missing_ok=True)
         raise
     return 'installed'
 
@@ -196,6 +206,8 @@ def main():
         else:
             state = json.loads((prefix/STATE).read_text()); validate_state(state)
             good = state['phase'] == 'installed' and (prefix/DLL).is_file() and sha((prefix/DLL).read_bytes()) == state['sha256'] and [registry.snapshot(root) for root in ROOTS] == state['registry']
+            if state.get('notices_sha256'):
+                good = good and (prefix/NOTICES).is_file() and sha((prefix/NOTICES).read_bytes()) == state['notices_sha256']
             if not good: raise Error('AVIF installation is incomplete or changed')
             print('AVIF codec: ok')
     finally:
