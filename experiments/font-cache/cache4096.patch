@@ -1,0 +1,11 @@
+--- a/dlls/win32u/font.c
++++ b/dlls/win32u/font.c
+@@ -2811,7 +2811,7 @@
+ static struct list gdi_font_list = LIST_INIT( gdi_font_list );
+ static struct list unused_gdi_font_list = LIST_INIT( unused_gdi_font_list );
+ static unsigned int unused_font_count;
+-#define UNUSED_CACHE_SIZE 10
++#define UNUSED_CACHE_SIZE 4096
+ 
+ static BOOL fontcmp( const struct gdi_font *font, DWORD hash, const LOGFONTW *lf,
+                      const FMAT2 *matrix, BOOL can_use_bitmap )

@@ -1,0 +1,6 @@
+fonts=4 first_ms=6.220 repeated_20_ms=0.645 repeated_per_pass=0.032
+fonts=8 first_ms=6.257 repeated_20_ms=3.153 repeated_per_pass=0.158
+fonts=12 first_ms=3.394 repeated_20_ms=296.788 repeated_per_pass=14.839
+fonts=16 first_ms=19.677 repeated_20_ms=228.283 repeated_per_pass=11.414
+fonts=32 first_ms=17.855 repeated_20_ms=542.688 repeated_per_pass=27.134
+fonts=128 first_ms=146.825 repeated_20_ms=2006.957 repeated_per_pass=100.348

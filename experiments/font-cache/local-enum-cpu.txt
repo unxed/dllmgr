@@ -1,0 +1,8 @@
+mode=0 round=0 callbacks=3256 wall_ms=302 cpu_ms=290.0
+mode=0 round=1 callbacks=3256 wall_ms=3 cpu_ms=0.0
+mode=1 round=0 callbacks=3256 wall_ms=2490 cpu_ms=2450.0
+mode=1 round=1 callbacks=3256 wall_ms=2408 cpu_ms=2410.0
+mode=2 round=0 callbacks=3256 wall_ms=996 cpu_ms=990.0
+mode=2 round=1 callbacks=3256 wall_ms=767 cpu_ms=770.0
+mode=3 round=0 callbacks=3256 wall_ms=745 cpu_ms=750.0
+mode=3 round=1 callbacks=3256 wall_ms=595 cpu_ms=590.0
