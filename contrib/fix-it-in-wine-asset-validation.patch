@@ -1,0 +1,46 @@
+--- a/SKILL.md
++++ b/SKILL.md
+@@ -260,6 +260,43 @@
+ - the exact undo command;
+ - that the change stays after a Wine update and is not updated with it. After a Wine update, run `tools/override.py status` and check again.
+ 
++## Asset workarounds and evidence from failures
++
++Before rebuilding a font or another data asset, distinguish broken source data
++from rendering/runtime behavior. Check ready redistributable alternatives and
++explain the tradeoff (for example, changed font metrics versus preserving the
++existing layout). Do not imply that hand-editing outlines is the only remedy.
++
++For a font workaround:
++
++- Geometry validation is necessary but insufficient. Zero intersection flags
++  can coexist with filled counters, missing stems or merged disconnected parts.
++- Keep rejected candidates as negative fixtures. A new guard must fail on the
++  rejected asset and pass on the new one. Check counters, disconnected ink
++  components, advance widths and unrelated outlines, then actual small-size
++  rendering and the application at the user's DPI.
++- Normalize inconsistent source winding before offsetting. Resolve crossing
++  contours before choosing their direction, recheck after rounding, and preserve
++  gaps between disconnected components. Neither operation order nor topology
++  checks alone establish good font design.
++- Whole-face hinting can change rasterized metrics even with unchanged advances
++  in font units. State its scope and retain the user's visual feedback exactly.
++- Prefer temporary per-prefix selection with a finally rollback during research.
++  Record the actually selected face, not only that a resource was loaded.
++
++For a codec, test generic system discovery as well as direct COM activation,
++then exercise the actual app. Validate registration types and rollback on the
++native reference platform as well as Wine; Wine accepting a registry value is
++not evidence that its type is correct. Publish explicit format/color/metadata
++limits rather than silently claiming complete format support.
++
++After each attempt, state the current user-visible installation status:
++experimental build only, temporary test rolled back, permanently installed, or
++uninstalled. A successful temporary app test does not fix the user's ordinary
++app after rollback. Save failed hypotheses, harness/focus errors, timeouts,
++cache contamination and exact recovery beside successful results; never turn
++missing evidence into a passing check. Retain only sanitized public evidence.
++
+ ## Self-improvement
+ 
+ When your experience shows how to make this skill better, open a pull request to https://github.com/unxed/fix-it-in-wine right away. Cases:
