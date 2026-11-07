@@ -28,3 +28,10 @@ Local clean portable profile on the owner's installed Wine/prefix also passed
 all eight capture states. The installed FastStone profile hashes were identical
 before and after; the temporary C-drive fixture was removed. The severe old
 path-row artifact did not appear in this single attempt.
+
+Run 42414270400 at 2dc9ce9 passed Windows and both Wine jobs. The measured
+open/pressed/capture transitions agree in all eight stages. Button painting
+differs substantially, but the initial window widths and OS themes also differ;
+these images do not isolate a Wine defect. Next capture fixes the client area
+at 900x600 logical pixels and separately disables theming on the combo with
+public SetWindowTheme; each mode starts from a fresh portable profile.

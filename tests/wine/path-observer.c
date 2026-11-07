@@ -2,8 +2,10 @@
 #define main general_observer_main
 #include "app-observer.c"
 #undef main
+#include <uxtheme.h>
 
 static HWND combo;
+static int classic;
 static BOOL CALLBACK find_combo(HWND child, LPARAM unused)
 {
     WCHAR cls[128],text[2048]; DWORD_PTR result=0; size_t n;
@@ -65,6 +67,16 @@ static int observe_path(HWND first)
     press_key(VK_RETURN); Sleep(1200);
     browser=wait_window("FastStone Image Viewer","FastStoneImageViewerMainForm");
     if(!browser || !activate_owned_window(browser)) return 4;
+    /* Match the application client area, excluding OS-specific decorations. */
+    ShowWindow(browser,SW_RESTORE);
+    for(int attempt=0;attempt<2;attempt++) {
+        RECT client,outer;GetClientRect(browser,&client);GetWindowRect(browser,&outer);
+        int width=MulDiv(900,GetDpiForWindow(browser),96);
+        int height=MulDiv(600,GetDpiForWindow(browser),96);
+        SetWindowPos(browser,NULL,20,20,width+outer.right-outer.left-client.right,
+                     height+outer.bottom-outer.top-client.bottom,SWP_NOZORDER|SWP_NOACTIVATE);
+    }
+    Sleep(500);
     EnumChildWindows(browser,find_combo,0);
     if(!combo) {
         puts("synthetic_path_combo_not_found");describe("after_enter",browser);
@@ -72,7 +84,21 @@ static int observe_path(HWND first)
         GetWindowRect(browser,&r);crop("missing-combo-window.bmp",r);return 5;
     }
     if(!GetComboBoxInfo(combo,&ci) || !GetWindowRect(combo,&r)) return 6;
+    if(classic) {
+        HRESULT hr=SetWindowTheme(combo,L"",L"");
+        printf("classic_theme_result=%08lx\n",(unsigned long)hr);
+        if(FAILED(hr))return 10;
+        RedrawWindow(combo,NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_UPDATENOW|RDW_ALLCHILDREN);
+        Sleep(250);
+    }
     describe("path_combo",combo);
+    {
+        WCHAR file[MAX_PATH],color[128],size[128];RECT client;
+        HRESULT hr=GetCurrentThemeName(file,ARRAYSIZE(file),color,ARRAYSIZE(color),size,ARRAYSIZE(size));
+        GetClientRect(browser,&client);
+        printf("client=%ldx%ld theme_hr=%08lx theme_color=%ls theme_size=%ls classic=%d\n",
+               client.right,client.bottom,(unsigned long)hr,SUCCEEDED(hr)?color:L"",SUCCEEDED(hr)?size:L"",classic);
+    }
     printf("combo_style=%08lx dpi=%u\n",GetWindowLongA(combo,GWL_STYLE),GetDpiForWindow(combo));
     p.x=r.right-GetSystemMetrics(SM_CXVSCROLL)/2-2;p.y=(r.top+r.bottom)/2;
     ok=capture_state("00-initial",browser);
@@ -100,9 +126,10 @@ int main(int argc,char **argv)
 {
     STARTUPINFOW startup={sizeof(startup)};PROCESS_INFORMATION process;WCHAR command[4096],**args;
     HWND hwnd;int n,status;
-    if(argc!=3){fputs("path-observer.exe FSViewer.exe synthetic-browser-image\n",stderr);return 2;}
+    if(argc!=3 && argc!=4){fputs("path-observer.exe FSViewer.exe synthetic-browser-image [classic]\n",stderr);return 2;}
+    classic=argc==4 && !strcmp(argv[3],"classic");if(argc==4 && !classic)return 2;
     SetProcessDPIAware();setvbuf(stdout,NULL,_IONBF,0);
-    args=CommandLineToArgvW(GetCommandLineW(),&n);if(!args || n!=3)return 2;
+    args=CommandLineToArgvW(GetCommandLineW(),&n);if(!args || n!=argc)return 2;
     if(wcslen(args[1])+wcslen(args[2])+6>=ARRAYSIZE(command)){LocalFree(args);return 2;}
     swprintf(command,ARRAYSIZE(command),L"\"%ls\" \"%ls\"",args[1],args[2]);LocalFree(args);
     if(!CreateProcessW(NULL,command,NULL,NULL,FALSE,0,NULL,NULL,&startup,&process))return 3;

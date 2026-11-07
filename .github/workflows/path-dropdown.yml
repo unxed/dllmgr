@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: bash tests/wine/ci-install.sh gcc-mingw-w64-x86-64
         timeout-minutes: 6
-      - run: x86_64-w64-mingw32-gcc -O2 -Wall -o path-observer.exe tests/wine/path-observer.c tests/wine/listview-probe.c -lgdi32
+      - run: x86_64-w64-mingw32-gcc -O2 -Wall -o path-observer.exe tests/wine/path-observer.c tests/wine/listview-probe.c -lgdi32 -luxtheme
       - uses: actions/upload-artifact@v4
         with:
           name: path-observer
@@ -39,8 +39,13 @@ jobs:
           unzip -q fs85.zip -d /c/dllmgr-path-test
           (cd /c/dllmgr-path-test && python "$GITHUB_WORKSPACE/tests/wine/make-images.py")
           mkdir captures
-          cd captures
-          ../path-observer.exe 'C:\dllmgr-path-test\FSViewer85\FSViewer.exe' 'C:\dllmgr-path-test\images\browser\00-landscape.bmp' > observations.txt
+          for mode in themed classic; do
+            rm -rf /c/dllmgr-path-test/FSViewer85
+            unzip -q fs85.zip -d /c/dllmgr-path-test
+            mkdir "captures/$mode"
+            args=(); if [ "$mode" = classic ]; then args+=(classic); fi
+            (cd "captures/$mode" && ../../path-observer.exe 'C:\dllmgr-path-test\FSViewer85\FSViewer.exe' 'C:\dllmgr-path-test\images\browser\00-landscape.bmp' "${args[@]}" >observations.txt)
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -74,13 +79,18 @@ jobs:
           unzip -q fs85.zip -d "$WINEPREFIX/drive_c/dllmgr-path-test"
           (cd "$WINEPREFIX/drive_c/dllmgr-path-test" && python3 "$GITHUB_WORKSPACE/tests/wine/make-images.py")
           export TEST_DPI=${{ matrix.dpi }}
-          xvfb-run -a -s '-screen 0 3072x1728x24' bash -e -o pipefail -c '
+          xvfb-run -a -s '-screen 0 2048x1536x24' bash -e -o pipefail -c '
             openbox >captures/openbox.txt 2>&1 &
             timeout 90 wineboot -u >captures/wineboot.txt 2>&1
             wine reg add "HKCU\Control Panel\Desktop" /v LogPixels /t REG_DWORD /d "$TEST_DPI" /f
             timeout 60 wineserver -w
-            cd captures
-            timeout 75 wine ../path-observer.exe "C:\dllmgr-path-test\FSViewer85\FSViewer.exe" "C:\dllmgr-path-test\images\browser\00-landscape.bmp" >observations.txt 2>errors.txt
+            for mode in themed classic; do
+              rm -rf "$WINEPREFIX/drive_c/dllmgr-path-test/FSViewer85"
+              unzip -q fs85.zip -d "$WINEPREFIX/drive_c/dllmgr-path-test"
+              mkdir "captures/$mode"
+              args=(); if [ "$mode" = classic ]; then args+=(classic); fi
+              (cd "captures/$mode" && timeout 75 wine ../../path-observer.exe "C:\dllmgr-path-test\FSViewer85\FSViewer.exe" "C:\dllmgr-path-test\images\browser\00-landscape.bmp" "${args[@]}" >observations.txt 2>errors.txt)
+            done
           '
       - uses: actions/upload-artifact@v4
         if: always()
