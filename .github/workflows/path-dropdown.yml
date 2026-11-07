@@ -90,7 +90,12 @@ jobs:
               rm -rf "$WINEPREFIX/drive_c/dllmgr-path-test/FSViewer85"
               unzip -q fs85.zip -d "$WINEPREFIX/drive_c/dllmgr-path-test"
               mkdir "captures/$mode"
-              args=(); if [ "$mode" = classic ]; then args+=(classic); fi
+              args=()
+              if [ "$mode" = classic ]; then
+                args+=(classic)
+                wine reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ThemeManager" /v ThemeActive /t REG_SZ /d 0 /f
+                timeout 60 wineserver -w
+              fi
               (cd "captures/$mode" && timeout 75 wine ../../path-observer.exe "C:\dllmgr-path-test\FSViewer85\FSViewer.exe" "C:\dllmgr-path-test\images\browser\00-landscape.bmp" "${args[@]}" >observations.txt 2>errors.txt)
             done
           '

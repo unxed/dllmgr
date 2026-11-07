@@ -44,3 +44,24 @@ SetWindowTheme(combo, L"", L"") returned 0x8007007b (invalid name), aborting
 that mode safely. Wine uxtheme's property setter calls GlobalAddAtomW on the
 empty value. The next probe uses nonempty, nonexistent space class names to
 disable theming on both systems; no prefix-wide theme setting is changed.
+
+A concrete themed-paint mismatch is reproducible at 96 DPI with equal combo
+sizes: native Windows changes 330 button pixels from hover to down, then **0**
+from down to up while the list remains open; Wine changes 300 on release.
+The candidate only keeps the themed button in its pressed visual state while
+the list is dropped; the public pressed/capture state still clears on release.
+The classic paint path is untouched.
+
+Run 42415273136 at 12af973 built the isolated DLL, proved its native load in
+actual FastStone and restored the original DLL on failure. The checker failed
+on all hosted images with `ModuleNotFoundError: No module named 'PIL'` before
+pixel assertions. The checker now reads the probe's simple uncompressed BMP
+format with Python's standard library, removing that unnecessary dependency.
+
+A nonempty SetWindowTheme override returns success in Wine but does not prove
+it affected a foreign process's control (Wine stores the strings as local
+atoms). Classic mode now requires a null control theme handle; Wine CI disables
+the theme in its **disposable prefix only** before launching that mode. Native
+Windows disables it on the specific combo. No owner's theme settings change.
+Local Xvfb testing was unavailable (`xvfb-run: command not found`); the owned
+96-DPI prefix test instead used the real desktop, without starting another WM.

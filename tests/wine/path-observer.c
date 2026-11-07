@@ -84,13 +84,15 @@ static int observe_path(HWND first)
         GetWindowRect(browser,&r);crop("missing-combo-window.bmp",r);return 5;
     }
     if(!GetComboBoxInfo(combo,&ci) || !GetWindowRect(combo,&r)) return 6;
-    if(classic) {
+    if(classic && IsThemeActive()) {
         HRESULT hr=SetWindowTheme(combo,L" ",L" ");
         printf("classic_theme_result=%08lx\n",(unsigned long)hr);
         if(FAILED(hr))return 10;
         RedrawWindow(combo,NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_UPDATENOW|RDW_ALLCHILDREN);
         Sleep(250);
     }
+    printf("control_themed=%d global_themed=%d\n",GetWindowTheme(combo)!=NULL,IsThemeActive());
+    if(classic && GetWindowTheme(combo)) {puts("classic_control_still_themed");return 10;}
     describe("path_combo",combo);
     {
         WCHAR file[MAX_PATH],color[128],size[128];RECT client;
