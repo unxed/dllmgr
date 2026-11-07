@@ -167,7 +167,7 @@ plan, directory, tag, arch, slot, *modules = sys.argv[1:]
 with open(plan, 'w') as output:
     json.dump([dict(dll=f"{directory}/{m}-{tag}-{arch}.dll",
                     name="comctl32.dll" if m.startswith("comctl32") else "gdiplus.dll",
-                    slot=slot if m.startswith("comctl32") else "system") for m in modules], output)
+                    slot=slot if m.startswith("comctl32") else "appdir") for m in modules], output)
 PLAN
 ui step "Applying the recipe transaction"
 if result=$(python3 "$here/manage-faststone.py" apply --fix "$fix" --prefix "$WINEPREFIX" --plan "$download/plan.json"); then
