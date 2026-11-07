@@ -2,6 +2,7 @@ name: Path dropdown research
 on:
   push:
     branches: ['research/faststone-path']
+    paths: ['tests/wine/path-*', 'tests/wine/check-path-dropdown.py', 'tests/wine/app-observer.c', 'tests/wine/listview-probe.*', 'patches/dllmgr-21.patch', '.github/workflows/path-dropdown.yml']
   workflow_dispatch:
 permissions:
   contents: read

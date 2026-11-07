@@ -10,6 +10,8 @@ parser.add_argument('folder', type=Path)
 parser.add_argument('--expect-release-change', action='store_true', help='require the known stock-Wine themed failure')
 args = parser.parse_args()
 text = (args.folder / 'observations.txt').read_text()
+if 'control_themed=1' not in text:
+    raise SystemExit('Themed-button check requires a verified themed control')
 stages = ['00-initial', '01-hover', '02-down', '03-held', '04-up', '05-second-down', '06-second-up', '07-escape']
 expected = [(0,0,0),(0,0,0),(1,8,1),(1,8,1),(1,0,1),(0,0,0),(0,0,0),(0,0,0)]
 images = {}

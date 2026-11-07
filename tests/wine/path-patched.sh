@@ -49,12 +49,20 @@ for selection in isolated combined; do
     undo_needed=1
     timeout 30 wineserver -k || true
     timeout 30 wineserver -w
-    rm -rf "$fixture/FSViewer85"
-    unzip -q "$out/fs85.zip" -d "$fixture"
-    (cd "$out/$selection" && WINEDEBUG=+loaddll timeout 75 wine "$repo/path-observer.exe" 'C:\dllmgr-path-test\FSViewer85\FSViewer.exe' 'C:\dllmgr-path-test\images\browser\00-landscape.bmp' >observations.txt 2>modules.txt)
-    grep -Ei 'loaddll:.*\\comctl32\.dll.*: native' "$out/$selection/modules.txt"
-    python3 "$repo/tests/wine/check-path-dropdown.py" "$out/$selection"
-    cmp "${sxs[0]}" "$out/$selection/comctl32_v6-wine-11.0-i386.dll"
+    for dpi in 96 192; do
+        wine reg add 'HKCU\Control Panel\Desktop' /v LogPixels /t REG_DWORD /d "$dpi" /f
+        timeout 30 wineserver -k || true
+        timeout 30 wineserver -w
+        rm -rf "$fixture/FSViewer85"
+        unzip -q "$out/fs85.zip" -d "$fixture"
+        mkdir "$out/$selection/dpi-$dpi"
+        (cd "$out/$selection/dpi-$dpi" && WINEDEBUG=+loaddll timeout 75 wine "$repo/path-observer.exe" 'C:\dllmgr-path-test\FSViewer85\FSViewer.exe' 'C:\dllmgr-path-test\images\browser\00-landscape.bmp' >observations.txt 2>modules.txt)
+        grep -Ei 'loaddll:.*\\comctl32\.dll.*: native' "$out/$selection/dpi-$dpi/modules.txt"
+        python3 "$repo/tests/wine/check-path-dropdown.py" "$out/$selection/dpi-$dpi"
+        cmp "${sxs[0]}" "$out/$selection/comctl32_v6-wine-11.0-i386.dll"
+        timeout 30 wineserver -k || true
+        timeout 30 wineserver -w
+    done
     python3 "$repo/fiw/tools/override.py" undo --prefix "$WINEPREFIX" --exe FSViewer.exe --name comctl32 >"$out/$selection/undo.txt"
     undo_needed=0
     sha256sum -c "$out/original.sha256" >>"$out/$selection/undo.txt"
