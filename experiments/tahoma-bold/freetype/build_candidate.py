@@ -5,6 +5,7 @@ Only existing outline points are changed. Glyph topology, advances, and all
 other glyph outlines remain from the original Wine 11.0 font.
 """
 import json
+import argparse
 import math
 import sys
 from pathlib import Path
@@ -15,12 +16,49 @@ from fontTools.ttLib.tables._g_l_y_f import GlyphCoordinates
 from fontTools.ttLib.tables.ttProgram import Program
 from fontTools.pens.areaPen import AreaPen
 
-SOURCE = Path(sys.argv[1])
-AFFECTED = Path(sys.argv[2])
-OUTPUT = Path(sys.argv[3])
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('source', type=Path)
+parser.add_argument('affected', type=Path)
+parser.add_argument('output', type=Path)
+parser.add_argument('--preserve-component-gaps', action='store_true')
+args = parser.parse_args()
+SOURCE, AFFECTED, OUTPUT = args.source, args.affected, args.output
 STRENGTH = 120
 HORIZONTAL_MARGIN = 16
 SCALE = 64
+
+
+def preserve_horizontal_gaps(original, endpoints, changed):
+    """Preserve source gaps between disjoint x projections, including ы/Ы.
+
+    Inner contours belong to their enclosing body's projection. Move complete
+    components; never stretch individual contours or change the glyph advance.
+    """
+    contours = []
+    start = 0
+    for end in endpoints:
+        indices = list(range(start, end + 1))
+        contours.append((min(original[i][0] for i in indices),
+                         max(original[i][0] for i in indices), indices))
+        start = end + 1
+    groups = []
+    for lo, hi, indices in sorted(contours):
+        if groups and lo <= groups[-1][1]:
+            groups[-1][1] = max(groups[-1][1], hi)
+            groups[-1][2].extend(indices)
+        else:
+            groups.append([lo, hi, indices])
+    previous = None
+    for lo, hi, indices in groups:
+        minimum = min(changed[i][0] for i in indices)
+        if previous:
+            old_maximum, new_maximum = previous
+            shift = max(0, new_maximum + lo - old_maximum - minimum)
+            for i in indices:
+                x, y = changed[i]
+                changed[i] = (x + shift, y)
+        previous = (hi, max(changed[i][0] for i in indices))
+    return changed
 
 codes = [int(value.removeprefix("U+"), 16) for value in json.loads(AFFECTED.read_text())]
 font = TTFont(SOURCE)
@@ -57,7 +95,10 @@ for code in codes:
     if error:
         raise SystemExit(f"U+{code:04X}: FT_Outline_EmboldenXY failed with error {error}")
     emboldened = [(x / SCALE, y / SCALE) for x, y in outline.points]
-    x0, y0, x1, y1 = outline.get_cbox().xMin / SCALE, outline.get_cbox().yMin / SCALE, outline.get_cbox().xMax / SCALE, outline.get_cbox().yMax / SCALE
+    if args.preserve_component_gaps:
+        emboldened = preserve_horizontal_gaps(original_points, glyph.endPtsOfContours, emboldened)
+    x0, y0 = min(x for x,y in emboldened), min(y for x,y in emboldened)
+    x1, y1 = max(x for x,y in emboldened), max(y for x,y in emboldened)
     if x1 <= x0 or y1 <= y0:
         raise SystemExit(f"U+{code:04X}: invalid emboldened outline bounds")
 

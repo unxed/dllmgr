@@ -1,0 +1,4 @@
+Checked 66 affected glyphs; counter/component failures: 0
+Minimum retained counter area ratio: 0.3733
+Minimum retained ink-component area ratio: 1.0283
+This raster topology check does not establish visual font quality.

@@ -1,8 +1,9 @@
 # Point-preserving emboldening and fast cleanup
 
 Experimental continuation, 2026-11-07. **Not installed permanently.**
-The owner found filled counters in .007; it is rejected. .008 fixes the cleanup
-order and is awaiting visual acceptance. The earlier .002/.003 candidates are retained
+The owner rejected .007 for filled counters and .008 for a thin right stroke
+in Ы and merged components in ы. Candidate .009 is nearly ideal according to
+the owner, with a minor weight difference in the unchanged capital В. The earlier .002/.003 candidates are retained
 only as failed/unfinished experiments.
 
 Starting from pristine Wine 11.0 Tahoma Bold, FreeType FT_Outline_EmboldenXY
@@ -83,3 +84,32 @@ captured with a temporary prefix font, removed in finally with settings restored
 ![Wine GDI: rejected .007 above, counter-safe .008 below](counters007-008.png)
 
 ![Actual FastStone: original left, .008 right](comparison-faststone008.png)
+
+## Component-safe candidate .009
+
+Owner feedback caught two more problems in .008: the right stem of Ы was
+thin and the two parts of ы touched. The original Ы has inconsistent contour
+directions: FreeType chose the body's orientation and shrank the separately
+oriented right stem. Normalize the affected original contours before offsetting.
+In ы the 120-unit expansion exceeds the original 100-unit gap. Group contours
+by overlapping horizontal projections, preserve the source gap between groups,
+then fit/center within the unchanged advance. Hole contours remain with their
+surrounding body, so they are never moved independently.
+
+Build using `--component-safe`. All original advances and unrelated outlines
+are preserved. The regression checker now also preserves disconnected ink
+component counts and rejects an ink component losing over 20% of its original
+area. .008 fails (merged ы and shrunken Ы stem). .009 passes all 66 glyphs;
+minimum component-area ratio is 1.0283, minimum counter ratio 0.3733.
+The owner called .009 nearly ideal; capital В looks slightly heavier than its
+neighbors. Its original bold outline was not changed. Keep this minor visual
+observation explicit; perfect Windows font-shape parity is not claimed.
+
+Actual Wine GDI selection and FastStone panel checks pass. A temporary font
+and application settings were restored afterwards. Install/undo commands and
+prefix-wide scope are described in [font workaround](../../../docs/fonts.md).
+The original rejected candidates remain here to reproduce failed checks.
+
+![Wine GDI: .008 above, .009 below](components008-009.png)
+
+![Actual FastStone: original left, .009 right](comparison-faststone009.png)

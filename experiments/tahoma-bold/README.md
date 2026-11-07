@@ -2,8 +2,9 @@
 
 Checkpoint: 2026-11-07. **Not an installable recipe or an accepted fix.**
 The owner rejected the first outline-only candidate: mixed bold/regular weight
-improved, but letter positioning still looked uneven. The latest .008 candidate
-has been rendered in actual Wine and FastStone; owner acceptance is pending.
+improved, but letter positioning still looked uneven. The latest .009 candidate
+has been rendered in actual Wine and FastStone; the owner called it nearly
+ideal, with a minor weight difference in the unchanged capital В.
 The owner rejected .007 because several counters were filled; see the new
 counter-safe cleanup and regression check below.
 No candidate is left installed. Original prefix fonts/settings are restored.
@@ -122,3 +123,10 @@ counter shapes survived cleanup. [Candidate .008](freetype/README.md#counter-saf
 changes cleanup order and passes a topology check that fails on .007. It has
 been checked through Wine GDI and in FastStone, with temporary installation
 fully removed. Do not install .007 or describe it as accepted.
+
+The owner also rejected .008 for merged parts in ы and a thin Ы right stem.
+[Candidate .009](freetype/README.md#component-safe-candidate-009) normalizes the
+original winding before offsetting and preserves gaps between disconnected
+horizontal components. All 66 affected glyphs pass the expanded regression
+check, which fails on .008. Wine GDI and actual FastStone comparisons pass;
+installation is handled separately and reversibly, with corresponding source.
