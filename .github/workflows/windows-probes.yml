@@ -1,0 +1,35 @@
+name: windows-probes
+# Reference behaviour from real Windows: build small Win32 probes with mingw
+# on Linux, run them on windows-latest, print their output in the log.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['tests/wine/feedback-*.c', '.github/workflows/windows-probes.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y -qq gcc-mingw-w64-x86-64 >/dev/null
+      - run: |
+          mkdir out
+          for src in tests/wine/feedback-setting.c tests/wine/feedback-get.c; do
+            x86_64-w64-mingw32-gcc -O2 -Wall -o "out/$(basename "$src" .c).exe" "$src" -luser32
+          done
+      - uses: actions/upload-artifact@v4
+        with: {name: probes, path: out}
+  run:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with: {name: probes, path: probes}
+      - name: Run probes
+        shell: pwsh
+        run: |
+          Get-ChildItem probes\*.exe | ForEach-Object { "== $($_.Name)"; & $_.FullName; "exit=$LASTEXITCODE" }
