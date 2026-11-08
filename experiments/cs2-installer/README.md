@@ -77,3 +77,31 @@ process) are invisible without msi.* relay.
 Current hypothesis (not proven): the texts are read with MsiGetPropertyA and
 a later remote call fails, leaving the caller's buffer untouched. Run 3:
 RelayInclude `msi.*`.
+
+## F13 + F14 mechanism, proven (run 3, 2026-11-09)
+
+RelayInclude `msi.*` (log 45 MB, local /home/claude/work/f13/install-cs2.log):
+1. Adobe's custom action CA_InstallFinishDisplay (NewBinary20!PerformSubInstalls)
+   runs in the custom-action host process; its remote MSI calls go through the
+   host's process-global RPC binding to the installing msiexec. Its last
+   successful MsiGetPropertyA is before the sub-installs.
+2. The same custom action then runs nested installs in that process:
+   `MsiSetInternalUI(2)` + `MsiInstallProductA("...\Bridge\Adobe Bridge 1.0.msi",
+   "ARPSYSTEMCOMPONENT=1 REBOOT=ReallySuppress ...")` and more.
+3. Back in the final dialog, every MsiGetPropertyA ("FINISHTEXT", "BACKTEXT",
+   "CANCELTEXT", "DIALOGTEXT2", "WINDOWTITLE", "LAUNCHTEXT", ...) returns
+   0x6A6 RPC_S_INVALID_BINDING; the caller's buffer keeps the last good value
+   "&Finish", which the CA puts on every control and the caption (F13).
+   The main install thread is still waiting for the CA (session alive), so the
+   binding was not lost because the session ended.
+4. Wine 11.0 source: MSI_FreePackage (dlls/msi/package.c) calls
+   `RpcBindingFree(&rpc_handle)` on the process-global custom-action client
+   binding (created in __wine_msi_call_dll_function, dlls/msi/custom.c)
+   whenever any package is freed. Freeing the nested install's package in the
+   custom-action host therefore destroys the outer custom action's binding.
+   The later msiexec crash with unhandled 0x6A6 after Finish (F14) is the same
+   invalid binding raised from a remote call (exception code matches).
+Fix idea (for WineHQ, words only): a package created inside a custom-action
+host must not free the host's client binding; free it only when the host
+finishes (or keep it per custom action). Impact: cosmetic final dialog plus a
+crash after installation completes; Photoshop is installed correctly.
