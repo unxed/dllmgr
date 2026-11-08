@@ -35,3 +35,9 @@ muffin mode 2 + B:   white -> image 1044, no interruption                   pass
 # Inconclusive: the owner sees the flash on Cinnamon (= Muffin), so root
 # XGetImage under a compositor on Xvfb likely does not reflect presented frames.
 # Only shows no regression of mode 2 + B there.
+
+# Clean ungated patch patches/winehq-60721.patch (x86_64 + i386 .so), same stand:
+popup:      f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a   (= Windows)
+occlusion:  pass
+faststone:  3/3 pass (first image 579/627/685 ms, no interruption)
+

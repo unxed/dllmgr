@@ -1,0 +1,104 @@
+Candidate fix for WineHQ bug 60721 / dllmgr issue 27 (FastStone first fullscreen
+open flashes black then white). Against wine-11.0 (db11d0fe).
+
+1. win32u: an X Expose no longer re-presents parts of a window surface that
+   were never drawn. Exposed rects are kept in surface->exposed; a flush sends
+   bounds plus (exposed ∩ painted), where painted is the bounding rect of all
+   drawing so far. A fresh surface is 0xff-filled, so before this the first
+   Expose showed white before WM_PAINT.
+2. winex11: X windows get background None instead of a black pixel, so the
+   previous screen contents stay visible until the first paint (as on Windows).
+
+Changes struct window_surface: rebuild win32u.so and winex11.so together.
+Limits: painted is a bounding rect, not a region; only checked with X11,
+Metacity without compositing, 192 DPI. Evidence:
+experiments/first-open/exp27-expose-background/.
+
+diff --git a/dlls/win32u/dce.c b/dlls/win32u/dce.c
+index 5d6cbb7..995aef6 100644
+--- a/dlls/win32u/dce.c
++++ b/dlls/win32u/dce.c
+@@ -538,6 +538,8 @@ W32KAPI struct window_surface *window_surface_create( UINT size, const struct wi
+     surface->alpha_bits = -1;
+     surface->alpha_mask = 0;
+     reset_bounds( &surface->bounds );
++    reset_bounds( &surface->exposed );
++    reset_bounds( &surface->painted );
+ 
+     if (!bitmap) bitmap = NtGdiCreateDIBSection( 0, NULL, 0, info, DIB_RGB_COLORS, 0, 0, 0, NULL );
+     if (!(surface->color_bitmap = bitmap))
+@@ -619,6 +621,19 @@ W32KAPI void window_surface_flush( struct window_surface *surface )
+ 
+     window_surface_lock( surface );
+ 
++    /* Only present exposed areas that have actually been drawn. A new surface
++     * is filled with 0xff, and showing those pixels before the first paint
++     * makes windows flash white; on Windows the previous screen contents stay
++     * visible until the application paints. */
++    add_bounds_rect( &surface->painted, &surface->bounds );
++    if (!IsRectEmpty( &surface->exposed ))
++    {
++        RECT exposed;
++        if (intersect_rect( &exposed, &surface->exposed, &surface->painted ))
++            add_bounds_rect( &surface->bounds, &exposed );
++        reset_bounds( &surface->exposed );
++    }
++
+     /* align bounds / dirty rect to help with 1bpp shape bitmap updates */
+     bounds.left = surface->bounds.left & ~7;
+     bounds.top = surface->bounds.top;
+diff --git a/dlls/win32u/window.c b/dlls/win32u/window.c
+index 4bceb90..87632ef 100644
+--- a/dlls/win32u/window.c
++++ b/dlls/win32u/window.c
+@@ -2381,12 +2381,12 @@ static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT
+     }
+ 
+     window_surface_lock( surface );
+-    if (!rect) add_bounds_rect( &surface->bounds, &surface->rect );
++    if (!rect) add_bounds_rect( &surface->exposed, &surface->rect );
+     else
+     {
+         OffsetRect( &exposed_rect, rects.client.left - rects.visible.left, rects.client.top - rects.visible.top );
+         intersect_rect( &exposed_rect, &exposed_rect, &surface->rect );
+-        add_bounds_rect( &surface->bounds, &exposed_rect );
++        add_bounds_rect( &surface->exposed, &exposed_rect );
+     }
+     window_surface_unlock( surface );
+     if (surface->alpha_mask) window_surface_flush( surface );
+diff --git a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
+index 7ff9b88..51164a0 100644
+--- a/dlls/winex11.drv/window.c
++++ b/dlls/winex11.drv/window.c
+@@ -526,14 +526,16 @@ static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttrib
+     attr->bit_gravity       = NorthWestGravity;
+     attr->backing_store     = NotUseful;
+     attr->border_pixel      = 0;
+-    attr->background_pixel  = 0;
++    /* no background: keep the previous screen contents until the window is
++     * painted, like Windows, instead of showing black */
++    attr->background_pixmap = None;
+     attr->event_mask        = (ExposureMask | KeyPressMask | KeyReleaseMask |
+                                FocusChangeMask | KeymapStateMask | StructureNotifyMask | PropertyChangeMask);
+     /* for transparent windows, exclude mouse events to allow mouse pass-through */
+     if (!(ex_style & WS_EX_TRANSPARENT)) attr->event_mask |= (PointerMotionMask | ButtonPressMask |
+                                                               ButtonReleaseMask | EnterWindowMask);
+ 
+-    return (CWSaveUnder | CWColormap | CWBorderPixel | CWBackPixel |
++    return (CWSaveUnder | CWColormap | CWBorderPixel | CWBackPixmap |
+             CWEventMask | CWBitGravity | CWBackingStore);
+ }
+ 
+diff --git a/include/wine/gdi_driver.h b/include/wine/gdi_driver.h
+index d7b5018..dcafc33 100644
+--- a/include/wine/gdi_driver.h
++++ b/include/wine/gdi_driver.h
+@@ -312,6 +312,8 @@ struct window_surface
+     HRGN                               shape_region; /* shape of the window surface, unshaped if 0 */
+     HBITMAP                            shape_bitmap; /* bitmap for the surface shape (1bpp) */
+     HBITMAP                            color_bitmap; /* bitmap for the surface colors */
++    RECT                               exposed;      /* exposed area waiting to be presented again */
++    RECT                               painted;      /* bounding rect of what has been drawn so far */
+     /* driver-specific fields here */
+ };
+ 
