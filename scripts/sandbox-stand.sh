@@ -95,6 +95,10 @@ prefix() {
 	# or inside one. Add-ons from install_pkgs are installed silently.
 	timeout 600 "$WINE/wineboot" -i >"$STAND_DIR/wineboot.log" 2>&1
 	timeout 120 "$WINE/wineserver" -w
+	# Owner's stand runs Wine at 192 DPI (winecfg's key); a fresh prefix is 96.
+	"$WINE/wine" reg add 'HKLM\System\CurrentControlSet\Hardware Profiles\Current\Software\Fonts' \
+		/v LogPixels /t REG_DWORD /d 192 /f
+	timeout 120 "$WINE/wineserver" -w
 	echo "prefix ready: $WINEPREFIX"
 }
 

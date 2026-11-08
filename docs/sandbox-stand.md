@@ -69,6 +69,21 @@ and must not be used for reports.
   Xvfb path and the repo-relative prefix; do not run it as-is here. The
   script above starts the same Xvfb+Muffin session without launching Photoshop.
 
+## CS2 trial install steps (sandbox, 2026-11-08)
+
+All inside one `session` on `:93` with the prefix at 192 DPI.
+
+1. `wine Photoshop_CS2.exe` -> WinZip Self-Extractor (690x380 at 192 DPI),
+   default folder `Photoshop TryOut` (relative to the cwd), Enter = Unzip,
+   "404 file(s) unzipped successfully", OK, Close. It does not start setup.
+2. `wine "Photoshop TryOut/Photoshop CS2/Setup.exe"` -> 1342x1080 window, blank
+   white for a few seconds, then language picker (North American English), OK.
+3. License Agreement dialog (Accept/Decline). Accepting it needs the owner's
+   explicit yes in chat; it is not implied by "install CS2".
+
+`shot.sh` style helper used: list visible windows with geometry via
+`xdotool search --onlyvisible --name .`, `import -window root`, crop.
+
 ## Installer
 
 Official `Photoshop_CS2.exe`, 345,068,035 bytes,
