@@ -1,0 +1,97 @@
+import importlib.util
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+
+spec = importlib.util.spec_from_file_location(
+    "prefill_proxy", Path(__file__).resolve().parent.parent / "prefill-proxy.py")
+pp = importlib.util.module_from_spec(spec)
+sys.modules["prefill_proxy"] = pp
+spec.loader.exec_module(pp)
+
+
+class FakeRegistry:
+    def __init__(self, values=None):
+        self.values = dict(values or {})
+
+    def get(self, key, name):
+        return self.values.get((key, name))
+
+    def set(self, key, name, value):
+        self.values[(key, name)] = value
+
+    def delete(self, key, name):
+        self.values.pop((key, name), None)
+
+
+class PrefillProxyTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        root = Path(self.tmp.name)
+        self.prefix = root / "prefix"
+        (self.prefix).mkdir()
+        (self.prefix / "system.reg").write_text("")
+        self.app = root / "app"
+        self.app.mkdir()
+        self.exe = self.app / "Photoshop.exe"
+        self.exe.write_bytes(b"MZexe")
+        self.dll = root / "version.dll"
+        self.dll.write_bytes(b"MZproxy")
+        self.key = pp.key_for(self.exe)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_apply_status_undo_restores_absent_override(self):
+        reg = FakeRegistry()
+        self.assertEqual(pp.apply(self.prefix, self.exe, "version", self.dll, reg), "installed")
+        self.assertEqual((self.app / "version.dll").read_bytes(), b"MZproxy")
+        self.assertEqual(reg.get(self.key, "version"), "native,builtin")
+        self.assertIn("AppDefaults\\Photoshop.exe\\DllOverrides", self.key)
+        pp.check(self.prefix, self.exe, reg)
+        self.assertEqual(pp.apply(self.prefix, self.exe, "version", self.dll, reg), "already installed")
+        pp.undo(self.prefix, self.exe, reg)
+        self.assertFalse((self.app / "version.dll").exists())
+        self.assertIsNone(reg.get(self.key, "version"))
+        with self.assertRaises(pp.Error):
+            pp.load(self.prefix, self.exe)
+
+    def test_undo_restores_previous_override(self):
+        reg = FakeRegistry({(self.key, "version"): "builtin"})
+        pp.apply(self.prefix, self.exe, "version", self.dll, reg)
+        pp.undo(self.prefix, self.exe, reg)
+        self.assertEqual(reg.get(self.key, "version"), "builtin")
+
+    def test_refuses_unmanaged_existing_dll_and_non_pe(self):
+        reg = FakeRegistry()
+        (self.app / "version.dll").write_bytes(b"MZsomeone else's")
+        with self.assertRaisesRegex(pp.Error, "not managed"):
+            pp.apply(self.prefix, self.exe, "version", self.dll, reg)
+        (self.app / "version.dll").unlink()
+        bad = self.dll.with_name("bad.dll")
+        bad.write_bytes(b"ELF")
+        with self.assertRaisesRegex(pp.Error, "PE DLL"):
+            pp.apply(self.prefix, self.exe, "version", bad, reg)
+        self.assertEqual(reg.values, {})
+
+    def test_tampering_is_detected_and_not_deleted(self):
+        reg = FakeRegistry()
+        pp.apply(self.prefix, self.exe, "version", self.dll, reg)
+        (self.app / "version.dll").write_bytes(b"MZchanged")
+        with self.assertRaisesRegex(pp.Error, "changed"):
+            pp.check(self.prefix, self.exe, reg)
+        with self.assertRaisesRegex(pp.Error, "changed outside"):
+            pp.undo(self.prefix, self.exe, reg)
+        self.assertTrue((self.app / "version.dll").exists())
+
+    def test_override_change_is_detected(self):
+        reg = FakeRegistry()
+        pp.apply(self.prefix, self.exe, "version", self.dll, reg)
+        reg.set(self.key, "version", "builtin")
+        with self.assertRaisesRegex(pp.Error, "override changed"):
+            pp.check(self.prefix, self.exe, reg)
+
+
+if __name__ == "__main__":
+    unittest.main()

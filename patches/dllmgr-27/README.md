@@ -7,9 +7,21 @@ in the exe's import table: a hidden top-level window is shown with the screen
 under it pre-presented (copy before ShowWindow, draw + GdiFlush right after),
 like Windows keeps the old screen until the app paints.
 
-Install for one app: `msimg32.dll` next to the exe + load order
-`msimg32=n,b` for that exe (dllmgr AppDefaults rule). `DLLMGR27_OFF=1`
-disables the hook at runtime. Build: `sh build.sh [out.dll]` (i686 mingw).
+Two entry points from the same `prefill.c`: `sh build.sh msimg32` (FastStone
+imports it) and `sh build.sh version` (loads before Photoshop CS2's UI
+modules; #36). Install / check / undo for one exe:
+
+    sh patches/dllmgr-27/build.sh version /tmp/version.dll
+    scripts/prefill-proxy.py apply  --exe ".../Photoshop.exe" --proxy version --dll /tmp/version.dll
+    scripts/prefill-proxy.py status --exe ".../Photoshop.exe"
+    scripts/prefill-proxy.py undo   --exe ".../Photoshop.exe"
+
+It copies the DLL next to the exe and sets `<dll>=native,builtin` under
+AppDefaults for that exe name only (previous value restored on undo; hashes
+checked). Hooks are per-thread message hooks (`DLLMGR27_MODE=iat` = old
+exe-IAT ShowWindow hook); `DLLMGR27_OFF=1` disables, `DLLMGR27_DEBUG=1`
+traces captures. Verified for Photoshop CS2 on stock Wine 11.0: splash
+without the white rectangle (#36).
 
 Result on the sandbox stand (stock /opt Wine 11.0, Metacity, 192 DPI,
 tests/wine/first-open-x.sh, X-pixel verdict), 3 runs each:
