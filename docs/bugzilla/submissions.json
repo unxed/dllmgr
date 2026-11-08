@@ -125,7 +125,7 @@
       "owner_visual_confirmation": {
         "date": "2026-11-07",
         "source": "docs/handoff.md and docs/fonts.md: owner's feedback recorded by the main dialogue",
-        "result": "Candidate .009 nearly ideal; unchanged capital Cyrillic \u0412 looks slightly heavier. Exact Windows glyph-shape parity is not claimed."
+        "result": "Candidate .009 nearly ideal; unchanged capital Cyrillic В looks slightly heavier. Exact Windows glyph-shape parity is not claimed."
       },
       "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=26037#c14",
       "posted_at_utc": "2026-11-07T19:43:24Z",
@@ -145,6 +145,16 @@
       "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=60720#c0",
       "posted_at_utc": "2026-11-08T16:33:54Z",
       "posted_by": "agent, explicitly authorized by owner"
+    },
+    {
+      "id": "dllmgr-27-first-open-flash-2026-11-08",
+      "local_issue_url": "https://github.com/unxed/dllmgr/issues/27",
+      "kind": "new-bug",
+      "status": "prepared",
+      "text_file": "docs/bugzilla/dllmgr-27.txt",
+      "prepared_on": "2026-11-08",
+      "duplicate_search": "ALL FastStone and ALL \"white flash\"; read Wine59109 through c6 (fullscreen d3d transition) and57839 (black redraws); shared cause unproved.",
+      "verification_file": "experiments/first-open/README.md"
     }
   ]
 }

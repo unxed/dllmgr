@@ -1,0 +1,11 @@
+FastStone Image Viewer 8.5 (official 32-bit portable build), Wine 11.0, x86-64 Linux Mint, X11, win64 prefix, 192 DPI. Portable download: https://www.faststonesoft.net/DN/FSViewer85.zip
+
+Start a fresh FastStone process with an image filename as its argument, so that the image opens fullscreen. I used a generated 800x600 JPEG filled with RGB 240,204,90. The image appears, the entire fullscreen image area briefly becomes white, then the image returns. This is a white interruption AFTER the first image has already appeared, rather than just an initially blank window before the first paint.
+
+The owner sees it on the normal desktop. I also reproduced it on a separate 3072x1728 Xvfb display with Metacity, stock Wine 11.0 DLLs and a disposable prefix: the expected image was observed at 2114 ms after launch, white at 2140 ms, and the image again at 2315 ms (about 175 ms white). Another run on the normal desktop showed about 251 ms white.
+
+The measurement samples nine points only while FastStone's own fullscreen window owns the foreground; all nine become white, and failed pixel reads are excluded. It is sampled evidence, not exhaustive frame capture. A traced run retained the same foreground fullscreen window handle and geometry through the image/white/image phases.
+
+A preliminary native Windows run displayed the same generated JPEG and did not sample the interruption, but it had only 44 valid samples at 96 DPI. That is insufficient to establish that Windows never flashes; a denser matched comparison is still needed. A single BMP run did not reproduce it either, which does not yet prove that it is JPEG-specific.
+
+The cause and a correct fix are not established. Bug 59109 describes white surface flushing in another application's fullscreen transition and may be related, but FastStone does not have an established Direct3D transition here, so I am not assuming a duplicate. Bug 57839 is another possibly related redraw report.
