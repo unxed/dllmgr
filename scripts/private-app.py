@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Install and launch exact-path application fixes without shared DLL replacement."""
 import argparse
+import importlib.util
 from contextlib import contextmanager
 import copy
 import fcntl
@@ -16,15 +17,23 @@ import subprocess
 import sys
 import tempfile
 import urllib.request
+import zipfile
 
 import catalog_fixes
 from ui import Progress
 from private_runtime import Error, assemble, digest, valid_sha, verify
 
-HERE = Path(__file__).resolve().parent
 EXE_SHA = '05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621'
 STATE = Path('.dllmgr/apps')
+HERE = Path(__file__).resolve().parent
 RULES = ('DLLMGR_TARGET_EXE', 'DLLMGR_COMCTL32', 'DLLMGR_GDIPLUS')
+# #27 trampoline: proxy shipped in the runtime package (checksummed by its
+# manifest); next to FSViewer.exe it relaunches stock-Wine starts through
+# `dllmgr run faststone` (patches/dllmgr-27/README.md).
+TRAMPOLINE_MEMBER = 'dllmgr-27/msimg32.dll'
+_spec = importlib.util.spec_from_file_location('prefill_proxy', HERE / 'prefill-proxy.py')
+prefill_proxy = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(prefill_proxy)
 
 
 def atomic(path, data):
@@ -322,9 +331,69 @@ def install(args, prefix):
         except BaseException:
             recover(prefix, state_path)
             raise
-    print('✓ FastStone fixes installed privately for ' + target)
+        print('✓ FastStone fixes installed privately for ' + target)
+        install_trampoline(prefix, exe, package, base)
     print('  Launch: dllmgr run faststone')
     print('  Shared prefix DLLs and system Wine were not changed.')
+
+
+def trampoline_registry(prefix, base):
+    return prefill_proxy.Registry(prefix, str(base / 'bin/wine'))
+
+
+def trampoline_line(prefix, exe):
+    """Launcher line the proxy runs instead of a stock-Wine start."""
+    launcher = (HERE.parent / 'dllmgr').resolve(strict=True)
+    if '"' in str(prefix) + str(exe):
+        raise prefill_proxy.Error('paths with double quotes are not supported')
+    return f'"{winpath(prefix, launcher)}" run faststone --prefix "{prefix}" --exe "{exe}" --'
+
+
+def install_trampoline(prefix, exe, package, base):
+    """Best effort: without it only `dllmgr run` and the routed launchers get the fix."""
+    try:
+        with zipfile.ZipFile(package) as archive:
+            if TRAMPOLINE_MEMBER not in archive.namelist():
+                print('  Note: this runtime package has no launch trampoline; other launchers stay unfixed.')
+                return
+            data = archive.read(TRAMPOLINE_MEMBER)
+    except zipfile.BadZipFile:
+        return
+    try:
+        with tempfile.TemporaryDirectory(prefix='dllmgr-trampoline-') as directory:
+            dll = Path(directory) / 'msimg32.dll'
+            dll.write_bytes(data)
+            reg = trampoline_registry(prefix, base)
+            line = trampoline_line(prefix, exe)
+            try:
+                result = prefill_proxy.apply(prefix, exe, 'msimg32', dll, reg, line)
+            except prefill_proxy.Error:
+                if not prefill_proxy.state_path(prefix, exe).exists():
+                    raise
+                prefill_proxy.undo(prefix, exe, reg)  # older build or moved dllmgr
+                result = prefill_proxy.apply(prefix, exe, 'msimg32', dll, reg, line)
+        print('  Launch trampoline ' + result + ': any start of this FSViewer.exe gets the fixes.')
+    except (prefill_proxy.Error, Error, OSError, subprocess.SubprocessError) as error:
+        print('  Warning: launch trampoline not installed (' + str(error) + '); use dllmgr run faststone.')
+
+
+def uninstall_trampoline(prefix, exe, base):
+    if not prefill_proxy.state_path(prefix, exe).exists():
+        return
+    try:
+        prefill_proxy.undo(prefix, exe, trampoline_registry(prefix, base))
+    except (prefill_proxy.Error, OSError, subprocess.SubprocessError) as error:
+        print('  Warning: launch trampoline left in place (' + str(error) + ')')
+
+
+def trampoline_status(prefix, exe, base):
+    if not prefill_proxy.state_path(prefix, exe).exists():
+        return 'absent'
+    try:
+        prefill_proxy.check(prefix, exe, trampoline_registry(prefix, base))
+        return 'ok'
+    except (prefill_proxy.Error, OSError, subprocess.SubprocessError) as error:
+        return 'broken (' + str(error) + ')'
 
 
 def recover(prefix, path):
@@ -370,6 +439,7 @@ def uninstall(args, prefix):
         before = bytes.fromhex(entry['before_hex']) if entry.get('before_hex') is not None else (entry['before'].encode() if entry.get('before') is not None else None)
         changes.append(dict(path=str(desktop), before_hex=desktop.read_bytes().hex(),
                             after_sha256=hashlib.sha256(before).hexdigest() if before is not None else None))
+    uninstall_trampoline(prefix, Path(state['exe']), Path(state['base']))
     pending = dict(state, phase='pending', transaction=dict(previous=state, desktops=changes))
     save(path, pending)
     try:
@@ -448,11 +518,13 @@ def main():
             _, state = read_state(prefix, args.exe)
             checked_files(prefix, state)
             verify(Path(state['runtime']), state['package_sha256'], Path(state['base']))
+            trampoline = trampoline_status(prefix, Path(state['exe']), Path(state['base']))
             if args.json:
-                print(json.dumps(state, indent=2, ensure_ascii=False))
+                print(json.dumps(dict(state, trampoline=trampoline), indent=2, ensure_ascii=False))
             else:
                 print('✓ FastStone · ' + state['fix'] + ' · private DLLs verified')
                 print('  ' + state['target'])
+                print('  Launch trampoline: ' + trampoline)
                 print('  Launch: dllmgr run faststone')
         else:
             launch(args, prefix)

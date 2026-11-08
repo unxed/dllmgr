@@ -202,6 +202,20 @@ class PrivateRuntimeTest(unittest.TestCase):
             self.assertEqual(path.read_bytes(), contents[key], key)
 
 
+class FakeRegistry:
+    def __init__(self):
+        self.values = {}
+
+    def get(self, key, name):
+        return self.values.get((key, name))
+
+    def set(self, key, name, value):
+        self.values[(key, name)] = value
+
+    def delete(self, key, name):
+        self.values.pop((key, name), None)
+
+
 class PrivateAppTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="dllmgr-private-app-")
@@ -368,6 +382,49 @@ class PrivateAppTest(unittest.TestCase):
         self.assertEqual(desktop.read_bytes(), b"preexisting desktop\r\n")
         default_desktop = self.data_home / "applications" / ("dllmgr-" + state["id"] + ".desktop")
         self.assertFalse(default_desktop.exists())
+
+    def trampoline_install(self, registry):
+        import zipfile
+        with zipfile.ZipFile(self.package, "w") as archive:
+            archive.writestr(private_app.TRAMPOLINE_MEMBER, b"MZ trampoline proxy")
+        (self.prefix / "dosdevices/z:").symlink_to("/")
+        with patch.object(private_app, "trampoline_registry", return_value=registry):
+            self.install()
+
+    def test_trampoline_installed_with_companion_and_removed_on_uninstall(self):
+        registry = FakeRegistry()
+        self.trampoline_install(registry)
+        proxy = self.exe.parent / "msimg32.dll"
+        companion = self.exe.parent / "msimg32.dllmgr"
+        self.assertEqual(proxy.read_bytes(), b"MZ trampoline proxy")
+        line = companion.read_text()
+        self.assertTrue(line.startswith('"Z:\\'), line)
+        self.assertIn('\\dllmgr" run faststone --prefix "' + str(self.prefix.resolve()) + '" --exe "', line)
+        self.assertTrue(line.endswith(str(self.exe.resolve()) + '" --\n'), line)
+        key = "HKCU\\Software\\Wine\\AppDefaults\\FSViewer.exe\\DllOverrides"
+        self.assertEqual(registry.values, {(key, "msimg32"): "native,builtin"})
+        with patch.object(private_app, "trampoline_registry", return_value=registry):
+            self.assertEqual(private_app.trampoline_status(self.prefix.resolve(), self.exe.resolve(), self.base), "ok")
+            private_app.uninstall(SimpleNamespace(fix="faststone", exe=self.exe), self.prefix.resolve())
+            self.assertEqual(private_app.trampoline_status(self.prefix.resolve(), self.exe.resolve(), self.base), "absent")
+        self.assertFalse(proxy.exists())
+        self.assertFalse(companion.exists())
+        self.assertEqual(registry.values, {})
+
+    def test_trampoline_reinstall_is_idempotent_and_foreign_proxy_is_kept(self):
+        registry = FakeRegistry()
+        self.trampoline_install(registry)
+        with patch.object(private_app, "trampoline_registry", return_value=registry):
+            self.install()
+        self.assertTrue((self.exe.parent / "msimg32.dllmgr").exists())
+        with patch.object(private_app, "trampoline_registry", return_value=registry):
+            private_app.uninstall(SimpleNamespace(fix="faststone", exe=self.exe), self.prefix.resolve())
+        (self.exe.parent / "msimg32.dll").write_bytes(b"MZ the user's own")
+        with patch.object(private_app, "trampoline_registry", return_value=registry):
+            self.install()
+        self.assertEqual((self.exe.parent / "msimg32.dll").read_bytes(), b"MZ the user's own")
+        self.assertFalse((self.exe.parent / "msimg32.dllmgr").exists())
+        self.assertEqual(registry.values, {})
 
     def test_routing_preserves_hidden_mime_entry_metadata(self):
         original = b'[Desktop Entry]\nName=Existing handler\nNoDisplay=true\nIcon=existing-icon\nExec=old-wine %f\n'
