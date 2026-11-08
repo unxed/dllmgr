@@ -102,3 +102,15 @@ no serial value is exported or passed by our script. Selected metadata only is
 in `windows-ci/trial-mode-public-msi-metadata.json` (full RTF/EULA omitted).
 Next: try normal `/qn` with the trial flag; if that refuses, drive the stock
 wizard via UIA. Do not invent a serial or bypass an activation/expiry prompt.
+
+### Measurement implementation
+
+`stage=measure` uses normal `msiexec /qn` with UNITYSELECTION=TRYOUT and no
+serial input; nonzero install exits fall back to the stock wizard's trial radio
+through UIA. Raw MSI logs stay outside the artifact; license/serial-related
+lines are removed before export. Installed state and EXE hash are required
+before startup. The main menu, three Open states, outer/client sizes, DPI,
+HWNDs, screenshots and UIA trees are captured. Activation/expiry barriers or
+two failed named-button searches stop for review. This implementation is
+pending its first real CS2 Windows run; the source-free probe alone does not
+validate the installer or the dialog transitions.

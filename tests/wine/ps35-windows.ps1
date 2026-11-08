@@ -38,7 +38,7 @@ try {
         $View.GetType().InvokeMember('Close','InvokeMethod',$null,$View,$null) | Out-Null
         ConvertTo-Json -InputObject $Rows -Depth 8 | Set-Content (Join-Path $Out "msi-$Name.json")
     }
-    foreach($Table in @('Property','Control','ControlEvent','InstallUISequence','LaunchCondition')){Read-MsiTable $Table}
+    foreach($Table in @('Property','Control','ControlEvent','InstallUISequence','LaunchCondition','RadioButton')){Read-MsiTable $Table}
     Add-Type -AssemblyName System.Windows.Forms,System.Drawing,UIAutomationClient,UIAutomationTypes
     $Screen=[System.Windows.Forms.SystemInformation]::VirtualScreen
     $Metadata=@{stage=$Stage;os=[System.Environment]::OSVersion.VersionString;interactive=[System.Environment]::UserInteractive;screen=@{x=$Screen.X;y=$Screen.Y;width=$Screen.Width;height=$Screen.Height};msi=$Msi.FullName;utc=[DateTime]::UtcNow.ToString('o')}
@@ -46,6 +46,6 @@ try {
     $Bitmap=New-Object System.Drawing.Bitmap $Screen.Width,$Screen.Height
     $Graphics=[System.Drawing.Graphics]::FromImage($Bitmap)
     try{$Graphics.CopyFromScreen($Screen.Location,[System.Drawing.Point]::Empty,$Screen.Size);$Bitmap.Save((Join-Path $Out 'desktop.png'))}finally{$Graphics.Dispose();$Bitmap.Dispose()}
-    if($Stage -ne 'inspect'){throw 'Measurement stage will follow verified MSI trial property discovery; no guessed properties used'}
+    if($Stage -eq 'measure'){. (Join-Path $PSScriptRoot 'ps35-measure.ps1');return}
     Write-Host 'MSI public database and runner desktop inspection complete; no installation attempted.'
 }finally{Stop-Transcript | Out-Null}

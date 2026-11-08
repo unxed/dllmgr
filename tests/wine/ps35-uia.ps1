@@ -22,6 +22,7 @@ namespace PS35 {
   [DllImport("user32.dll")] static extern bool GetClientRect(IntPtr h,out RECT r);
   [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr h);
   [DllImport("user32.dll")] public static extern uint GetDpiForSystem();
+  [DllImport("msi.dll",CharSet=CharSet.Unicode)] public static extern int MsiQueryProductState(string product);
   [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h,uint m,IntPtr w,IntPtr l);
   public static Window[] Windows() {
    var a=new List<Window>();
@@ -49,7 +50,7 @@ function Save-UiTree([System.Windows.Automation.AutomationElement]$Root,[string]
     }
     ConvertTo-Json -InputObject $Rows -Depth 5 | Set-Content (Join-Path $Out "$Name-uia.json")
 }
-function Normalize-UiName([string]$Name){return ($Name -replace '[&\s\._…]','').ToLowerInvariant()}
+function Normalize-UiName([string]$Name){return (($Name -replace '\t.*$','') -replace '[^a-zA-Z0-9]','').ToLowerInvariant()}
 function Find-Named([System.Windows.Automation.AutomationElement]$Root,[string]$Name){
     $All=$Root.FindAll([System.Windows.Automation.TreeScope]::Descendants,[System.Windows.Automation.Condition]::TrueCondition)
     foreach($Item in $All){try{if((Normalize-UiName $Item.Current.Name) -eq (Normalize-UiName $Name) -and -not $Item.Current.IsOffscreen){return $Item}}catch{}}
@@ -72,7 +73,7 @@ function Invoke-NamedTwice([System.Windows.Automation.AutomationElement]$Root,[s
 }
 function Wait-Open([uint32]$ProcessId){
     $End=[DateTime]::UtcNow.AddSeconds(60)
-    do{$OpenWindows=@([PS35.Native]::Windows() | Where-Object {$_.ProcessId -eq $ProcessId -and $_.Text -eq 'Open'});if($OpenWindows.Count -gt 0){return $OpenWindows[-1]};Start-Sleep -Milliseconds 500}while([DateTime]::UtcNow -lt $End)
+    do{$OpenWindows=@([PS35.Native]::Windows() | Where-Object {$_.ProcessId -eq $ProcessId -and $_.Text -eq 'Open'});if($OpenWindows.Count -gt 0){return $OpenWindows[0]};Start-Sleep -Milliseconds 500}while([DateTime]::UtcNow -lt $End)
     Save-Desktop 'open-timeout';throw 'Open dialog did not become visible'
 }
 function Save-OpenState([string]$Name,[uint32]$ProcessId){
