@@ -19,11 +19,9 @@ Corrected Cyrillic Tahoma Bold: `dllmgr fix faststone-fonts`, undo with
 
 ## What it does
 
-- Sets one DLL for one program. The module can come from another Wine
-  release or from a third party, for example cc580.
-- Keys Wine overrides by exe name, including copies installed outside Program
-  Files. Automatic selection checks the detected versions and architectures
-  before creating a rule shared by copies with that name.
+- Installs verified FastStone DLLs in private storage and selects them by the
+  full executable path through a private Wine launcher. See [isolation and
+  migration](docs/app-isolation.md); AppDefaults alone does not isolate files.
 - Applies patches for DLLs that cannot be replaced (DLLs with a unix part
   and the system core).
 - Rolls back in one step. Removing a rule restores the prefix byte for byte.
@@ -90,9 +88,8 @@ subscriptions, unattended updates and GUI are described in the
 
 BSD-3-Clause. See `LICENSE`.
 
-> **Safety correction (dllmgr#25):** the legacy FastStone DLL installer is
-> temporarily disabled. It replaced DLLs in the prefix's shared system/SxS
-> directories; an AppDefaults rule did not isolate those files from other
-> programs. Undo remains available. Do not re-enable the legacy installer on
-> a working prefix. A private-runtime replacement is being verified in
-> [#25](https://github.com/unxed/dllmgr/issues/25).
+> **Safety correction ([#25](https://github.com/unxed/dllmgr/issues/25)):**
+> legacy system/SxS DLL replacement is disabled. FastStone installation uses
+> an application-private runtime and launcher. Existing legacy replacements
+> must be restored first. Fonts and AVIF remain separate, explicitly
+> prefix-wide operations. See [scope and migration](docs/app-isolation.md).

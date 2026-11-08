@@ -1,0 +1,126 @@
+"""Verify and assemble an application-private Wine overlay. Never edits base Wine."""
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import shutil
+import tempfile
+import zipfile
+
+WINE_COMMIT = 'db11d0fe6a169c457e23d007e20404643d067aa8'
+OVERLAY = {
+    'bin/wine': 'bin/wine',
+    'i386-windows/ntdll.dll': 'lib/wine/i386-windows/ntdll.dll',
+    'x86_64-windows/ntdll.dll': 'lib/wine/x86_64-windows/ntdll.dll',
+    'x86_64-unix/ntdll.so': 'lib/wine/x86_64-unix/ntdll.so',
+}
+
+
+class Error(RuntimeError):
+    pass
+
+
+def digest(path):
+    h = hashlib.sha256()
+    with Path(path).open('rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            h.update(block)
+    return h.hexdigest()
+
+
+def valid_sha(value):
+    return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+
+
+def verify_base(base, manifest):
+    expected = manifest.get('base_files')
+    if not isinstance(expected, dict) or set(expected) != set(OVERLAY.values()):
+        raise Error('Runtime package has an incomplete base-Wine fingerprint')
+    for name, checksum in expected.items():
+        if not valid_sha(checksum) or digest(base / name) != checksum:
+            raise Error('Unsupported or changed base Wine: ' + name)
+
+
+def package_manifest(package):
+    with zipfile.ZipFile(package) as archive:
+        names = archive.namelist()
+        if len(names) != len(set(names)) or sum(i.file_size for i in archive.infolist()) > 150 * 1024 * 1024:
+            raise Error('Invalid or oversized private-runtime package')
+        for name in names:
+            path = PurePosixPath(name)
+            if path.is_absolute() or '..' in path.parts or str(path) != name:
+                raise Error('Unsafe runtime archive member')
+        manifest = json.loads(archive.read('manifest.json'))
+        if manifest.get('schema') != 1 or manifest.get('wine_commit') != WINE_COMMIT or manifest.get('wine_version') != 'wine-11.0':
+            raise Error('Unsupported private runtime')
+        files = manifest.get('files', {})
+        if not isinstance(files, dict) or set(files) != set(names) - {'manifest.json'} or not set(OVERLAY) <= set(files):
+            raise Error('Incomplete runtime manifest')
+        for name, checksum in files.items():
+            if not valid_sha(checksum) or hashlib.sha256(archive.read(name)).hexdigest() != checksum:
+                raise Error('Runtime package checksum mismatch: ' + name)
+    return manifest
+
+
+def verify(runtime, package_sha, base):
+    state = json.loads((runtime / '.dllmgr-runtime.json').read_text())
+    if state.get('package_sha256') != package_sha or state.get('base') != str(base):
+        raise Error('Private runtime ownership record changed')
+    manifest = state['manifest']
+    verify_base(base, manifest)
+    for name, checksum in state.get('copied_files', {}).items():
+        path = runtime / name
+        if path.is_symlink() or digest(path) != checksum:
+            raise Error('Private runtime changed: ' + name)
+    for source, dest in OVERLAY.items():
+        path = runtime / dest
+        if path.is_symlink() or digest(path) != manifest['files'][source]:
+            raise Error('Private runtime changed: ' + dest)
+    return runtime
+
+
+def assemble(package, base, cache):
+    base = base.resolve(strict=True)
+    package_sha = digest(package)
+    manifest = package_manifest(package)
+    verify_base(base, manifest)
+    # Include the base path: two equal installations may later be upgraded separately.
+    key = hashlib.sha256((package_sha + str(base)).encode()).hexdigest()
+    runtime = cache / key
+    if runtime.exists():
+        return verify(runtime, package_sha, base)
+    cache.mkdir(parents=True, exist_ok=True)
+    stage = Path(tempfile.mkdtemp(prefix='.runtime-', dir=cache))
+    try:
+        # Unix modules must be real files: realpath(ntdll.so) determines Wine's
+        # module directory. Large unchanged PE modules can be read-only links.
+        for root, dirs, files in os.walk(base, followlinks=True):
+            relative = Path(root).relative_to(base)
+            target = stage / relative
+            target.mkdir(parents=True, exist_ok=True)
+            for name in files:
+                src, dest = Path(root) / name, target / name
+                if not src.is_file():
+                    continue
+                if relative.parts and (relative.parts[0] == 'bin' or relative.name.endswith('-unix')):
+                    shutil.copy2(src, dest)
+                else:
+                    dest.symlink_to(src.resolve())
+        with zipfile.ZipFile(package) as archive:
+            for source, dest in OVERLAY.items():
+                path = stage / dest
+                path.unlink(missing_ok=True)  # Never write through a link into /opt.
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(archive.read(source))
+                path.chmod(0o755 if source in ('bin/wine', 'x86_64-unix/ntdll.so') else 0o644)
+        copied = {str(p.relative_to(stage)): digest(p) for p in stage.rglob('*')
+                  if p.is_file() and not p.is_symlink()}
+        (stage / '.dllmgr-runtime.json').write_text(json.dumps(dict(
+            package_sha256=package_sha, base=str(base), manifest=manifest,
+            copied_files=copied), sort_keys=True) + '\n')
+        verify(stage, package_sha, base)
+        stage.rename(runtime)
+    finally:
+        if stage.exists():
+            shutil.rmtree(stage)
+    return runtime

@@ -113,8 +113,8 @@ pathlib.Path(sys.argv[sys.argv.index("-o") + 1]).write_bytes(data)
 
     def test_product_apply_refuses_shared_changes_before_download(self):
         result = self.run_script(DLLMGR_UNSAFE_SHARED_RESEARCH="0")
-        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-        self.assertIn("shared-prefix DLL installation is disabled", result.stderr)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("dllmgr:", result.stderr)
         self.assertEqual(self.dest.read_bytes(), self.original)
         self.assertEqual(self.gdi.read_bytes(), self.gdi_original)
         self.assertFalse((self.prefix / "fix-it-in-wine").exists())

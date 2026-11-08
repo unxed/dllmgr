@@ -72,3 +72,7 @@ icon view, item 150, scrolled by 300 pixels: Windows keeps `(2171,2)`; stock
 Wine 9.0, 11.0 and 11.21 move it to client coordinates `(2155,4) -> (1855,4)`;
 with the patch it stays `(2155,4)` in v5 and v6, and undo brings the bug back.
 In FastStone 8.5 the fullscreen strip shows its thumbnails. See `results`.
+
+The product installer now uses [private runtime routing](../../docs/app-isolation.md).
+Historical shared SxS replacement with an FSViewer.exe AppDefaults rule was not
+application isolation and is disabled for normal installation.

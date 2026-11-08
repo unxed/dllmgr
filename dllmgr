@@ -20,6 +20,8 @@ Usage:
   dllmgr fix faststone [--exe PATH/FSViewer.exe] [--build]
   dllmgr fix faststone-avif [--prefix PATH]
   dllmgr fix faststone-fonts [--prefix PATH]
+  dllmgr run faststone [--exe PATH] [--prefix PATH] -- [FILES...]
+  dllmgr status faststone [--prefix PATH]
   dllmgr uninstall faststone
   dllmgr uninstall faststone-avif [--prefix PATH]
   dllmgr uninstall faststone-fonts [--prefix PATH]
@@ -57,9 +59,16 @@ case ${1:-} in
             shift 2
             exec "$here/scripts/undo-winehq-60703.sh" "$@"
         fi
-        [ "$#" = 2 ] && [ "$2" = faststone ] || { usage >&2; exit 2; }
+        [ "${2:-}" = faststone ] || { usage >&2; exit 2; }
+        shift 2
         export DLLMGR_REQUIRE_PROFILE=1
-        exec "$here/scripts/undo-faststone.sh"
+        exec "$here/scripts/undo-faststone.sh" "$@"
+        ;;
+    run|status)
+        command=$1
+        [ "${2:-}" = faststone ] || { usage >&2; exit 2; }
+        shift 2
+        exec python3 "$here/scripts/private-app.py" "$command" "$@"
         ;;
     share)
         shift

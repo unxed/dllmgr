@@ -29,12 +29,17 @@ fixes=$(python3 "$here/catalog_fixes.py" "$fix") || exit 2
 release=https://github.com/unxed/dllmgr/releases/download/$fix
 export WINEPREFIX=${WINEPREFIX:-$HOME/.wine}
 work=${FIW_WORK:-$HOME/.cache/fix-it-in-wine}
-[ -f "$WINEPREFIX/system.reg" ] || { echo "no Wine prefix at $WINEPREFIX (set WINEPREFIX)" >&2; exit 2; }
 exe="" build=0 undo=0
+private_args=()
 while [ $# -gt 0 ]; do
     case $1 in
         --undo) undo=1 ;;
         --build) build=1 ;;
+        --prefix|--runtime-package|--base-wine|--desktop-entry)
+            [ "$#" -ge 2 ] || { echo "$1 needs a value" >&2; exit 2; }
+            private_args+=("$1" "$2")
+            [ "$1" != --prefix ] || export WINEPREFIX=$2
+            shift ;;
         --exe)
             [ "$#" -ge 2 ] || { echo "--exe needs a path" >&2; exit 2; }
             exe=$2; shift ;;
@@ -43,13 +48,19 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-# Emergency safety gate (#25). The old engine physically replaces shared DLLs.
-# Keep undo available. Only disposable CI/research prefixes may opt into apply.
-if [ "$undo" = 0 ] && [ "${DLLMGR_UNSAFE_SHARED_RESEARCH:-0}" != 1 ]; then
-    echo 'dllmgr: shared-prefix DLL installation is disabled (dllmgr#25).' >&2
-    echo 'AppDefaults limits load order, not who can load a replaced system/SxS DLL.' >&2
-    echo 'Keep the existing backups. Use undo to restore them; a private-runtime installer is being verified.' >&2
-    exit 2
+[ -f "$WINEPREFIX/system.reg" ] || { echo "no Wine prefix at $WINEPREFIX (set WINEPREFIX)" >&2; exit 2; }
+
+# Product installation uses only the private runtime. Retain the old engine
+# solely for byte-exact legacy undo and explicitly disposable CI experiments.
+if [ "${DLLMGR_UNSAFE_SHARED_RESEARCH:-0}" != 1 ]; then
+    args=(--fix "$fix" "${private_args[@]}")
+    [ -z "$exe" ] || args+=(--exe "$exe")
+    if [ "$undo" = 0 ]; then
+        [ "$build" = 0 ] || { echo 'dllmgr: build the private runtime in CI, then install its verified package' >&2; exit 2; }
+        exec python3 "$here/private-app.py" install "${args[@]}"
+    elif compgen -G "$WINEPREFIX/.dllmgr/apps/faststone-*.json" >/dev/null; then
+        exec python3 "$here/private-app.py" uninstall "${args[@]}"
+    fi
 fi
 
 if [ "$undo" = 0 ]; then

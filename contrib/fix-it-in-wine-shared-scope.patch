@@ -1,0 +1,77 @@
+--- a/tools/override.py
++++ b/tools/override.py
+@@ -261,6 +261,11 @@
+ # ---------- commands ----------
+ 
+ def cmd_apply(args):
++    if args.slot != "appdir" and not getattr(args, "allow_shared_prefix", False):
++        raise OverrideError(
++            "system/SxS DLL files are shared by every application in the prefix; "
++            "AppDefaults is only a load-order rule, not isolation. Use a verified "
++            "private runtime, or --allow-shared-prefix for explicitly shared research.")
+     prefix = os.path.abspath(args.prefix)
+     arch = prefix_arch(prefix)
+     name = args.name or os.path.basename(args.dll)
+@@ -412,6 +417,8 @@
+     a.add_argument("--dll", required=True)
+     a.add_argument("--name")
+     a.add_argument("--slot", default="system")
++    a.add_argument("--allow-shared-prefix", action="store_true",
++                   help="explicitly allow prefix-wide physical DLL replacement; not per-app isolation")
+     u = sub.add_parser("undo", help="revert an apply")
+     u.add_argument("--prefix", required=True)
+     u.add_argument("--exe", required=True)
+--- a/SKILL.md
++++ b/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: fix-it-in-wine
+-description: Fixes a Windows program that misbehaves under Wine on the user's Linux machine. Finds which Wine DLL is at fault, finds the matching WineHQ Bugzilla ticket, builds that one DLL from Wine sources (with the ticket's patch or a small fix), enables it for that program only in one prefix with a one-step undo, and prepares an upstream bug report. Use when the user says a Windows program under Wine shows wrong drawing, crashes, misses controls or behaves differently than on Windows, and wants it fixed.
++description: Fixes a Windows program that misbehaves under Wine on the user's Linux machine. Finds which Wine DLL is at fault, finds the matching WineHQ Bugzilla ticket, builds that one DLL from Wine sources (with the ticket's patch or a small fix), validates its loading scope before enabling it in one prefix with a one-step undo, and prepares an upstream bug report. Use when the user says a Windows program under Wine shows wrong drawing, crashes, misses controls or behaves differently than on Windows, and wants it fixed.
+ ---
+ 
+ # fix-it-in-wine
+@@ -28,7 +28,7 @@
+ 
+ 1. Fail fast. If data is missing, stop and ask the user. Never guess a program path, a prefix, a Wine version or a symptom.
+ 2. Visual symptoms are confirmed by the user. Ask the user to look and to say what they see. Do not decide yourself that a picture is correct.
+-3. Every change is reversible and limited to one program in one prefix. Use `tools/override.py` only. Do not edit prefix files by hand.
++3. Every change must be reversible and have a proved scope. AppDefaults rules are basename-based load-order settings, not file isolation. System32/syswow64/winsxs files are shared, and appdir placement can affect other executables in that directory or fail KnownDLL/SxS resolution. Do not claim per-app isolation from a registry scan or file placement. For strict isolation require a verified private runtime with exact full-image-path gating, selected native-module proof and unrelated same-directory/same-basename/child counterexamples. Never modify installed system Wine. Existing shared overrides may be undone with their verified original journal/backups; malformed state must be quarantined and recovered from independently verified originals, not fabricated hashes. Shared-slot apply now requires explicit --allow-shared-prefix and must not be used as a per-app product fix.
+ 4. Never modify the system Wine installation. Do not install, remove or patch Wine packages. Builds go to the work directory (`~/.cache/fix-it-in-wine`, or `FIW_WORK`).
+ 5. Never post anything to the internet without the user's explicit yes: not a new bug, not a comment. Show the exact text first. Wait for the answer.
+ 6. Clean room, following Wine's [Clean Room Guidelines](https://gitlab.winehq.org/wine/wine/-/wikis/Clean-Room-Guidelines). Study Windows only as a black box: test programs that call the API and check results, run on Windows. Never disassemble Microsoft code, examine its debug symbols, trace native Microsoft components with `+relay`, or write tests that dump internal tables. Never read Microsoft source code (leaked or "public") or ReactOS source code. Allowed sources: Microsoft documentation, Wine sources and tests, behaviour you observe.
+@@ -168,7 +168,24 @@
+ - Do not push to a branch whose run you are waiting for: `cancel-in-progress` cancels the run. Batch commits locally and push once the result is in.
+ - Set `--stall-min` to about 2-3x the job's normal duration. A stall (or a cancelled or failed run) is a failure to investigate, not a reason to keep waiting.
+ 
+-### 6. Enable it for this program
++### 6. Validate scope before enabling
++
++The legacy commands below replace shared prefix files and require an explicit
++`--allow-shared-prefix`. They are only suitable when that prefix-wide scope is
++intended, for example a disposable reproducer. Do not use them to satisfy a
++request for isolated application fixes. In particular, FastStone's embedded
++common-controls v6 manifest and Wine KnownDLL handling require a tested private
++loader/runtime; an external manifest or an AppDefaults registry entry does not
++make the shared SxS binary private. Launchers must state clearly when a direct
++system-Wine invocation bypasses their private fixes.
++
++For any loader mechanism, test the actual intended application together with
++an unrelated application in the same prefix, inspect mapped bytes/paths, and
++verify shared module hashes remain unchanged across install/update/undo.
++Font selection and WIC codec registration are separate prefix-wide assets and
++must not silently enter an app-only operation.
++
++### Legacy shared-prefix research commands
+ 
+ Use the 32-bit build (`i386-windows`) for a 32-bit program, the 64-bit one (`x86_64-windows`) for a 64-bit program.
+ 
+@@ -256,7 +273,7 @@
+ Tell the user:
+ 
+ - what was changed: the program, the prefix, the DLL, the slot path, the Wine tag;
+-- that nothing else was changed: other programs and the system Wine are untouched;
++- the proved scope of each change: shared prefix files, app-directory files, private runtime, font selection and WIC registration are distinct; never claim other programs are untouched without isolation evidence;
+ - the exact undo command;
+ - that the change stays after a Wine update and is not updated with it. After a Wine update, run `tools/override.py status` and check again.
+ 

@@ -75,8 +75,10 @@ Two ways to activate, to be chosen by experiment:
   upgrades. The vendor must start the program through it.
 
 Open: how comctl32 v6, which comes through the side-by-side manifest, is best
-placed per application. dllmgr today uses the prefix's system slot with a
-per-exe override; a kit must not change other programs in the prefix.
+placed per application. The old system/SxS-slot method was unsafe and is
+disabled: a per-exe override does not isolate a shared file. The current
+FastStone method uses a private runtime with exact image-path selection;
+see [scope and launch requirements](app-isolation.md).
 
 ## License
 

@@ -40,7 +40,7 @@ still has open app-specific issues including tile overflow, path-field
 repainting, fonts and performance. See [the audit](../../docs/faststone.md)
 and [the remaining reports](https://github.com/unxed/dllmgr/issues/8).
 
-After applying or undoing a selection, close all Wine applications in the
-target prefix and wait for its Wine server to exit before relaunching FastStone.
-Wine 11 can keep the previous system DLL mapped in a KnownDLL section for the
-lifetime of that server.
+Installation uses [a private runtime and explicit launcher](../../docs/app-isolation.md),
+not a replacement in shared system/SxS directories. Start with `dllmgr run
+faststone` or its managed desktop entry. Close an already-running FastStone
+before relaunching. Direct system-Wine launches bypass the private fixes.

@@ -1,0 +1,370 @@
+"""Synthetic tests for private Wine runtime assembly and app launch isolation."""
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import struct
+import sys
+import tempfile
+import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
+import zipfile
+
+SCRIPTS = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SCRIPTS))
+import private_runtime
+
+SPEC = importlib.util.spec_from_file_location("private_app", SCRIPTS / "private-app.py")
+private_app = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(private_app)
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def make_pe(name=b"comctl32_v6.dll", tail=b"payload"):
+    """Small synthetic PE containing Wine's builtin mark and one export name."""
+    data = bytearray(0x400)
+    data[:2] = b"MZ"
+    struct.pack_into("<I", data, 0x3C, 0x60)
+    data[0x40:0x50] = b"Wine builtin DLL"
+    data[0x60:0x64] = b"PE\0\0"
+    struct.pack_into("<HH", data, 0x64, 0x14C, 1)
+    struct.pack_into("<H", data, 0x74, 0xE0)
+    struct.pack_into("<H", data, 0x78, 0x10B)
+    struct.pack_into("<II", data, 0x78 + 96, 0x1000, 0x28)
+    struct.pack_into("<8sIIII", data, 0x78 + 0xE0, b".edata", 0x100, 0x1000, 0x100, 0x200)
+    struct.pack_into("<I", data, 0x20C, 0x1028)
+    data[0x228:0x229 + len(name)] = name + b"\0"
+    data[0x300:0x300 + len(tail)] = tail
+    return bytes(data)
+
+
+def make_runtime_package(path, payloads=None, manifest_overrides=None, extra_members=None):
+    payloads = payloads or {
+        "bin/wine": b"private wine launcher",
+        "i386-windows/ntdll.dll": b"private i386 ntdll",
+        "x86_64-windows/ntdll.dll": b"private x64 ntdll",
+        "x86_64-unix/ntdll.so": b"private unix ntdll",
+    }
+    files = {name: sha(data) for name, data in payloads.items()}
+    manifest = {
+        "schema": 1,
+        "wine_commit": private_runtime.WINE_COMMIT,
+        "wine_version": "wine-11.0",
+        "files": files,
+        "base_files": {name: "0" * 64 for name in private_runtime.OVERLAY.values()},
+    }
+    if manifest_overrides:
+        manifest.update(manifest_overrides)
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("manifest.json", json.dumps(manifest))
+        for name, data in payloads.items():
+            archive.writestr(name, data)
+        for name, data in (extra_members or {}).items():
+            archive.writestr(name, data)
+    return manifest, payloads
+
+
+class PrivateRuntimeTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="dllmgr-private-runtime-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.package = self.root / "runtime.zip"
+        self.base = self.root / "base-wine"
+        self.base.mkdir()
+
+    def test_rejects_archive_traversal(self):
+        make_runtime_package(self.package, extra_members={"../escape": b"outside"})
+        with self.assertRaisesRegex(private_runtime.Error, "Unsafe runtime archive member"):
+            private_runtime.package_manifest(self.package)
+        self.assertFalse((self.root.parent / "escape").exists())
+
+    def test_rejects_manifest_mismatch_and_wrong_runtime(self):
+        make_runtime_package(self.package, manifest_overrides={"wine_commit": "0" * 40})
+        with self.assertRaisesRegex(private_runtime.Error, "Unsupported private runtime"):
+            private_runtime.package_manifest(self.package)
+
+        make_runtime_package(self.package, manifest_overrides={"files": {"bin/wine": "0" * 64}})
+        with self.assertRaisesRegex(private_runtime.Error, "Incomplete runtime manifest"):
+            private_runtime.package_manifest(self.package)
+
+    def test_rejects_base_fingerprint_mismatch(self):
+        manifest, _ = make_runtime_package(self.package)
+        for name in private_runtime.OVERLAY.values():
+            path = self.base / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"base " + name.encode())
+            manifest["base_files"][name] = sha(path.read_bytes())
+        private_runtime.verify_base(self.base, manifest)
+        changed = self.base / "lib/wine/x86_64-windows/ntdll.dll"
+        changed.write_bytes(b"changed base runtime")
+        with self.assertRaisesRegex(private_runtime.Error, "Unsupported or changed base Wine"):
+            private_runtime.verify_base(self.base, manifest)
+
+    def test_assembler_unlinks_overlay_symlinks_before_writing(self):
+        external = self.root / "external"
+        external.mkdir()
+        targets = {
+            "wine": external / "wine",
+            "i386_ntdll": external / "i386-ntdll.dll",
+            "unix_ntdll": external / "ntdll.so",
+        }
+        contents = {
+            "wine": b"stock base wine",
+            "i386_ntdll": b"stock base i386 ntdll",
+            "unix_ntdll": b"stock base unix ntdll",
+        }
+        for key, path in targets.items():
+            path.write_bytes(contents[key])
+
+        (self.base / "bin").mkdir(parents=True)
+        (self.base / "bin/wine").symlink_to(targets["wine"])
+        i386 = self.base / "lib/wine/i386-windows"
+        i386.mkdir(parents=True)
+        (i386 / "ntdll.dll").symlink_to(targets["i386_ntdll"])
+        x64 = self.base / "lib/wine/x86_64-windows"
+        x64.mkdir(parents=True)
+        (x64 / "ntdll.dll").write_bytes(b"stock base x64 ntdll")
+        unix = self.base / "lib/wine/x86_64-unix"
+        unix.mkdir(parents=True)
+        (unix / "ntdll.so").symlink_to(targets["unix_ntdll"])
+
+        package_files = {
+            "bin/wine": b"overlay wine",
+            "i386-windows/ntdll.dll": b"overlay i386 ntdll",
+            "x86_64-windows/ntdll.dll": b"overlay x64 ntdll",
+            "x86_64-unix/ntdll.so": b"overlay unix ntdll",
+        }
+        manifest, _ = make_runtime_package(self.package, payloads=package_files)
+        for dest, source in private_runtime.OVERLAY.items():
+            manifest["base_files"][source] = sha((self.base / source).read_bytes())
+        # Rewrite the manifest with the real base fingerprints.
+        with zipfile.ZipFile(self.package, "w", zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("manifest.json", json.dumps(manifest))
+            for name, data in package_files.items():
+                archive.writestr(name, data)
+
+        runtime = private_runtime.assemble(self.package, self.base, self.root / "cache")
+        for source, dest in private_runtime.OVERLAY.items():
+            installed = runtime / dest
+            self.assertFalse(installed.is_symlink(), dest)
+            self.assertEqual(installed.read_bytes(), package_files[source])
+        for key, path in targets.items():
+            self.assertEqual(path.read_bytes(), contents[key], key)
+
+
+class PrivateAppTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="dllmgr-private-app-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.prefix = self.root / "prefix"
+        self.drive_c = self.prefix / "drive_c"
+        self.exe = self.drive_c / "Program Files/FastStone/FSViewer.exe"
+        self.exe.parent.mkdir(parents=True)
+        self.exe_bytes = b"synthetic verified FastStone executable"
+        self.exe.write_bytes(self.exe_bytes)
+        (self.prefix / "system.reg").write_text("WINE REGISTRY Version 2\n#arch=win64\n")
+        dosdevices = self.prefix / "dosdevices"
+        dosdevices.mkdir()
+        (dosdevices / "c:").symlink_to(self.drive_c)
+        self.base = self.root / "base-wine"
+        (self.base / "bin").mkdir(parents=True)
+        (self.base / "bin/wine").write_bytes(b"wine-11.0")
+        self.runtime = self.root / "private-runtime"
+        self.package = self.root / "runtime.zip"
+        self.package.write_bytes(b"test package fingerprint")
+        self.payloads = {
+            "comctl32.dll": b"private patched comctl32 payload",
+            "gdiplus.dll": b"private patched gdiplus payload",
+        }
+        self.original_exe_sha = private_app.EXE_SHA
+        private_app.EXE_SHA = sha(self.exe_bytes)
+        self.addCleanup(setattr, private_app, "EXE_SHA", self.original_exe_sha)
+        self.data_home = self.root / "xdg-data"
+        self.data_home.mkdir()
+        self.old_env = os.environ.copy()
+
+    def install(self, payloads=None, desktop_entry=None):
+        args = SimpleNamespace(
+            exe=self.exe,
+            base_wine=self.base,
+            runtime_package=self.package,
+            fix="faststone",
+            desktop_entry=[desktop_entry] if desktop_entry else [],
+        )
+        payloads = payloads or self.payloads
+        with patch.object(private_app.platform, "machine", return_value="x86_64"), \
+             patch.object(private_app.subprocess, "check_output", return_value="wine-11.0\n"), \
+             patch.object(private_app, "runtime_package", return_value=self.package), \
+             patch.object(private_app, "assemble", return_value=self.runtime), \
+             patch.object(private_app, "modules", return_value=("faststone-v2", payloads)), \
+             patch.dict(os.environ, {"XDG_DATA_HOME": str(self.data_home)}, clear=False):
+            private_app.install(args, self.prefix.resolve())
+        return args
+
+    def state(self):
+        state_dir = self.prefix / private_app.STATE
+        paths = list(state_dir.glob("faststone-*.json"))
+        self.assertEqual(len(paths), 1)
+        return paths[0], json.loads(paths[0].read_text())
+
+    def test_install_uses_exact_target_and_does_not_write_shared_prefix_dlls(self):
+        windows = self.drive_c / "windows"
+        windows.mkdir()
+        shared = windows / "syswow64/gdiplus.dll"
+        shared.parent.mkdir(parents=True)
+        shared.write_bytes(b"stock shared gdiplus")
+        system_before = (self.prefix / "system.reg").read_bytes()
+        shared_before = shared.read_bytes()
+        custom_desktop = self.data_home / "applications/custom-faststone.desktop"
+        custom_desktop.parent.mkdir(parents=True)
+        custom_desktop.write_text("before desktop entry\n")
+
+        self.install(desktop_entry=custom_desktop)
+
+        state_path, state = self.state()
+        target = r"C:\Program Files\FastStone\FSViewer.exe"
+        self.assertEqual(state["target"], target)
+        self.assertEqual(state["exe"], str(self.exe.resolve()))
+        self.assertEqual(state["exe_sha256"], sha(self.exe_bytes))
+        self.assertEqual(shared.read_bytes(), shared_before)
+        self.assertEqual((self.prefix / "system.reg").read_bytes(), system_before)
+        self.assertFalse((self.prefix / "user.reg").exists())
+        self.assertFalse((self.prefix / "fix-it-in-wine").exists())
+        self.assertFalse((self.exe.parent / "comctl32.dll").exists())
+        self.assertFalse((self.exe.parent / "gdiplus.dll").exists())
+        desktop_text = custom_desktop.read_text()
+        self.assertIn("Name=FastStone Image Viewer (dllmgr)", desktop_text)
+        self.assertEqual(desktop_text.count('"run" "faststone"'), 1)
+        installed = self.prefix / "drive_c/dllmgr/apps" / state["id"] / state["generation"]
+        self.assertEqual({p.name for p in installed.iterdir()}, set(self.payloads))
+        self.assertEqual(state_path.parent, self.prefix / private_app.STATE)
+
+    def test_run_execs_exact_executable_and_private_dll_paths(self):
+        self.install(payloads={"comctl32.dll": self.payloads["comctl32.dll"]})
+        state_path, state = self.state()
+        app_args = [r"C:\Images\image with spaces.png", "--view"]
+        args = SimpleNamespace(exe=self.exe, app_args=app_args)
+        captures = {}
+
+        def capture_exec(path, argv, env):
+            captures.update(path=path, argv=argv, env=env)
+
+        with patch.object(private_app, "verify") as verify, \
+             patch.object(private_app.os, "chdir") as chdir, \
+             patch.object(private_app.os, "execve", side_effect=capture_exec), \
+             patch.dict(os.environ, {
+                 "DLLMGR_TARGET_EXE": "inherited-target",
+                 "DLLMGR_COMCTL32": "inherited-comctl",
+                 "WINEPREFIX": "inherited-prefix",
+                 "WINELOADER": "inherited-loader",
+                 "WINESERVER": "inherited-server",
+             }, clear=False):
+            private_app.launch(args, self.prefix.resolve())
+
+        target = r"C:\Program Files\FastStone\FSViewer.exe"
+        self.assertEqual(captures["path"], self.runtime / "bin/wine")
+        self.assertEqual(captures["argv"], [str(self.runtime / "bin/wine"), target, *app_args])
+        self.assertEqual(captures["env"]["WINEPREFIX"], str(self.prefix.resolve()))
+        self.assertEqual(captures["env"]["WINEARCH"], "wow64")
+        self.assertEqual(captures["env"]["WINELOADER"], str(self.runtime / "bin/wine"))
+        self.assertEqual(captures["env"]["WINESERVER"], str(self.runtime / "bin/wineserver"))
+        self.assertEqual(captures["env"]["DLLMGR_TARGET_EXE"], target)
+        module_path = self.prefix / "drive_c/dllmgr/apps" / state["id"] / state["generation"] / "comctl32.dll"
+        expected_module_path = "C:\\dllmgr\\apps\\" + state["id"] + "\\" + state["generation"] + "\\comctl32.dll"
+        self.assertEqual(captures["env"]["DLLMGR_COMCTL32"], expected_module_path)
+        self.assertNotIn("DLLMGR_GDIPLUS", captures["env"])
+        self.assertEqual(module_path.read_bytes(), self.payloads["comctl32.dll"])
+        chdir.assert_called_once_with(self.exe.parent)
+        verify.assert_called_once_with(self.runtime, state["package_sha256"], Path(state["base"]))
+        self.assertTrue(state_path.is_file())
+
+    def test_tampered_private_module_blocks_status_and_uninstall_without_deleting_state(self):
+        self.install()
+        state_path, state = self.state()
+        directory = self.prefix / "drive_c/dllmgr/apps" / state["id"] / state["generation"]
+        module = directory / "gdiplus.dll"
+        module.write_bytes(b"tampered")
+
+        with self.assertRaisesRegex(private_app.Error, "Private DLL changed: gdiplus.dll"):
+            private_app.checked_files(self.prefix, state)
+        with self.assertRaisesRegex(private_app.Error, "Private DLL changed: gdiplus.dll"):
+            private_app.uninstall(SimpleNamespace(fix="faststone", exe=self.exe), self.prefix.resolve())
+        self.assertTrue(state_path.is_file())
+        self.assertTrue(module.is_file())
+
+    def test_uninstall_restores_prior_desktop_and_removes_owned_private_files(self):
+        desktop = self.data_home / "applications/custom-faststone.desktop"
+        desktop.parent.mkdir(parents=True)
+        desktop.write_bytes(b"preexisting desktop\r\n")
+        self.install(desktop_entry=desktop)
+        _, state = self.state()
+        directory = self.prefix / "drive_c/dllmgr/apps" / state["id"] / state["generation"]
+
+        private_app.uninstall(SimpleNamespace(fix="faststone", exe=self.exe), self.prefix.resolve())
+
+        self.assertFalse((self.prefix / private_app.STATE / (state["id"] + ".json")).exists())
+        self.assertFalse(directory.exists())
+        self.assertEqual(desktop.read_bytes(), b"preexisting desktop\r\n")
+        default_desktop = self.data_home / "applications" / ("dllmgr-" + state["id"] + ".desktop")
+        self.assertFalse(default_desktop.exists())
+
+    def test_interrupted_launcher_update_rolls_back_on_recovery(self):
+        self.install()
+        state_path, state = self.state()
+        entry = state["desktops"][0]
+        desktop = Path(entry["path"])
+        before = desktop.read_bytes()
+        changed = b"interrupted new desktop content\n"
+        pending = dict(state, phase="pending", transaction=dict(previous=state,
+            desktops=[dict(path=str(desktop), before_hex=before.hex(), after_sha256=sha(changed))]))
+        private_app.save(state_path, pending)
+        desktop.write_bytes(changed)
+        private_app.recover(self.prefix.resolve(), state_path)
+        self.assertEqual(desktop.read_bytes(), before)
+        self.assertEqual(json.loads(state_path.read_text()), state)
+
+    def test_recovery_does_not_overwrite_external_launcher_edit(self):
+        self.install()
+        state_path, state = self.state()
+        desktop = Path(state["desktops"][0]["path"])
+        before = desktop.read_bytes()
+        pending = dict(state, phase="pending", transaction=dict(previous=state,
+            desktops=[dict(path=str(desktop), before_hex=before.hex(), after_sha256=sha(b"candidate"))]))
+        private_app.save(state_path, pending)
+        desktop.write_bytes(b"external edit")
+        with self.assertRaisesRegex(private_app.Error, "changed outside dllmgr"):
+            private_app.recover(self.prefix.resolve(), state_path)
+        self.assertEqual(desktop.read_bytes(), b"external edit")
+        self.assertEqual(json.loads(state_path.read_text())["phase"], "pending")
+
+    def test_modules_builds_only_selected_partial_recipe(self):
+        raw = make_pe()
+        name = "comctl32_v6-wine-11.0-i386.dll"
+
+        def fake_download(url, dest, checksum=None):
+            if dest.name == "SHA256SUMS":
+                dest.write_text(sha(raw) + "  " + name + "\n")
+            else:
+                dest.write_bytes(raw)
+
+        entry = {"id": "winehq-59609", "dlls": ["comctl32"]}
+        with patch.object(private_app.catalog_fixes, "resolve", return_value=["winehq-59609"]), \
+             patch.object(private_app.catalog_fixes, "load_index", return_value=[entry]), \
+             patch.object(private_app, "download", side_effect=fake_download):
+            release, payloads = private_app.modules("winehq-59609", self.root)
+
+        self.assertEqual(release, "winehq-59609")
+        self.assertEqual(set(payloads), {"comctl32.dll"})
+        self.assertEqual(payloads["comctl32.dll"][0x40:0x60], bytes(32))
+        self.assertFalse((self.root / "gdiplus-wine-11.0-i386.dll").exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

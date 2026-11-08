@@ -50,6 +50,10 @@ check that the rule really took effect.
 
 ## 2. Verified facts about Wine (rely on them, do not re-check)
 
+Scope correction: historical basename overrides below describe Wine load order,
+not application isolation. Current product routing is specified in
+[application isolation](app-isolation.md).
+
 Checked against the sources of the tags `wine-9.0` and `wine-11.0`.
 
 - **F1. Builtin mark.** In Wine builtin DLLs, 32 bytes `"Wine builtin DLL"` lie
@@ -69,7 +73,9 @@ Checked against the sources of the tags `wine-9.0` and `wine-11.0`.
   `*name`, then `name`. If there is no override (`LO_DEFAULT`), the builtin DLL
   wins even when a native file is found. The exception is a builtin with the
   PREFER_NATIVE flag. Two consequences: without an explicit override our file
-  is not loaded, and other programs do not pick it up.
+  is normally not loaded. This does not isolate a physically replaced shared
+  DLL: another load-order rule can select it in another process. The product
+  uses full-image-path private runtime routing; see [#25](app-isolation.md).
 - **F3.** With order `native,builtin`, an unmarked file is loaded as native, and
   an untouched marked file still gives the Wine builtin DLL (`load_builtin`
   turns the order into `LO_BUILTIN_NATIVE`). So we always write
