@@ -1,0 +1,8 @@
+{
+  "action": "run",
+  "ok": false,
+  "pid": 9088,
+  "code": 1,
+  "output": "cat: /product-state.txt: No such file or directory\n",
+  "utc": "2026-11-08T22:25:50Z"
+}
