@@ -8,7 +8,8 @@ dllmgr fixes Windows programs under Wine. Before any work read, in order:
 3. Your environment:
    - console Claude Code / any agent on the owner's machine: docs/console-agent.md
    - Claude cloud sandbox (root, disposable Ubuntu): docs/sandbox-agent-hints.md
-4. The area you work on: docs/photoshop-handoff.md (Photoshop CS2),
+4. Task cards with decided designs and stop points: docs/plans/README.md.
+5. The area you work on: docs/photoshop-handoff.md (Photoshop CS2),
    docs/handoff.md / docs/faststone.md (FastStone), docs/development.md
    (process), docs/concept.md (architecture), docs/decisions.md.
 
