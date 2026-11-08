@@ -26,6 +26,7 @@ Usage:
   dllmgr uninstall faststone-avif [--prefix PATH]
   dllmgr uninstall faststone-fonts [--prefix PATH]
   dllmgr share faststone
+  dllmgr diag [--prefix PATH]      read-only debug report to paste into an issue
 Wine commands use WINEPREFIX (default: ~/.wine).
 'dllmgr fix' alone finds the programs with verified recipes and asks before
 applying each one. Set DLLMGR_VERBOSE=1 or pass --verbose for detailed output.
@@ -73,6 +74,10 @@ case ${1:-} in
     share)
         shift
         exec python3 "$here/scripts/share-recipe.py" "$@"
+        ;;
+    diag)
+        shift
+        exec python3 "$here/scripts/diag.py" "$@"
         ;;
     -h|--help|help)
         usage
