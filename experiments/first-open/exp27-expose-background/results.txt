@@ -28,3 +28,10 @@ exp build, no env:   image 608 -> black 1234 -> white 1254 -> image 1341    FAIL
 mode 2:              image 628 -> black 1264 -> image 1357                  FAIL (black 93 ms, no white)
 mode 2 + B (run 1):  image 684, no interruption                             pass
 mode 2 + B (run 2):  image 592, no interruption                             pass
+
+# Same first-open under Muffin (mutter-based, compositing), xsample on the root:
+muffin stock:        white -> black 915 -> image 1019, no interruption      pass (!)
+muffin mode 2 + B:   white -> image 1044, no interruption                   pass
+# Inconclusive: the owner sees the flash on Cinnamon (= Muffin), so root
+# XGetImage under a compositor on Xvfb likely does not reflect presented frames.
+# Only shows no regression of mode 2 + B there.
