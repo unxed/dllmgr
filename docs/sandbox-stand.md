@@ -29,6 +29,13 @@ per [development.md](development.md). Problems hit along the way go to
 [sandbox-findings.md](sandbox-findings.md) and are fixed last, after the
 already existing bugs.
 
+Releases: the cloud session gets HTTP 403 on release creation. The owner
+allowed (2026-11-08) publishing private-runtime releases after the package
+passed tests by dispatching `.github/workflows/publish-runtime.yml`
+(`gh api -X POST repos/unxed/dllmgr/actions/workflows/publish-runtime.yml/dispatches
+-f ref=main -f inputs[run_id]=RUN -f inputs[tag]=TAG -f inputs[notes]=TEXT`),
+then pinning scripts/private-runtime.json to the published asset's SHA256.
+
 ## Rebuild
 
     sh scripts/sandbox-stand.sh install    # once per sandbox

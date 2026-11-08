@@ -43,3 +43,14 @@ dialog's rect; no Wine defect is shown. Whether Adobe's code does the same on
 Windows cannot be derived from Wine traces (no reverse engineering of
 Photoshop). Deciding needs a real Windows run of the same three steps (owner
 machine/VM or a Windows CI job installing the CS2 trial).
+
+## Next: Windows CI comparison (owner decision 2026-11-08)
+
+Do it as a Windows job in this repo (next to first-open.yml): download the
+official CS2 trial installer (SHA256 in docs/sandbox-stand.md), unzip it
+(identical to the WinZip SFX output), install the trial unattended (owner
+approved the trial EULA; no serial), then drive File > Open > Use Adobe
+Dialog > Use OS Dialog with UI Automation and record the "Open" window rect
+after each step with a small EnumWindows probe (tests/wine/winstyles.c style).
+Compare with the Wine numbers above. Expect several blind iterations on the
+installer automation; keep each in small commits.

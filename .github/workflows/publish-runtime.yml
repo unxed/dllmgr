@@ -1,0 +1,41 @@
+name: publish-runtime
+# Publish a private-runtime release from a finished app-isolation CI run.
+# The owner allowed agents to dispatch this after the package passed tests
+# (2026-11-08); the cloud session itself cannot create releases.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'app-isolation workflow run id whose artifact to publish'
+        required: true
+      tag:
+        description: 'release tag, e.g. app-isolation-wine-11.0-v3'
+        required: true
+      notes:
+        description: 'release notes (one paragraph)'
+        required: true
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download and verify the tested artifact
+        run: |
+          gh run download "${{ inputs.run_id }}" -R "$GITHUB_REPOSITORY" -n app-isolation -D dl
+          out=$(dirname "$(find dl -name wine-11.0-app-isolation.zip | head -1)")
+          cd "$out" && sha256sum -c SHA256SUMS
+          echo "OUT=$PWD" >> "$GITHUB_ENV"
+          echo "SHA=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/${{ inputs.run_id }}" --jq .head_sha)" >> "$GITHUB_ENV"
+      - name: Create the release at the tested commit
+        run: |
+          cd "$OUT"
+          gh release create "${{ inputs.tag }}" -R "$GITHUB_REPOSITORY" --target "$SHA" \
+            --title "${{ inputs.tag }}" \
+            --notes "${{ inputs.notes }} Built by CI run https://github.com/$GITHUB_REPOSITORY/actions/runs/${{ inputs.run_id }} . Complete modified Wine source attached (LGPL)." \
+            wine-11.0-app-isolation.zip wine-11.0-app-isolation-source.tar.xz SHA256SUMS
+          sha256sum wine-11.0-app-isolation.zip
