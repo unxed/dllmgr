@@ -1,0 +1,182 @@
+[
+  {
+    "class": "RichEdit20W",
+    "automation_id": "8087",
+    "patterns": [],
+    "name": "",
+    "type": "ControlType.Pane",
+    "handle": 131632,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "RichEdit20W",
+    "automation_id": "8097",
+    "patterns": [],
+    "name": "",
+    "type": "ControlType.Pane",
+    "handle": 197190,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "RichEdit20W",
+    "automation_id": "4703",
+    "patterns": [],
+    "name": "",
+    "type": "ControlType.Pane",
+    "handle": 131640,
+    "enabled": false,
+    "offscreen": false
+  },
+  {
+    "class": "Button",
+    "automation_id": "4690",
+    "patterns": [],
+    "name": "Next >",
+    "type": "ControlType.Pane",
+    "handle": 131644,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Button",
+    "automation_id": "4473",
+    "patterns": [],
+    "name": "Cancel",
+    "type": "ControlType.Pane",
+    "handle": 131624,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Button",
+    "automation_id": "4632",
+    "patterns": [],
+    "name": "< Back",
+    "type": "ControlType.Pane",
+    "handle": 131650,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Button",
+    "automation_id": "8093",
+    "patterns": [],
+    "name": "",
+    "type": "ControlType.Pane",
+    "handle": 131630,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Button",
+    "automation_id": "8429",
+    "patterns": [],
+    "name": "Install 30-day trial version",
+    "type": "ControlType.Pane",
+    "handle": 131628,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Button",
+    "automation_id": "4505",
+    "patterns": [],
+    "name": "I have a serial number, install full version",
+    "type": "ControlType.Pane",
+    "handle": 131626,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "4659",
+    "patterns": [],
+    "name": "The following information must be entered before installation of Adobe Photoshop CS2 can be completed.",
+    "type": "ControlType.Pane",
+    "handle": 131648,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "4661",
+    "patterns": [],
+    "name": "Customer Information",
+    "type": "ControlType.Pane",
+    "handle": 131646,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8013",
+    "patterns": [],
+    "name": "NewBinary26",
+    "type": "ControlType.Pane",
+    "handle": 131642,
+    "enabled": false,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8015",
+    "patterns": [],
+    "name": "InstallShield",
+    "type": "ControlType.Pane",
+    "handle": 131638,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8017",
+    "patterns": [],
+    "name": "InstallShield",
+    "type": "ControlType.Pane",
+    "handle": 131636,
+    "enabled": false,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8020",
+    "patterns": [],
+    "name": "",
+    "type": "ControlType.Pane",
+    "handle": 131634,
+    "enabled": false,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8102",
+    "patterns": [],
+    "name": "User Name:",
+    "type": "ControlType.Pane",
+    "handle": 131658,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8107",
+    "patterns": [],
+    "name": "Organization:",
+    "type": "ControlType.Pane",
+    "handle": 131652,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8110",
+    "patterns": [],
+    "name": "Serial Number:",
+    "type": "ControlType.Pane",
+    "handle": 131666,
+    "enabled": true,
+    "offscreen": false
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "file": "attempt3-trial-selected-crop.png",
+    "source_artifact_file": "trial-selected.png",
+    "source_sha256": "18f0a84904e80773a63d2a7b68061e89c49dcc2505dd6409c290b5ca6089f131",
+    "crop": "496x376+264+172, physical pixels; installer illustration only, no Open-dialog measurement",
+    "sha256": "409dec9c2bb60d694a44fce52694208bca94fe24aa67d820c9f19067b9e50982"
+  },
+  {
+    "file": "attempt3-required-fields-crop.png",
+    "source_artifact_file": "install-wait2.png",
+    "source_sha256": "d0f023bb5885469aab7734e6a12151b7c185b4e71f6597b3dad6134dc21204f8",
+    "crop": "496x376+264+172, physical pixels; installer illustration only, no Open-dialog measurement",
+    "sha256": "48be7c97538a0fae3ad514566195a1990a3912758d0b21b50ec5a6a321703f82"
+  }
+]

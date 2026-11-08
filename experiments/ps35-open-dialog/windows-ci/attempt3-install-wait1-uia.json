@@ -1,0 +1,92 @@
+[
+  {
+    "class": "Static",
+    "automation_id": "6538",
+    "patterns": [],
+    "name": "NewBinary26",
+    "type": "ControlType.Pane",
+    "handle": 197148,
+    "enabled": false,
+    "offscreen": false
+  },
+  {
+    "class": "Button",
+    "automation_id": "4473",
+    "patterns": [],
+    "name": "Cancel",
+    "type": "ControlType.Pane",
+    "handle": 131620,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Button",
+    "automation_id": "4632",
+    "patterns": [],
+    "name": "< Back",
+    "type": "ControlType.Pane",
+    "handle": 131618,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "4661",
+    "patterns": [],
+    "name": "Required fields are empty",
+    "type": "ControlType.Pane",
+    "handle": 131616,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "4672",
+    "patterns": [],
+    "name": "The User Name and Serial Number fields are required for setup to continue.  Please go back and ensure that these fields are filled in correctly.",
+    "type": "ControlType.Pane",
+    "handle": 131614,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8015",
+    "patterns": [],
+    "name": "InstallShield",
+    "type": "ControlType.Pane",
+    "handle": 197146,
+    "enabled": true,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8017",
+    "patterns": [],
+    "name": "InstallShield",
+    "type": "ControlType.Pane",
+    "handle": 197136,
+    "enabled": false,
+    "offscreen": false
+  },
+  {
+    "class": "Static",
+    "automation_id": "8020",
+    "patterns": [],
+    "name": "",
+    "type": "ControlType.Pane",
+    "handle": 197134,
+    "enabled": false,
+    "offscreen": false
+  },
+  {
+    "class": "Button",
+    "automation_id": "8078",
+    "patterns": [],
+    "name": "Next >",
+    "type": "ControlType.Pane",
+    "handle": 262496,
+    "enabled": false,
+    "offscreen": false
+  }
+]

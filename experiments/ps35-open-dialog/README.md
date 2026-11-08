@@ -141,3 +141,18 @@ for those two known HWNDs only. The disabled serial control is excluded.
 The controller now uses Windows PowerShell5.1 and records supported UIA
 patterns to diagnose classic-provider compatibility; this is a task-specific
 controller adjustment, not a Photoshop/Wine fix or a completed comparison.
+
+## Paused by owner (2026-11-09 00:30 CET)
+
+Start the next session with [windows-ci/PAUSED.md](windows-ci/PAUSED.md).
+Third measured run42534865330 was cancelled for this pause. Its last saved
+page is "Required fields are empty" (User Name and Serial Number), despite
+normal trial selection and a disabled serial field. Cause not established;
+no serial was supplied and no bypass attempted. No installed state or Open
+comparison was verified. Selected UIA diagnostics and reviewed installer crops
+are retained; full artifact ID/checksum/manifest are recorded.
+
+A live Windows HTTPS-control draft is preserved, unvalidated and never
+dispatched, in session/codex-debian-8c42-ps35-live-draft (962cdb2a). It is not
+a general execution rule and must not be merged as such. Claim35 is released
+for the pause; reacquire only after checking other agents.

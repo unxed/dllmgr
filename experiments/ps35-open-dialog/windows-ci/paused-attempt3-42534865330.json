@@ -1,0 +1,28 @@
+{
+  "run_id": 42534865330,
+  "url": "https://github.com/unxed/dllmgr/actions/runs/42534865330",
+  "conclusion": "cancelled",
+  "reason": "Owner requested save and pause",
+  "cancelled_utc": "2026-11-08T23:30:51Z",
+  "source": {
+    "sha256": "919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea",
+    "url": "https://web.archive.org/web/20240522171734id_/http://download.adobe.com/pub/adobe/photoshop/win/cs2/Photoshop_CS2.exe",
+    "bytes": 345068035,
+    "cache_hit": "true"
+  },
+  "installation": {
+    "utc": "2026-11-08T23:23:11.9997534Z",
+    "mode": "normal vendor trial flag; no serial",
+    "silent_exit": 1603
+  },
+  "last_observed_page": "Required fields are empty",
+  "last_observed_message": "The User Name and Serial Number fields are required for setup to continue. Please go back and ensure that these fields are filled in correctly.",
+  "installed_state_verified": false,
+  "open_rects_collected": false,
+  "cause": "Not established. Normal trial selected; do not infer that supplying a serial is necessary or permitted.",
+  "artifact_id": 13638857501,
+  "artifact_sha256": "6c2ffaf988c1ff6b43367c84445997ce981455026042cc06b8bac35fae4987f8",
+  "live_draft_branch": "session/codex-debian-8c42-ps35-live-draft",
+  "live_draft_commit": "962cdb2a0e5ad2ff338c471f5ee53f1980db2d80",
+  "live_draft_dispatched": false
+}

@@ -1,0 +1,107 @@
+[
+  {
+    "file": "desktop.png",
+    "bytes": 254761,
+    "sha256": "397f2976a400c2efdb6f57150f7b4e933005389d74f1b1f3fd3f6f790d5e9698"
+  },
+  {
+    "file": "environment.json",
+    "bytes": 427,
+    "sha256": "0b1452d2fc44edb4853b91dd5eee7b0a11086fffbf7a98f31d95b1c7483100b3"
+  },
+  {
+    "file": "extraction.txt",
+    "bytes": 850,
+    "sha256": "84f95c586a143fb40d74cab98632c157ebd24448652675733fbd55326a5abca1"
+  },
+  {
+    "file": "install-wait1-uia.json",
+    "bytes": 2709,
+    "sha256": "a03b2529be900a57127a62a8b3bf9d558e87c095cb6db6e07df783f9d4dfe724"
+  },
+  {
+    "file": "install-wait1.png",
+    "bytes": 263074,
+    "sha256": "d0f023bb5885469aab7734e6a12151b7c185b4e71f6597b3dad6134dc21204f8"
+  },
+  {
+    "file": "install-wait2-uia.json",
+    "bytes": 2709,
+    "sha256": "a03b2529be900a57127a62a8b3bf9d558e87c095cb6db6e07df783f9d4dfe724"
+  },
+  {
+    "file": "install-wait2.png",
+    "bytes": 263074,
+    "sha256": "d0f023bb5885469aab7734e6a12151b7c185b4e71f6597b3dad6134dc21204f8"
+  },
+  {
+    "file": "installation.json",
+    "bytes": 130,
+    "sha256": "4088241d4e4062a101f3816ee9385979067356fccdc70efa997a8bf4c678445f"
+  },
+  {
+    "file": "msi-Control.json",
+    "bytes": 135954,
+    "sha256": "68942ee1c662b303f56c606569cb7afc01ea8e96ef9fee5fb6d76285cf6a1e2a"
+  },
+  {
+    "file": "msi-ControlEvent.json",
+    "bytes": 38620,
+    "sha256": "6ecddc796d233ac8fdb5a126643749f0e8c75f2106a00e50a09273378bb2437f"
+  },
+  {
+    "file": "msi-InstallUISequence.json",
+    "bytes": 2648,
+    "sha256": "52763894d18f484d641e3cdcec1589b844518c42dd4cfa0dfea1b593dcf8bc3e"
+  },
+  {
+    "file": "msi-LaunchCondition.json",
+    "bytes": 559,
+    "sha256": "a670084d564aaa7dcb5e75610c4f8b12754f49a9ece5a7339a2bf8e3d92a6fde"
+  },
+  {
+    "file": "msi-Property.json",
+    "bytes": 9498,
+    "sha256": "59a47418b267c8faa7fe1baf4d1d83868bec3f729d8f63a236934a4d4ed57db1"
+  },
+  {
+    "file": "msi-RadioButton.json",
+    "bytes": 3598,
+    "sha256": "086719800e16f18494fb2a1045d5171454faedba12e8bade23bff235a6bfeb1a"
+  },
+  {
+    "file": "msi-install-redacted.log",
+    "bytes": 288505,
+    "sha256": "5175bbad4881fc6dd1efacb13a5aecdaaee2ef4e9e98c12bae227146fca2df19"
+  },
+  {
+    "file": "msi-silent-redacted.log",
+    "bytes": 174399,
+    "sha256": "38abcbf6f27f9b3bda3e4dbebf310a8255de297b40dd8a7391531768111cacaf"
+  },
+  {
+    "file": "source.json",
+    "bytes": 264,
+    "sha256": "bc4d463e473969b73d6156f483f935b311a9ec4b66d8e3830632ae3c0796cba3"
+  },
+  {
+    "file": "transcript.txt",
+    "bytes": 974,
+    "sha256": "8ba1307a72f570f006ecddddcf591baf87a452dfefeddb2a0de7c33d08000068"
+  },
+  {
+    "file": "trial-before-action-uia.json",
+    "bytes": 5252,
+    "sha256": "b5237fb71f495e955c5e5a2051f80bfb55f350f2e84ee54cc239e1c14d247801"
+  },
+  {
+    "file": "trial-before-action.png",
+    "bytes": 265948,
+    "sha256": "258adacc9b9dac2ded6b1986cb767a9ea859c4d4378f50daea39cc017f3cebcf"
+  },
+  {
+    "file": "trial-selected.png",
+    "bytes": 266719,
+    "sha256": "18f0a84904e80773a63d2a7b68061e89c49dcc2505dd6409c290b5ca6089f131"
+  }
+]
