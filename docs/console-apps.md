@@ -56,6 +56,10 @@ Verify against a compatible terminal and actual Far3/hiew interactions.
   the documented capabilities before choosing a subset; do not claim protocol
   support from an untested subset. Preserve a safe fallback on other terminals.
 
+Routes for the Unix side to evaluate first: https://github.com/unxed/winescape
+and https://git.howett.net/DHowett/WinUnixPtyBridge (Dustin Howett, Microsoft
+terminal team, a for-fun project); see docs/plans/far3.md.
+
 Most affected Wine console code is core or Unix-backed. These changes need a
 supported patch/runtime mechanism; they cannot be installed as ordinary native
 DLL overrides. All new scope above is plan only until scheduled. Wine receives

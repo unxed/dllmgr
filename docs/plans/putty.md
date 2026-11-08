@@ -1,7 +1,9 @@
 # PuTTY task cards (#20) — showcase bootstrap
 
 Nothing is analysed yet; issue #20 lists Wine 57513 (owner: critical) and
-https://bugs.winehq.org/buglist.cgi?quicksearch=putty .
+https://bugs.winehq.org/buglist.cgi?quicksearch=putty . The owner recalls
+57513 as his own report about **Russian keyboard input** in PuTTY; verify
+against the bug text before planning the reproducer.
 
 ## PT-1 audit (executing agent)
 

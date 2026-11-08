@@ -71,8 +71,7 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 4. Deferred installer bugs from docs/sandbox-findings.md: F13/F14 (MSI final
    dialog texts all "&Finish", msiexec 0x6a6 crash), F11/F12 (MSI dialogs
    not DPI-scaled), F9 (EULA letter spacing).
-5. #34 TopPlan: blocked until an installer is found (Wayback CDX lists only
-   pages, see docs/photoshop-handoff.md).
+5. (#34 TopPlan dropped by the owner: no installer, not a showcase.)
 
 FastStone queue: #27 every-launch-path follow-up
 (docs/tasks/27-every-launch-path.md), owner retests listed in docs/handoff.md.

@@ -13,6 +13,19 @@ docs/console-apps.md. Cards here only add execution guidance.
 Done when: a results table in far3.md with both platforms.
 Stop and ask if: Far needs a display to start at all (record and ask).
 
+## Unix-side console: two existing routes (owner, 2026-11-08)
+
+- https://github.com/unxed/winescape — owner's project: a Windows program
+  under Wine calls native host APIs (escape hatch out of Wine).
+- https://git.howett.net/DHowett/WinUnixPtyBridge — Dustin Howett (Microsoft
+  terminal team, written for fun): bridges Windows console/ConPTY semantics
+  to a Unix pty.
+Before designing any conhost/Unix-console change (win32-input-mode, OSC52,
+kitty keys), compare both: features already there, per-app installation
+(private runtime overlay vs PE side), licence, per-call overhead (far3.md
+benchmark). Record the comparison in docs/console-apps.md; choose with the
+owner.
+
 ## FAR-2 console bugs (far3.md Goal 2)
 
 Executing agent: Bugzilla audit + a console reproducer per bug (plain text

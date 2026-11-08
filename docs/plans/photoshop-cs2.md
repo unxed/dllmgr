@@ -41,8 +41,8 @@ Steps:
 3. Install unattended. Try first: the MSI inside the unpacked tree with
    `msiexec /i "<msi>" /qn /l*v install.log` plus trial properties; find
    property names by reading the MSI tables with PowerShell
-   (WindowsInstaller.Installer COM, `Property` table) — reading the MSI's own
-   tables is allowed, disassembling binaries is not. If /qn refuses, fall back
+   (WindowsInstaller.Installer COM, `Property` table). Clean-room reverse
+   engineering is allowed where needed (AGENTS.md). If /qn refuses, fall back
    to UI Automation of the same GUI path as scripts/sandbox-install-cs2.sh.
 4. Start Photoshop.exe, wait for the main window (UIA, class "Photoshop"),
    then File > Open by UIA menu invoke; find "Use Adobe Dialog" by button
@@ -96,5 +96,5 @@ log of the final dialog, the MSI Control/ControlEvent rows of that dialog
 (PowerShell or msiinfo/msidump from wine), and the backtrace.
 F11/F12/F9: collect side-by-side Windows screenshots from the PS-1 job first.
 
-## PS-5 (#34) TopPlan: blocked (no installer). Do not search broadly; the
-owner decides when a source appears.
+## TopPlan (#34): dropped by the owner 2026-11-08 (no installer; an old
+owner report, not a showcase). No further work.
