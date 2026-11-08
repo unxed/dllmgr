@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-08",
+  "status": "passed on rebuilt runtime with existing initialized prefix",
+  "arch": "win32",
+  "wine_version": "wine-11.0",
+  "kernel": "6.12.115+deb13.1-amd64",
+  "pe_machine": "0x14c",
+  "saved_text": "Wine 11.0 win32: Xvfb input and save verified.",
+  "elapsed_seconds": 120.9,
+  "checks": [
+    "wineboot --init",
+    "cmd echo",
+    "Windows DPI reg add/query: 192",
+    "PE32 Notepad window",
+    "X11 activation, focus, keyboard input",
+    "Ctrl+S persisted expected synthetic file contents",
+    "Xvfb screenshot"
+  ],
+  "not_tested": [
+    "Photoshop CS2",
+    "real Windows",
+    "owner desktop parity"
+  ]
+}

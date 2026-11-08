@@ -74,3 +74,11 @@ an unapplied catalog-format1 compatibility patch, with26 passing catalog tests
 and a live current-index read. Local outputs/fix-it-in-wine-catalog-format1.patch
 and work/catalog-fix/ preserve it. Do not claim merged or edit another shared
 checkout; the owner applies changes to other unxed repositories.
+
+## Separate cloud test environment
+
+The reproducible Wine 11.0 / Xvfb cloud stand is documented in
+[cloud-wine-sandbox.md](cloud-wine-sandbox.md), with pinned packages and setup
+scripts in `tools/wine-sandbox/`. It does not contain the local trial prefix
+or establish a Photoshop retest. The cloud host cannot run Linux i386 ELF
+natively; use the documented full-system QEMU fallback for 32-bit Wine.

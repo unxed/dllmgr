@@ -1,0 +1,671 @@
+{
+  "format": 1,
+  "host": "Debian 13 trixie x86_64",
+  "created": "2026-11-08",
+  "packages": [
+    {
+      "package": "busybox-static",
+      "version": "1:1.37.0-6+b9",
+      "architecture": "amd64",
+      "file": "busybox-static_1:1.37.0-6+b9_amd64.deb",
+      "sha256": "598a3fd92bdafc34cd81196b2952ad36e910e47a4ecf162f8ce5e8e262598e53",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/b/busybox/busybox-static_1.37.0-6%2bb9_amd64.deb"
+    },
+    {
+      "package": "debconf",
+      "version": "1.5.91",
+      "architecture": "all",
+      "file": "debconf_1.5.91_all.deb",
+      "sha256": "1ddc7e6c5925f748eefb7ca811d98e049f18c158bb21fbc7e122262ce6011e49",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/d/debconf/debconf_1.5.91_all.deb"
+    },
+    {
+      "package": "fontconfig-config",
+      "version": "2.15.0-2.3",
+      "architecture": "amd64",
+      "file": "fontconfig-config_2.15.0-2.3_amd64.deb",
+      "sha256": "0475c00d02660c07a15085051818625331bb502e053242106aaaa1f2ddb41225",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/f/fontconfig/fontconfig-config_2.15.0-2.3_amd64.deb"
+    },
+    {
+      "package": "fonts-dejavu-core",
+      "version": "2.37-8",
+      "architecture": "all",
+      "file": "fonts-dejavu-core_2.37-8_all.deb",
+      "sha256": "86635b3d25b3655fc11cb3ecc3af59f0bf19643b02b94f2de48bd10253cdba12",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/f/fonts-dejavu/fonts-dejavu-core_2.37-8_all.deb"
+    },
+    {
+      "package": "fonts-dejavu-mono",
+      "version": "2.37-8",
+      "architecture": "all",
+      "file": "fonts-dejavu-mono_2.37-8_all.deb",
+      "sha256": "3003e98a5debfdeadc7040a7f715fe9fe6fb67f68deacf6049b54e30f07fc014",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/f/fonts-dejavu/fonts-dejavu-mono_2.37-8_all.deb"
+    },
+    {
+      "package": "gcc-14-base",
+      "version": "14.2.0-19",
+      "architecture": "amd64",
+      "file": "gcc-14-base_14.2.0-19_amd64.deb",
+      "sha256": "5b6825de4263824b78c4c51f6476414f3b4e89c2ab63e81dc8b9b5501e867cf6",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gcc-14/gcc-14-base_14.2.0-19_amd64.deb"
+    },
+    {
+      "package": "gcc-14-base",
+      "version": "14.2.0-19",
+      "architecture": "i386",
+      "file": "gcc-14-base_14.2.0-19_i386.deb",
+      "sha256": "cab3cc6782d6cd3445d184ad317bbd8cc46395eb2675ccd75f4b57147469887a",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gcc-14/gcc-14-base_14.2.0-19_i386.deb"
+    },
+    {
+      "package": "libaio1t64",
+      "version": "0.3.113-8+b1",
+      "architecture": "amd64",
+      "file": "libaio1t64_0.3.113-8+b1_amd64.deb",
+      "sha256": "490c8a2d116001a5f3b0a6d7a7aabf6a7b629366590dc5c3f75b078e931dd129",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/liba/libaio/libaio1t64_0.3.113-8%2bb1_amd64.deb"
+    },
+    {
+      "package": "libasound2-data",
+      "version": "1.2.14-1+deb13u1",
+      "architecture": "all",
+      "file": "libasound2-data_1.2.14-1+deb13u1_all.deb",
+      "sha256": "04688afdff3769c0f685541daed7b2f6f0cb946799ddf1d5847ddf11fe245559",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/a/alsa-lib/libasound2-data_1.2.14-1%2bdeb13u1_all.deb"
+    },
+    {
+      "package": "libasound2t64",
+      "version": "1.2.14-1+deb13u1",
+      "architecture": "i386",
+      "file": "libasound2t64_1.2.14-1+deb13u1_i386.deb",
+      "sha256": "8e5c56690975924768c32ad126034e5888de0df3d6beced709da08566d77350d",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/a/alsa-lib/libasound2t64_1.2.14-1%2bdeb13u1_i386.deb"
+    },
+    {
+      "package": "libasyncns0",
+      "version": "0.8-6+b5",
+      "architecture": "i386",
+      "file": "libasyncns0_0.8-6+b5_i386.deb",
+      "sha256": "57528d6cb22dbc007ba432a8a3294144fc88144eb49c645cb3a8e671e357f412",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/liba/libasyncns/libasyncns0_0.8-6%2bb5_i386.deb"
+    },
+    {
+      "package": "libbrotli1",
+      "version": "1.1.0-2+deb13u1",
+      "architecture": "i386",
+      "file": "libbrotli1_1.1.0-2+deb13u1_i386.deb",
+      "sha256": "b686eb23b57276622a8517f75e31a479eae82d736cae449e873695ff38508611",
+      "url": "https://snapshot.debian.org/archive/debian-security/20261103T013555Z/pool/updates/main/b/brotli/libbrotli1_1.1.0-2%2bdeb13u1_i386.deb"
+    },
+    {
+      "package": "libbz2-1.0",
+      "version": "1.0.8-6",
+      "architecture": "i386",
+      "file": "libbz2-1.0_1.0.8-6_i386.deb",
+      "sha256": "c23dee450dcee574135cbe004d463be3f413cdc017b22d8273c5ce0a18a7de10",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/b/bzip2/libbz2-1.0_1.0.8-6_i386.deb"
+    },
+    {
+      "package": "libc6",
+      "version": "2.41-12+deb13u4",
+      "architecture": "amd64",
+      "file": "libc6_2.41-12+deb13u4_amd64.deb",
+      "sha256": "967aa62605721081c3eb2a17650611a792aa802d76a6511d1840242623d204c9",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/glibc/libc6_2.41-12%2bdeb13u4_amd64.deb"
+    },
+    {
+      "package": "libc6",
+      "version": "2.41-12+deb13u4",
+      "architecture": "i386",
+      "file": "libc6_2.41-12+deb13u4_i386.deb",
+      "sha256": "67bb4b54cf4bb6a380449dfa1852cd9135659f85360caa0e41d312f4b30e573a",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/glibc/libc6_2.41-12%2bdeb13u4_i386.deb"
+    },
+    {
+      "package": "libcap2",
+      "version": "1:2.75-10+deb13u1+b3",
+      "architecture": "i386",
+      "file": "libcap2_1:2.75-10+deb13u1+b3_i386.deb",
+      "sha256": "15cdfa6ca972c7c81e48e0c030a2b3ae16acb146cca45659bf72919f4af94aeb",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libc/libcap2/libcap2_2.75-10%2bdeb13u1%2bb3_i386.deb"
+    },
+    {
+      "package": "libcapstone5",
+      "version": "5.0.7-1~deb13u1",
+      "architecture": "amd64",
+      "file": "libcapstone5_5.0.7-1~deb13u1_amd64.deb",
+      "sha256": "775187a7be26bb0b076d1979a02163b943dbc13eb4adb0efc503223a03c75422",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/c/capstone/libcapstone5_5.0.7-1%7edeb13u1_amd64.deb"
+    },
+    {
+      "package": "libdaxctl1",
+      "version": "81-1",
+      "architecture": "amd64",
+      "file": "libdaxctl1_81-1_amd64.deb",
+      "sha256": "6296eb5c976743ba0defb7a061ef081238ca072cf569c6bb96fd3f9095c58a30",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/n/ndctl/libdaxctl1_81-1_amd64.deb"
+    },
+    {
+      "package": "libdbus-1-3",
+      "version": "1.16.2-2",
+      "architecture": "i386",
+      "file": "libdbus-1-3_1.16.2-2_i386.deb",
+      "sha256": "2a6491a71245ea6863b5873743ee3f57b89dc9b3698441a94704b9360050652e",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/d/dbus/libdbus-1-3_1.16.2-2_i386.deb"
+    },
+    {
+      "package": "libexpat1",
+      "version": "2.9.0-1~deb13u1",
+      "architecture": "i386",
+      "file": "libexpat1_2.9.0-1~deb13u1_i386.deb",
+      "sha256": "dacea4f5745522893556052bf5f387fbab019e1547b8dd4a120fa593d9d1f15d",
+      "url": "https://snapshot.debian.org/archive/debian-security/20261103T013555Z/pool/updates/main/e/expat/libexpat1_2.9.0-1%7edeb13u1_i386.deb"
+    },
+    {
+      "package": "libfdt1",
+      "version": "1.7.2-2+b1",
+      "architecture": "amd64",
+      "file": "libfdt1_1.7.2-2+b1_amd64.deb",
+      "sha256": "8e37034d7864807ae2063efcc82fc79aad59069546212e6e0908ed67f9f7e107",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/d/device-tree-compiler/libfdt1_1.7.2-2%2bb1_amd64.deb"
+    },
+    {
+      "package": "libffi8",
+      "version": "3.4.8-2",
+      "architecture": "i386",
+      "file": "libffi8_3.4.8-2_i386.deb",
+      "sha256": "8bafefb38c320ca27796070c881595ce04d900c3b534ac142a494daf1fe1db13",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libf/libffi/libffi8_3.4.8-2_i386.deb"
+    },
+    {
+      "package": "libflac14",
+      "version": "1.5.0+ds-2",
+      "architecture": "i386",
+      "file": "libflac14_1.5.0+ds-2_i386.deb",
+      "sha256": "a83bfb785cf7dd1c99d22f3e1f62d6faba5a982bf13461bf31bced4c2305aba5",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/f/flac/libflac14_1.5.0%2bds-2_i386.deb"
+    },
+    {
+      "package": "libfontconfig1",
+      "version": "2.15.0-2.3",
+      "architecture": "i386",
+      "file": "libfontconfig1_2.15.0-2.3_i386.deb",
+      "sha256": "d24faaee293c8f76fd68dea181ac927ad8fb8ec18fcdf7e5bf6fe847678f227b",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/f/fontconfig/libfontconfig1_2.15.0-2.3_i386.deb"
+    },
+    {
+      "package": "libfreetype6",
+      "version": "2.13.3+dfsg-1+deb13u1",
+      "architecture": "i386",
+      "file": "libfreetype6_2.13.3+dfsg-1+deb13u1_i386.deb",
+      "sha256": "fbe01c5a6e2654ed7c8fbb08b39c9b20cf19bd24554088d11762c330f7af1dd2",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/f/freetype/libfreetype6_2.13.3%2bdfsg-1%2bdeb13u1_i386.deb"
+    },
+    {
+      "package": "libgcc-s1",
+      "version": "14.2.0-19",
+      "architecture": "i386",
+      "file": "libgcc-s1_14.2.0-19_i386.deb",
+      "sha256": "a4c71fd856d2a48a7505a087b4186e3cca23f94603c05e3fb7c799b27e72f761",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gcc-14/libgcc-s1_14.2.0-19_i386.deb"
+    },
+    {
+      "package": "libgcc-s1",
+      "version": "14.2.0-19",
+      "architecture": "amd64",
+      "file": "libgcc-s1_14.2.0-19_amd64.deb",
+      "sha256": "3c71917b490d1a17aed43196a2787a256ecf060526cdb20216a74bedc061b150",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gcc-14/libgcc-s1_14.2.0-19_amd64.deb"
+    },
+    {
+      "package": "libgmp10",
+      "version": "2:6.3.0+dfsg-3",
+      "architecture": "i386",
+      "file": "libgmp10_2:6.3.0+dfsg-3_i386.deb",
+      "sha256": "f005fef33ce70d6775070c60017f0d29a0c415f1b657b4cc622d1a556561615c",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gmp/libgmp10_6.3.0%2bdfsg-3_i386.deb"
+    },
+    {
+      "package": "libgnutls30t64",
+      "version": "3.8.9-3+deb13u4",
+      "architecture": "i386",
+      "file": "libgnutls30t64_3.8.9-3+deb13u4_i386.deb",
+      "sha256": "8cf569d66f972184d90bdb424eb5b0af1245df4abb15f229d30b6c905d565265",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gnutls28/libgnutls30t64_3.8.9-3%2bdeb13u4_i386.deb"
+    },
+    {
+      "package": "libhogweed6t64",
+      "version": "3.10.1-1",
+      "architecture": "i386",
+      "file": "libhogweed6t64_3.10.1-1_i386.deb",
+      "sha256": "c947e90d9451239ebfa85f67ae0a6c3f9dc19b8bd9f0bb7c98a73dff33665592",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/n/nettle/libhogweed6t64_3.10.1-1_i386.deb"
+    },
+    {
+      "package": "libidn2-0",
+      "version": "2.3.8-2",
+      "architecture": "i386",
+      "file": "libidn2-0_2.3.8-2_i386.deb",
+      "sha256": "385d7ec787a45c8afbca118f30c770186004542011699ae0b51b37ed5f9a5b22",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libi/libidn2/libidn2-0_2.3.8-2_i386.deb"
+    },
+    {
+      "package": "libimlib2t64",
+      "version": "1.12.4-2",
+      "architecture": "amd64",
+      "file": "libimlib2t64_1.12.4-2_amd64.deb",
+      "sha256": "0abd807eb797a05bbcaa52f30b31f95c348859a110f5f680d7370661158267a4",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/i/imlib2/libimlib2t64_1.12.4-2_amd64.deb"
+    },
+    {
+      "package": "libmp3lame0",
+      "version": "3.100-6+b3",
+      "architecture": "i386",
+      "file": "libmp3lame0_3.100-6+b3_i386.deb",
+      "sha256": "df68cd18e2f747fe2d93f740b2d0df206da80adac9fff2a2346faa5690a66fc3",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/l/lame/libmp3lame0_3.100-6%2bb3_i386.deb"
+    },
+    {
+      "package": "libmpg123-0t64",
+      "version": "1.32.10-1+deb13u1",
+      "architecture": "i386",
+      "file": "libmpg123-0t64_1.32.10-1+deb13u1_i386.deb",
+      "sha256": "4080376b9d3e730f5020552223507e1c93696ab1d7ba56da2afccf97978c7238",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/m/mpg123/libmpg123-0t64_1.32.10-1%2bdeb13u1_i386.deb"
+    },
+    {
+      "package": "libndctl6",
+      "version": "81-1",
+      "architecture": "amd64",
+      "file": "libndctl6_81-1_amd64.deb",
+      "sha256": "fe60a05d42e61cb9f49a90b872aa5ca569363b13459ee0d405243c37a7de7c93",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/n/ndctl/libndctl6_81-1_amd64.deb"
+    },
+    {
+      "package": "libnettle8t64",
+      "version": "3.10.1-1",
+      "architecture": "i386",
+      "file": "libnettle8t64_3.10.1-1_i386.deb",
+      "sha256": "6daa71300749e0ec1e0792dc4b1886ffae6668317d363aa13c2f30f3b8d96792",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/n/nettle/libnettle8t64_3.10.1-1_i386.deb"
+    },
+    {
+      "package": "libobrender32v5",
+      "version": "3.6.1-12+b2",
+      "architecture": "amd64",
+      "file": "libobrender32v5_3.6.1-12+b2_amd64.deb",
+      "sha256": "f84c607b744f672429f310a95e3c85bad58a6002781283af62ea2a74e36c70b1",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/o/openbox/libobrender32v5_3.6.1-12%2bb2_amd64.deb"
+    },
+    {
+      "package": "libobt2v5",
+      "version": "3.6.1-12+b2",
+      "architecture": "amd64",
+      "file": "libobt2v5_3.6.1-12+b2_amd64.deb",
+      "sha256": "f590a93c50bf7587ba8e6d9999df430566d04dc7447b2135bc7f2eb5ffc34c5a",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/o/openbox/libobt2v5_3.6.1-12%2bb2_amd64.deb"
+    },
+    {
+      "package": "libogg0",
+      "version": "1.3.5-3+b2",
+      "architecture": "i386",
+      "file": "libogg0_1.3.5-3+b2_i386.deb",
+      "sha256": "4ee76bfbd7c9408571a0dbe2b21223d4bac7598e93c2d5082f2752a59332ebbc",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libo/libogg/libogg0_1.3.5-3%2bb2_i386.deb"
+    },
+    {
+      "package": "libopus0",
+      "version": "1.5.2-2",
+      "architecture": "i386",
+      "file": "libopus0_1.5.2-2_i386.deb",
+      "sha256": "eac2162ec314a46d5b93f1d7943368cc7704ec627629c342361fb8101cc67dbb",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/o/opus/libopus0_1.5.2-2_i386.deb"
+    },
+    {
+      "package": "libp11-kit0",
+      "version": "0.25.5-3",
+      "architecture": "i386",
+      "file": "libp11-kit0_0.25.5-3_i386.deb",
+      "sha256": "87454329e53dab3176c2f61f50386ac2c42d6088a68fb882b3804f8bc0ba7660",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/p/p11-kit/libp11-kit0_0.25.5-3_i386.deb"
+    },
+    {
+      "package": "libpmem1",
+      "version": "1.13.1-1.1+b1",
+      "architecture": "amd64",
+      "file": "libpmem1_1.13.1-1.1+b1_amd64.deb",
+      "sha256": "7d972d6958e915ce602e4b90debc6b4b91a01dfea1fe003d0b013756e7d9d863",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/p/pmdk/libpmem1_1.13.1-1.1%2bb1_amd64.deb"
+    },
+    {
+      "package": "libpng16-16t64",
+      "version": "1.6.48-1+deb13u6",
+      "architecture": "i386",
+      "file": "libpng16-16t64_1.6.48-1+deb13u6_i386.deb",
+      "sha256": "087f92b31fa6c4ff047e539c944a3f97432d15b6b8e5ef4127a7e13b72643847",
+      "url": "https://snapshot.debian.org/archive/debian-security/20261103T013555Z/pool/updates/main/libp/libpng1.6/libpng16-16t64_1.6.48-1%2bdeb13u6_i386.deb"
+    },
+    {
+      "package": "libpulse0",
+      "version": "17.0+dfsg1-2+b1",
+      "architecture": "i386",
+      "file": "libpulse0_17.0+dfsg1-2+b1_i386.deb",
+      "sha256": "ec7887ebe910ea46f6c0fd9f813e1338608361ce6d50582d7e2474fd753d582e",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/p/pulseaudio/libpulse0_17.0%2bdfsg1-2%2bb1_i386.deb"
+    },
+    {
+      "package": "libsndfile1",
+      "version": "1.2.2-2+deb13u1",
+      "architecture": "i386",
+      "file": "libsndfile1_1.2.2-2+deb13u1_i386.deb",
+      "sha256": "004654d5a78eb710586807322f41144e54c8c88ea3347f007c4b6b0d59b37d21",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libs/libsndfile/libsndfile1_1.2.2-2%2bdeb13u1_i386.deb"
+    },
+    {
+      "package": "libstdc++6",
+      "version": "14.2.0-19",
+      "architecture": "amd64",
+      "file": "libstdc++6_14.2.0-19_amd64.deb",
+      "sha256": "ab1fa05837aa7a92aae748fd07a18a35f7d18bb4a71c4724fe2bbf0e32089de0",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gcc-14/libstdc%2b%2b6_14.2.0-19_amd64.deb"
+    },
+    {
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "architecture": "i386",
+      "file": "libsystemd0_257.13-1~deb13u1_i386.deb",
+      "sha256": "e034259827e162c4c01ef4412bc6a2c4b4c3e2744767e5c08338132a0e2cf0ad",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/s/systemd/libsystemd0_257.13-1%7edeb13u1_i386.deb"
+    },
+    {
+      "package": "libtasn1-6",
+      "version": "4.20.0-2+deb13u1",
+      "architecture": "i386",
+      "file": "libtasn1-6_4.20.0-2+deb13u1_i386.deb",
+      "sha256": "e12a0eb8430e54eacdc4e650c93fb5c5db66594e0a3f5885127a3ab3ed275981",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libt/libtasn1-6/libtasn1-6_4.20.0-2%2bdeb13u1_i386.deb"
+    },
+    {
+      "package": "libunistring5",
+      "version": "1.3-2",
+      "architecture": "i386",
+      "file": "libunistring5_1.3-2_i386.deb",
+      "sha256": "d7f66009fe785d4964ca749ddf38602d692e944847dfdef1ccf76b4d30e050b2",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libu/libunistring/libunistring5_1.3-2_i386.deb"
+    },
+    {
+      "package": "liburing2",
+      "version": "2.9-1",
+      "architecture": "amd64",
+      "file": "liburing2_2.9-1_amd64.deb",
+      "sha256": "4b589c00c7a51172aace2cb2fb3d3ff32daf86c644023126dcfcaa840cc941ea",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libu/liburing/liburing2_2.9-1_amd64.deb"
+    },
+    {
+      "package": "libvdeplug2t64",
+      "version": "4.0.1-5.1+b1",
+      "architecture": "amd64",
+      "file": "libvdeplug2t64_4.0.1-5.1+b1_amd64.deb",
+      "sha256": "01291e2c8e28e91eac6b59c983a3a44e29ad0ddb8622699fbb84cbd5f26334a4",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/v/vdeplug4/libvdeplug2t64_4.0.1-5.1%2bb1_amd64.deb"
+    },
+    {
+      "package": "libvorbis0a",
+      "version": "1.3.7-3",
+      "architecture": "i386",
+      "file": "libvorbis0a_1.3.7-3_i386.deb",
+      "sha256": "32b6df776b5504097392c04045728e8920f28fee73a0748845e89852c6d372c5",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libv/libvorbis/libvorbis0a_1.3.7-3_i386.deb"
+    },
+    {
+      "package": "libvorbisenc2",
+      "version": "1.3.7-3",
+      "architecture": "i386",
+      "file": "libvorbisenc2_1.3.7-3_i386.deb",
+      "sha256": "d15bd9a2f93f0742ddf53b2a7cf25038cc2a52ff532327af47eaa77a366010be",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libv/libvorbis/libvorbisenc2_1.3.7-3_i386.deb"
+    },
+    {
+      "package": "libx11-6",
+      "version": "2:1.8.12-1",
+      "architecture": "i386",
+      "file": "libx11-6_2:1.8.12-1_i386.deb",
+      "sha256": "0a4ee67fffb3299953a9bd298c33e4f66d1b7f2f112eb83eb32c8e4351927741",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libx11/libx11-6_1.8.12-1_i386.deb"
+    },
+    {
+      "package": "libx11-data",
+      "version": "2:1.8.12-1",
+      "architecture": "all",
+      "file": "libx11-data_2:1.8.12-1_all.deb",
+      "sha256": "c54f87069888f80ba4da586da6147d74c7598ccdd8b90906dbc4271fa414c738",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libx11/libx11-data_1.8.12-1_all.deb"
+    },
+    {
+      "package": "libx11-xcb1",
+      "version": "2:1.8.12-1",
+      "architecture": "i386",
+      "file": "libx11-xcb1_2:1.8.12-1_i386.deb",
+      "sha256": "c17ba14a5a1c8b5733eef8eb54e640df27816d5fa6636c512d75374ca5305029",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libx11/libx11-xcb1_1.8.12-1_i386.deb"
+    },
+    {
+      "package": "libxau6",
+      "version": "1:1.0.11-1",
+      "architecture": "i386",
+      "file": "libxau6_1:1.0.11-1_i386.deb",
+      "sha256": "1645415b2ea8b64268f87944b733b9f9a2f243f89eb73555120eaf459fa06a57",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxau/libxau6_1.0.11-1_i386.deb"
+    },
+    {
+      "package": "libxcb1",
+      "version": "1.17.0-2+b1",
+      "architecture": "i386",
+      "file": "libxcb1_1.17.0-2+b1_i386.deb",
+      "sha256": "a4c421cf27ef4f66b32f650e3ac8bbd12bc8ec28b70a3be5dcc56dc3453e8d3e",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxcb/libxcb1_1.17.0-2%2bb1_i386.deb"
+    },
+    {
+      "package": "libxcomposite1",
+      "version": "1:0.4.6-1",
+      "architecture": "i386",
+      "file": "libxcomposite1_1:0.4.6-1_i386.deb",
+      "sha256": "74993ed9b8652244e862dbad8224b72a1fd634ee326abee8c7f7d3b3800e4a9c",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxcomposite/libxcomposite1_0.4.6-1_i386.deb"
+    },
+    {
+      "package": "libxcursor1",
+      "version": "1:1.2.3-1",
+      "architecture": "i386",
+      "file": "libxcursor1_1:1.2.3-1_i386.deb",
+      "sha256": "730d69855b63ad950143bd3b1a4629b25633eaa691148e9fde1dfe38495da809",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxcursor/libxcursor1_1.2.3-1_i386.deb"
+    },
+    {
+      "package": "libxdmcp6",
+      "version": "1:1.1.5-1",
+      "architecture": "i386",
+      "file": "libxdmcp6_1:1.1.5-1_i386.deb",
+      "sha256": "06b3a5d82fd69b1ff66e4e68fd4cf55f616864a29f456609a1f92b275b6126f7",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxdmcp/libxdmcp6_1.1.5-1_i386.deb"
+    },
+    {
+      "package": "libxdo3",
+      "version": "1:3.20160805.1-5.1",
+      "architecture": "amd64",
+      "file": "libxdo3_1:3.20160805.1-5.1_amd64.deb",
+      "sha256": "d634e25d2b50af140ee9f44bab507fcfb665f3556fd483faefdb56e85598cc12",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/x/xdotool/libxdo3_3.20160805.1-5.1_amd64.deb"
+    },
+    {
+      "package": "libxext6",
+      "version": "2:1.3.4-1+b3",
+      "architecture": "i386",
+      "file": "libxext6_2:1.3.4-1+b3_i386.deb",
+      "sha256": "9e15d0b7f325c70081acb33e21bf019a1bb7c9f0df262ece49bef91d072705a1",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxext/libxext6_1.3.4-1%2bb3_i386.deb"
+    },
+    {
+      "package": "libxfixes3",
+      "version": "1:6.0.0-2+b4",
+      "architecture": "i386",
+      "file": "libxfixes3_1:6.0.0-2+b4_i386.deb",
+      "sha256": "5ab7a33e21647a5398d422eff7426595c1bcbb8a58574c0cc8aa1a4f0a44c6cc",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxfixes/libxfixes3_6.0.0-2%2bb4_i386.deb"
+    },
+    {
+      "package": "libxi6",
+      "version": "2:1.8.2-1",
+      "architecture": "i386",
+      "file": "libxi6_2:1.8.2-1_i386.deb",
+      "sha256": "5a423e684387b8595cd9de0496279cef5a2bf54afd6a5c165d92b6e692e5a0fe",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxi/libxi6_1.8.2-1_i386.deb"
+    },
+    {
+      "package": "libxinerama1",
+      "version": "2:1.1.4-3+b4",
+      "architecture": "i386",
+      "file": "libxinerama1_2:1.1.4-3+b4_i386.deb",
+      "sha256": "53618c19fc1f95d814e57a67b81d079ef6afef35f9fdc017193b3834b602ed00",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxinerama/libxinerama1_1.1.4-3%2bb4_i386.deb"
+    },
+    {
+      "package": "libxrandr2",
+      "version": "2:1.5.4-1+b3",
+      "architecture": "i386",
+      "file": "libxrandr2_2:1.5.4-1+b3_i386.deb",
+      "sha256": "b3940d28cd51c5fb295737085bcca24064f3288a3b98cea3f9f92a4dfa757c72",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxrandr/libxrandr2_1.5.4-1%2bb3_i386.deb"
+    },
+    {
+      "package": "libxrender1",
+      "version": "1:0.9.12-1",
+      "architecture": "i386",
+      "file": "libxrender1_1:0.9.12-1_i386.deb",
+      "sha256": "c1666fddcb0ded151fbe3a2569264761b4e8a18e862bcc2bce156aa0f06d3473",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/libx/libxrender/libxrender1_0.9.12-1_i386.deb"
+    },
+    {
+      "package": "linux-image-6.12.115+deb13.1-amd64",
+      "version": "6.12.115-2",
+      "architecture": "amd64",
+      "file": "linux-image-6.12.115+deb13.1-amd64_6.12.115-2_amd64.deb",
+      "sha256": "6aa130b0864e58c7102b53ab9c2be4071fae62394f57c80bf4e1912f4c9b3b2a",
+      "url": "https://snapshot.debian.org/archive/debian-security/20261103T013555Z/pool/updates/main/l/linux-signed-amd64/linux-image-6.12.115%2bdeb13.1-amd64_6.12.115-2_amd64.deb"
+    },
+    {
+      "package": "openbox",
+      "version": "3.6.1-12+b2",
+      "architecture": "amd64",
+      "file": "openbox_3.6.1-12+b2_amd64.deb",
+      "sha256": "2250f7758694066d67b622b9612e942a9c0a06edb92c72bb948928320f891853",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/o/openbox/openbox_3.6.1-12%2bb2_amd64.deb"
+    },
+    {
+      "package": "patchelf",
+      "version": "0.18.0-1.4",
+      "architecture": "amd64",
+      "file": "patchelf_0.18.0-1.4_amd64.deb",
+      "sha256": "1d39a7973504a4a5eb4101293cca142b83055a5a0f94e1d4286ded2563289b92",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/p/patchelf/patchelf_0.18.0-1.4_amd64.deb"
+    },
+    {
+      "package": "qemu-system-common",
+      "version": "1:10.0.13+ds-0+deb13u1",
+      "architecture": "amd64",
+      "file": "qemu-system-common_1:10.0.13+ds-0+deb13u1_amd64.deb",
+      "sha256": "3a99dc23c42c66bb7e96dc1f2ba12b1797d154a472fbdb1cfcd822d9fb69e85b",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/q/qemu/qemu-system-common_10.0.13%2bds-0%2bdeb13u1_amd64.deb"
+    },
+    {
+      "package": "qemu-system-data",
+      "version": "1:10.0.13+ds-0+deb13u1",
+      "architecture": "all",
+      "file": "qemu-system-data_1:10.0.13+ds-0+deb13u1_all.deb",
+      "sha256": "a0e03c526cc09d4c2ab20aa19a8c12e916cdc49a170acb16a6563c28f70eafd3",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/q/qemu/qemu-system-data_10.0.13%2bds-0%2bdeb13u1_all.deb"
+    },
+    {
+      "package": "qemu-system-x86",
+      "version": "1:10.0.13+ds-0+deb13u1",
+      "architecture": "amd64",
+      "file": "qemu-system-x86_1:10.0.13+ds-0+deb13u1_amd64.deb",
+      "sha256": "5e841d0723a657fd8bc2e9e1a085d24f47fcb3e4a0f94762e6c38b429f22fbb1",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/q/qemu/qemu-system-x86_10.0.13%2bds-0%2bdeb13u1_amd64.deb"
+    },
+    {
+      "package": "seabios",
+      "version": "1.16.3-2",
+      "architecture": "all",
+      "file": "seabios_1.16.3-2_all.deb",
+      "sha256": "2b590534250b940f43222eeab9a8f57f337a9d9a73fc412a43ab8cd07a7e56f6",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/s/seabios/seabios_1.16.3-2_all.deb"
+    },
+    {
+      "package": "wine-stable",
+      "version": "11.0.0.0~trixie-1",
+      "architecture": "amd64",
+      "file": "wine-stable_11.0.0.0~trixie-1_amd64.deb",
+      "sha256": "b44710c2a6ff960e218a7fac7503860e04db0ef838996ea856336efb505f9898",
+      "url": "https://dl.winehq.org/wine-builds/debian/pool/main/w/wine/wine-stable_11.0.0.0~trixie-1_amd64.deb"
+    },
+    {
+      "package": "wine-stable-amd64",
+      "version": "11.0.0.0~trixie-1",
+      "architecture": "amd64",
+      "file": "wine-stable-amd64_11.0.0.0~trixie-1_amd64.deb",
+      "sha256": "5e12c8ed66d3e070fdfe20cd671e8fee7dbb16c40803d607052350c78b9ab589",
+      "url": "https://dl.winehq.org/wine-builds/debian/pool/main/w/wine/wine-stable-amd64_11.0.0.0~trixie-1_amd64.deb"
+    },
+    {
+      "package": "wine-stable-i386",
+      "version": "11.0.0.0~trixie-1",
+      "architecture": "i386",
+      "file": "wine-stable-i386_11.0.0.0~trixie-1_i386.deb",
+      "sha256": "e35945ec82884b1f420bcf6e7e60410d3c826375464f559b76dc47b27fcf8da6",
+      "url": "https://dl.winehq.org/wine-builds/debian/pool/main/w/wine/wine-stable-i386_11.0.0.0~trixie-1_i386.deb"
+    },
+    {
+      "package": "x11-xkb-utils",
+      "version": "7.7+9",
+      "architecture": "amd64",
+      "file": "x11-xkb-utils_7.7+9_amd64.deb",
+      "sha256": "745e29c79bb435d057cdbf8bb59a35fa33e818e566cb754674f44d381ccd4317",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/x/x11-xkb-utils/x11-xkb-utils_7.7%2b9_amd64.deb"
+    },
+    {
+      "package": "xdotool",
+      "version": "1:3.20160805.1-5.1",
+      "architecture": "amd64",
+      "file": "xdotool_1:3.20160805.1-5.1_amd64.deb",
+      "sha256": "98ac8681533b01020c7288fb2e9de403d586747dab48cfd58e04cb00d0c44fb1",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/x/xdotool/xdotool_3.20160805.1-5.1_amd64.deb"
+    },
+    {
+      "package": "xserver-common",
+      "version": "2:21.1.16-1.3+deb13u4",
+      "architecture": "all",
+      "file": "xserver-common_2:21.1.16-1.3+deb13u4_all.deb",
+      "sha256": "94bc0dcceeefabd4f706af19b3424de7f827758d0ebad5c18c52e73365d7f3ab",
+      "url": "https://snapshot.debian.org/archive/debian-security/20261103T013555Z/pool/updates/main/x/xorg-server/xserver-common_21.1.16-1.3%2bdeb13u4_all.deb"
+    },
+    {
+      "package": "xvfb",
+      "version": "2:21.1.16-1.3+deb13u4",
+      "architecture": "amd64",
+      "file": "xvfb_2:21.1.16-1.3+deb13u4_amd64.deb",
+      "sha256": "893d87bf159b6de077a929fc796a73c39f837d45310b2076e3eeebebb80552b6",
+      "url": "https://snapshot.debian.org/archive/debian-security/20261103T013555Z/pool/updates/main/x/xorg-server/xvfb_21.1.16-1.3%2bdeb13u4_amd64.deb"
+    },
+    {
+      "package": "zlib1g",
+      "version": "1:1.3.dfsg+really1.3.1-1+b1",
+      "architecture": "i386",
+      "file": "zlib1g_1:1.3.dfsg+really1.3.1-1+b1_i386.deb",
+      "sha256": "8950c79b1ade51f53b2f37863aec532cfaca3dff315e28f0c5b53902425c41ed",
+      "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bb1_i386.deb"
+    }
+  ]
+}
