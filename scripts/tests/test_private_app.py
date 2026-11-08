@@ -393,6 +393,22 @@ class PrivateAppTest(unittest.TestCase):
         self.assertIn("Versions: dllmgr ", out.getvalue())
         self.assertIn("modules faststone-v2", out.getvalue())
 
+    def test_trampoline_uses_upgrade_stable_launcher_of_installed_copy(self):
+        lib = self.root / "home/.local/lib/dllmgr"
+        version = lib / ("a" * 40)
+        (version / "scripts").mkdir(parents=True)
+        (version / "dllmgr").write_text("#!/bin/sh\n")
+        (version / ".dllmgr-revision").write_text("a" * 40 + "\n")
+        link = self.root / "home/.local/bin/dllmgr"
+        link.parent.mkdir(parents=True)
+        link.symlink_to(version / "dllmgr")
+        (self.prefix / "dosdevices/z:").symlink_to("/")
+        with patch.object(private_app, "HERE", version / "scripts"), \
+             patch.object(private_app.Path, "home", return_value=self.root / "home"):
+            line = private_app.trampoline_line(self.prefix.resolve(), self.exe.resolve())
+            self.assertEqual(private_app.dllmgr_version(), "aaaaaaa (installed)")
+        self.assertTrue(line.startswith('"Z:' + str(link.parent).replace("/", "\\") + '\\dllmgr" run'), line)
+
     def trampoline_install(self, registry):
         import zipfile
         with zipfile.ZipFile(self.package, "w") as archive:

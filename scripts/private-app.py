@@ -183,6 +183,9 @@ def runtime_release(requested):
 
 
 def dllmgr_version():
+    revision = HERE.parent / '.dllmgr-revision'  # written by install.sh
+    if revision.is_file():
+        return revision.read_text().strip()[:7] + ' (installed)'
     try:
         return subprocess.check_output(['git', '-C', str(HERE.parent), 'log', '-1', '--format=%h %cs'],
                                        text=True, stderr=subprocess.DEVNULL).strip() or 'unknown'
@@ -377,16 +380,31 @@ def install(args, prefix):
     print('  Shared prefix DLLs and system Wine were not changed.')
 
 
+def stable_launcher():
+    """The dllmgr command that survives upgrades: install.sh's symlink
+    (~/.local/bin/dllmgr -> ~/.local/lib/dllmgr/<sha>/dllmgr) when this copy is
+    an installed version, otherwise this checkout's own script."""
+    own = (HERE.parent / 'dllmgr').resolve(strict=True)
+    if (HERE.parent / '.dllmgr-revision').is_file():
+        link = Path.home() / '.local/bin/dllmgr'
+        if link.is_symlink() and link.resolve().parent.parent == HERE.parent.parent:
+            return link
+    return own
+
+
 def trampoline_registry(prefix, base):
     return prefill_proxy.Registry(prefix, str(base / 'bin/wine'))
 
 
 def trampoline_line(prefix, exe):
     """Launcher line the proxy runs instead of a stock-Wine start."""
-    launcher = (HERE.parent / 'dllmgr').resolve(strict=True)
+    launcher = stable_launcher()
     if '"' in str(prefix) + str(exe):
         raise prefill_proxy.Error('paths with double quotes are not supported')
-    return f'"{winpath(prefix, launcher)}" run faststone --prefix "{prefix}" --exe "{exe}" --'
+    # Keep the launcher's own name (it may be the install.sh symlink that
+    # follows upgrades); only its directory is resolved for the drive mapping.
+    launcher_win = winpath(prefix, launcher.parent) + '\\' + launcher.name
+    return f'"{launcher_win}" run faststone --prefix "{prefix}" --exe "{exe}" --'
 
 
 def install_trampoline(prefix, exe, package, base):
