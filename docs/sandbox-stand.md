@@ -92,6 +92,28 @@ All inside one `session` on `:93` with the prefix at 192 DPI.
 `shot.sh` style helper used: list visible windows with geometry via
 `xdotool search --onlyvisible --name .`, `import -window root`, crop.
 
+## Building Wine 11.0 pieces in the sandbox (#27 research)
+
+    apt-get install -y build-essential flex bison gettext pkg-config \
+      gcc-mingw-w64-x86-64 gcc-mingw-w64-i686 libx11-dev libxext-dev \
+      libxrender-dev libxrandr-dev libxi-dev libxcomposite-dev libxcursor-dev \
+      libxfixes-dev libxinerama-dev libfreetype-dev libfontconfig-dev \
+      libgnutls28-dev libdbus-1-dev
+    git clone --depth 1 --branch wine-11.0 https://github.com/wine-mirror/wine wine-11.0
+    mkdir wine-build64 && cd wine-build64 && ../wine-11.0/configure --enable-win64 \
+      --without-wayland --without-vulkan --without-opengl --without-gstreamer \
+      --without-pulse --without-alsa --without-cups --without-sane --without-krb5 \
+      --without-netapi --without-oss --without-pcap --without-usb --without-v4l2 \
+      --without-gphoto --without-capi --without-xxf86vm --without-osmesa \
+      --without-sdl --without-udev --without-unwind
+    make -j3 dlls/win32u/win32u.so dlls/winex11.drv/winex11.so   # ~40 s each
+
+Test a rebuilt `.so` in a copy (`cp -a /opt/wine-stable work/wine-exp`, drop it
+into `lib/wine/x86_64-unix/`), never in `/opt`. WineHQ packages use old WoW64:
+32-bit apps (FastStone) load `i386-unix/*.so`, which needs a separate i386 build.
+FastStone 8.5: https://www.faststonesoft.net/DN/FSViewer85.zip, SHA256 in
+tests/wine/faststone85.sh.
+
 ## Installer
 
 Official `Photoshop_CS2.exe`, 345,068,035 bytes,

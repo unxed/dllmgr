@@ -23,3 +23,27 @@ and A drops that. A correct change must skip only areas never drawn since the
 surface was created (or initialise from screen content). Next: such a
 "painted region" variant, regression checks for occlusion/redraw, then the
 real FastStone first-open probe (32-bit, i386-unix build) at 192 DPI.
+
+## Status / continuation (2026-11-08 18:50)
+
+- Proper A design (not yet coded): expose stores rects in a new
+  `surface->exposed` instead of `bounds`; each flush accumulates app drawing
+  (`bounds`) into a new `surface->painted`; flush sends
+  `bounds ∪ (exposed ∩ painted)`, so never-painted pixels never reach X.
+  Plus B (X background `None`). Simplification: `painted` is one bounding
+  rect, not a region (two painted corners mark the middle painted too).
+  Adding fields to `struct window_surface` needs win32u.so and winex11.so
+  rebuilt together (driver structs embed it); fine for a Wine source patch.
+- Regression gate `tests/wine/window-occlusion.c` is **not valid yet**: the
+  topmost blue cover never showed at the sampled centre (`covered` stage read
+  yellow), so even naive A passes it. Fix the probe first (cover must be seen
+  at the `covered` stage), then require naive A to FAIL it, then the proper
+  design to pass both probes.
+- Then: i386 build (FastStone 8.5 is PE32 and stock WineHQ uses i386-unix),
+  real first-open probe (tests/wine/first-open-probe.c) at 192 DPI.
+- Sandbox build recipe: `apt` deps in docs/sandbox-stand.md; Wine source
+  `git clone --depth 1 --branch wine-11.0 https://github.com/wine-mirror/wine`
+  (= db11d0fe); `configure --enable-win64 --without-<extras>` in a separate
+  build dir; `make dlls/win32u/win32u.so dlls/winex11.drv/winex11.so`
+  (~40 s incremental); copy `/opt/wine-stable` to a scratch dir and drop the
+  .so files into its `lib/wine/x86_64-unix/`. Run with `STAND_WM=metacity`.
