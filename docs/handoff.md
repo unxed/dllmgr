@@ -4,6 +4,44 @@ Before continuing, follow [the development policy](development.md): small atomic
 RUP increments, immediate push to `main` and delivery to the user; extended
 checks and refinement come afterward. Do not accumulate completed changes.
 
+## Current unfinished-work queue (2026-11-08)
+
+This entry point supersedes older checkpoint instructions below. Follow
+[the immediate-delivery policy](development.md); do not accumulate finished
+work while broadening tests. The current app-private installation is documented
+in [app-isolation.md](app-isolation.md), delivered on main in `6d21cb1`.
+Shared system/SxS DLL apply must stay disabled for product use. Photoshop scope
+is only the self-extractor's initial window, not installation.
+
+- [#21](https://github.com/unxed/dllmgr/issues/21): deliver the proven dropdown
+  paint correction through private install; owner acceptance and the separate
+  intermittent severe path-row corruption remain. Branch `research/faststone-path`
+  at `8ea884f`; final CI passed. Its old shared installer must not be reused.
+- [#22](https://github.com/unxed/dllmgr/issues/22): startup/Draw latency. The
+  font-cache enlargement was rejected after actual-app A/B; branch
+  `research/faststone-font-cache` at `643b39a` preserves the negative result.
+- [#23](https://github.com/unxed/dllmgr/issues/23): one composed selection with
+  explicit distinction between private DLLs and prefix-wide font/WIC assets.
+- [#27](https://github.com/unxed/dllmgr/issues/27): first-open full white-screen
+  flash, newly reported; cause/reproduction not yet established.
+- [#28](https://github.com/unxed/dllmgr/issues/28): accepted font .009 final
+  polish (capital В); preserve the accepted improvements and rejected fixtures.
+- [#29](https://github.com/unxed/dllmgr/issues/29): remaining middle-button/mode,
+  Crop and historical redraw audit; physical-pointer slowness unreproduced now.
+- [#30](https://github.com/unxed/dllmgr/issues/30): reconcile Wine report ledger,
+  historical docs and supplied upstream patches. The unfinished local draft is
+  remotely recoverable from [the source checkpoint](checkpoints/README.md).
+- [#19](https://github.com/unxed/dllmgr/issues/19): vtui TUI first, goWidgets GUI
+  later; planning only, do not implement until the owner activates the work.
+- [#18](https://github.com/unxed/dllmgr/issues/18): Far3/hiew and terminal
+  protocols. Far3's standing Lunobot assignment remains `unxed/lunobot#322`;
+  the added hiew/protocol scope is recorded only for now.
+
+Parent [#8](https://github.com/unxed/dllmgr/issues/8) is the authoritative
+remaining-work index. Completed #25 must not be mistaken for an unresolved
+Photoshop installation task; historical notes below are evidence, not current
+instructions to restore the unsafe shared-file method.
+
 ## Latest local checkpoint (2026-11-07)
 
 Saved on GitHub at the owner's request on **2026-11-07**. Detailed attempts,

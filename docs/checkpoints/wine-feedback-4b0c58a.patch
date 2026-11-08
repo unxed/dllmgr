@@ -1,0 +1,645 @@
+diff --git a/catalog/README.md b/catalog/README.md
+index e361d48..c1af824 100644
+--- a/catalog/README.md
++++ b/catalog/README.md
+@@ -30,6 +30,13 @@ Trackers: `winehq` (WineHQ Bugzilla, `https://bugs.winehq.org/show_bug.cgi?id=N`
+ `dllmgr` (`https://github.com/unxed/dllmgr/issues/N`, for a fix that has no
+ upstream bug yet; rename the entry once a WineHQ report exists).
+ 
++Published Wine feedback is tracked in the [feedback ledger](../docs/bugzilla/submissions.json),
++which links bugs and exact comments to their fix/workaround records. The
++[FastStone problem map](../docs/faststone.md#published-wine-feedback) also includes
++the separate AVIF and font workarounds, which are documented outside this DLL
++patch catalog. Follow the [reporting instructions](../docs/bugzilla/README.md)
++before preparing another report.
++
+ ## Submitting an entry
+ 
+ 1. Fork this repository.
+diff --git a/catalog/fixes/dllmgr-14.md b/catalog/fixes/dllmgr-14.md
+index b9597ff..6e5cb97 100644
+--- a/catalog/fixes/dllmgr-14.md
++++ b/catalog/fixes/dllmgr-14.md
+@@ -19,6 +19,13 @@ ai_assisted: true
+ 
+ # dllmgr-14
+ 
++Upstream Wine bug: [60711](https://bugs.winehq.org/show_bug.cgi?id=60711),
++published [description](https://bugs.winehq.org/show_bug.cgi?id=60711#c0).
++The existing local fix ID is `dllmgr-14`; its Wine counterpart is
++`winehq-60711`. [Report text](../../docs/bugzilla/dllmgr-14.txt), verification
++and publication time are linked in the [feedback ledger](../../docs/bugzilla/submissions.json).
++The local tracking issue remains [dllmgr #14](https://github.com/unxed/dllmgr/issues/14).
++
+ FastStone owner-draws each thumbnail tile inside the rectangle returned by
+ `LVM_GETITEMRECT(LVIR_ICON)`. Native comctl32 v6 returns the whole cell
+ (138 px wide for FastStone's 138×144 spacing at 96 DPI). Wine returns only
+@@ -39,15 +46,25 @@ the item position. All other cases keep the current metrics. Painting and
+ hit-testing do not use this path, so only callers of `LVM_GETITEMRECT` see
+ the change.
+ 
+-Open question for a Wine report: the Windows measurement covers FastStone's
+-owner-drawn cells; plain large-icon controls with default spacing should be
+-compared on Windows before this is proposed as general behavior.
++The focused check also covers a plain large-icon ListView with a normal
++32x32 image list and default spacing: Windows v6 returns a 74-pixel-wide icon
++rectangle for empty text, a space and a filename; stock Wine returns only the
++32-pixel image width. With only dllmgr-14, Wine returns its full 75-pixel cell
++width and the check passes. The one-pixel cell-width difference between the
++systems is not claimed to be fixed. Other views and state-image configurations
++remain outside the measured scope. See the
++[report evidence](../../docs/bugzilla/dllmgr-14-validation.txt).
+ 
+ ## Validation status
+ 
+ Same runner, 192 DPI, FastStone 8.5 x86, Wine 11.0: with the four earlier
+ fixes the tiles overflow; adding this patch keeps the folder preview, badges
+ and selection inside each tile (artifact `faststone85-192-comparison`,
+-`patched` vs `icon-cell`). Not yet compared with Windows for other
+-views or image list setups. No WineHQ bug yet; see the gate in
++`patched` vs `icon-cell`). The standalone icon-cell check fails on stock Wine
++and passes with only this change; the later deep run
++[42278157255](https://github.com/unxed/dllmgr/actions/runs/42278157255) completed
++successfully. The owner also confirmed that previews fit their tiles.
++Other views and image-list setups are not claimed. The owner filed
++[Wine bug 60711](https://bugs.winehq.org/show_bug.cgi?id=60711) on 2026-11-07;
++see the gate in
+ [the audit](../../docs/faststone.md).
+diff --git a/catalog/fixes/winehq-48872.md b/catalog/fixes/winehq-48872.md
+index f62ea81..fa05155 100644
+--- a/catalog/fixes/winehq-48872.md
++++ b/catalog/fixes/winehq-48872.md
+@@ -18,6 +18,9 @@ ai_assisted: true
+ 
+ # winehq-48872
+ 
++Published Wine feedback: [comment 7](https://bugs.winehq.org/show_bug.cgi?id=48872#c7).
++Publication status and text are tracked in the [feedback ledger](../../docs/bugzilla/submissions.json).
++
+ ## Problem
+ 
+ In a list-view in icon view, an item whose own text is empty gets a
+@@ -50,6 +53,9 @@ and names appear under files and folders, including Cyrillic ones. The
+ controls fixture `--check-label` checks a usable rectangle and no painted
+ pixels. See `results` and [the audit](../../docs/faststone.md).
+ 
++On 2026-11-07 the owner visually confirmed that file and folder names are
++visible under the tiles in the ordinary thumbnail grid with the installed fix.
++
+ ## Installation
+ 
+ Part of the FastStone recipe (`dllmgr fix faststone`). The per-bug entry
+diff --git a/catalog/fixes/winehq-48874.md b/catalog/fixes/winehq-48874.md
+index 157c9ad..8626dd2 100644
+--- a/catalog/fixes/winehq-48874.md
++++ b/catalog/fixes/winehq-48874.md
+@@ -18,6 +18,9 @@ ai_assisted: true
+ 
+ # winehq-48874
+ 
++Published Wine feedback: [comment 9](https://bugs.winehq.org/show_bug.cgi?id=48874#c9).
++Publication status and text are tracked in the [feedback ledger](../../docs/bugzilla/submissions.json).
++
+ ## Problem
+ 
+ FastStone's pencil in Draw Board always draws black, whatever colour is
+@@ -50,7 +53,9 @@ stock comctl32 and a freshly started wineserver draws red (`ff0000`, 3642
+ pixels), with native GDI+ / builtin comctl32 load evidence. Undo restored the
+ installed bundle, override values, managed state and settings. See
+ `experiments/local-validation/README.md` for the earlier stale-server failure
+-and the successful cold comparison. User visual acceptance remains pending.
++and the successful cold comparison. On 2026-11-07 the owner confirmed that
++the pencil draws the selected colour, with screenshots showing a cyan stroke
++matching the colour selector at 100% and 300% zoom in FastStone's Draw Board.
+ 
+ ## Installation
+ 
+diff --git a/catalog/fixes/winehq-59251.md b/catalog/fixes/winehq-59251.md
+index 8fe643d..9f6e712 100644
+--- a/catalog/fixes/winehq-59251.md
++++ b/catalog/fixes/winehq-59251.md
+@@ -19,6 +19,9 @@ ai_assisted: true
+ 
+ # winehq-59251
+ 
++Published Wine feedback: [comment 4](https://bugs.winehq.org/show_bug.cgi?id=59251#c4).
++Publication status and text are tracked in the [feedback ledger](../../docs/bugzilla/submissions.json).
++
+ ## Problem
+ 
+ In a list-view in icon view (`LVS_ICON`), the mouse wheel does not behave
+diff --git a/catalog/fixes/winehq-59609.md b/catalog/fixes/winehq-59609.md
+index e04df0a..6774df4 100644
+--- a/catalog/fixes/winehq-59609.md
++++ b/catalog/fixes/winehq-59609.md
+@@ -21,6 +21,10 @@ authors: [T_Im]
+ 
+ # winehq-59609: LVM_GETITEMPOSITION in icon views
+ 
++Published Wine feedback: [results, comment 8](https://bugs.winehq.org/show_bug.cgi?id=59609#c8)
++and [apply/undo, comment 9](https://bugs.winehq.org/show_bug.cgi?id=59609#c9).
++Publication status is tracked in the [feedback ledger](../../docs/bugzilla/submissions.json).
++
+ ## Symptom
+ 
+ FastStone Image Viewer (`FSViewer.exe`) shows its full-screen thumbnail strip
+diff --git a/contrib/fix-it-in-wine-report-disclosure.patch b/contrib/fix-it-in-wine-report-disclosure.patch
+new file mode 100644
+index 0000000..836819a
+--- /dev/null
++++ b/contrib/fix-it-in-wine-report-disclosure.patch
+@@ -0,0 +1,19 @@
++--- a/SKILL.md
+++++ b/SKILL.md
++@@ -249,7 +249,7 @@
++ 
++ Gate before posting. A test that reproduces the behaviour described in the ticket fails on the unmodified Wine build and passes with only the proposed change, and the change was also checked by eye in the real application (the user confirms). A synthetic probe alone, or a build with several changes, does not pass the gate. Record the program version, Wine build, architecture, display setup, the exact command and the results.
++ 
++-Post only after the user's explicit yes. Posting goes through the user's own Bugzilla login in the agent's browser (the user logs in at https://bugs.winehq.org; you must not ask for the password). Do not attach, paste or link code you wrote (rule 9): describe it in words only. A patch written by a person, such as one already in the ticket, may be referenced as usual. State in the text that it was prepared with an AI agent.
+++Post only after the user's explicit yes. Posting goes through the user's own Bugzilla login in the agent's browser (the user logs in at https://bugs.winehq.org; you must not ask for the password). Do not attach, paste or link code you wrote (rule 9): describe it in words only. A patch written by a person, such as one already in the ticket, may be referenced as usual. Add an AI-authorship disclosure to the report only if the destination explicitly requires it, or the user requests it. Check the current destination rules and record the source of any requirement; do not describe this local skill preference as an upstream rule. Answer direct provenance questions honestly and never falsely claim human authorship.
++ 
++ ### 11. Finish
++ 
++--- a/templates/bug-report.md
+++++ b/templates/bug-report.md
++@@ -93,4 +93,4 @@
++ 
++ ## Disclosure
++ 
++-This report was prepared with an AI agent (fix-it-in-wine). The code the agent wrote is not offered for inclusion in Wine.
+++<!-- Add an AI-authorship disclosure only if the destination explicitly requires it or the user requests it. Do not include this instruction in the posted text. -->
+diff --git a/docs/avif.md b/docs/avif.md
+index 699f32e..01ad7fb 100644
+--- a/docs/avif.md
++++ b/docs/avif.md
+@@ -1,5 +1,8 @@
+ # AVIF in FastStone (WineHQ 60703)
+ 
++Wine bug and published findings: [60703, comment 4](https://bugs.winehq.org/show_bug.cgi?id=60703#c4).
++Publication status and text: [feedback ledger](bugzilla/submissions.json).
++
+ An experimental, reversible workaround for FastStone 8.5 x86 on Wine 11.0.
+ Wine's WIC has no AVIF decoder. This adds a native x86 COM decoder built from
+ libavif and libaom, using open-source code and no Microsoft binaries.
+diff --git a/docs/bugzilla/README.md b/docs/bugzilla/README.md
+new file mode 100644
+index 0000000..e6dd5a0
+--- /dev/null
++++ b/docs/bugzilla/README.md
+@@ -0,0 +1,39 @@
++# WineHQ feedback
++
++Before preparing feedback, check `submissions.json` and read the entire live
++ticket. Existing reports receive a follow-up; search for duplicates before
++creating a new report. Handle one report at a time.
++Also audit local fix records with only a dllmgr issue: covering the existing
++Wine numbers does not complete reporting while a verified local fix still
++needs its own upstream report. Track each such pending new report explicitly;
++its `bug_url` remains null until the owner publishes it.
++
++Write the text in English and plain text, without Markdown. Describe measured
++behavior, environment and verification; keep unsupported conclusions out.
++The verification gate in `docs/faststone.md` still applies. The owner posts
++the text. Never mark a prepared draft as posted. After publication, verify the
++comment and record its exact URL and UTC timestamp in `submissions.json`.
++Each record's `fix_record` points to the catalog fix or separate workaround
++description; that description links back to this ledger and the published
++comment. The problem overview is `docs/faststone.md#published-wine-feedback`.
++
++## AI disclosure
++
++Owner decision, 2026-11-07: do not add a statement that an agent wrote the
++report unless Wine explicitly requires that disclosure. If such a requirement
++is introduced or requested for the report, follow it and record its source.
++Do not falsely claim human authorship or conceal provenance if asked directly.
++
++Checked on 2026-11-07:
++
++- https://gitlab.winehq.org/wine/wine/-/wikis/Clean-Room-Guidelines
++- https://gitlab.winehq.org/wine/wine/-/wikis/Bugs
++
++Neither checked page requires AI disclosure in bug-report prose. The clean-room
++rule prohibits using an LLM to generate code for Wine; it does not impose a
++disclosure footer on bug-report text. Our words-only, no-agent-code and
++no-agent-code-links policy remains in force. The unconditional disclosure
++sentence in the current fix-it-in-wine skill/template is a local instruction,
++not a requirement found in these Wine rules. This owner decision overrides it
++for dllmgr reports. A corresponding patch for that repository is in
++`contrib/fix-it-in-wine-report-disclosure.patch`.
+diff --git a/docs/bugzilla/dllmgr-14-validation.txt b/docs/bugzilla/dllmgr-14-validation.txt
+new file mode 100644
+index 0000000..d23c9c6
+--- /dev/null
++++ b/docs/bugzilla/dllmgr-14-validation.txt
+@@ -0,0 +1,41 @@
++Local fix: dllmgr-14
++Wine report: https://bugs.winehq.org/show_bug.cgi?id=60711#c0
++Published by the owner on 2026-11-07 at 20:40:18 UTC; publication verified in the browser.
++
++Actual-app comparison recorded in the catalog:
++https://github.com/unxed/dllmgr/actions/runs/42256224744
++Artifact faststone85-192-comparison compares the same application with the existing fixes and with the additional public LVIR_ICON rectangle change.
++
++Later deep validation:
++https://github.com/unxed/dllmgr/actions/runs/42278157255
++Source SHA 255f086b95ed9cc751f80d945384ec021f130b71.
++Checked live on 2026-11-07: build, windows, wine, patched, faststone85 (96/144/192) and windows-app all completed successfully.
++
++Archived standalone measurements reviewed for report preparation:
++validation-current/windows-baseline/windows-v6.txt
++  Empty text: LVIR_ICON=(2,0,76,36), width 74.
++  Space: LVIR_ICON=(0,0,74,36), width 74.
++  Filename: LVIR_ICON=(1,0,75,36), width 74.
++validation-current/fixed-modules/dllmgr/dllmgr/results/before-controls6.exe.txt
++  All three texts: LVIR_ICON=(21,4,53,36), width 32.
++  All three have the explicit icon-cell check failure. The complete combined baseline has 7 failures, including other independently tracked defects.
++validation-current/fixed-modules/dllmgr/dllmgr/results/dllmgr-14-v6.txt
++  All three texts: LVIR_ICON=(0,0,75,36), width 75, matching Wine's own cell width.
++  Focused check: Failures: 0. Other known defects remain present, as expected for an isolated fix.
++validation-current/fixed-modules/dllmgr/dllmgr/out/dllmgr-14/SOURCE.txt
++  wine-11.0 db11d0fe6a169c457e23d007e20404643d067aa8 + dllmgr-14
++
++Archived actual-app geometry:
++  Windows, FastStone 8.5, 96 DPI: horizontal icon spacing 138; first LVIR_ICON=(2,0,140,124), width 138.
++  Wine 11.0, FastStone 8.5, 192 DPI, before cell change: spacing 276; first LVIR_ICON=(18,4,258,244), width 240.
++  Same Wine application with cell change: first LVIR_ICON=(0,0,276,244), width 276.
++
++Owner visual confirmation, 2026-11-06:
++https://github.com/unxed/dllmgr/issues/8#issuecomment-6693158826
++Thumbnails and folder previews fit their tiles after applying the fix.
++
++Duplicate search checked in the browser, 2026-11-07:
++ALL LVIR_ICON: only Wine 9491, read through its final comment. It concerns LVM_GETSUBITEMRECT/report-mode behavior and was closed fixed; it is not this large-icon LVM_GETITEMRECT case.
++ALL FastStone: 18 reports; no matching tile-overflow report found. Existing 48872 is the separate label-rectangle issue.
++
++Scope: native v6 and Wine v6 large-icon view with a normal image list, without state images. No parity claim for other views or image-list configurations.
+diff --git a/docs/bugzilla/dllmgr-14.txt b/docs/bugzilla/dllmgr-14.txt
+new file mode 100644
+index 0000000..a0dbbd2
+--- /dev/null
++++ b/docs/bugzilla/dllmgr-14.txt
+@@ -0,0 +1,15 @@
++FastStone Image Viewer 8.5: thumbnails and format labels overflow their tiles
++
++Environment: FastStone Image Viewer 8.5 (32-bit), WineHQ stable 11.0, Linux Mint 22.3 x86-64, win64 prefix, 192 DPI.
++
++Application download: https://www.faststonesoft.net/DN/FSViewerSetup85.exe
++
++Open a folder containing several images and subfolders in FastStone, then select the thumbnail view. Image thumbnails, folder previews and file-format badges extend past their tile frames. Selection frames are also misaligned. These elements should fit inside their corresponding tiles, as they do on Windows.
++
++The application uses LVM_GETITEMRECT with LVIR_ICON for the tile geometry. With native comctl32 v6, FastStone's 138-pixel horizontal icon spacing at 96 DPI produces a 138-pixel-wide rectangle. Wine 11.0 at 192 DPI reports only the centered 240-pixel image width inside a 276-pixel cell.
++
++The difference also occurs in a standalone icon-view ListView with a normal 32 x 32 image list and default spacing, without FastStone: native v6 returns an icon rectangle 74 pixels wide, while Wine returns only 32 pixels. Empty text, a space and a filename all show the difference.
++
++A local change restricted to comctl32 v6 large-icon view, with a normal image list and no state image list, makes the public LVIR_ICON rectangle cover the cell width and start at the cell's top. Internal painting and hit-testing metrics remain unchanged. The focused check fails on stock Wine and passes with this change alone. In the actual FastStone comparison, adding this change to the same baseline fixes the overflowing previews, badges and frames. I have also confirmed the result visually on my desktop.
++
++This is separate from bug 48872, which concerns missing filenames and the LVIR_LABEL rectangle. Behavior in other views or image-list configurations is not claimed.
+diff --git a/docs/bugzilla/submissions.json b/docs/bugzilla/submissions.json
+new file mode 100644
+index 0000000..3d4d8d7
+--- /dev/null
++++ b/docs/bugzilla/submissions.json
+@@ -0,0 +1,135 @@
++{
++  "description": "WineHQ feedback ledger. prepared is not posted. Set status to posted only after verifying the published comment or new bug; record its exact URL and UTC publication time. Check this ledger and the live ticket before preparing or sending another update.",
++  "problem_record": "docs/faststone.md#published-wine-feedback",
++  "reports": [
++    {
++      "id": "dllmgr-14-tile-overflow-2026-11-07",
++      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=60711",
++      "local_issue_url": "https://github.com/unxed/dllmgr/issues/14",
++      "fix_id": "dllmgr-14",
++      "upstream_id": "winehq-60711",
++      "fix_record": "catalog/fixes/dllmgr-14.md",
++      "kind": "new-bug",
++      "topic": "FastStone thumbnails and badges overflow tiles because LVIR_ICON returns image bounds",
++      "status": "posted",
++      "prepared_on": "2026-11-07",
++      "text_file": "docs/bugzilla/dllmgr-14.txt",
++      "verification_file": "docs/bugzilla/dllmgr-14-validation.txt",
++      "new_bug_form": "https://bugs.winehq.org/enter_bug.cgi?product=Wine",
++      "component": "comctl32",
++      "wine_version": "11.0",
++      "duplicate_search": "ALL LVIR_ICON and ALL FastStone checked on 2026-11-07; Wine 9491 read and excluded as a different report-view/subitem case.",
++      "owner_visual_confirmation": "https://github.com/unxed/dllmgr/issues/8#issuecomment-6693158826",
++      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=60711#c0",
++      "posted_at_utc": "2026-11-07T20:40:18Z",
++      "posted_by": "owner"
++    },
++    {
++      "id": "winehq-48874-pencil-findings-2026-11-07",
++      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=48874",
++      "fix_record": "catalog/fixes/winehq-48874.md",
++      "kind": "follow-up",
++      "topic": "GDI+ incorrectly inherits HDC ROP2 for pencil strokes",
++      "status": "posted",
++      "prepared_on": "2026-11-07",
++      "text_file": "docs/bugzilla/winehq-48874.txt",
++      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=48874#c8",
++      "owner_visual_confirmation": {
++        "date": "2026-11-07",
++        "result": "Pencil draws the selected colour; supplied screenshots show cyan matching the selector at 100% and 300% zoom."
++      },
++      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=48874#c9",
++      "posted_at_utc": "2026-11-07T19:28:14Z",
++      "posted_by": "owner"
++    },
++    {
++      "id": "winehq-59251-wheel-findings-2026-11-07",
++      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=59251",
++      "fix_record": "catalog/fixes/winehq-59251.md",
++      "kind": "follow-up",
++      "topic": "Icon-view mouse-wheel axis, delta accumulation and spacing",
++      "status": "posted",
++      "prepared_on": "2026-11-07",
++      "text_file": "docs/bugzilla/winehq-59251.txt",
++      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=59251#c3",
++      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=59251#c4",
++      "posted_at_utc": "2026-11-07T19:13:02Z",
++      "posted_by": "owner"
++    },
++    {
++      "id": "winehq-59609-coordinate-results-2026-11-06",
++      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=59609",
++      "fix_record": "catalog/fixes/winehq-59609.md",
++      "kind": "follow-up",
++      "topic": "Windows and Wine 9.0/11.0/11.21 coordinate comparison",
++      "status": "posted",
++      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=59609#c8",
++      "posted_at_utc": "2026-11-06T04:01:17Z"
++    },
++    {
++      "id": "winehq-59609-apply-undo-2026-11-06",
++      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=59609",
++      "fix_record": "catalog/fixes/winehq-59609.md",
++      "kind": "follow-up",
++      "topic": "FastStone one-step apply and undo instructions",
++      "status": "posted",
++      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=59609#c9",
++      "posted_at_utc": "2026-11-06T04:41:57Z"
++    },
++    {
++      "id": "winehq-60703-wic-decoder-findings-2026-11-07",
++      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=60703",
++      "fix_record": "docs/avif.md",
++      "kind": "follow-up",
++      "topic": "Missing WIC AVIF decoder confirmed; sample dimensions and local workaround",
++      "status": "posted",
++      "prepared_on": "2026-11-07",
++      "text_file": "docs/bugzilla/winehq-60703.txt",
++      "verification_file": "docs/avif.md",
++      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=60703#c3",
++      "owner_visual_evidence": "2026-11-07: supplied Draw Board screenshots display the attached AVIF with 626x417 dimensions at 100% and 300% zoom.",
++      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=60703#c4",
++      "posted_at_utc": "2026-11-07T19:30:55Z",
++      "posted_by": "owner"
++    },
++    {
++      "id": "winehq-48872-label-findings-2026-11-07",
++      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=48872",
++      "fix_record": "catalog/fixes/winehq-48872.md",
++      "kind": "follow-up",
++      "topic": "Empty list-view label geometry hides FastStone file and folder names",
++      "status": "posted",
++      "prepared_on": "2026-11-07",
++      "text_file": "docs/bugzilla/winehq-48872.txt",
++      "verification_file": "catalog/fixes/winehq-48872.md",
++      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=48872#c6",
++      "owner_visual_confirmation": {
++        "date": "2026-11-07",
++        "result": "Owner confirmed that file and folder names are visible under tiles in the ordinary thumbnail grid with the installed fix."
++      },
++      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=48872#c7",
++      "posted_at_utc": "2026-11-07T19:40:32Z",
++      "posted_by": "owner"
++    },
++    {
++      "id": "winehq-26037-cyrillic-findings-2026-11-07",
++      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=26037",
++      "fix_record": "docs/fonts.md",
++      "kind": "follow-up",
++      "topic": "Wine 11.0 Tahoma Bold retains regular Cyrillic outlines with bold advances",
++      "status": "posted",
++      "prepared_on": "2026-11-07",
++      "text_file": "docs/bugzilla/winehq-26037.txt",
++      "verification_file": "docs/fonts.md",
++      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=26037#c13",
++      "owner_visual_confirmation": {
++        "date": "2026-11-07",
++        "source": "docs/handoff.md and docs/fonts.md: owner's feedback recorded by the main dialogue",
++        "result": "Candidate .009 nearly ideal; unchanged capital Cyrillic В looks slightly heavier. Exact Windows glyph-shape parity is not claimed."
++      },
++      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=26037#c14",
++      "posted_at_utc": "2026-11-07T19:43:24Z",
++      "posted_by": "owner"
++    }
++  ]
++}
+diff --git a/docs/bugzilla/winehq-26037.md b/docs/bugzilla/winehq-26037.md
+index a7c9b11..1b40eb5 100644
+--- a/docs/bugzilla/winehq-26037.md
++++ b/docs/bugzilla/winehq-26037.md
+@@ -1,8 +1,9 @@
+ # Draft: follow-up to WineHQ bug 26037 "Tahoma Bold is not bold"
+ 
+-Status: draft, not posted. The owner posts it. Gate (docs/faststone.md): the
+-observation is reproduced (stock Wine 11.0 font files, owner's screenshot);
+-the "passes with only the change" part waits for a corrected font.
++Status: earlier draft, superseded by `winehq-26037.txt`. The updated plain-text
++follow-up includes the corrected .009 font validation and owner feedback
++recorded in `docs/fonts.md`. The owner posted that updated text on 2026-11-07:
++https://bugs.winehq.org/show_bug.cgi?id=26037#c14 . See `submissions.json`.
+ Words only: no code and no links to code (D20).
+ 
+ ---
+@@ -28,5 +29,3 @@ in tahomabd.ttf was divided by the area of the same letter in tahoma.ttf.
+ 
+ Expected: every Cyrillic letter in tahomabd.ttf has bold outlines, as in
+ Windows' Tahoma Bold, with advance widths that match those outlines.
+-
+-This report was prepared with an AI agent (fix-it-in-wine).
+diff --git a/docs/bugzilla/winehq-26037.txt b/docs/bugzilla/winehq-26037.txt
+new file mode 100644
+index 0000000..fe68193
+--- /dev/null
++++ b/docs/bugzilla/winehq-26037.txt
+@@ -0,0 +1,7 @@
++This still affects Cyrillic in Wine 11.0's own Tahoma Bold. In FastStone Image Viewer 8.5, the Russian fullscreen-panel headings "Файл, слайдшоу" and "Поворот, размеры, текст" mix bold and regular-looking letters, with uneven gaps. Environment: WineHQ stable 11.0, 32-bit FastStone in a win64 prefix, 192 DPI.
++
++Comparing Wine's tahomabd.ttf with tahoma.ttf shows that а, с, о, р and е have bold outlines: their enclosed outline areas are about 1.65-1.88 times those of the regular face. However, Ф, й, л, д, ш, у, П, в, т, з, м, ы and к have exactly the same outline areas as the regular face, despite wider advance widths in the bold face. Both fonts contain these characters, so this is not missing-glyph fallback.
++
++Rendering the same headings directly from these font files reproduces the mixed-weight pattern outside FastStone. The regular outlines combined with wider advances also explain the apparent extra spacing.
++
++A locally corrected Wine font, with the affected Cyrillic outlines emboldened and the original advance widths preserved, removes the mixed-weight appearance in the same FastStone panel. Minor weight balancing remains, so exact Windows glyph-shape parity is not claimed. The underlying issue is that these Cyrillic glyphs in the bold face still use regular outlines.
+diff --git a/docs/bugzilla/winehq-48872.txt b/docs/bugzilla/winehq-48872.txt
+new file mode 100644
+index 0000000..58ae2d7
+--- /dev/null
++++ b/docs/bugzilla/winehq-48872.txt
+@@ -0,0 +1,9 @@
++Confirmed with FastStone Image Viewer 8.5 (32-bit), Wine 11.0, a win64 prefix and 192 DPI. My earlier successful test with FastStone 5.6 does not cover this version.
++
++FastStone draws file and folder names itself, while the corresponding list-view item text is empty. Wine returns a zero-width label rectangle from LVM_GETITEMRECT with LVIR_LABEL, leaving no space for the application to draw the name.
++
++Tests against Windows comctl32 v6 show that an empty icon-view label still has a full-width rectangle below the icon. Selecting the item does not paint a label selection background there. Replacing empty text with a space changes that painting behavior, so geometry and painting need to be handled separately.
++
++A local change makes LISTVIEW_GetItemRect return a full-item-width, one-line-high label rectangle for empty icon-view labels and include that area in LVIR_SELECTBOUNDS. Internal painting metrics remain unchanged, preserving the empty label's lack of selection background.
++
++In FastStone at 192 DPI, the label width changes from 0 to 276 pixels and names appear under files and folders, including Cyrillic names. The focused test checks both usable label geometry and the absence of unwanted selection painting. I have also visually confirmed that the names are displayed correctly on my desktop.
+diff --git a/docs/bugzilla/winehq-48874.txt b/docs/bugzilla/winehq-48874.txt
+new file mode 100644
+index 0000000..69b4b43
+--- /dev/null
++++ b/docs/bugzilla/winehq-48874.txt
+@@ -0,0 +1,9 @@
++Confirmed with FastStone Image Viewer 8.5 (32-bit), Wine 11.0, a win64 prefix and 192 DPI. My earlier successful test with FastStone 5.6 does not cover this version.
++
++The cause is in gdiplus. FastStone draws pencil strokes with a GDI+ pen on an HDC whose GDI raster operation is R2_BLACK. Wine inherits that operation, so the stroke becomes black regardless of the pen colour.
++
++A focused test draws a red GDI+ line on 24-bit and 32-bit DIBs with several HDC ROP2 settings. On Windows the line stays red and the caller's ROP2 is preserved. Stock Wine draws black with R2_BLACK.
++
++The correction is to use R2_COPYPEN inside GDI+'s prepare_dc path after saving the DC, then restore the caller's original DC state afterwards. The focused test passes with this change, including preservation of the caller's ROP2.
++
++In the actual application, replacing only Wine's gdiplus with the corrected build, while keeping stock comctl32, changes the same pencil stroke from black to red. I have also visually confirmed on my desktop that the pencil now draws the selected colour, including cyan.
+diff --git a/docs/bugzilla/winehq-59251.txt b/docs/bugzilla/winehq-59251.txt
+new file mode 100644
+index 0000000..2ed68c8
+--- /dev/null
++++ b/docs/bugzilla/winehq-59251.txt
+@@ -0,0 +1,10 @@
++I investigated the mouse-wheel part of this bug with FastStone Image Viewer 8.5 (32-bit), Wine 11.0, a win64 prefix and 192 DPI.
++
++The problem is in comctl32's icon-view mouse-wheel handling. Wine always scrolls vertically, so a list with only a horizontal scrollbar, such as the fullscreen thumbnail strip, does not move. In an ordinary thumbnail grid, it moves a fixed 37 pixels per wheel message, regardless of wheel delta or icon spacing. This also explains the very slow scrolling with larger thumbnails or higher DPI.
++
++Tests against Windows comctl32 v6 show that wheel deltas accumulate until they reach a full detent (120). The remainder is reset when the direction changes. Scrolling is horizontal when there is a horizontal scrollbar but no vertical one; otherwise it is vertical. With the default three scroll lines, each detent moves three times half the icon spacing on that axis, capped at one page.
++
++A local change implementing this behavior fixes the focused control tests. In FastStone's grid at 192 DPI, successive wheel events of half, half, one and two detents move 37/37/37/37 pixels on stock Wine, versus 0/426/426/852 pixels with the change. The fullscreen strip also scrolls with the wheel on the user's desktop after applying the fix.
++
++The missing thumbnails mentioned in the original report are a separate issue, tracked as bug 59609. This follow-up concerns wheel scrolling.
++
+diff --git a/docs/bugzilla/winehq-60703.txt b/docs/bugzilla/winehq-60703.txt
+new file mode 100644
+index 0000000..d3d89ea
+--- /dev/null
++++ b/docs/bugzilla/winehq-60703.txt
+@@ -0,0 +1,7 @@
++The WIC decoder explanation in comment 3 is confirmed. FastStone 8.5 (32-bit) calls WIC's CreateDecoderFromStream for AVIF. On stock Wine 11.0 this fails with 0x88982f50 (WINCODEC_ERR_COMPONENTNOTFOUND).
++
++The attached avif_samle.avif is actually 626 x 417 pixels. The displayed 1 x 1 dimensions are a decoding-failure fallback, not the image's real size.
++
++Registering a local 32-bit WIC AVIF decoder built with libavif and libaom makes WIC decode the attachment at its correct dimensions. The attached image also opens in FastStone's Draw Board on my desktop. A separate generated 320 x 192 AVIF was checked before and after registration: stock Wine shows the extension notice; with the decoder, FastStone displays the image in the thumbnail, preview pane and fullscreen view, with correct dimensions.
++
++This works on Wine 11.0 in a win64 prefix at 192 DPI, without Microsoft codec binaries or changes to FastStone. Registration applies to 32-bit WIC clients in that prefix. It is an experimental external workaround, not an upstream Wine fix; full AVIF support, HDR and animation are not claimed.
+diff --git a/docs/decisions.md b/docs/decisions.md
+index 482750a..09f5e1e 100644
+--- a/docs/decisions.md
++++ b/docs/decisions.md
+@@ -280,3 +280,20 @@ running one for the same branch. While a deep run is in progress, push only
+   Keep a visible dllmgr tracking issue as well as the standing Lunobot task.
+ - Scope: record requirements only; do not start the new hiew/protocol work
+   during the active FastStone investigation. See `docs/console-apps.md`.
++
++## D24 — Wine feedback tracking and conditional AI disclosure
++
++- Date: 2026-11-07
++- Decided by: owner
++- Decision: handle Wine feedback one report at a time, in plain English text
++  without Markdown. Check the live ticket and `docs/bugzilla/submissions.json`
++  before preparing an update. Record verified publications with exact comment
++  URLs and UTC timestamps; a prepared draft is not a sent report.
++- Do not add an AI-authorship notice unless Wine explicitly requires it. If
++  required, comply and record the source. The Clean Room Guidelines and Bugs
++  instructions checked on this date contain no such requirement for prose.
++  Do not falsely claim human authorship; answer provenance questions honestly.
++- This overrides the unconditional disclosure sentence in the current
++  fix-it-in-wine skill/template for dllmgr reports. The existing words-only
++  policy, verification gate and owner-posting workflow remain unchanged.
++  See `docs/bugzilla/README.md` for the checked sources and reporting procedure.
+diff --git a/docs/faststone.md b/docs/faststone.md
+index 1584210..ffcd2d5 100644
+--- a/docs/faststone.md
++++ b/docs/faststone.md
+@@ -29,6 +29,29 @@ AVIF display in FastStone 8.5. The x86 WIC decoder preview passes native Windows
+ and actual Wine/FastStone checks; install/undo and format limits are described
+ in [AVIF workaround](avif.md). It is separate from faststone-v2.
+ 
++## Published Wine feedback
++
++Verified publications, 2026-11-07. The machine-readable
++[feedback ledger](bugzilla/submissions.json) joins each Wine bug and exact
++published comment to its fix/workaround record, text and publication time.
++Check it and the live ticket before preparing another update.
++
++| Problem | Wine feedback | Fix or workaround record |
++| --- | --- | --- |
++| Missing file/folder names | [48872, comment 7](https://bugs.winehq.org/show_bug.cgi?id=48872#c7) | [winehq-48872](../catalog/fixes/winehq-48872.md) |
++| Pencil always black | [48874, comment 9](https://bugs.winehq.org/show_bug.cgi?id=48874#c9) | [winehq-48874](../catalog/fixes/winehq-48874.md) |
++| Wheel axis, delta and speed | [59251, comment 4](https://bugs.winehq.org/show_bug.cgi?id=59251#c4) | [winehq-59251](../catalog/fixes/winehq-59251.md) |
++| Missing fullscreen-strip thumbnails | [59609, results in comment 8](https://bugs.winehq.org/show_bug.cgi?id=59609#c8), [apply/undo in comment 9](https://bugs.winehq.org/show_bug.cgi?id=59609#c9) | [winehq-59609](../catalog/fixes/winehq-59609.md) |
++| AVIF decoding | [60703, comment 4](https://bugs.winehq.org/show_bug.cgi?id=60703#c4) | [faststone-avif](avif.md), separate experimental WIC decoder |
++| Mixed-weight Cyrillic Tahoma Bold | [26037, comment 14](https://bugs.winehq.org/show_bug.cgi?id=26037#c14) | [faststone-fonts](fonts.md), separate font workaround |
++| Thumbnails and format badges overflow tiles | [60711, description](https://bugs.winehq.org/show_bug.cgi?id=60711#c0) | [dllmgr-14](../catalog/fixes/dllmgr-14.md), also tracked as winehq-60711; [focused validation](bugzilla/dllmgr-14-validation.txt) |
++
++All seven numbered Wine tickets above have received their feedback, including
++the new tile-overflow report; they do not need duplicate submissions of these
++results. This does not close the remaining FastStone investigations. Startup,
++Draw Board delay, physical cursor speed and intermittent path-field artifacts
++also remain separate investigations.
++
+ ## Packaging and acceptance
+ 
+ - Individual entries remain keyed by Wine bug, with source, base Wine tag,
+@@ -227,7 +250,7 @@ headless 192 DPI comparison on GitHub Actions; the user's desktop can differ.
+ | Symptom | Fix | Status |
+ | --- | --- | --- |
+ | Names under thumbnails missing (FS-names, 48872) | winehq-48872 | fixed in CI at 192 DPI, Windows parity |
+-| Thumbnails, folder preview, `BMP` badge, selection cross the tile (FS-geometry) | dllmgr-14 | fixed in CI at 192 DPI; other DPIs and thumbnail sizes not yet compared |
++| Thumbnails, folder preview, `BMP` badge, selection cross the tile (FS-geometry) | dllmgr-14 ([Wine 60711](https://bugs.winehq.org/show_bug.cgi?id=60711)) | fixed in CI at 192 DPI; other DPIs and thumbnail sizes not yet compared |
+ | Fullscreen strip without thumbnails (59251/59609) | winehq-59609 | thumbnails shown in CI |
+ | Wheel scrolls ~12× slower than Windows, ignores the wheel amount (FS-wheel-speed) | winehq-59251 (v6: half the item spacing per line) | fixed in CI: 0/426/426/852 px for ½,½,1,2 detents at 192 DPI; Windows 0/216/216/432 at 96 DPI |
+ | Fullscreen strip hides before wheel input in CI | — | harness or Wine: measured by `strip_persistence` |
+diff --git a/docs/fonts.md b/docs/fonts.md
+index 408c1d1..81fb042 100644
+--- a/docs/fonts.md
++++ b/docs/fonts.md
+@@ -1,5 +1,8 @@
+ # Corrected Cyrillic Tahoma Bold (WineHQ 26037)
+ 
++Wine bug and published findings: [26037, comment 14](https://bugs.winehq.org/show_bug.cgi?id=26037#c14).
++Publication status and text: [feedback ledger](bugzilla/submissions.json).
++
+ A reversible workaround for the mixed regular/bold Cyrillic in Wine 11.0's
+ Tahoma Bold. FastStone 8.5's fullscreen panel exposes the defect, but it is in
+ the font data rather than the program's text. The owner describes candidate
+diff --git a/docs/handoff.md b/docs/handoff.md
+index 49738e8..25fae33 100644
+--- a/docs/handoff.md
++++ b/docs/handoff.md
+@@ -6,13 +6,13 @@ Saved on GitHub at the owner's request on **2026-11-07**. Detailed attempts,
+ including failures, are in `experiments/local-validation/README.md` and
+ `experiments/tahoma-bold/README.md`; start there before repeating experiments.
+ 
+-- **Wine feedback already posted:** 48872, 48874, 59251, 59609, 60703 and
+-  26037. Exact verified comment URLs, publication times, report texts and
++- **Wine feedback already posted:** 48872, 48874, 59251, 59609, 60703,
++  26037 and 60711. Exact verified comment URLs, publication times, report texts and
+   fix/workaround links are in `docs/bugzilla/submissions.json`; the readable
+   problem map is `docs/faststone.md#published-wine-feedback`. Check these before
+   preparing further reports. D24 and `docs/bugzilla/README.md` record the
+-  owner's conditional AI-disclosure instruction. Tile overflow still uses
+-  dllmgr-14; no Wine bug has been filed for it.
++  owner's conditional AI-disclosure instruction. Tile overflow uses the existing
++  local fix ID dllmgr-14 and is now linked to Wine bug 60711, filed by the owner.
+ 
+ - **AVIF / Wine 60703:** the native x86 WIC decoder passes Windows CI
+   [42402910201](https://github.com/unxed/dllmgr/actions/runs/42402910201) at
+@@ -209,7 +209,8 @@ browser). Not a Wine bug so far.
+   draft: Problem, Windows behavior, The fix in words, Results. Done for
+   winehq-59251 and dllmgr-14. Published follow-ups now cover 48872, 48874,
+   59251, 59609, 60703 and 26037; consult `docs/bugzilla/submissions.json`.
+-  The dllmgr-14 Wine report remains separate and has not been filed.
++  The owner also filed Wine bug 60711 for dllmgr-14 (tile overflow); its
++  published description is linked in the same ledger.
+ - Showcase app for lunobot (https://github.com/unxed/lunobot/issues/323): not
+   tax software and not defense; prefer electronic identification.
+ - KISS: the data model must be no more complex than OpenStreetMap's (a budget,
