@@ -2,7 +2,7 @@ name: app-isolation
 on:
   push:
     branches: ['experiment/app-isolation-loader']
-    paths: ['patches/wine-11.0-app-isolation.patch', 'patches/winehq-60721.patch', 'tests/wine/app-isolation*', '.github/workflows/app-isolation.yml']
+    paths: ['patches/wine-11.0-app-isolation.patch', 'patches/winehq-60721.patch', 'tests/wine/app-isolation*', 'patches/dllmgr-27/**', '.github/workflows/app-isolation.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,6 +28,11 @@ jobs:
         run: |
           cp tests/wine/app-isolation{.md,-build.sh,-check.sh,.c,-package.py} tests/wine/controls.{rc,manifest} out/isolation/
           cp "$RUNNER_TEMP/wine-source/COPYING.LIB" out/isolation/
+          # #27 trampoline + prefill proxy for FastStone (installed next to
+          # FSViewer.exe by `dllmgr fix faststone`), with its sources.
+          mkdir -p out/isolation/dllmgr-27
+          sh patches/dllmgr-27/build.sh msimg32 "$PWD/out/isolation/dllmgr-27/msimg32.dll"
+          cp patches/dllmgr-27/{prefill.c,msimg32.def,build.sh,README.md} out/isolation/dllmgr-27/
           python3 tests/wine/app-isolation-package.py
           tar --exclude=.git -C "$RUNNER_TEMP" -c wine-source | xz -T2 > out/wine-11.0-app-isolation-source.tar.xz
           (cd out && sha256sum wine-11.0-app-isolation.zip wine-11.0-app-isolation-source.tar.xz > SHA256SUMS)
