@@ -9,3 +9,13 @@ A+B:        underlay=f0cc5a shown=f0cc5a unpainted=f0cc5a pumped=f0cc5a position
 windows:    all stages f0cc5a (popup-pump-windows.txt)
 # A = DLLMGR_EXP27=1  (win32u expose_window_surface does not add exposed rect to surface bounds)
 # B = DLLMGR_EXP27B=1 (winex11 X window background_pixmap None instead of background_pixel 0)
+
+# Mode 2 (DLLMGR_EXP27=2): expose rects go to surface->exposed; each flush adds
+# app drawing (bounds) to surface->painted and re-sends exposed ∩ painted only.
+# Popup = window-first-paint stages; occlusion = tests/wine/window-occlusion.sh (X pixel verdict).
+stock:        popup f0cc5a 000000 000000 ffffff ffffff ffffff f0cc5a   occlusion pass
+naive A + B:  popup f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a   occlusion FAIL (000000)
+mode 2:       popup f0cc5a 000000 000000 000000 000000 000000 f0cc5a   occlusion pass
+mode 2 + B:   popup f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a   occlusion pass (2/2; one earlier run printed no verdict, gate flake)
+windows:      popup all f0cc5a
+

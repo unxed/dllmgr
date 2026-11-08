@@ -48,3 +48,15 @@ real FastStone first-open probe (32-bit, i386-unix build) at 192 DPI.
   build dir; `make dlls/win32u/win32u.so dlls/winex11.drv/winex11.so`
   (~40 s incremental); copy `/opt/wine-stable` to a scratch dir and drop the
   .so files into its `lib/wine/x86_64-unix/`. Run with `STAND_WM=metacity`.
+
+## Mode 2 result (2026-11-08 18:55)
+
+`DLLMGR_EXP27=2 DLLMGR_EXP27B=1` (painted-rect expose + X background None)
+matches native Windows on the popup diagnostic at every stage AND passes the
+occlusion gate (old pixels re-sent after uncover). Naive A fails that gate.
+Patch: research-env-gated.patch (adds `exposed`/`painted` to
+`struct window_surface`, so win32u.so and winex11.so must be rebuilt
+together). Still research: env-gated, bounding-rect approximation, B changes
+every X window's background (GL/Vulkan client areas, resize gaps, other WMs
+untested). Next: i386 build and the real FastStone first-open probe judged by
+X pixels (F18), then other WMs (Muffin) and a resize check.

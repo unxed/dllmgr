@@ -1,16 +1,69 @@
+diff --git a/dlls/win32u/dce.c b/dlls/win32u/dce.c
+index 5d6cbb7..6262ae1 100644
+--- a/dlls/win32u/dce.c
++++ b/dlls/win32u/dce.c
+@@ -538,6 +538,8 @@ W32KAPI struct window_surface *window_surface_create( UINT size, const struct wi
+     surface->alpha_bits = -1;
+     surface->alpha_mask = 0;
+     reset_bounds( &surface->bounds );
++    reset_bounds( &surface->exposed );
++    reset_bounds( &surface->painted );
+ 
+     if (!bitmap) bitmap = NtGdiCreateDIBSection( 0, NULL, 0, info, DIB_RGB_COLORS, 0, 0, 0, NULL );
+     if (!(surface->color_bitmap = bitmap))
+@@ -619,6 +621,17 @@ W32KAPI void window_surface_flush( struct window_surface *surface )
+ 
+     window_surface_lock( surface );
+ 
++    /* EXPERIMENT #27 mode 2: remember what the app drew; re-send exposed
++     * areas only where the app has drawn, never the 0xff initial fill. */
++    if (!IsRectEmpty( &surface->exposed ) || !IsRectEmpty( &surface->bounds ))
++    {
++        RECT exposed;
++        add_bounds_rect( &surface->painted, &surface->bounds );
++        if (intersect_rect( &exposed, &surface->exposed, &surface->painted ))
++            add_bounds_rect( &surface->bounds, &exposed );
++        reset_bounds( &surface->exposed );
++    }
++
+     /* align bounds / dirty rect to help with 1bpp shape bitmap updates */
+     bounds.left = surface->bounds.left & ~7;
+     bounds.top = surface->bounds.top;
 diff --git a/dlls/win32u/window.c b/dlls/win32u/window.c
-index 4bceb90..ddd7a86 100644
+index 4bceb90..a22ebb6 100644
 --- a/dlls/win32u/window.c
 +++ b/dlls/win32u/window.c
-@@ -2380,6 +2380,8 @@ static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT
+@@ -2380,15 +2380,23 @@ static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT
          return TRUE;
      }
  
-+    /* EXPERIMENT #27: do not mark exposed areas dirty at all */
-+    if (getenv( "DLLMGR_EXP27" )) { window_surface_release( surface ); return TRUE; }
-     window_surface_lock( surface );
-     if (!rect) add_bounds_rect( &surface->bounds, &surface->rect );
-     else
+-    window_surface_lock( surface );
+-    if (!rect) add_bounds_rect( &surface->bounds, &surface->rect );
+-    else
+     {
+-        OffsetRect( &exposed_rect, rects.client.left - rects.visible.left, rects.client.top - rects.visible.top );
+-        intersect_rect( &exposed_rect, &exposed_rect, &surface->rect );
+-        add_bounds_rect( &surface->bounds, &exposed_rect );
++        /* EXPERIMENT #27: 1 = do not mark exposed areas dirty at all (naive),
++         * 2 = collect them in surface->exposed, flush keeps only painted parts */
++        const char *exp = getenv( "DLLMGR_EXP27" );
++        RECT *target = &surface->bounds;
++        if (exp && exp[0] == '1') { window_surface_release( surface ); return TRUE; }
++        if (exp && exp[0] == '2') target = &surface->exposed;
++        window_surface_lock( surface );
++        if (!rect) add_bounds_rect( target, &surface->rect );
++        else
++        {
++            OffsetRect( &exposed_rect, rects.client.left - rects.visible.left, rects.client.top - rects.visible.top );
++            intersect_rect( &exposed_rect, &exposed_rect, &surface->rect );
++            add_bounds_rect( target, &exposed_rect );
++        }
++        window_surface_unlock( surface );
+     }
+-    window_surface_unlock( surface );
+     if (surface->alpha_mask) window_surface_flush( surface );
+     window_surface_release( surface );
+     return TRUE;
 diff --git a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
 index 7ff9b88..bf3ad39 100644
 --- a/dlls/winex11.drv/window.c
@@ -29,3 +82,16 @@ index 7ff9b88..bf3ad39 100644
      return (CWSaveUnder | CWColormap | CWBorderPixel | CWBackPixel |
              CWEventMask | CWBitGravity | CWBackingStore);
  }
+diff --git a/include/wine/gdi_driver.h b/include/wine/gdi_driver.h
+index d7b5018..dbed603 100644
+--- a/include/wine/gdi_driver.h
++++ b/include/wine/gdi_driver.h
+@@ -312,6 +312,8 @@ struct window_surface
+     HRGN                               shape_region; /* shape of the window surface, unshaped if 0 */
+     HBITMAP                            shape_bitmap; /* bitmap for the surface shape (1bpp) */
+     HBITMAP                            color_bitmap; /* bitmap for the surface colors */
++    RECT                               exposed;      /* EXPERIMENT #27: exposed, not yet re-sent */
++    RECT                               painted;      /* EXPERIMENT #27: area the app has drawn (bounding rect) */
+     /* driver-specific fields here */
+ };
+ 
