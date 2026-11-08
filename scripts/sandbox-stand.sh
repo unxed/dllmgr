@@ -54,6 +54,32 @@ up() {
 	xdpyinfo | grep -E 'dimensions|resolution'
 }
 
+# Self-contained run: own Xvfb + Muffin in the foreground, run "$@" (or just
+# hold the session if no command), then tear everything down. Use this as one
+# background task per experiment; detached X processes do not survive replies.
+session() {
+	mkdir -p "$STAND_DIR"
+	rm -f "/tmp/.X${STAND_DISPLAY#:}-lock" "/tmp/.X11-unix/X${STAND_DISPLAY#:}"
+	Xvfb "$STAND_DISPLAY" -screen 0 3072x1728x24 -nolisten tcp -dpi 192 \
+		>"$STAND_DIR/xvfb.log" 2>&1 &
+	xpid=$!
+	# The socket file appears before Xvfb accepts clients: poll a real client.
+	for _ in $(seq 100); do xdpyinfo >/dev/null 2>&1 && break; sleep .1; done
+	dbus-run-session -- muffin --sm-disable --x11 >"$STAND_DIR/wm.log" 2>&1 &
+	wpid=$!
+	trap '"$WINE/wineserver" -k 2>/dev/null; kill $wpid $xpid 2>/dev/null; :' EXIT
+	trap 'exit 130' INT TERM
+	for _ in $(seq 150); do
+		xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null | grep -q 'window id' && break
+		sleep .1
+	done
+	xprop -root _NET_SUPPORTING_WM_CHECK | grep 'window id' ||
+		{ echo "session: no WM on $STAND_DISPLAY, see $STAND_DIR/wm.log" >&2; exit 1; }
+	rc=0
+	if [ $# -gt 0 ]; then "$@" || rc=$?; else wait $xpid || rc=$?; fi
+	exit $rc
+}
+
 prefix() {
 	[ -e "$WINEPREFIX" ] && { echo "exists: $WINEPREFIX (delete it yourself)"; return 0; }
 	# Without the overrides wineboot blocks forever on the invisible Mono prompt.
@@ -67,6 +93,7 @@ case "${1:-all}" in
 	install) install_pkgs ;;
 	up) up ;;
 	prefix) prefix ;;
+	session) shift; session "$@" ;;
 	all) install_pkgs; up; prefix ;;
-	*) echo "usage: $0 [install|up|prefix|all]" >&2; exit 2 ;;
+	*) echo "usage: $0 [install|up|prefix|session [cmd...]|all]" >&2; exit 2 ;;
 esac

@@ -20,8 +20,18 @@ Complements docs/photoshop-handoff.md (owner's laptop stand) and issue #31.
 
 ## Rebuild
 
-    sh scripts/sandbox-stand.sh            # install + up + prefix
-    sh scripts/sandbox-stand.sh up         # after a reset of X processes only
+    sh scripts/sandbox-stand.sh install    # once per sandbox
+    sh scripts/sandbox-stand.sh prefix     # clean prefix, once
+    sh scripts/sandbox-stand.sh session CMD...   # every experiment
+
+Every experiment is one self-contained `session` run: it starts its own
+Xvfb + Muffin, waits for a real WM, runs CMD (a script doing wine + xdotool
+steps + `import -window root` screenshots), returns CMD's exit code and
+tears down X, Muffin and wineserver. Only the prefix and logs persist.
+Use a separate STAND_DISPLAY (e.g. `:93`) for throwaway checks. Smoke test
+verified 2026-11-08: Wine Notepad gets a decorated window in ~2 s (first
+wine start in a fresh prefix ~20 s). `up` is legacy and only good for a
+quick look within one reply.
 
 Result: Wine 11.0 (`/opt/wine-stable`, WineHQ `11.0.0.0~noble-1`, pinned),
 Xvfb `:92` 3072x1728x24 at 192 DPI, Muffin as WM (no compositing), clean
@@ -38,9 +48,11 @@ and must not be used for reports.
   `WINEDLLOVERRIDES='mscoree,mshtml='` at prefix creation. CS2 does not need
   Mono/Gecko. If a later bug turns out to depend on them, record that.
 - Processes detached with `setsid`/`&` (Xvfb, Muffin) are killed a few
-  minutes after the assistant's reply ends. Run the X session as a
-  long-lived background task of the assistant's shell tool instead
-  (max ~2 h per task, then restart with `sandbox-stand.sh up`).
+  minutes after the assistant's reply ends, and a background shell task is
+  capped at ~2 h. Hence no long-lived desktop: use `session` per experiment;
+  run it as a background task if it outlasts one reply.
+- The X socket file appears before Xvfb accepts clients; starting Muffin
+  then fails with `Unable to open display`. `session` polls `xdpyinfo`.
 - dbus `Failed to set fd limit` and xkbcomp keysym warnings are harmless.
 - `experiments/photoshop-handoff/headless.py` hardcodes the owner's unpacked
   Xvfb path and the repo-relative prefix; do not run it as-is here. The
