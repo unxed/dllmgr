@@ -194,3 +194,9 @@ Do not replace white initialization with black as a speculative product fix.
 interruption to a black-centre interruption of162ms, then undo restores white.
 This is not a usable solution and was never installed in the normal prefix.
 Do not accept observed_image_white_image=0 as a no-flicker gate.
+
+The observer now logs a general image→interruption→image metric in addition
+to the white-specific one. Black candidates are also verified at9/9 points.
+A captured non-image phase after the expected image remains a failure of a
+flicker-free result even if it is black rather than white. The probe's exit0
+means successful observation, not that a workaround fixed the interruption.

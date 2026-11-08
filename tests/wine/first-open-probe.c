@@ -14,6 +14,7 @@ int wmain(int argc, WCHAR **argv)
     STARTUPINFOW si={sizeof(si)}; PROCESS_INFORMATION pi;
     WCHAR command[32768]; unsigned expected;
     DWORD start,first_image=0,first_white=0,restored=0,last=99;
+    DWORD interrupted=0,resumed=0;
     unsigned samples=0,missed=0,max_capture=0; HDC screen; int status=0;
     if(argc!=4 || wcslen(argv[1])+wcslen(argv[2])+8>=ARRAYSIZE(command)) {
         fputs("first-open-probe.exe EXE IMAGE RRGGBB\n",stderr);return 2;
@@ -28,7 +29,7 @@ int wmain(int argc, WCHAR **argv)
            GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN),pid);
     while(GetTickCount()-start<20000) {
         HWND window=GetForegroundWindow();DWORD owner=0,phase=0,now=GetTickCount()-start;
-        RECT bounds;WCHAR cls[128];unsigned center,white=0,points=1;BOOL valid=TRUE;
+        RECT bounds;WCHAR cls[128];unsigned center,white=0,black=0,points=1;BOOL valid=TRUE;
         DWORD capture_start,capture_ms;COLORREF pixel;
         GetWindowThreadProcessId(window,&owner);
         if(WaitForSingleObject(pi.hProcess,0)==WAIT_OBJECT_0){status=4;break;}
@@ -39,18 +40,19 @@ int wmain(int argc, WCHAR **argv)
             missed++;Sleep(10);continue;
         }
         /* Desktop GetPixel is costly on Windows. Read the centre every cycle;
-         * only a white candidate needs the remaining eight verification points. */
+         * only a white/black candidate needs eight more verification points. */
         capture_start=GetTickCount();
         pixel=GetPixel(screen,(bounds.left+bounds.right)/2,(bounds.top+bounds.bottom)/2);
         valid=pixel!=CLR_INVALID;center=rgb(pixel);
-        if(valid && center==0xffffff) {
-            white=1;
+        if(valid && (center==0xffffff || center==0)) {
+            white=center==0xffffff;black=center==0;
             for(int y=1;y<=5;y+=2)for(int x=1;x<=5;x+=2) {
                 if(x==3 && y==3)continue;
                 pixel=GetPixel(screen,bounds.left+(bounds.right-bounds.left)*x/6,
                                bounds.top+(bounds.bottom-bounds.top)*y/6);
                 if(pixel==CLR_INVALID)valid=FALSE;
                 if(rgb(pixel)==0xffffff)white++;
+                if(rgb(pixel)==0)black++;
                 points++;
             }
         }
@@ -61,10 +63,12 @@ int wmain(int argc, WCHAR **argv)
         samples++;
         if(center==expected)phase=2;
         else if(white==9)phase=3;
+        else if(black==9)phase=4;
         else phase=1;
         if(phase!=last) {
-            printf("t_ms=%lu phase=%s center=%06x white_samples=%u/%u capture_ms=%lu\n",now,
-                   phase==2?"image":phase==3?"white":"other",center,white,points,capture_ms);
+            printf("t_ms=%lu phase=%s center=%06x white_samples=%u/%u black_samples=%u/%u capture_ms=%lu\n",now,
+                   phase==2?"image":phase==3?"white":phase==4?"black":"other",
+                   center,white,points,black,points,capture_ms);
             printf("phase_window=%p style=%08lx exstyle=%08lx\n",window,
                    (unsigned long)GetWindowLongW(window,GWL_STYLE),
                    (unsigned long)GetWindowLongW(window,GWL_EXSTYLE));
@@ -72,6 +76,8 @@ int wmain(int argc, WCHAR **argv)
             fflush(stdout);last=phase;
         }
         if(phase==2 && !first_image)first_image=now;
+        if(phase!=2 && first_image && !interrupted)interrupted=now;
+        if(phase==2 && interrupted && !resumed)resumed=now;
         if(phase==3 && first_image && !first_white) {
             first_white=now;snapshot("white-after-image.bmp");
         }
@@ -84,6 +90,8 @@ int wmain(int argc, WCHAR **argv)
     ReleaseDC(NULL,screen);
     printf("first_image_ms=%lu white_after_image_ms=%lu restored_ms=%lu samples=%u skipped=%u\n",
            first_image,first_white,restored,samples,missed);
+    printf("interrupted_ms=%lu resumed_ms=%lu observed_image_interruption_image=%d\n",
+           interrupted,resumed,!!(first_image && interrupted && resumed));
     printf("max_capture_ms=%u\n",max_capture);
     printf("observed_image_white_image=%d\n",!!(first_image && first_white && restored));
     if(!first_image)status=5;
