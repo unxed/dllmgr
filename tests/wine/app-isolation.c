@@ -15,8 +15,9 @@ static int check(const WCHAR *name, const WCHAR *variable, int private_expected)
     int match;
     IMAGE_NT_HEADERS *headers;
     if (!module || !GetModuleFileNameW(module, actual, 32768)) return 1;
-    if (!GetEnvironmentVariableW(variable, expected, 32768)) return 2;
-    match = !wcsicmp(actual, expected);
+    expected[0] = 0;
+    GetEnvironmentVariableW(variable, expected, 32768);
+    match = expected[0] && !wcsicmp(actual, expected);
     headers = (IMAGE_NT_HEADERS *)((BYTE *)module + ((IMAGE_DOS_HEADER *)module)->e_lfanew);
     if ((headers->FileHeader.TimeDateStamp == 0xd11a600d) != private_expected)
     {
@@ -30,6 +31,8 @@ static int check(const WCHAR *name, const WCHAR *variable, int private_expected)
 int wmain(int argc, WCHAR **argv)
 {
     int failures, expect_private = argc > 1 && !wcscmp(argv[1], L"private");
+    int expect_gdi = expect_private || (argc > 1 && !wcscmp(argv[1], L"private-gdiplus"));
+    int expect_comctl = expect_private || (argc > 1 && !wcscmp(argv[1], L"private-comctl32"));
     WCHAR system[32768];
     InitCommonControls();
     GdiplusStartup(NULL, NULL, NULL);
@@ -39,8 +42,8 @@ int wmain(int argc, WCHAR **argv)
     GetSystemDirectoryW(system, 32740);
     wcscat(system, L"\\comctl32.dll");
     failures += check(system, L"DLLMGR_COMCTL32", 0);
-    failures += check(L"gdiplus.dll", L"DLLMGR_GDIPLUS", expect_private);
-    failures += check(L"comctl32.dll", L"DLLMGR_COMCTL32", expect_private);
+    failures += check(L"gdiplus.dll", L"DLLMGR_GDIPLUS", expect_gdi);
+    failures += check(L"comctl32.dll", L"DLLMGR_COMCTL32", expect_comctl);
     if (argc > 2)
     {
         STARTUPINFOW si = {sizeof(si)};

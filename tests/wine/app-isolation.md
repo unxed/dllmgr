@@ -16,7 +16,8 @@ these Windows paths, canonicalized by winepath -w:
 Only bare gdiplus.dll and comctl32.dll requests from the exact target image are
 redirected before SxS and KnownDLL resolution. Paths compare case-insensitively.
 Explicit DLL paths use ordinary Wine behavior. No registry override is needed.
-Missing, relative, or noncanonical selected DLL paths fail loading; there is no
+Unset module variables preserve stock loading, so a one-module fix stays one-module.
+Missing files, relative, or noncanonical selected DLL paths fail loading; there is no
 fallback to a stock DLL for that selected request. Unrelated child images inherit
 the variables but fail the exact-image match. Another EXE in the same folder or
 the same EXE basename in another folder likewise uses ordinary loading.

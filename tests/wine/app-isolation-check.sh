@@ -54,6 +54,8 @@ for arch in i386 x86_64; do
     export DLLMGR_COMCTL32="Z:${root//\//\\}\\private Юникод\\comctl32-$arch.dll"
     "$wine" "$root/target Юникод/probe-$arch.exe" private "Z:${root//\//\\}\\other\\probe-$arch.exe" | tee "results/target-child-$arch.txt"
     WINEDLLOVERRIDES='gdiplus,comctl32=b;mscoree,mshtml=' "$wine" "$root/target Юникод/probe-$arch.exe" private | tee "results/forced-builtin-$arch.txt"
+    env -u DLLMGR_GDIPLUS "$wine" "$root/target Юникод/probe-$arch.exe" private-comctl32 | tee "results/comctl-only-$arch.txt"
+    env -u DLLMGR_COMCTL32 "$wine" "$root/target Юникод/probe-$arch.exe" private-gdiplus | tee "results/gdiplus-only-$arch.txt"
     "$wine" "$root/target Юникод/other-$arch.exe" stock | tee "results/other-exe-$arch.txt"
     "$wine" "$root/other/probe-$arch.exe" stock | tee "results/same-name-$arch.txt"
     DLLMGR_TARGET_EXE= "$wine" "$root/target Юникод/probe-$arch.exe" stock | tee "results/no-rule-$arch.txt"
