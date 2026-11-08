@@ -1,46 +1,54 @@
-name: First-open research
+name: temporary-cs2-session-37
 on:
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
-  build:
+  session:
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 110
+    env:
+      STAND_DISPLAY: ':151'
+      STAND_WM: metacity
+      WINEARCH: win64
+      WINEDEBUG: fixme-all
+      WINEDLLOVERRIDES: mscoree,mshtml=
     steps:
       - uses: actions/checkout@v4
-      - run: bash tests/wine/ci-install.sh gcc-mingw-w64-x86-64
-        timeout-minutes: 6
-      - run: x86_64-w64-mingw32-gcc -O2 -Wall -municode -o first-open-probe.exe tests/wine/first-open-probe.c tests/wine/listview-probe.c -lgdi32 -lshell32
-      - run: x86_64-w64-mingw32-gcc -O2 -Wall -o window-first-paint.exe tests/wine/window-first-paint.c -lgdi32
-      - uses: actions/upload-artifact@v4
-        with:
-          name: first-open-probe
-          path: |
-            first-open-probe.exe
-            window-first-paint.exe
-  windows:
-    needs: build
-    runs-on: windows-latest
-    timeout-minutes: 6
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: first-open-probe
-      - shell: bash
+      - name: Scope this temporary runner
         run: |
-          set -euo pipefail
-          curl --max-time 90 -fsSL https://www.faststonesoft.net/DN/FSViewer85.zip -o fs85.zip
-          echo '685282a063b91daf4388b84be9e0daf3c5feed4073651137eb9fe9421cf39439  fs85.zip' | sha256sum -c
-          mkdir -p /c/dllmgr-first-open captures
-          cp tests/wine/fixtures/first-open.jpg /c/dllmgr-first-open/synthetic.jpg
-          unzip -q fs85.zip -d /c/dllmgr-first-open
-          cd captures
-          ../window-first-paint.exe >window-first-paint.txt
-          ../first-open-probe.exe 'C:\dllmgr-first-open\FSViewer85\FSViewer.exe' 'C:\dllmgr-first-open\synthetic.jpg' f0cc5a >observations.txt
-      - uses: actions/upload-artifact@v4
+          echo "STAND_DIR=$RUNNER_TEMP/codex-debian-8c42/cs2" >> "$GITHUB_ENV"
+          echo "WINEPREFIX=$RUNNER_TEMP/codex-debian-8c42/cs2/prefix" >> "$GITHUB_ENV"
+          echo "LAB_OUT=$GITHUB_WORKSPACE/session-evidence" >> "$GITHUB_ENV"
+          nproc; free -m; uname -a
+          test ! -e /tmp/.X11-unix/X151
+      - name: Native Wine 11.0 and headless tools
+        run: |
+          bash tests/wine/ci-install.sh --winehq --install-recommends \
+            winehq-stable=11.0.0.0~noble-1 wine-stable=11.0.0.0~noble-1 \
+            wine-stable-amd64=11.0.0.0~noble-1 wine-stable-i386=11.0.0.0~noble-1 \
+            xvfb metacity xdotool x11-utils x11-apps imagemagick dbus-x11 unzip gcc-mingw-w64-i686
+          /opt/wine-stable/bin/wine --version
+      - name: Exact authorized trial source
+        run: |
+          mkdir -p "$STAND_DIR/dl"
+          curl -fLsS --retry 2 --connect-timeout 20 --max-time 300 \
+            https://download.adobe.com/pub/adobe/photoshop/win/cs2/Photoshop_CS2.exe \
+            -o "$STAND_DIR/dl/Photoshop_CS2.exe"
+          echo "919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea  $STAND_DIR/dl/Photoshop_CS2.exe" | sha256sum -c -
+      - name: Install ordinary trial and expose temporary HTTPS command session
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: sh scripts/sandbox-stand.sh session bash .session-lab/session.sh
+      - name: Preserve this run's evidence only
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: first-open-windows
-          path: captures/
+          name: cs2-session-37-${{ github.run_id }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            session-evidence/
+            ${{ runner.temp }}/dllmgr-ci-install/
+            ${{ runner.temp }}/codex-debian-8c42/cs2/xvfb.log
+            ${{ runner.temp }}/codex-debian-8c42/cs2/wm.log
