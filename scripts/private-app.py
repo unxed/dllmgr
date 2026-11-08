@@ -167,6 +167,28 @@ def download(url, dest, checksum=None, label=None):
         raise Error('Download checksum mismatch: ' + dest.name)
 
 
+def runtime_release(requested):
+    """Human-readable runtime origin: release tag of the pin, or a local package."""
+    if requested:
+        return 'local package ' + str(requested)
+    url = json.loads((HERE / 'private-runtime.json').read_text()).get('url', '')
+    return url.split('/download/', 1)[-1].split('/', 1)[0] if '/download/' in url else url
+
+
+def dllmgr_version():
+    try:
+        return subprocess.check_output(['git', '-C', str(HERE.parent), 'log', '-1', '--format=%h %cs'],
+                                       text=True, stderr=subprocess.DEVNULL).strip() or 'unknown'
+    except (OSError, subprocess.SubprocessError):
+        return 'unknown'
+
+
+def print_versions(state):
+    print('  Versions: dllmgr ' + dllmgr_version() + ' · runtime ' +
+          state.get('runtime_release', 'unknown (installed by an older dllmgr)') +
+          ' (sha256 ' + state.get('package_sha256', '?')[:12] + ') · modules ' + str(state.get('release', '?')))
+
+
 def runtime_package(requested, temp):
     if requested:
         return requested.resolve(strict=True)
@@ -318,7 +340,8 @@ def install(args, prefix):
         state = dict(schema=1, phase='installed', id=ident, prefix=str(prefix), exe=str(exe),
                      target=target, exe_sha256=EXE_SHA, fix=args.fix, release=release,
                      generation=generation, files=hashes, runtime=str(runtime), base=str(base),
-                     package_sha256=digest(package), desktops=owned)
+                     package_sha256=digest(package), desktops=owned,
+                     runtime_release=runtime_release(args.runtime_package))
         changes = [dict(path=str(p.absolute()),
                         before_hex=p.read_bytes().hex() if p.exists() else None,
                         after_sha256=hashlib.sha256(outputs[p.absolute()]).hexdigest()) for p in desktops]
@@ -332,6 +355,7 @@ def install(args, prefix):
             recover(prefix, state_path)
             raise
         print('✓ FastStone fixes installed privately for ' + target)
+        print_versions(state)
         install_trampoline(prefix, exe, package, base)
     print('  Launch: dllmgr run faststone')
     print('  Shared prefix DLLs and system Wine were not changed.')
@@ -524,6 +548,7 @@ def main():
             else:
                 print('✓ FastStone · ' + state['fix'] + ' · private DLLs verified')
                 print('  ' + state['target'])
+                print_versions(state)
                 print('  Launch trampoline: ' + trampoline)
                 print('  Launch: dllmgr run faststone')
         else:

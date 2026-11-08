@@ -78,7 +78,7 @@ Read from the sources (winescape 8d2826b, WinUnixPtyBridge b866e0a, Wine 11.0).
 | Delivery | conhost.exe is a builtin PE program loaded from the runtime's lib dir: a new private-runtime optional group (`x86_64-windows/conhost.exe` (+ i386 if used)), no prefix change | compiled into the program that uses it (f4); Far is not ours to rebuild | build per Wine version with winegcc (Wine ABI), hardcoded zsh and HOME |
 | Licence | LGPL (Wine) | CC0 | none stated (all rights reserved): not redistributable |
 
-Decision proposal (for the owner): win32-input-mode first as a patch to
+Decision (owner, 2026-11-09: accepted): win32-input-mode first as a patch to
 Wine's PE conhost, delivered through the private runtime (new optional group;
 design in the same style as OPTIONAL_GROUPS), and posted to WineHQ in words.
 winescape stays the tool for programs we build ourselves (f4) and for a

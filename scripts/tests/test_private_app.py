@@ -383,6 +383,16 @@ class PrivateAppTest(unittest.TestCase):
         default_desktop = self.data_home / "applications" / ("dllmgr-" + state["id"] + ".desktop")
         self.assertFalse(default_desktop.exists())
 
+    def test_install_records_and_prints_versions(self):
+        import contextlib, io
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.install()
+        _, state = self.state()
+        self.assertEqual(state["runtime_release"], "local package " + str(self.package))
+        self.assertIn("Versions: dllmgr ", out.getvalue())
+        self.assertIn("modules faststone-v2", out.getvalue())
+
     def trampoline_install(self, registry):
         import zipfile
         with zipfile.ZipFile(self.package, "w") as archive:
