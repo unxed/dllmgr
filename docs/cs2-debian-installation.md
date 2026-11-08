@@ -190,3 +190,24 @@ powered off its VM. This is not a Photoshop crash. The same installed prefix
 and EXE were retained and hash-verified; all old request files were archived
 before restarting the controller so stale HWND/button actions could not replay.
 No trial state, activation data or clock was reset, and no reinstall occurred.
+
+## First application start checkpoint (2026-11-08 22:10 UTC)
+
+Tracked separately in [#37](https://github.com/unxed/dllmgr/issues/37),
+agent `codex-debian-8c42`; this does not claim or start the #35/#36 fixes.
+Repository instructions and the other session’s task cards were read through
+1818613, including the new claim protocol.
+
+After starting the same retained prefix, public MSI APIs again reported state5,
+version9.0. Photoshop was launched from its installation directory at21:58:21
+UTC. Its frame and normal Adobe Photoshop CS2 Version9.0 / Tryout Version
+splash appeared. At22:10 the splash still says `Looking for preferences…`;
+there is no trial continuation dialog or completed workspace yet. The app log
+is empty; the process is active and its I/O counters increase. This is evidence
+of a delayed startup, not yet proof of a usable editor or a diagnosed hang.
+The synthetic settings directory contains a zero-byte Prefs.psp created at
+22:00:22; its contents were not inspected or modified.
+
+The reviewed screenshot36 is committed. PID278/Wine PID444 and all HWNDs are
+historical observations; enumerate again before interacting. No code patch,
+activation workaround, trial reset, hardware change or reinstall was applied.

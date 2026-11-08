@@ -3,5 +3,7 @@
   "sha256": "98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30",
   "bytes": 19533824,
   "expected_sha_matches": true,
-  "installer_still_running": true
+  "installer_still_running": false,
+  "verified_after_finish": true,
+  "verified_after_same_prefix_restart": true
 }

@@ -190,5 +190,35 @@
     "sha256": "164aac54812766dfa5fd5a297058bdf5559667d8b3bbe8865a3b6d0ffef19427",
     "bytes": 183307,
     "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "33-photoshop-startup.png",
+    "sha256": "51d7eea85f3650563a2c9f8247033043a7bb27f2f5a110a14f3de1ffd52397d6",
+    "bytes": 184269,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "34-startup-check.png",
+    "sha256": "51d7eea85f3650563a2c9f8247033043a7bb27f2f5a110a14f3de1ffd52397d6",
+    "bytes": 184269,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "35-photoshop-startup.png",
+    "sha256": "51d7eea85f3650563a2c9f8247033043a7bb27f2f5a110a14f3de1ffd52397d6",
+    "bytes": 184269,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "36-resumed-startup.png",
+    "sha256": "51d7eea85f3650563a2c9f8247033043a7bb27f2f5a110a14f3de1ffd52397d6",
+    "bytes": 184269,
+    "storage": "experiments/cs2-debian-installation/screenshots/36-resumed-startup.png"
+  },
+  {
+    "file": "37-startup-progress.png",
+    "sha256": "51d7eea85f3650563a2c9f8247033043a7bb27f2f5a110a14f3de1ffd52397d6",
+    "bytes": 184269,
+    "storage": "local only, duplicate/transitional capture"
   }
 ]

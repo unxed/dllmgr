@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-11-08T22:00:40.494841+00:00",
+  "updated_utc": "2026-11-08T22:11:03.064552+00:00",
   "priority": "all newly found issues after existing bugs",
   "source_verified": true,
   "archive_crc_ok": true,
@@ -7,15 +7,15 @@
   "extractor_result": "404 file(s) unzipped successfully",
   "msi_installed": true,
   "photoshop_launched": true,
-  "current_stage": "Product registered installed; after same-prefix VM restart Photoshop first process/main frame visible, complete workspace and trial continuation not yet verified",
+  "current_stage": "Same-prefix first startup shows Tryout Version splash, Looking for preferences; complete workspace not verified",
   "prefix": "/workspace/work/photoshop-cs2/prefix110",
   "controller": "/workspace/work/photoshop-cs2/control/controller.py",
   "display": "guest :191 only",
-  "next_step": "Choose language, accept normal EULA, install trial via stock Setup; do not type an unowned serial or bypass activation.",
+  "next_step": "Observe ordinary first startup; inspect fresh windows and use normal trial continuation if shown. Do not reinstall/reset trial or start compatibility fixes.",
   "trial_mode": "Install 30-day trial version",
   "serial_entered": false,
   "installer_ui_confirmed": true,
-  "repo_context_reviewed": "7f2581a",
+  "repo_context_reviewed": "1818613",
   "existing_findings_to_watch": [
     "F11",
     "F12",
@@ -36,5 +36,10 @@
   "installer_client_exit": 0,
   "installer_server_exit": 1,
   "post_finish_exception": "0x000006a6",
-  "startup_ui_verified": false
+  "startup_ui_verified": false,
+  "agent_id": "codex-debian-8c42",
+  "tracking_issue": 37,
+  "msi_registration_persisted_after_restart": true,
+  "first_start_utc": "2026-11-08T21:58:21Z",
+  "latest_reviewed_screenshot": "36-resumed-startup.png"
 }
