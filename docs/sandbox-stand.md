@@ -15,8 +15,9 @@ Complements docs/photoshop-handoff.md (owner's laptop stand) and issue #31.
 - `gh` works only through REST (`gh api ...`), GraphQL is blocked; issue
   comments of unattached repos are not readable that way. WebFetch of the issue
   page works but is rate-limited (retry once, one page at a time).
-- The session can clone this repo but cannot push: deliver commits as
-  `git format-patch` to the owner.
+- Push works once the repo is attached with push access through the session's
+  GitHub app (`add_repo` with `access: push`); that clone lives at
+  `/home/claude/dllmgr`. The anonymous read-only clone cannot push.
 
 ## Rebuild
 
