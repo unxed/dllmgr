@@ -48,6 +48,12 @@ bypass this runtime and therefore do not enable these private DLL fixes. There
 is no global wine wrapper. Close an already-running FastStone before relaunch:
 its single-instance handling may otherwise forward files to the old process.
 
+A runtime package may additionally replace whitelisted Unix module groups
+(`scripts/private_runtime.py` `OPTIONAL_GROUPS`), all-or-none per group, with
+base fingerprints for the replaced originals. First group: `win32u.so` +
+`winex11.so` for `patches/winehq-60721.patch` (issue 27: they share
+`struct window_surface`). The packaged release does not ship it yet.
+
 The `--runtime-package FILE` option is for an explicitly trusted offline ZIP.
 Normal installation downloads a SHA256-pinned release. Its complete modified
 Wine source, patch, build scripts and LGPL notices accompany that release.

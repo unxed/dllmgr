@@ -106,6 +106,50 @@ class PrivateRuntimeTest(unittest.TestCase):
         with self.assertRaisesRegex(private_runtime.Error, "Unsupported or changed base Wine"):
             private_runtime.verify_base(self.base, manifest)
 
+    def test_optional_overlay_group_is_all_or_none(self):
+        payloads = {
+            "bin/wine": b"w", "i386-windows/ntdll.dll": b"a", "x86_64-windows/ntdll.dll": b"b",
+            "x86_64-unix/ntdll.so": b"c", "x86_64-unix/win32u.so": b"only one of the pair",
+        }
+        make_runtime_package(self.package, payloads=payloads)
+        with self.assertRaisesRegex(private_runtime.Error, "Partial optional overlay group"):
+            private_runtime.package_manifest(self.package)
+
+    def test_optional_overlay_group_is_fingerprinted_and_installed(self):
+        base_files = {
+            "bin/wine": b"stock wine", "lib/wine/i386-windows/ntdll.dll": b"stock i386",
+            "lib/wine/x86_64-windows/ntdll.dll": b"stock x64", "lib/wine/x86_64-unix/ntdll.so": b"stock unix",
+            "lib/wine/x86_64-unix/win32u.so": b"stock win32u", "lib/wine/x86_64-unix/winex11.so": b"stock x11",
+            "lib/wine/x86_64-unix/winewayland.so": b"untouched",
+        }
+        for name, data in base_files.items():
+            (self.base / name).parent.mkdir(parents=True, exist_ok=True)
+            (self.base / name).write_bytes(data)
+        payloads = {
+            "bin/wine": b"overlay wine", "i386-windows/ntdll.dll": b"overlay i386",
+            "x86_64-windows/ntdll.dll": b"overlay x64", "x86_64-unix/ntdll.so": b"overlay unix",
+            "x86_64-unix/win32u.so": b"patched win32u", "x86_64-unix/winex11.so": b"patched winex11",
+        }
+        overlay = dict(private_runtime.OVERLAY, **private_runtime.OPTIONAL_GROUPS[0])
+        fingerprint = {dest: sha(base_files[dest]) for dest in overlay.values()}
+        # Without the optional files fingerprinted the base check must fail.
+        partial = {dest: sha(base_files[dest]) for dest in private_runtime.OVERLAY.values()}
+        make_runtime_package(self.package, payloads=payloads, manifest_overrides={"base_files": partial})
+        with self.assertRaisesRegex(private_runtime.Error, "incomplete base-Wine fingerprint"):
+            private_runtime.assemble(self.package, self.base, self.root / "cache")
+        make_runtime_package(self.package, payloads=payloads, manifest_overrides={"base_files": fingerprint})
+        runtime = private_runtime.assemble(self.package, self.base, self.root / "cache2")
+        for source, dest in overlay.items():
+            self.assertEqual((runtime / dest).read_bytes(), payloads[source], dest)
+            self.assertFalse((runtime / dest).is_symlink(), dest)
+        self.assertEqual((runtime / "lib/wine/x86_64-unix/winewayland.so").read_bytes(), b"untouched")
+        for name, data in base_files.items():
+            self.assertEqual((self.base / name).read_bytes(), data, name)  # base never written
+        private_runtime.verify(runtime, private_runtime.digest(self.package), self.base.resolve())
+        (runtime / "lib/wine/x86_64-unix/winex11.so").write_bytes(b"tampered")
+        with self.assertRaisesRegex(private_runtime.Error, "Private runtime changed"):
+            private_runtime.verify(runtime, private_runtime.digest(self.package), self.base.resolve())
+
     def test_assembler_unlinks_overlay_symlinks_before_writing(self):
         external = self.root / "external"
         external.mkdir()

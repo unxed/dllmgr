@@ -14,6 +14,16 @@ OVERLAY = {
     'x86_64-windows/ntdll.dll': 'lib/wine/x86_64-windows/ntdll.dll',
     'x86_64-unix/ntdll.so': 'lib/wine/x86_64-unix/ntdll.so',
 }
+# Optional overlays: Unix modules a package may additionally replace. Each group
+# is all-or-none because its members share internal structures (win32u.so and
+# winex11.so share struct window_surface, changed by patches/winehq-60721.patch).
+OPTIONAL_GROUPS = (
+    {
+        'x86_64-unix/win32u.so': 'lib/wine/x86_64-unix/win32u.so',
+        'x86_64-unix/winex11.so': 'lib/wine/x86_64-unix/winex11.so',
+    },
+)
+UNIX_MODES = {'bin/wine', 'x86_64-unix/ntdll.so', 'x86_64-unix/win32u.so', 'x86_64-unix/winex11.so'}
 
 
 class Error(RuntimeError):
@@ -32,9 +42,19 @@ def valid_sha(value):
     return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
 
 
+def overlay_for(manifest):
+    """OVERLAY plus every optional group the package ships (validated in package_manifest)."""
+    overlay = dict(OVERLAY)
+    files = manifest.get('files', {})
+    for group in OPTIONAL_GROUPS:
+        if set(group) <= set(files):
+            overlay.update(group)
+    return overlay
+
+
 def verify_base(base, manifest):
     expected = manifest.get('base_files')
-    if not isinstance(expected, dict) or set(expected) != set(OVERLAY.values()):
+    if not isinstance(expected, dict) or set(expected) != set(overlay_for(manifest).values()):
         raise Error('Runtime package has an incomplete base-Wine fingerprint')
     for name, checksum in expected.items():
         if not valid_sha(checksum) or digest(base / name) != checksum:
@@ -56,6 +76,9 @@ def package_manifest(package):
         files = manifest.get('files', {})
         if not isinstance(files, dict) or set(files) != set(names) - {'manifest.json'} or not set(OVERLAY) <= set(files):
             raise Error('Incomplete runtime manifest')
+        for group in OPTIONAL_GROUPS:
+            if set(group) & set(files) and not set(group) <= set(files):
+                raise Error('Partial optional overlay group: ' + ', '.join(sorted(set(group) - set(files))))
         for name, checksum in files.items():
             if not valid_sha(checksum) or hashlib.sha256(archive.read(name)).hexdigest() != checksum:
                 raise Error('Runtime package checksum mismatch: ' + name)
@@ -72,7 +95,7 @@ def verify(runtime, package_sha, base):
         path = runtime / name
         if path.is_symlink() or digest(path) != checksum:
             raise Error('Private runtime changed: ' + name)
-    for source, dest in OVERLAY.items():
+    for source, dest in overlay_for(manifest).items():
         path = runtime / dest
         if path.is_symlink() or digest(path) != manifest['files'][source]:
             raise Error('Private runtime changed: ' + dest)
@@ -107,12 +130,12 @@ def assemble(package, base, cache):
                 else:
                     dest.symlink_to(src.resolve())
         with zipfile.ZipFile(package) as archive:
-            for source, dest in OVERLAY.items():
+            for source, dest in overlay_for(manifest).items():
                 path = stage / dest
                 path.unlink(missing_ok=True)  # Never write through a link into /opt.
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(archive.read(source))
-                path.chmod(0o755 if source in ('bin/wine', 'x86_64-unix/ntdll.so') else 0o644)
+                path.chmod(0o755 if source in UNIX_MODES else 0o644)
         copied = {str(p.relative_to(stage)): digest(p) for p in stage.rglob('*')
                   if p.is_file() and not p.is_symlink()}
         (stage / '.dllmgr-runtime.json').write_text(json.dumps(dict(
