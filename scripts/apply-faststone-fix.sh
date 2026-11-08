@@ -25,7 +25,13 @@ export PYTHONIOENCODING=utf-8
 
 fix=${DLLMGR_FIX:-winehq-59609}
 fixes=$(python3 "$here/catalog_fixes.py" "$fix") || exit 2
-release=https://github.com/unxed/dllmgr/releases/download/$fix
+# Resolve the release tag: bundles (faststone) use catalog_fixes.py --release,
+# single fixes (winehq-59609) are their own release tag.
+if release_tag=$(python3 "$here/catalog_fixes.py" --release "$fix" wine-11.0 2>/dev/null); then
+    release=https://github.com/unxed/dllmgr/releases/download/$release_tag
+else
+    release=https://github.com/unxed/dllmgr/releases/download/$fix
+fi
 export WINEPREFIX=${WINEPREFIX:-$HOME/.wine}
 work=${FIW_WORK:-$HOME/.cache/fix-it-in-wine}
 [ -f "$WINEPREFIX/system.reg" ] || { echo "no Wine prefix at $WINEPREFIX (set WINEPREFIX)" >&2; exit 2; }

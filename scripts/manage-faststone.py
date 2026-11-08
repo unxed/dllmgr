@@ -31,27 +31,41 @@ def installed_fix(entry):
 
 def snapshot(prefix, dest, name):
     registry = override.reg_query(prefix, "FSViewer.exe", override.norm(name))
-    return dict(dest=dest, name=name, raw=override.read_file(dest), mode=os.stat(dest).st_mode & 0o7777,
-                link=os.readlink(dest) if os.path.islink(dest) else None,
-                registry=registry)
+    if os.path.lexists(dest):
+        raw = override.read_file(dest)
+        mode = os.stat(dest).st_mode & 0o7777
+        link = os.readlink(dest) if os.path.islink(dest) else None
+    else:
+        # New file (e.g. appdir slot): nothing to restore on rollback except removal.
+        raw = None
+        mode = None
+        link = None
+    return dict(dest=dest, name=name, raw=raw, mode=mode, link=link, registry=registry)
 
 
 def restore(prefix, files, state):
     for item in files:
         if item["link"] is None:
-            override.write_atomic(item["dest"],item["raw"],item["mode"])
+            if item["raw"] is None:
+                # New file we created: remove it on rollback.
+                try:
+                    os.unlink(item["dest"])
+                except FileNotFoundError:
+                    pass
+            else:
+                override.write_atomic(item["dest"], item["raw"], item["mode"])
         else:
             temp = item["dest"] + ".dllmgr-rollback-%d" % os.getpid()
-            os.symlink(item["link"],temp)
-            os.replace(temp,item["dest"])
+            os.symlink(item["link"], temp)
+            os.replace(temp, item["dest"])
         value = override.norm(item["name"])
-        current = override.reg_query(prefix,"FSViewer.exe",value)
+        current = override.reg_query(prefix, "FSViewer.exe", value)
         if item["registry"] is None:
             if current is not None:
-                override.reg_delete(prefix,"FSViewer.exe",value)
+                override.reg_delete(prefix, "FSViewer.exe", value)
         else:
-            override.reg_add(prefix,"FSViewer.exe",value,item["registry"])
-    override.save_state(prefix,state)
+            override.reg_add(prefix, "FSViewer.exe", value, item["registry"])
+    override.save_state(prefix, state)
 
 
 def check_entry(state, entry, dest):
@@ -108,7 +122,8 @@ def manage(args, parser, prefix):
                 parser.error("apply needs unique supported modules and DLL paths")
             seen.add(override.norm(name))
             raw = override.unmark(override.read_file(module["dll"]))
-            dest = os.path.join(override.slot_dir(prefix,module["slot"],override.pe_machine(raw),override.prefix_arch(prefix)),name)
+            dest = os.path.join(override.slot_dir(prefix,module["slot"],override.pe_machine(raw),override.prefix_arch(prefix),
+                                                  "FSViewer.exe"),name)
             entry = override.find_entry(state,"FSViewer.exe",name)
             check_entry(state,entry,dest)
             plan.append(dict(module,dest=dest,entry=entry,sha256=override.sha256(raw)))
