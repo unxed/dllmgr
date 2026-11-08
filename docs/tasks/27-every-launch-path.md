@@ -141,3 +141,13 @@ Next (delivery): `dllmgr fix faststone` installs the CI-built proxy, the
 companion line (absolute launcher path of this dllmgr checkout) and the
 AppDefaults override; `status` checks them; `undo` removes them. Needs the
 proxy binary in a CI-built package (FS-1 step 1).
+
+## Delivered (2026-11-09)
+
+Release app-isolation-wine-11.0-v3 (CI run 42533286745, published by the
+owner by hand, F20), pinned in scripts/private-runtime.json. Verified with the
+pinned path on the stand: `private-app.py uninstall` + `install` (no
+--runtime-package) prints `runtime app-isolation-wine-11.0-v3` and "Launch
+trampoline installed"; trampoline-e2e.sh pass; first-open-x.sh pass (white=0).
+Owner retest: `git pull`, `dllmgr uninstall faststone && dllmgr fix faststone`,
+then start FastStone any way (menu, file manager, wine FSViewer.exe).
