@@ -1,0 +1,25 @@
+wine: created the configuration directory '<TEST_PREFIX>'
+004c:err:vulkan:vulkan_init_once Failed to load libvulkan.so.1
+0054:err:ole:StdMarshalImpl_MarshalInterface Failed to create ifstub, hr 0x80004002
+0054:err:ole:CoMarshalInterface Failed to marshal the interface {6d5140c1-7436-11ce-8034-00aa006009fa}, hr 0x80004002
+0054:err:ole:apartment_get_local_server_stream Failed: 0x80004002
+0054:err:ole:start_rpcss Failed to open RpcSs service
+004c:err:ole:StdMarshalImpl_MarshalInterface Failed to create ifstub, hr 0x80004002
+004c:err:ole:CoMarshalInterface Failed to marshal the interface {6d5140c1-7436-11ce-8034-00aa006009fa}, hr 0x80004002
+004c:err:ole:apartment_get_local_server_stream Failed: 0x80004002
+002c:err:setupapi:do_file_copyW Unsupported style(s) 0x10
+00ec:err:ntoskrnl:ZwLoadDriver failed to create driver L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\winebth": c00000e5
+002c:err:setupapi:SetupDiInstallDevice Failed to start service L"winebth" for device L"ROOT\\WINE\\WINEBTH", error 1359.
+002c:err:setupapi:SetupDiInstallDevice Failed to control service L"winebth" for device L"ROOT\\WINE\\WINEBTH", error 1062.
+002c:err:setupapi:do_file_copyW Unsupported style(s) 0x10
+0110:err:ntoskrnl:ZwLoadDriver failed to create driver L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\winebus": c0000135
+002c:err:setupapi:SetupDiInstallDevice Failed to start service L"winebus" for device L"ROOT\\WINE\\WINEBUS", error 126.
+002c:err:setupapi:SetupDiInstallDevice Failed to control service L"winebus" for device L"ROOT\\WINE\\WINEBUS", error 1062.
+002c:err:setupapi:do_file_copyW Unsupported style(s) 0x10
+012c:err:wineusb:DriverEntry Failed to initialize Unix library, status 0xc0000135.
+012c:err:ntoskrnl:ZwLoadDriver failed to create driver L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\wineusb": c0000135
+002c:err:setupapi:SetupDiInstallDevice Failed to start service L"wineusb" for device L"ROOT\\WINE\\WINEUSB", error 126.
+002c:err:setupapi:SetupDiInstallDevice Failed to control service L"wineusb" for device L"ROOT\\WINE\\WINEUSB", error 1062.
+016c:err:winediag:getaddrinfo Failed to resolve your host name IP
+0268:err:wineusb:DriverEntry Failed to initialize Unix library, status 0xc0000135.
+0268:err:ntoskrnl:ZwLoadDriver failed to create driver L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\wineusb": c0000135
