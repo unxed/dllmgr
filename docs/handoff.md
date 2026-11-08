@@ -69,6 +69,40 @@ remaining-work index. Completed #25 must not be mistaken for an unresolved
 Photoshop installation task; historical notes below are evidence, not current
 instructions to restore the unsafe shared-file method.
 
+## Emergency continuation checkpoint (2026-11-08, owner quota limit)
+
+Everything useful from this session is pushed to main; no research job remains
+running. Last successful research run42501854290 atf682c3b9b99c5f373d76425593a1fca4e5c1fb5a.
+
+- Installed **faststone-v4** close repaint passes the exact stationary second-click
+  sequence on the hidden laptop stand. All1825 files from the shared DLL/font/WIC
+  baseline remain byte-identical, verified again after v4. Evidence:
+  experiments/path-dropdown/owner-close-2026-11-08/v4-shared-integrity.json.
+- Wine60720 and60721 are published, words only; exact URLs/times in
+  docs/bugzilla/submissions.json. Already-published font c15/c16 were recovered,
+  not reposted. Historical prepared reports are now individually readable.
+- White flash remains **unfixed**. The improved centre-first observer gets
+  241–242 Windows samples instead of44, with no sampled flash; Wine192DPI still
+  reproduces it. DPI/resolution differ and this is not exhaustive frame capture.
+- Same-size positioning plus a corner paint does not reproduce the white flash
+  in the minimal popup; Windows retains yellow, Wine stays black. This is a
+  negative diagnostic result, not a solution. Next inspect what marks the real
+  new fullscreen surface entirely dirty before its first flush.
+- Source is work/wine-11.0 atdb11d0fe6a169c457e23d007e20404643d067aa8.
+  Diagnostic trace: work/local-first-open-headless/gdi-trace/trace.txt,
+  interval.txt and observations.txt. Own hidden Xvfb:93 and Metacity remain
+  available; verify ownership before reuse. Disposable prefix:
+  work/avif-wine-validation/prefix. Never use the user's desktop for tests.
+- Current checkout work/dllmgr-private, branch fix/app-isolation, pushes HEAD
+  directly to origin/main. The old work/dllmgr22-file WIP is exactly preserved
+  by checkpoint991a22b; do not reset or merge it wholesale. Its current tree
+  ef50b39e56c838239bc53470c758dab0091f7183 matches the saved patch. The only
+  untracked images/ in the current checkout contains166 synthetic files,
+  byte-identical to tests/wine/make-images.py output, not unpublished source.
+- Other-repo changes remain supplied patches for the owner, not silently applied.
+  No delegation or automation was started. Current queue remains issues8/21/22/
+  23/27/28/29/30; Photoshop/TopPlan handoff is linked above.
+
 ## Latest local checkpoint (2026-11-07)
 
 Saved on GitHub at the owner's request on **2026-11-07**. Detailed attempts,

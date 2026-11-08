@@ -170,3 +170,20 @@ The diagnostic now records that same-size positioning separately and then a
 16x16 corner paint before the final full paint. This tests which operation
 exposes the blank centre; it is not a proposed fix or a contract for unpainted
 window pixels.
+
+## Saved continuation checkpoint2026-11-08
+
+[CI42501854290](https://github.com/unxed/dllmgr/actions/runs/42501854290)
+atf682c3b9b99c5f373d76425593a1fca4e5c1fb5a completed successfully. Native
+Windows collected241 app samples, maximum32ms capture, no sampled flash.
+The refined popup remains yellow through same-size positioning and a16x16
+corner paint on Windows; stock Wine stays black until full paint. Thus the
+positioning call alone did **not** reproduce FastStone's white transition.
+Preserve this negative result; do not claim a white-flash fix. Raw timelines:
+popup-position-wine.txt, popup-position-windows.txt, position-run-windows.txt.
+
+Next bounded step: identify what marks the whole new FastStone surface dirty
+between ShowWindow and the128933.104s flush, then reproduce that public-API
+sequence on Windows/Wine. Local source/trace locations are in the handoff;
+all useful diagnostic source and sanitized timelines are already on main.
+Do not replace white initialization with black as a speculative product fix.

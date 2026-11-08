@@ -1,0 +1,7 @@
+{
+  "checked_files": 1825,
+  "unchanged_files": 1825,
+  "changed_files": [],
+  "scope": "The prior isolation audit baseline: shared DLLs and separately managed font/WIC assets; no user registry/settings capture.",
+  "installed_release": "faststone-v4"
+}
