@@ -150,11 +150,15 @@
       "id": "dllmgr-27-first-open-flash-2026-11-08",
       "local_issue_url": "https://github.com/unxed/dllmgr/issues/27",
       "kind": "new-bug",
-      "status": "prepared",
+      "status": "posted",
       "text_file": "docs/bugzilla/dllmgr-27.txt",
       "prepared_on": "2026-11-08",
       "duplicate_search": "ALL FastStone and ALL \"white flash\"; read Wine59109 through c6 (fullscreen d3d transition) and57839 (black redraws); shared cause unproved.",
-      "verification_file": "experiments/first-open/README.md"
+      "verification_file": "experiments/first-open/README.md",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=60721",
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=60721#c0",
+      "posted_at_utc": "2026-11-08T16:43:57Z",
+      "posted_by": "agent, explicitly authorized by owner"
     }
   ]
 }

@@ -126,3 +126,19 @@ Next: correlate surface invalidation/flushing and the first partial paint in
 FastStone with a refined synthetic case; avoid simply replacing one flash colour
 with another. The actual-app Windows run again had44 valid samples, so its
 unsampled intervals remain a limitation.
+
+## Upstream feedback (2026-11-08)
+
+The verified symptom is published, words only, as
+[Wine60721](https://bugs.winehq.org/show_bug.cgi?id=60721#c0).
+ALL FastStone and the exact phrase white flash were searched. Wine59109
+through comment6 describes initial surface flushing in a fullscreen game;
+that is a concrete lead, but its Direct3D client-surface transition is not
+established in FastStone. Wine57839 is another possible redraw relation.
+No duplicate or shared cause is asserted. The report explicitly retains
+the sparse Windows-sampling limitation and does not claim a fix.
+
+Next: examine whether the first partial image paint and later surface
+creation/flush replace already-painted pixels. Compare an explicitly
+partially painted synthetic popup on Windows and Wine. Keep all tests
+on a hidden display or hosted runners.

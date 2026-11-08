@@ -33,7 +33,7 @@ new CS2 trial compatibility audit is tracked separately in #31.
 - [#27](https://github.com/unxed/dllmgr/issues/27): first-open full white-screen
   flash: reproduced image→white→image with a synthetic JPEG; the white
   interval was 251 ms. Probe and timeline: `experiments/first-open/`. Cause and
-  fix remain open. All further GUI tests must use a separate headless display
+  fix remain open. Words-only Wine60721 is posted (docs/bugzilla/submissions.json). All further GUI tests must use a separate headless display
   and disposable prefix or hosted CI; no test windows on the owner's desktop.
 - [#28](https://github.com/unxed/dllmgr/issues/28): accepted font .009 final
   polish (capital В); preserve the accepted improvements and rejected fixtures.
