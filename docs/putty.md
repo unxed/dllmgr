@@ -16,3 +16,5 @@ verified by tests/wine/putty085.sh (w64 d01fdb5a…, w32 4c70267c…).
 Dropped (not PuTTY): 48678, 50591, 52154, 40322, 43666 (winegcc build).
 
 Priority: 57513 (owner: critical).
+
+57513 status: reproduced on the sandbox stand (IBus + us,ru, UTF-8 locale), mechanism narrowed to the IME notification not reaching an IME UI window in PuTTY; details and scripts in experiments/putty-57513/README.md.
