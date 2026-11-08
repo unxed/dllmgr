@@ -57,3 +57,16 @@ contents of its own window, which on Wine was the 0xff initial surface.
 Screenshots kept local (they show the registered user name).
 Next: package this as an app-scoped dllmgr fix for Photoshop.exe; then check
 the splash over other backgrounds and that later dialogs/palettes look normal.
+
+## DPI fix and full-UI check (2026-11-08 19:35)
+
+First full-startup check with the proxy showed a regression: a small,
+not-yet-painted window at the top left displayed a 2x enlarged copy of the
+menu bar. Photoshop is DPI-unaware and Wine scales its coordinates, while the
+capture was logical and the window DC scaled. The proxy now captures and draws
+in physical pixels (SetThreadDpiAwarenessContext per-monitor around both,
+WINDOWPOS moves/sizes converted with the real screen DPI). Re-run (stock Wine,
+192 DPI): splash without white, no enlarged copies, final UI (toolbox, options
+bar, palettes) normal. Remaining observation: a faint light 1 px line along the
+right/bottom edge of the splash window rectangle (probably its own frame,
+previously hidden by the white fill); not compared with Windows yet.

@@ -22,6 +22,29 @@ static int debug;
 
 static BOOL (WINAPI *real_show_window)(HWND, int);
 
+/* Capture and draw in physical pixels on both sides. In a DPI-unaware app
+ * (Photoshop CS2) Wine scales window coordinates; mixing a logical capture
+ * with a scaled window DC showed a 2x enlarged copy in small windows.
+ * Resolved at runtime: user32 of Windows < 10 / old Wine lacks these. */
+typedef DPI_AWARENESS_CONTEXT (WINAPI *set_ctx_fn)(DPI_AWARENESS_CONTEXT);
+static set_ctx_fn set_thread_dpi_ctx;
+static UINT (WINAPI *dpi_for_window)(HWND);
+
+static DPI_AWARENESS_CONTEXT physical_begin(void)
+{
+    if (!set_thread_dpi_ctx) {
+        HMODULE user32 = GetModuleHandleA("user32.dll");
+        set_thread_dpi_ctx = (set_ctx_fn)GetProcAddress(user32, "SetThreadDpiAwarenessContext");
+        dpi_for_window = (void *)GetProcAddress(user32, "GetDpiForWindow");
+    }
+    return set_thread_dpi_ctx ? set_thread_dpi_ctx(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE) : NULL;
+}
+
+static void physical_end(DPI_AWARENESS_CONTEXT old)
+{
+    if (old && set_thread_dpi_ctx) set_thread_dpi_ctx(old);
+}
+
 void WINAPI vSetDdrawflag(void)
 {
 }
@@ -141,11 +164,25 @@ static void capture_under(HWND hwnd, const WINDOWPOS *pos)
     char cls[64] = "";
     GetClassNameA(hwnd, cls, sizeof(cls));
     TRACE("capture tid=%04lx hwnd=%p class=%s flags=%04x\n", GetCurrentThreadId(), (void *)hwnd, cls, pos->flags);
-    if (!c || find_capture(hwnd) || !GetWindowRect(hwnd, &rect)) return;
-    if (!(pos->flags & SWP_NOMOVE)) OffsetRect(&rect, pos->x - rect.left, pos->y - rect.top);
-    if (!(pos->flags & SWP_NOSIZE)) { rect.right = rect.left + pos->cx; rect.bottom = rect.top + pos->cy; }
+    UINT app_dpi = dpi_for_window ? dpi_for_window(hwnd) : 96;  /* in the app's own context */
+    DPI_AWARENESS_CONTEXT old_ctx;
+    if (!c || find_capture(hwnd)) return;
+    old_ctx = physical_begin();
+    if (!GetWindowRect(hwnd, &rect)) { physical_end(old_ctx); return; }
+    {
+        /* WINDOWPOS is in the app's coordinates; convert to physical. */
+        HDC probe = GetDC(NULL);
+        UINT phys_dpi = probe ? GetDeviceCaps(probe, LOGPIXELSY) : app_dpi;  /* aware context: real DPI */
+        if (probe) ReleaseDC(NULL, probe);
+        if (!(pos->flags & SWP_NOMOVE))
+            OffsetRect(&rect, MulDiv(pos->x, phys_dpi, app_dpi) - rect.left, MulDiv(pos->y, phys_dpi, app_dpi) - rect.top);
+        if (!(pos->flags & SWP_NOSIZE)) {
+            rect.right = rect.left + MulDiv(pos->cx, phys_dpi, app_dpi);
+            rect.bottom = rect.top + MulDiv(pos->cy, phys_dpi, app_dpi);
+        }
+    }
     w = rect.right - rect.left; h = rect.bottom - rect.top;
-    if (w <= 0 || h <= 0 || !(screen = GetDC(NULL))) return;
+    if (w <= 0 || h <= 0 || !(screen = GetDC(NULL))) { physical_end(old_ctx); return; }
     c->mem = CreateCompatibleDC(screen);
     c->bitmap = c->mem ? CreateCompatibleBitmap(screen, w, h) : NULL;
     if (c->bitmap) {
@@ -155,6 +192,7 @@ static void capture_under(HWND hwnd, const WINDOWPOS *pos)
         c->hwnd = hwnd;
     } else if (c->mem) DeleteDC(c->mem);
     ReleaseDC(NULL, screen);
+    physical_end(old_ctx);
 }
 
 static void present_capture(HWND hwnd)
@@ -165,11 +203,15 @@ static void present_capture(HWND hwnd)
 
     if (!c) return;
     TRACE("present hwnd=%p\n", (void *)hwnd);
-    if (GetWindowRect(hwnd, &now) && (dc = GetDCEx(hwnd, NULL, DCX_WINDOW | DCX_CACHE))) {
-        BitBlt(dc, c->rect.left - now.left, c->rect.top - now.top, c->rect.right - c->rect.left,
-               c->rect.bottom - c->rect.top, c->mem, 0, 0, SRCCOPY);
-        ReleaseDC(hwnd, dc);
-        GdiFlush();
+    {
+        DPI_AWARENESS_CONTEXT old_ctx = physical_begin();
+        if (GetWindowRect(hwnd, &now) && (dc = GetDCEx(hwnd, NULL, DCX_WINDOW | DCX_CACHE))) {
+            BitBlt(dc, c->rect.left - now.left, c->rect.top - now.top, c->rect.right - c->rect.left,
+                   c->rect.bottom - c->rect.top, c->mem, 0, 0, SRCCOPY);
+            ReleaseDC(hwnd, dc);
+            GdiFlush();
+        }
+        physical_end(old_ctx);
     }
     release_capture(c);
 }

@@ -74,7 +74,8 @@ session() {
 		>"$STAND_DIR/xvfb.log" 2>&1 &
 	xpid=$!
 	# The socket file appears before Xvfb accepts clients: poll a real client.
-	for _ in $(seq 100); do xdpyinfo >/dev/null 2>&1 && break; sleep .1; done
+	for _ in $(seq 300); do xdpyinfo >/dev/null 2>&1 && break; sleep .1; done
+	xdpyinfo >/dev/null 2>&1 || { echo "session: Xvfb $STAND_DISPLAY not up after 30 s, see $STAND_DIR/xvfb.log" >&2; exit 1; }
 	# STAND_WM: muffin (default; mutter-based, ALWAYS composites) or metacity
 	# (with --compositor=none, as in the owner's #27 FastStone stand). Tests that
 	# sample pixels through the screen DC need the non-compositing metacity.
