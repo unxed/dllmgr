@@ -59,3 +59,13 @@ Dialog > Use OS Dialog with UI Automation and record the "Open" window rect
 after each step with a small EnumWindows probe (tests/wine/winstyles.c style).
 Compare with the Wine numbers above. Expect several blind iterations on the
 installer automation; keep each in small commits.
+
+## Windows CI execution started (2026-11-08, codex-debian-8c42)
+
+Issue35 claimed under the multi-agent protocol. Task-specific manual workflow
+`ps35-windows.yml` first inspects the verified Wayback archive's public MSI
+Property/Control/ControlEvent tables and the Windows runner desktop. Serial/key
+property values are redacted. No installer properties are guessed and no serial
+is entered. The `measure` implementation follows this inspection; it is not
+currently a completed comparison. No WineHQ comment is authorized by this task.
+This workflow is specific to35, not a project-wide requirement to run in CI.

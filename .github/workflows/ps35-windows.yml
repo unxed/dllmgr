@@ -1,0 +1,59 @@
+name: ps35-windows
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Inspect MSI trial properties or run the measured dialog comparison
+        type: choice
+        options: [inspect, measure]
+        default: inspect
+permissions:
+  contents: read
+jobs:
+  comparison:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore exact trial source
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/ps35-download
+          key: ps35-cs2-919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea
+      - name: Download from pinned Wayback snapshot and verify
+        id: source
+        shell: pwsh
+        run: |
+          $Dir=Join-Path $env:RUNNER_TEMP 'ps35-download'
+          New-Item -ItemType Directory -Force $Dir | Out-Null
+          $File=Join-Path $Dir 'Photoshop_CS2.exe'
+          $Hash='919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea'
+          $Url='https://web.archive.org/web/20240522171734id_/http://download.adobe.com/pub/adobe/photoshop/win/cs2/Photoshop_CS2.exe'
+          if(-not(Test-Path $File)){
+            & curl.exe -fLsS --retry 2 --connect-timeout 30 --max-time 900 $Url -o $File
+            if($LASTEXITCODE -ne 0){throw "Wayback download failed: $LASTEXITCODE; no Adobe fallback"}
+          }
+          if((Get-Item $File).Length -ne 345068035 -or (Get-FileHash $File -Algorithm SHA256).Hash.ToLower() -ne $Hash){throw 'Source hash/size mismatch'}
+          New-Item -ItemType Directory -Force ps35-evidence | Out-Null
+          @{url=$Url;sha256=$Hash;bytes=(Get-Item $File).Length;cache_hit='${{ steps.cache.outputs.cache-hit }}'} | ConvertTo-Json | Set-Content ps35-evidence/source.json
+          'verified=true' >> $env:GITHUB_OUTPUT
+      - name: Cache verified installer only
+        if: steps.source.outputs.verified == 'true' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/ps35-download
+          key: ps35-cs2-919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea
+      - name: Inspect or measure through public Windows APIs
+        shell: pwsh
+        env:
+          PS35_STAGE: ${{ inputs.stage }}
+        run: '& tests/wine/ps35-windows.ps1 -Stage $env:PS35_STAGE'
+      - name: Preserve text and screenshots, excluding Adobe binaries and trial state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ps35-windows-${{ github.run_id }}
+          path: ps35-evidence/
+          retention-days: 14
+          if-no-files-found: warn
