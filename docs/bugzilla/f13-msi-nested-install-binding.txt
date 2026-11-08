@@ -1,6 +1,6 @@
 Where: https://bugs.winehq.org/enter_bug.cgi?product=Wine  (new bug)
 Product: Wine   Component: msi   Version: 11.0   Severity: normal
-Status: PREPARED 2026-11-09, not posted (owner posts). Checked for duplicates:
+Status: POSTED by the owner 2026-11-09 as https://bugs.winehq.org/show_bug.cgi?id=60727. Do not repost. Checked for duplicates:
 19343 (control class names) and 53571 (SelectFileAssoc page fault) are different.
 
 Summary:

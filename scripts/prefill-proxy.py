@@ -55,7 +55,10 @@ class Registry:
         self.wine = wine
 
     def _reg(self, *args):
-        return subprocess.run([self.wine, 'reg', *args], env=self.env, capture_output=True, text=True)
+        # reg.exe prints in the console code page (cp866 etc. on non-English
+        # locales); only ASCII names/values are parsed, so never fail decoding.
+        return subprocess.run([self.wine, 'reg', *args], env=self.env, capture_output=True, text=True,
+                              encoding='utf-8', errors='replace')
 
     def get(self, key, name):
         out = self._reg('query', key, '/v', name)

@@ -180,7 +180,7 @@ def dllmgr_version():
         return subprocess.check_output(['git', '-C', str(HERE.parent), 'log', '-1', '--format=%h %cs'],
                                        text=True, stderr=subprocess.DEVNULL).strip() or 'unknown'
     except (OSError, subprocess.SubprocessError):
-        return 'unknown'
+        return 'unknown (' + str(HERE.parent) + ' is not a readable git checkout)'
 
 
 def print_versions(state):
@@ -397,7 +397,7 @@ def install_trampoline(prefix, exe, package, base):
                 prefill_proxy.undo(prefix, exe, reg)  # older build or moved dllmgr
                 result = prefill_proxy.apply(prefix, exe, 'msimg32', dll, reg, line)
         print('  Launch trampoline ' + result + ': any start of this FSViewer.exe gets the fixes.')
-    except (prefill_proxy.Error, Error, OSError, subprocess.SubprocessError) as error:
+    except Exception as error:  # optional part: never fail the installed fix
         print('  Warning: launch trampoline not installed (' + str(error) + '); use dllmgr run faststone.')
 
 

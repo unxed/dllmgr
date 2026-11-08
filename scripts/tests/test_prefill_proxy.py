@@ -122,6 +122,15 @@ class PrefillProxyTest(unittest.TestCase):
         self.assertFalse((self.app / "version.dll").exists())
         self.assertEqual(reg.values, {})
 
+    def test_registry_survives_non_utf8_reg_output(self):
+        fake = Path(self.tmp.name) / "fake-wine"
+        # reg.exe on a Russian locale: cp866 error text, exit 1 for a missing value
+        fake.write_bytes(b"#!/bin/sh\nprintf '\\216\\350\\250\\241\\255\\240\\357 \\255\\245\\342\\n' >&2\n"
+                         b"printf 'x\\255y\\n'\nexit 1\n")
+        fake.chmod(0o755)
+        reg = pp.Registry(self.prefix, str(fake))
+        self.assertIsNone(reg.get(self.key, "version"))
+
 
 if __name__ == "__main__":
     unittest.main()
