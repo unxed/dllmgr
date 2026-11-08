@@ -11,6 +11,9 @@ wine=$1 fsdir=$2 xsample=$3 duration=${4:-9000}
 here=$(cd "$(dirname "$0")" && pwd)
 work=$(mktemp -d)
 cp -r "$fsdir" "$work/fs"
+# FS_EXTRA: space-separated files to drop next to FSViewer.exe (e.g. a proxy
+# DLL; pair it with WINEDLLOVERRIDES=name=n,b).
+for f in ${FS_EXTRA:-}; do cp "$f" "$work/fs/"; done
 cp "$here/fixtures/first-open.jpg" "$work/synthetic.jpg"
 "$xsample" f0cc5a "$duration" >"$work/x.txt" &
 spid=$!

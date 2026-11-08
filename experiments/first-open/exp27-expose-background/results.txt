@@ -41,3 +41,10 @@ popup:      f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a   (= Windows)
 occlusion:  pass
 faststone:  3/3 pass (first image 579/627/685 ms, no interruption)
 
+
+# PE-side workaround patches/dllmgr-27 (proxy msimg32 + ShowWindow prefill) on STOCK /opt Wine:
+faststone plain:   image 677 -> black 1122 -> white 1143 -> image 1219        FAIL
+faststone proxy 1: image 626 -> black 1165 -> image 1188 (black 23 ms)        no white
+faststone proxy 2: image 789 -> black 1206 -> image 1227 (black 21 ms)        no white
+faststone proxy 3: image 663 -> black 1482 -> image 1510 (black 28 ms)        no white
+window-prefill.exe (synthetic): plain black 23 ms + white 1010 ms; prefill black 10-12 ms, no white
