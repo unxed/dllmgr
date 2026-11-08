@@ -52,7 +52,8 @@ A runtime package may additionally replace whitelisted Unix module groups
 (`scripts/private_runtime.py` `OPTIONAL_GROUPS`), all-or-none per group, with
 base fingerprints for the replaced originals. First group: `win32u.so` +
 `winex11.so` for `patches/winehq-60721.patch` (issue 27: they share
-`struct window_surface`). The packaged release does not ship it yet.
+`struct window_surface`). Shipped since runtime release
+`app-isolation-wine-11.0-v2` (pinned in scripts/private-runtime.json).
 
 The `--runtime-package FILE` option is for an explicitly trusted offline ZIP.
 Normal installation downloads a SHA256-pinned release. Its complete modified
