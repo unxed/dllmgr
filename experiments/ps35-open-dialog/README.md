@@ -114,3 +114,19 @@ HWNDs, screenshots and UIA trees are captured. Activation/expiry barriers or
 two failed named-button searches stop for review. This implementation is
 pending its first real CS2 Windows run; the source-free probe alone does not
 validate the installer or the dialog transitions.
+
+### First measured attempt42534239661
+
+The SHA-keyed cache restored successfully (`cache_hit=true`); source size/hash
+rechecked without another Wayback download. `/qn` returned1603; the redacted
+MSI log shows CA_CheckPersErr returning3, without an established detailed
+cause. The stock wizard fallback found the trial choice, then the harness
+failed because managed .NET UIAutomation has no LegacyIAccessiblePattern type.
+No Open measurements were taken. This is retained as an installer observation
+and a separate harness error, not attributed to Wine or Photoshop's dialog.
+
+Correction: use available Invoke/ExpandCollapse/SelectionItem/Toggle patterns;
+for a UIA-named standard Win32 Button with a real HWND, use its documented
+BM_CLICK action. Other unsupported controls still stop with evidence. Dump
+the trial UIA tree/screenshot before the next action. No coordinates, serial
+input, proprietary code changes or activation workaround.

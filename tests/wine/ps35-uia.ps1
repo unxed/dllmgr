@@ -60,7 +60,17 @@ function Invoke-UiElement([System.Windows.Automation.AutomationElement]$Element)
     $Pattern=$null
     if($Element.TryGetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern,[ref]$Pattern)){$Pattern.Invoke();return}
     if($Element.TryGetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern,[ref]$Pattern)){$Pattern.Expand();return}
-    if($Element.TryGetCurrentPattern([System.Windows.Automation.LegacyIAccessiblePattern]::Pattern,[ref]$Pattern)){$Pattern.DoDefaultAction();return}
+    if($Element.TryGetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern,[ref]$Pattern)){$Pattern.Select();return}
+    if($Element.TryGetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern,[ref]$Pattern)){
+        if($Pattern.Current.ToggleState -eq [System.Windows.Automation.ToggleState]::Off){$Pattern.Toggle()};return
+    }
+    # Managed .NET UIAutomation does not expose LegacyIAccessiblePattern.
+    # For a named UIA element backed by a standard Win32 Button only, use its
+    # documented BM_CLICK action, never coordinates or a guessed handle.
+    if($Element.Current.ClassName -eq 'Button' -and $Element.Current.NativeWindowHandle -ne 0){
+        if(-not [PS35.Native]::PostMessage([IntPtr]$Element.Current.NativeWindowHandle,0xF5,[IntPtr]::Zero,[IntPtr]::Zero)){throw 'BM_CLICK post failed'}
+        return
+    }
     throw "No public UIA action pattern: $($Element.Current.Name)"
 }
 function Invoke-NamedTwice([System.Windows.Automation.AutomationElement]$Root,[string]$Name,[string]$Tag){

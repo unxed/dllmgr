@@ -1,0 +1,20 @@
+{
+  "run_id": 42534239661,
+  "url": "https://github.com/unxed/dllmgr/actions/runs/42534239661",
+  "source": {
+    "cache_hit": "true",
+    "sha256": "919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea",
+    "url": "https://web.archive.org/web/20240522171734id_/http://download.adobe.com/pub/adobe/photoshop/win/cs2/Photoshop_CS2.exe",
+    "bytes": 345068035
+  },
+  "installation": {
+    "silent_exit": 1603,
+    "mode": "normal vendor trial flag; no serial",
+    "utc": "2026-11-08T23:15:20.4582393Z"
+  },
+  "conclusion": "failure",
+  "silent_failure": "CA_CheckPersErr returned3; no detailed cause established",
+  "harness_failure": "Unable to find type System.Windows.Automation.LegacyIAccessiblePattern at ps35-uia.ps1:63; occurred during normal trial wizard fallback",
+  "measurement_completed": false,
+  "next": "Use available UIA patterns; for UIA-named standard Win32 Button with a real HWND only, documented BM_CLICK; no coordinate guess or app patch"
+}

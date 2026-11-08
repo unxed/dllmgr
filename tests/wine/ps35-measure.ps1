@@ -23,6 +23,7 @@ function Install-WithWizard {
         if($Window.Text -match '(?i)invalid serial|activation|expired'){Save-UiTree $Root 'install-blocked';Save-Desktop 'install-blocked';throw 'STOP_LICENSE: installer requests serial/activation or reports expiry'}
         $Trial=Find-Named $Root 'Install 30-day trial version'
         if($null -ne $Trial){
+            Save-UiTree $Root 'trial-before-action';Save-Desktop 'trial-before-action'
             $Pattern=$null
             if($Trial.TryGetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern,[ref]$Pattern)){$Pattern.Select()}else{Invoke-UiElement $Trial}
             Start-Sleep -Milliseconds 500
