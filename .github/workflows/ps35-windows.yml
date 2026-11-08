@@ -1,4 +1,4 @@
-name: ps35-windows
+name: ps35-temporary-live-session
 on:
   workflow_dispatch:
     inputs:
@@ -8,11 +8,11 @@ on:
         options: [inspect, measure, probe]
         default: inspect
 permissions:
-  contents: read
+  contents: write
 jobs:
   comparison:
     runs-on: windows-latest
-    timeout-minutes: 35
+    timeout-minutes: 100
     steps:
       - uses: actions/checkout@v4
       - name: Parse task PowerShell scripts before any download
@@ -58,12 +58,22 @@ jobs:
         shell: powershell
         env:
           PS35_STAGE: ${{ inputs.stage }}
-        run: '& tests/wine/ps35-windows.ps1 -Stage $env:PS35_STAGE'
+        run: '& tests/wine/ps35-windows.ps1 -Stage inspect'
+      - name: Temporary task35 HTTPS control session
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PS35_KEEP_UI: '1'
+        run: |
+          $env:LAB_OUT=Join-Path $env:GITHUB_WORKSPACE 'session-evidence'
+          python .session-lab/lab.py serve --minutes 60
       - name: Preserve text and screenshots, excluding Adobe binaries and trial state
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ps35-windows-${{ github.run_id }}
-          path: ps35-evidence/
+          name: ps35-temporary-live-session-${{ github.run_id }}
+          path: |
+            ps35-evidence/
+            session-evidence/
           retention-days: 14
           if-no-files-found: warn
