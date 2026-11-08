@@ -106,3 +106,10 @@ only synthetic timelines are published.
 Next steps: a minimal public-API popup/delayed-paint reproducer compared on
 Windows/Wine, and a denser trustworthy native Windows capture. Preserve the
 reproduced failure as the gate; do not ship a hardcoded white-to-black change.
+
+`tests/wine/window-first-paint.c` is the next minimal public-API diagnostic:
+paint a synthetic underlay, show a popup without a background brush, sample its
+unpainted centre, then explicitly paint it. The manual Windows workflow runs
+this alongside the application observer. It records observations rather than
+asserting a contract for uninitialized window pixels; a matching blank popup
+alone would not establish that this is FastStone's exact path.

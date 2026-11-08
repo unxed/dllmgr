@@ -12,10 +12,13 @@ jobs:
       - run: bash tests/wine/ci-install.sh gcc-mingw-w64-x86-64
         timeout-minutes: 6
       - run: x86_64-w64-mingw32-gcc -O2 -Wall -municode -o first-open-probe.exe tests/wine/first-open-probe.c tests/wine/listview-probe.c -lgdi32 -lshell32
+      - run: x86_64-w64-mingw32-gcc -O2 -Wall -o window-first-paint.exe tests/wine/window-first-paint.c -lgdi32
       - uses: actions/upload-artifact@v4
         with:
           name: first-open-probe
-          path: first-open-probe.exe
+          path: |
+            first-open-probe.exe
+            window-first-paint.exe
   windows:
     needs: build
     runs-on: windows-latest
@@ -34,6 +37,7 @@ jobs:
           cp tests/wine/fixtures/first-open.jpg /c/dllmgr-first-open/synthetic.jpg
           unzip -q fs85.zip -d /c/dllmgr-first-open
           cd captures
+          ../window-first-paint.exe >window-first-paint.txt
           ../first-open-probe.exe 'C:\dllmgr-first-open\FSViewer85\FSViewer.exe' 'C:\dllmgr-first-open\synthetic.jpg' f0cc5a >observations.txt
       - uses: actions/upload-artifact@v4
         if: always()
