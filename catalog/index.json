@@ -52,7 +52,7 @@
       "kind": "fix",
       "title": "comctl32 v6: keep themed combo button painting in sync with its open/closed list",
       "license": "LGPL-2.1-or-later",
-      "bug": "https://bugs.winehq.org/show_bug.cgi?id=60720",
+      "bug": "https://github.com/unxed/dllmgr/issues/21",
       "dlls": [
         "comctl32_v6"
       ],

@@ -1,7 +1,7 @@
 ---
 id: dllmgr-21
 kind: fix
-bug: https://bugs.winehq.org/show_bug.cgi?id=60720
+bug: https://github.com/unxed/dllmgr/issues/21
 title: "comctl32 v6: keep themed combo button painting in sync with its open/closed list"
 dlls: [comctl32_v6]
 programs: [FSViewer.exe]
@@ -49,7 +49,7 @@ Stock Wine fails the actual-app pixel check at 96/192 DPI. With this isolated
 change, and with the four existing list-view patches composed into the same
 module, the button is stable across hold/release while the list stays open.
 Native loading and byte-exact original-DLL restoration passed in CI
-[42416643457](https://github.com/unxed/dllmgr/actions/runs/42499612512) at
+[42416643457](https://github.com/unxed/dllmgr/actions/runs/42416643457) at
 8ea884f7137bda4e6cb23a11dfd73b0dae45f6b8. See
 [the research log](../../experiments/path-dropdown/README.md) for failures and
 scope. An earlier build of the same patch series passed on the owner's actual prefix at 192 DPI, with
