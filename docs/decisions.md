@@ -280,3 +280,16 @@ running one for the same branch. While a deep run is in progress, push only
   Keep a visible dllmgr tracking issue as well as the standing Lunobot task.
 - Scope: record requirements only; do not start the new hiew/protocol work
   during the active FastStone investigation. See `docs/console-apps.md`.
+
+## Development policy — RUP and immediate delivery
+
+- Date: 2026-11-08
+- Decided by: owner
+- Decision: follow RUP principles with small, atomic, reversible increments.
+  Immediately commit and push useful working increments to `main` and deliver
+  them to the user for testing; do not accumulate unpublished or unmerged work.
+  Extended testing, polish and edge-case research follow delivery and do not
+  delay an already working fix. Preserve rollback and state proof/limitations
+  honestly. See [the development policy](development.md).
+- Reason: the user needs working fixes and fast feedback, not a growing queue
+  of changes held back by perfectionism.

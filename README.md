@@ -17,6 +17,13 @@ from the five-fix recipe; see [scope, supported files and evidence](docs/avif.md
 Corrected Cyrillic Tahoma Bold: `dllmgr fix faststone-fonts`, undo with
 `dllmgr uninstall faststone-fonts`; see [font scope and evidence](docs/fonts.md).
 
+## How we develop
+
+We follow RUP principles: small atomic increments and immediate delivery to
+`main` and the user for testing. Broader testing and refinement follow delivery;
+we do not accumulate changes while pursuing perfection. See the
+[development policy](docs/development.md).
+
 ## What it does
 
 - Installs verified FastStone DLLs in private storage and selects them by the

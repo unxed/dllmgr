@@ -1,5 +1,9 @@
 # Handoff: FastStone work
 
+Before continuing, follow [the development policy](development.md): small atomic
+RUP increments, immediate push to `main` and delivery to the user; extended
+checks and refinement come afterward. Do not accumulate completed changes.
+
 ## Latest local checkpoint (2026-11-07)
 
 Saved on GitHub at the owner's request on **2026-11-07**. Detailed attempts,
