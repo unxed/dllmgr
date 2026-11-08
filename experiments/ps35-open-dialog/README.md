@@ -28,3 +28,18 @@ dialog's width, so the round trip keeps the size. Next: log the Adobe
 dialog's WM_GETMINMAXINFO answer; compare with Windows only if needed.
 Wine 34134 c5 (published earlier) says cause unknown; do not post again
 until the minimum-size question is answered.
+
+## Minimum sizes (2026-11-08 19:50)
+
+WM_GETMINMAXINFO answers logged with the prefill proxy's DLLMGR27_DEBUG
+(version.dll entry): the OS dialog (#32770) reports min 604x602 = its initial
+size (comdlg32), the Adobe dialog never answers a WM_GETMINMAXINFO during the
+toggle. So 760 is the width Adobe's code chooses itself, not a clamp; the 768
+in Wine's calc_winpos trace is the same request in window-rect terms (the X
+sizes are 1520 = 760 x 2 physical for both later states).
+
+Status: Wine executes Adobe's explicit MoveWindow of the OS dialog to the Adobe
+dialog's rect; no Wine defect is shown. Whether Adobe's code does the same on
+Windows cannot be derived from Wine traces (no reverse engineering of
+Photoshop). Deciding needs a real Windows run of the same three steps (owner
+machine/VM or a Windows CI job installing the CS2 trial).

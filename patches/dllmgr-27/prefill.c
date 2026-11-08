@@ -233,6 +233,14 @@ static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
 static LRESULT CALLBACK after(int code, WPARAM wparam, LPARAM lparam)
 {
     const CWPRETSTRUCT *m = (const CWPRETSTRUCT *)lparam;
+    if (debug && code == HC_ACTION && m->message == WM_GETMINMAXINFO) {
+        /* diagnostic only (#35): what minimum size a window asks for */
+        const MINMAXINFO *mm = (const MINMAXINFO *)m->lParam;
+        char cls[64] = "";
+        GetClassNameA(m->hwnd, cls, sizeof(cls));
+        TRACE("minmax hwnd=%p class=%s min=%ldx%ld max=%ldx%ld\n", (void *)m->hwnd, cls,
+              mm->ptMinTrackSize.x, mm->ptMinTrackSize.y, mm->ptMaxTrackSize.x, mm->ptMaxTrackSize.y);
+    }
     if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGED &&
         (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW))
         present_capture(m->hwnd);
