@@ -381,8 +381,9 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
                 SetEvent(event);
                 CloseHandle(event);
             }
-            idle = TRUE; /* DisableThreadLibraryCalls alone did not stop
-                          * DLL_THREAD_ATTACH under Wine 11.0 */
+            idle = TRUE; /* DisableThreadLibraryCalls is refused for DLLs
+                          * with static TLS (mingw's TLS callbacks), as on
+                          * Windows, so DLL_THREAD_ATTACH still arrives */
             DisableThreadLibraryCalls(instance);
             return TRUE;
         }

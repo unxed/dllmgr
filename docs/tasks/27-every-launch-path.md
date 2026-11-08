@@ -128,8 +128,14 @@ WINEDLLOVERRIDES=msimg32=n,b:
 - Fail-safe: launcher path missing -> "cannot start launcher (error 3)",
   window on stock Wine at once; launcher exits without starting the private
   runtime (`/bin/false`) -> stock Wine after DLLMGR27_TRAMP_WAIT.
-- Found: Wine 11.0 still calls DllMain(DLL_THREAD_ATTACH) after
-  DisableThreadLibraryCalls; the proxy keeps its own `idle` flag.
+- DllMain(DLL_THREAD_ATTACH) still arrives after DisableThreadLibraryCalls:
+  not a Wine bug, the call is refused for DLLs with static TLS (mingw TLS
+  callbacks), as on Windows (ntdll loader.c LdrDisableThreadCalloutsForDll);
+  the proxy keeps its own `idle` flag.
+- The two Unix-child facts are Wine design, not bugs to report: Unix
+  programs are started by fork_and_exec (double fork, execv with the Unix
+  `environ`), so there is no process object to wait on and the PEB
+  environment is not used. No Windows program depends on it.
 
 Next (delivery): `dllmgr fix faststone` installs the CI-built proxy, the
 companion line (absolute launcher path of this dllmgr checkout) and the
