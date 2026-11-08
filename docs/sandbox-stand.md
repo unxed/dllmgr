@@ -45,7 +45,9 @@ wine start in a fresh prefix ~20 s). `up` is legacy and only good for a
 quick look within one reply.
 
 Result: Wine 11.0 (`/opt/wine-stable`, WineHQ `11.0.0.0~noble-1`, pinned),
-Xvfb `:92` 3072x1728x24 at 192 DPI, Muffin as WM (no compositing), clean
+Xvfb `:92` 3072x1728x24 at 192 DPI, Muffin as WM (it ALWAYS composites, being
+mutter-based; `STAND_WM=metacity` gives Metacity `--compositor=none`, the
+owner's #27 setup, needed for screen-DC pixel sampling), clean
 prefix `/home/claude/work/photoshop-cs2/prefix110`. Ubuntu's own wine is 9.0
 and must not be used for reports.
 

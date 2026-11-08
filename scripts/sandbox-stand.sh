@@ -74,7 +74,14 @@ session() {
 	xpid=$!
 	# The socket file appears before Xvfb accepts clients: poll a real client.
 	for _ in $(seq 100); do xdpyinfo >/dev/null 2>&1 && break; sleep .1; done
-	dbus-run-session -- muffin --sm-disable --x11 >"$STAND_DIR/wm.log" 2>&1 &
+	# STAND_WM: muffin (default; mutter-based, ALWAYS composites) or metacity
+	# (with --compositor=none, as in the owner's #27 FastStone stand). Tests that
+	# sample pixels through the screen DC need the non-compositing metacity.
+	if [ "${STAND_WM:-muffin}" = metacity ]; then
+		dbus-run-session -- metacity --sm-disable --compositor=none >"$STAND_DIR/wm.log" 2>&1 &
+	else
+		dbus-run-session -- muffin --sm-disable --x11 >"$STAND_DIR/wm.log" 2>&1 &
+	fi
 	wpid=$!
 	# set -e is active inside traps too: every teardown step must not fail, or
 	# the shell exits with 1 before killing X (that leaked Xvfb/Muffin before).
