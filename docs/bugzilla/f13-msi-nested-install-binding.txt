@@ -1,0 +1,40 @@
+Where: https://bugs.winehq.org/enter_bug.cgi?product=Wine  (new bug)
+Product: Wine   Component: msi   Version: 11.0   Severity: normal
+Status: PREPARED 2026-11-09, not posted (owner posts). Checked for duplicates:
+19343 (control class names) and 53571 (SelectFileAssoc page fault) are different.
+
+Summary:
+msi: nested MsiInstallProduct inside a custom action invalidates the custom action's remote handle (RPC_S_INVALID_BINDING), Photoshop CS2 setup shows "&Finish" on every control and msiexec crashes with 0x6a6
+
+Description:
+Adobe Photoshop CS2 (trial installer) ends with a final dialog where every
+label, checkbox, button and the window title read "&Finish". After clicking
+Finish, msiexec dies with "Unhandled exception 0x000006a6" (RPC_S_INVALID_BINDING).
+The product itself is installed correctly. Wine 11.0, clean 64-bit prefix.
+
+What happens (relay log of the msi exports):
+1. The final dialog is drawn by one of Adobe's own DLL custom actions
+   (CA_InstallFinishDisplay, entry PerformSubInstalls), running in the custom
+   action host process. Early on, its MsiGetPropertyA calls succeed.
+2. The same custom action then installs bundled packages from that process:
+   MsiSetInternalUI followed by MsiInstallProductA for "Adobe Bridge 1.0.msi"
+   and the other shared components. These nested installs complete.
+3. Afterwards every remote call of the outer custom action fails:
+   MsiGetPropertyA for FINISHTEXT, BACKTEXT, CANCELTEXT, DIALOGTEXT2,
+   WINDOWTITLE, LAUNCHTEXT and so on returns 0x6a6. The caller reuses one
+   buffer, which still holds "&Finish" from the last successful read, and
+   puts it on every control and the caption. The main install thread is still
+   waiting for this custom action at that point, so the session is alive.
+4. The later crash after Finish carries the same 0x6a6 code.
+
+Cause, from reading dlls/msi: the custom action host keeps a single
+process-wide RPC binding to the installing process, created when the first
+custom action is dispatched there. MSI_FreePackage releases that binding
+whenever any package is freed in the process. A package opened by a nested
+MsiInstallProduct inside a custom action is freed when the nested install
+ends, which drops the outer custom action's binding.
+
+Expected: a nested install inside a custom action should not affect the
+remote handle of the custom action that started it; the binding belongs to
+the custom action host and should only be released when the host is done
+with it (or be kept per custom action).
