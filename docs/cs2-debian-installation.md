@@ -11,6 +11,7 @@ do not merge results from different environments or duplicate those issues.
 - The reproducible [Debian Wine stand](cloud-wine-sandbox.md): WineHQ
   11.0.0.0~trixie-1, full-system QEMU TCG, Debian 6.12.115+deb13.1-amd64,
   Openbox, Xvfb :191 3072x1728x24, Windows DPI 192.
+- Windows version reported by `cmd /c ver`: **10.0.19045**, unchanged.
 - New, independent **win32** prefix:
   `/workspace/work/photoshop-cs2/prefix110`. No owner files or existing trial
   prefix copied. Optional Mono/Gecko are disabled by the stand's documented
@@ -71,6 +72,8 @@ to Wine/Photoshop has been made to suppress them.
 | D7 | Autorun EULA | HTML pane blank, while local official License.html exists and is readable | Stand explicitly disables mshtml/Gecko; configuration limitation, not proven Wine bug. Read verified local terms, then used normal Accept. Deferred. |
 | D8 | Autorun | `err:mmdevapi:load_driver Unable to load UNIX functions: c0000135`; ALSA `cannot find card '0'`, `Unknown PCM default` | No virtual audio device, overlaps Ubuntu finding F7. Deferred; autorun continued. |
 | D9 | MSI first GUI | Several minutes between MSI process creation and first Welcome page | Processes remained active; Welcome eventually appeared. TCG timing observation, not a demonstrated hang or new upstream defect. |
+| D10 | Non-invasive DPI-aware Win32 probe | `SetProcessDPIAware=1 LOGPIXELS=192,192 GetDpiForSystem=192 screen=6144x3456` while Xvfb root is 3072x1728 | DPI 192 is independently confirmed, but Windows/X screen metrics differ. Preserve exact values; virtualization/scaling cause unproven, defer. |
+| D11 | Shared-component installation | `err:kerberos:kerberos_LsaApInitializePackage no Kerberos support, expect problems` | Optional authentication integration in the extracted runtime; no Photoshop failure attributed. Deferred. |
 | D5 | Self-extractor first screenshot | First frame was black while the X window was already present; the next stable screenshot painted the WinZip UI | Readiness/timing observation under CPU emulation. A transient screenshot is not proof of a persistent paint defect. |
 
 Wineboot and extraction are distinct from MSI installation and from the
@@ -124,3 +127,34 @@ The association header ellipses were independently observed here (16 screenshot)
 record as another environment observation of F12, not a duplicate new defect.
 F18 also matters: judge painting by X-server screenshots, not GetPixel alone.
 No #27 research DLL/source patch was installed in this stock Wine baseline.
+
+During copy, Photoshop.exe appeared and already matched the expected owner
+binary SHA256 `98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30`
+(19533824 bytes). This verifies the file, not installer completion or startup.
+`installed-exe.json` explicitly records that the installer was still running.
+`dpi-probe.c` is a public-API-only synthetic probe; its DPI-aware result and the
+X root size must both be retained rather than assuming identical coordinates.
+
+### Recovery controls and current shared-component stage
+
+`prepare-controls.py` restores six exact Debian MinGW packages using URLs and
+SHA256 in toolchain.json, extracts them locally and compiles windows-install,
+dpi-probe and product-state (all public APIs). It was run successfully against
+verified cached packages during this session. Default paths are the ones in
+checkpoint.json; if changing the root, adjust the controller/client constants.
+
+```sh
+python3 experiments/cs2-debian-installation/prepare-controls.py
+```
+
+At this checkpoint Photoshop.exe is verified, while the standard outer MSI is
+still installing its bundled shared components. Bridge was followed by Adobe
+Common Files. No Finish click or Photoshop launch is claimed. Later verify the
+product with product-state.exe (`MsiQueryProductState` + name/version) and
+re-enumerate the final UI before clicking anything; watch F13/F14.
+
+The controller's polling of completed request files consumed avoidable CPU/9p
+metadata traffic. Completed request files were moved to completed-requests/,
+while response guard files and the full action journal were retained. Keeping
+the response guards ensures an in-flight directory iteration still skips old
+requests. This is harness bookkeeping, not a Wine/Photoshop fix.

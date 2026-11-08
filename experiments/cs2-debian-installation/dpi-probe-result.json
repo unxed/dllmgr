@@ -1,0 +1,9 @@
+{
+  "public_api_probe_output": "SetProcessDPIAware=1 LOGPIXELS=192,192 GetDpiForSystem=192 screen=6144x3456\n",
+  "utc": "2026-11-08T18:12:14Z",
+  "x_root_pixels": [
+    3072,
+    1728
+  ],
+  "cause_of_metric_difference": "not established"
+}

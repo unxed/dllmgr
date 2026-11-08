@@ -99,12 +99,24 @@
     "file": "17-ready-to-install.png",
     "sha256": "4d38573fc204f3026ebc72cb919a441e34f62dad13f5b6a16bcfa2d75f97a085",
     "bytes": 27287,
-    "storage": "local only, duplicate/transitional capture"
+    "storage": "experiments/cs2-debian-installation/screenshots/17-ready-to-install.png"
   },
   {
     "file": "18-installing.png",
     "sha256": "515f56530ba683339a2e0439d551fe2716ff9118c4f06e55bb3002d021822ba9",
     "bytes": 30275,
+    "storage": "experiments/cs2-debian-installation/screenshots/18-installing.png"
+  },
+  {
+    "file": "19-installation-state.png",
+    "sha256": "f0452c4a2fbd4d86f791de748d35a069b1b66bb85ce72ab95fc715dec62b415f",
+    "bytes": 33991,
+    "storage": "experiments/cs2-debian-installation/screenshots/19-installation-state.png"
+  },
+  {
+    "file": "20-shared-components.png",
+    "sha256": "f8942013596d902bb431b662bad9f6bd5c0d1daf7420b99258748630e1d25835",
+    "bytes": 34034,
     "storage": "local only, duplicate/transitional capture"
   }
 ]

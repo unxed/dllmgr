@@ -18,3 +18,4 @@ ALSA lib pcm.c:2722:(snd_pcm_open_noupdate) Unknown PCM default
 0434:err:msi:dialog_bitmap_control Failed to load bitmap (null)
 0434:err:msi:dialog_bitmap_control Failed to load bitmap (null)
 0434:err:msi:dialog_bitmap_control Failed to load bitmap (null)
+06f0:err:kerberos:kerberos_LsaApInitializePackage no Kerberos support, expect problems

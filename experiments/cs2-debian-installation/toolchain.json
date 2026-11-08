@@ -2,31 +2,55 @@
   {
     "file": "gcc-mingw-w64-i686-posix_14.2.0-19+27+b1_amd64.deb",
     "sha256": "31bbc7a215925deb972df1f5a8923e4b9ce3633903e0b30a908eb11dc82cdba6",
-    "metadata": "Package: gcc-mingw-w64-i686-posix\nVersion: 14.2.0-19+27+b1\nArchitecture: amd64\n"
+    "metadata": "Package: gcc-mingw-w64-i686-posix\nVersion: 14.2.0-19+27+b1\nArchitecture: amd64\n",
+    "package": "gcc-mingw-w64-i686-posix",
+    "version": "14.2.0-19+27+b1",
+    "architecture": "amd64",
+    "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gcc-mingw-w64/gcc-mingw-w64-i686-posix_14.2.0-19%2b27%2bb1_amd64.deb"
   },
   {
     "file": "gcc-mingw-w64-i686-posix-runtime_14.2.0-19+27+b1_amd64.deb",
     "sha256": "17a77024da685e0a56aac485afc518f9fba4d9ad557bce5d09ba2bf70c56bbb7",
-    "metadata": "Package: gcc-mingw-w64-i686-posix-runtime\nVersion: 14.2.0-19+27+b1\nArchitecture: amd64\n"
+    "metadata": "Package: gcc-mingw-w64-i686-posix-runtime\nVersion: 14.2.0-19+27+b1\nArchitecture: amd64\n",
+    "package": "gcc-mingw-w64-i686-posix-runtime",
+    "version": "14.2.0-19+27+b1",
+    "architecture": "amd64",
+    "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gcc-mingw-w64/gcc-mingw-w64-i686-posix-runtime_14.2.0-19%2b27%2bb1_amd64.deb"
   },
   {
     "file": "mingw-w64-i686-dev_12.0.0-5_all.deb",
     "sha256": "ddd5f65c29014ae67b89df146a8016f38056a9d8eadbccd17cae4c00ccd01528",
-    "metadata": "Package: mingw-w64-i686-dev\nVersion: 12.0.0-5\nArchitecture: all\n"
+    "metadata": "Package: mingw-w64-i686-dev\nVersion: 12.0.0-5\nArchitecture: all\n",
+    "package": "mingw-w64-i686-dev",
+    "version": "12.0.0-5",
+    "architecture": "all",
+    "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/m/mingw-w64/mingw-w64-i686-dev_12.0.0-5_all.deb"
   },
   {
     "file": "gcc-mingw-w64-base_14.2.0-19+27+b1_amd64.deb",
     "sha256": "8d2c64b886ab4a435a78ddc4cd3b510f149b65fbd6be8472e8f460627562718a",
-    "metadata": "Package: gcc-mingw-w64-base\nVersion: 14.2.0-19+27+b1\nArchitecture: amd64\n"
+    "metadata": "Package: gcc-mingw-w64-base\nVersion: 14.2.0-19+27+b1\nArchitecture: amd64\n",
+    "package": "gcc-mingw-w64-base",
+    "version": "14.2.0-19+27+b1",
+    "architecture": "amd64",
+    "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/g/gcc-mingw-w64/gcc-mingw-w64-base_14.2.0-19%2b27%2bb1_amd64.deb"
   },
   {
     "file": "mingw-w64-common_12.0.0-5_all.deb",
     "sha256": "97dce5d0d8aff1cade4786ad4ef5078345477a598829afcac2e7f2fbc5399990",
-    "metadata": "Package: mingw-w64-common\nVersion: 12.0.0-5\nArchitecture: all\n"
+    "metadata": "Package: mingw-w64-common\nVersion: 12.0.0-5\nArchitecture: all\n",
+    "package": "mingw-w64-common",
+    "version": "12.0.0-5",
+    "architecture": "all",
+    "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/m/mingw-w64/mingw-w64-common_12.0.0-5_all.deb"
   },
   {
     "file": "binutils-mingw-w64-i686_2.44-3+12+b1_amd64.deb",
     "sha256": "a8b90b43c53371e436e804a2335bfef77824dbd3d40c74e01acbed04ad333310",
-    "metadata": "Package: binutils-mingw-w64-i686\nVersion: 2.44-3+12+b1\nArchitecture: amd64\n"
+    "metadata": "Package: binutils-mingw-w64-i686\nVersion: 2.44-3+12+b1\nArchitecture: amd64\n",
+    "package": "binutils-mingw-w64-i686",
+    "version": "2.44-3+12+b1",
+    "architecture": "amd64",
+    "url": "https://snapshot.debian.org/archive/debian/20261103T013555Z/pool/main/b/binutils-mingw-w64/binutils-mingw-w64-i686_2.44-3%2b12%2bb1_amd64.deb"
   }
 ]

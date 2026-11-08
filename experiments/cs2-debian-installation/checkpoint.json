@@ -1,13 +1,13 @@
 {
-  "updated_utc": "2026-11-08T18:07:35.100747+00:00",
+  "updated_utc": "2026-11-08T18:23:57.391532+00:00",
   "priority": "all newly found issues after existing bugs",
   "source_verified": true,
   "archive_crc_ok": true,
   "extracted_files_verified": 404,
   "extractor_result": "404 file(s) unzipped successfully",
-  "msi_installed": false,
+  "msi_installed": null,
   "photoshop_launched": false,
-  "current_stage": "30-day trial explicitly selected; default destination/associations; Install pressed, MSI installing",
+  "current_stage": "Main EXE hash verified; outer MSI installing shared components (Adobe Common Files), no Finish or first launch yet",
   "prefix": "/workspace/work/photoshop-cs2/prefix110",
   "controller": "/workspace/work/photoshop-cs2/control/controller.py",
   "display": "guest :191 only",
@@ -24,5 +24,10 @@
     "F15",
     "F16",
     "F18"
-  ]
+  ],
+  "msi_installation_verified": false,
+  "app_exe_present": true,
+  "app_exe_sha256": "98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30",
+  "windows_version": "10.0.19045",
+  "dpi_confirmed_by_public_probe": 192
 }
