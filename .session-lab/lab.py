@@ -85,7 +85,7 @@ def serve(minutes):
 
 def request(run,req):
     bus='session-codex-8c42-'+run;name=str(time.time_ns());path='lab-requests/'+name+'.json'
-    api('contents/'+path,{'message':'Temporary session command '+name,'branch':bus+'-cmd','content':base64.b64encode(json.dumps(req).encode()).decode()},'PUT')
+    api('contents/'+path,{'message':'Temporary session command '+name+' [skip ci]','branch':bus+'-cmd','content':base64.b64encode(json.dumps(req).encode()).decode()},'PUT')
     print('request',name,flush=True);deadline=time.monotonic()+360
     while time.monotonic()<deadline:
         head=branch_head(bus+'-out');tree=api('git/trees/'+head+'?recursive=1')['tree'];wanted='lab-results/'+name+'/'
