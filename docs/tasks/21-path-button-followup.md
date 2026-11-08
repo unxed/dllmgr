@@ -1,5 +1,8 @@
 # Agent task: stationary mouse release on the FastStone path button (#21)
 
+Status2026-11-08: the owner deferred delegation. This is a saved task draft;
+the current dllmgr chat continues the investigation. No second agent is assigned.
+
 Continue https://github.com/unxed/dllmgr/issues/21; read its body and **all**
 comments first, then docs/handoff.md, docs/development.md and docs/app-isolation.md
 from current main. Work in a separate clone/worktree: another agent is actively

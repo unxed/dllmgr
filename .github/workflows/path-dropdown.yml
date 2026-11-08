@@ -4,6 +4,11 @@ on:
     branches: ['research/faststone-path']
     paths: ['tests/wine/path-*', 'tests/wine/check-path-dropdown.py', 'tests/wine/app-observer.c', 'tests/wine/listview-probe.*', 'patches/dllmgr-21.patch', '.github/workflows/path-dropdown.yml']
   workflow_dispatch:
+    inputs:
+      build_patched:
+        description: Rebuild isolated and composed DLLs (disable for observer-only research)
+        type: boolean
+        default: true
 permissions:
   contents: read
 concurrency:
@@ -108,6 +113,7 @@ jobs:
           path: captures/
 
   patched:
+    if: github.event_name != 'workflow_dispatch' || inputs.build_patched
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 20

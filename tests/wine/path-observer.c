@@ -113,6 +113,11 @@ static int observe_path(HWND first)
     Sleep(750);ok=capture_state("03-held",browser) && ok;
     event.mi.dwFlags=MOUSEEVENTF_LEFTUP;SendInput(1,&event,sizeof(event));held=0;
     Sleep(250);ok=capture_state("04-up",browser) && ok;
+    /* Owner follow-up: mouse-up alone must be observed separately from motion. */
+    Sleep(750);ok=capture_state("04-stationary",browser) && ok;
+    pointer(p.x-2,p.y,0);Sleep(250);ok=capture_state("04-move-inside",browser) && ok;
+    pointer(r.left-20,r.top-20,0);Sleep(250);ok=capture_state("04-move-outside",browser) && ok;
+    pointer(p.x,p.y,0);Sleep(250);ok=capture_state("04-return",browser) && ok;
     /* Repeat on the same button; release is unconditional even after a capture failure. */
     if(!activate_owned_window(browser)) return 7;
     event.mi.dwFlags=MOUSEEVENTF_LEFTDOWN;held=SendInput(1,&event,sizeof(event))==1;

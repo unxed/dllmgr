@@ -14,6 +14,9 @@ if 'control_themed=1' not in text:
     raise SystemExit('Themed-button check requires a verified themed control')
 stages = ['00-initial', '01-hover', '02-down', '03-held', '04-up', '05-second-down', '06-second-up', '07-escape']
 expected = [(0,0,0),(0,0,0),(1,8,1),(1,8,1),(1,0,1),(0,0,0),(0,0,0),(0,0,0)]
+# Motion states are observed before the second click, with the same open popup.
+stages[5:5] = ['04-stationary','04-move-inside','04-move-outside','04-return']
+expected[5:5] = [(1,0,1)] * 4
 images = {}
 
 def button_pixels(path, box):
@@ -54,6 +57,12 @@ def changes(a,b):
 result = {'hover_to_down_pixels': changes('01-hover','02-down'),
           'down_to_held_pixels': changes('02-down','03-held'),
           'down_to_up_pixels': changes('02-down','04-up')}
+result.update({
+    'up_to_stationary_pixels': changes('04-up','04-stationary'),
+    'stationary_to_inside_pixels': changes('04-stationary','04-move-inside'),
+    'inside_to_outside_pixels': changes('04-move-inside','04-move-outside'),
+    'outside_to_return_pixels': changes('04-move-outside','04-return'),
+})
 (args.folder / 'pixel-check.json').write_text(json.dumps(result,indent=2)+'\n')
 print(json.dumps(result))
 if result['hover_to_down_pixels'] == 0 or result['down_to_held_pixels'] != 0:
