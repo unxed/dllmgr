@@ -1,0 +1,49 @@
+Where: https://bugs.winehq.org/enter_bug.cgi?product=Wine  (new bug)
+Product: Wine   Component: user32   Version: 11.0   Severity: normal
+Status: prepared 2026-11-08, NOT posted (owner posts; then record the URL here
+and in issue #38). Words only: no code, no links to code.
+
+Summary:
+user32: SetWindowFeedbackSetting/GetWindowFeedbackSetting are not exported (Adobe Photoshop 2024 aborts when opening an image)
+
+Description:
+Adobe Photoshop 2024 aborts when an image is opened or a new document is
+created:
+
+  Unimplemented function USER32.dll.SetWindowFeedbackSetting called at address ... aborting
+
+(reported by a user of a Wine fork for Adobe installers, Photoshop 2024 in a
+Bottles prefix). user32 does not export SetWindowFeedbackSetting or
+GetWindowFeedbackSetting in Wine 11.0 or in current master: both spec entries
+are commented out, so the loader binds an aborting stub to the import.
+win32u has only a syscall stub for NtUserSetWindowFeedbackSetting.
+
+The functions configure per-window touch and pen visual feedback. Measured on
+Windows (Windows Server 2022 GitHub runner, small test program, one result
+per case):
+
+- SetWindowFeedbackSetting with a valid window, a feedback type from 1 to 11,
+  flags 0 and a BOOL-sized configuration succeeds; the value is stored per
+  window and per type.
+- A NULL configuration with size 0 succeeds and resets the setting to unset.
+- Size other than sizeof(BOOL), type 0 or 99, or non-zero flags: FALSE with
+  ERROR_INVALID_PARAMETER.
+- Invalid or NULL window: FALSE with ERROR_INVALID_WINDOW_HANDLE (both
+  functions).
+- GetWindowFeedbackSetting for an unset value returns FALSE, writes 0 to the
+  configuration buffer and leaves the last error unchanged; after a set it
+  returns TRUE with the stored value.
+- GWFS_INCLUDE_ANCESTORS makes a child window return its parent's value;
+  without the flag the child reads as unset.
+- A NULL configuration buffer returns TRUE and reports the size (4).
+
+Suggested change in words: export both functions from user32 and implement
+them as above. Wine draws no touch/pen feedback, so the values only need to
+round-trip (for example as window properties). With such an implementation
+on Wine 11.0 the same test program prints exactly the Windows results for
+all cases, and a program that imports SetWindowFeedbackSetting statically,
+like Photoshop, no longer aborts. Not yet confirmed with Photoshop 2024
+itself (it requires a Creative Cloud login).
+
+Prepared with the help of an AI agent; the Windows measurements and the Wine
+results above were produced by running the test program on both.
