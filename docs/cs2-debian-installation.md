@@ -44,8 +44,16 @@ The reviewed prefix-initialization log is retained in
    was terminated, and a new launch after `chdir` to the installer directory
    reached the normal Adobe language picker. This establishes the working-
    directory workaround, not an upstream Wine bug or a Photoshop fix.
-5. Current checkpoint: language picker. **No successful MSI installation or
-   Photoshop launch has yet been claimed.**
+5. North American English selected. The autorun EULA HTML pane was blank;
+   the exact official local en_US/License.html was read offline, including
+   tryout/evaluation and timeout terms. Normal Accept was clicked.
+6. Install Photoshop CS2 launched the standard MSI with SETUPEXEDIR. It
+   spent several minutes preparing its GUI in TCG, then showed the normal
+   InstallShield Welcome/Next page. Customer Information offered `Install 30-day trial version`; that option was
+   explicitly selected, serial stayed disabled/blank, synthetic test identity
+   entered. Default destination and file associations were retained. Install
+   pressed at 18:05 UTC; MSI now shows Installing Adobe Photoshop CS2.
+   **Installation success and first application launch are still pending.**
 
 ## Deferred observations
 
@@ -60,6 +68,9 @@ to Wine/Photoshop has been made to suppress them.
 | D3 | Fresh wineboot, before Adobe | `winebth` start/control errors 1359/1062; `do_file_copyW Unsupported style(s) 0x10`; `winebus` and `wineusb` driver load `c0000135`, service errors 126/1062; `Failed to initialize Unix library, status 0xc0000135` | Bluetooth messages/style warning overlap F6. USB/bus support is not validated in this extracted-runtime VM; deferred stand integration, not an installer failure. |
 | D4 | Fresh wineboot, before Adobe | `err:winediag:getaddrinfo Failed to resolve your host name IP` | Guest networking/hostname limitation; no external NIC. Deferred; do not impute to Photoshop. |
 | D6 | Root Setup.exe / autorun | `Error: .\AutoPlay\main.ini`, then `MAIN_FILE_VERSION` | Launched from wrong cwd; file exists and CRC matches. Retry after stopping failed singleton and setting cwd reaches language picker. Preserve this launch requirement; defer any broader launcher investigation. |
+| D7 | Autorun EULA | HTML pane blank, while local official License.html exists and is readable | Stand explicitly disables mshtml/Gecko; configuration limitation, not proven Wine bug. Read verified local terms, then used normal Accept. Deferred. |
+| D8 | Autorun | `err:mmdevapi:load_driver Unable to load UNIX functions: c0000135`; ALSA `cannot find card '0'`, `Unknown PCM default` | No virtual audio device, overlaps Ubuntu finding F7. Deferred; autorun continued. |
+| D9 | MSI first GUI | Several minutes between MSI process creation and first Welcome page | Processes remained active; Welcome eventually appeared. TCG timing observation, not a demonstrated hang or new upstream defect. |
 | D5 | Self-extractor first screenshot | First frame was black while the X window was already present; the next stable screenshot painted the WinZip UI | Readiness/timing observation under CPU emulation. A transient screenshot is not proof of a persistent paint defect. |
 
 Wineboot and extraction are distinct from MSI installation and from the
@@ -69,8 +80,9 @@ installed application's first trial launch. Track their outcomes separately.
 
 `experiments/cs2-debian-installation/checkpoint.json` states the exact last
 verified stage. `actions.jsonl` is the reviewed chronological record (repetitive
-X frame trees omitted); screen hashes are in `screenshots.json`. Screenshots
-remain local, and no Adobe program, installer, prefix or license is committed.
+X frame trees omitted); screen hashes are in `screenshots.json`. Reviewed screenshots of the synthetic test environment are saved under
+`screenshots/`; their blob paths/hashes are in the manifest. Other raw captures
+remain local. No Adobe program, installer, prefix or license value is committed.
 Newly found observations remain below existing bug priorities.
 
 The saved controller/client/sequence scripts run through the prepared VM, with
@@ -95,3 +107,20 @@ Controller readiness is control/ready.json. The client waits for a complete
 JSON response; a transient empty file on the uncached 9p share must not trigger
 a retry of an already executed button click. Source/archive contents should be
 restored from the exact official download and hash, not committed binaries.
+
+MSI initialization progress was checked with guest process/IO counters, without
+debugging or reverse engineering Adobe code. A separate harness JSON-file race
+was observed (client saw an empty just-created response); retrying incomplete
+JSON fixed the client. It must not trigger duplicate installation clicks or be
+reported as a Photoshop/Wine defect.
+
+## Repository update incorporated during installation
+
+At the owner's request this checkout was updated to `7f2581a`, preserving all
+local installation evidence. The other stand's F11-F16 are now explicit
+comparison points: MSI scaling/clipping, association headers, all-Finish
+labels, post-Finish RPC crash, critical-section warnings and synthetic keys.
+The association header ellipses were independently observed here (16 screenshot);
+record as another environment observation of F12, not a duplicate new defect.
+F18 also matters: judge painting by X-server screenshots, not GetPixel alone.
+No #27 research DLL/source patch was installed in this stock Wine baseline.

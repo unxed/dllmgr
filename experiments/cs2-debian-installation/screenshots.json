@@ -3,36 +3,108 @@
     "file": "01-extractor-initial.png",
     "sha256": "cd9f0f74c67fc09b6cb93a1cced69d1b4c83e688f46a5c84c41a987b353f9dfa",
     "bytes": 783,
-    "storage": "local only; no user documents"
+    "storage": "local only, duplicate/transitional capture"
   },
   {
     "file": "02-extractor-ready.png",
     "sha256": "a8fd12626edabf8fc52e32c1f670f43121469e116a8638a489ec8234673808ae",
     "bytes": 25035,
-    "storage": "local only; no user documents"
+    "storage": "experiments/cs2-debian-installation/screenshots/02-extractor-ready.png"
   },
   {
     "file": "03-extracting.png",
     "sha256": "7822b133cc33745f355bc72e3145906c8d60bbf14e19e42fbb3402f8f55ea50e",
     "bytes": 25588,
-    "storage": "local only; no user documents"
+    "storage": "experiments/cs2-debian-installation/screenshots/03-extracting.png"
   },
   {
     "file": "04-extraction-state.png",
     "sha256": "d842bb3c468e997b62e91ac8e433a597cd870ac5697fe1868af605a5cff29e0d",
     "bytes": 25605,
-    "storage": "local only; no user documents"
+    "storage": "local only, duplicate/transitional capture"
   },
   {
     "file": "05-setup-launch.png",
     "sha256": "1aa12abbc6bfbaddd829db37d1a523f61b4a3d38a01ffc1e84f0073dd21c19cf",
     "bytes": 20703,
-    "storage": "local only; no user documents"
+    "storage": "experiments/cs2-debian-installation/screenshots/05-setup-launch.png"
   },
   {
     "file": "06-setup-correct-directory.png",
     "sha256": "17947834a8b6a26419f61922e7eed9d84ac8ea22865e2cffb8c446cd58481e54",
     "bytes": 20324,
-    "storage": "local only; no user documents"
+    "storage": "experiments/cs2-debian-installation/screenshots/06-setup-correct-directory.png"
+  },
+  {
+    "file": "07-language-picker.png",
+    "sha256": "4845fee61b718bb31402dee8b953fc51dd76f82b6a98adaaa1575eaf09c8138e",
+    "bytes": 102544,
+    "storage": "experiments/cs2-debian-installation/screenshots/07-language-picker.png"
+  },
+  {
+    "file": "08-license.png",
+    "sha256": "b6055dcf4e7e5a72b4ecd303daed9293a4cc62ae7e260dba0dc21d89a4704ff5",
+    "bytes": 66373,
+    "storage": "experiments/cs2-debian-installation/screenshots/08-license.png"
+  },
+  {
+    "file": "09-install-menu.png",
+    "sha256": "9e25a9bac80a55e915dedf98731c75dcddd31a65144c402c1825deac95e1600d",
+    "bytes": 120026,
+    "storage": "experiments/cs2-debian-installation/screenshots/09-install-menu.png"
+  },
+  {
+    "file": "10-installshield-start.png",
+    "sha256": "cd9f0f74c67fc09b6cb93a1cced69d1b4c83e688f46a5c84c41a987b353f9dfa",
+    "bytes": 783,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "11-msi-stage.png",
+    "sha256": "cd9f0f74c67fc09b6cb93a1cced69d1b4c83e688f46a5c84c41a987b353f9dfa",
+    "bytes": 783,
+    "storage": "experiments/cs2-debian-installation/screenshots/11-msi-stage.png"
+  },
+  {
+    "file": "12-msi-welcome.png",
+    "sha256": "1b37d0ed2bd44de0d38c65ba122c216d93c46b3cf88a406c83daaf236e4bd85e",
+    "bytes": 42036,
+    "storage": "experiments/cs2-debian-installation/screenshots/12-msi-welcome.png"
+  },
+  {
+    "file": "13-msi-license.png",
+    "sha256": "56c93e3e3c8483cb6ff1893025f672e724a7d769c7a48c22be0079e0221f52ad",
+    "bytes": 41210,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "14-customer-trial.png",
+    "sha256": "7fa387e4c59642a4831d8cd99e4fff1781008424372912f43981b7ec99226c9b",
+    "bytes": 42954,
+    "storage": "experiments/cs2-debian-installation/screenshots/14-customer-trial.png"
+  },
+  {
+    "file": "15-destination.png",
+    "sha256": "8856202a204bb1cffe1dec578ac1bcbebf630d46bc7a15ba08b583b79afe4b1a",
+    "bytes": 28215,
+    "storage": "experiments/cs2-debian-installation/screenshots/15-destination.png"
+  },
+  {
+    "file": "16-file-associations.png",
+    "sha256": "61cfd9e185a702bf2f4ac9edc55637206f5e6b73a3ea4c3bf01d7564fa78c98d",
+    "bytes": 51370,
+    "storage": "experiments/cs2-debian-installation/screenshots/16-file-associations.png"
+  },
+  {
+    "file": "17-ready-to-install.png",
+    "sha256": "4d38573fc204f3026ebc72cb919a441e34f62dad13f5b6a16bcfa2d75f97a085",
+    "bytes": 27287,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "18-installing.png",
+    "sha256": "515f56530ba683339a2e0439d551fe2716ff9118c4f06e55bb3002d021822ba9",
+    "bytes": 30275,
+    "storage": "local only, duplicate/transitional capture"
   }
 ]
