@@ -1,0 +1,1 @@
+{"action": "run", "argv": ["sh", "-c", "cat /home/runner/work/dllmgr/dllmgr/session-evidence/installer-steps.log; cat /home/runner/work/dllmgr/dllmgr/session-evidence/installer-harness-exit.txt; tail -n 50 /home/runner/work/dllmgr/dllmgr/session-evidence/install-cs2.log; /opt/wine-stable/bin/wine --version; uname -a; nproc"], "timeout": 30}
