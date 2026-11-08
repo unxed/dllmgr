@@ -16,8 +16,11 @@ new CS2 trial compatibility audit is tracked separately in #31.
 
 - [#21](https://github.com/unxed/dllmgr/issues/21): deliver the proven dropdown
   paint correction is delivered and installed privately in `faststone-v3`
-  (main `15a038c`); owner acceptance and the separate intermittent severe
-  path-row corruption remain. See experiments/path-dropdown/laptop-private-v3.json.
+  (main `15a038c`). Owner says it is better, but reports that the button can
+  remain visually pressed after mouse-up until the cursor moves. Track that
+  as unfinished: compare stationary release, movement inside and outside the
+  button with Windows before changing it. Separate severe intermittent
+  path-row corruption remains unreproduced. See experiments/path-dropdown/laptop-private-v3.json.
   Its old research shared installer must not be reused.
 - [#22](https://github.com/unxed/dllmgr/issues/22): startup/Draw latency. The
   font-cache enlargement was rejected after actual-app A/B; branch

@@ -74,3 +74,35 @@ Next: compare the cold-launch sequence with real Windows via the manual
 missing expected image fails the probe; absence of a sampled flash alone does
 not establish a fix. The native path-button correction is delivered separately
 (issue21).
+
+## Windows baseline and rejected capture shortcuts
+
+[Windows CI 42497502733](https://github.com/unxed/dllmgr/actions/runs/42497502733)
+at ea5b75a succeeded: expected JPEG image at2406 ms, no sampled white transition.
+However, it collected only44 valid samples at1024x768/96DPI; screen GetPixel is
+slow there. This is a preliminary baseline, not proof of absence or a matched
+192DPI/high-resolution comparison. See [Windows timeline](windows-first.txt).
+
+Two attempted faster capture methods were rejected on headless Wine192DPI:
+
+- StretchBlt to a6x6 DIB did not recognize the expected image at all (exit5),
+  and took up to183 ms per capture; do not adopt it or infer that the bug vanished.
+  See [failed timeline](rejected-stretch.txt).
+- Full-screen BitBlt to a DIB recognized the final image but missed the short
+  first image and took up to213 ms per capture. It collected only75 samples,
+  less than the original GetPixel method. See [timeline](rejected-full-blit.txt).
+
+The original guarded nine-point sampler remains in use. These rejected methods
+must not turn the regression green by losing the first image.
+
+The timestamped +win,+gdi run aligned the white phase with the first flush of a
+new fullscreen window surface (white at128933.112s, initial surface flush at
+128933.104s). Wine's window_surface_create initializes pixels to0xff. This is a
+specific source/trace lead, **not proof** that changing initialization or forcing
+an early paint is correct. [Traced phases](headless-gdi-traced.txt) retain the
+same foreground HWND. The trace is local in local-first-open-headless/gdi-trace;
+only synthetic timelines are published.
+
+Next steps: a minimal public-API popup/delayed-paint reproducer compared on
+Windows/Wine, and a denser trustworthy native Windows capture. Preserve the
+reproduced failure as the gate; do not ship a hardcoded white-to-black change.
