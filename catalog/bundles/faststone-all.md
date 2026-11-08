@@ -8,7 +8,7 @@ profiles:
     wine: wine-11.0
     host_arch: x86_64
     prefix_arch: win64
-    release: faststone-v3
+    release: faststone-v4
 title: "FastStone Image Viewer: composed application fixes"
 programs: [FSViewer.exe]
 wine: [wine-11.0]
@@ -33,10 +33,10 @@ dllmgr uninstall faststone
 dllmgr share faststone
 ```
 
-See [installation and sharing](../../docs/recipes.md). `faststone-v3` composes
+See [installation and sharing](../../docs/recipes.md). `faststone-v4` composes
 six fixes: file/folder label geometry, colored pencil, fullscreen-strip wheel,
 item coordinates, tile bounds, and the path dropdown button's held/open
-appearance. The path correction passed actual FastStone checks on Windows
+appearance and immediate repaint after closing. The path correction passed actual FastStone checks on Windows
 and Wine at 96/192 DPI; the standalone fix is `dllmgr-21`.
 
 Remaining work includes the separate intermittent path-row corruption, the

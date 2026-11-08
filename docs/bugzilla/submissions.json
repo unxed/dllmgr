@@ -133,15 +133,18 @@
     },
     {
       "id": "dllmgr-21-themed-combo-2026-11-08",
-      "bug_url": null,
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=60720",
       "local_issue_url": "https://github.com/unxed/dllmgr/issues/21",
       "kind": "new-bug",
-      "status": "prepared",
+      "status": "posted",
       "text_file": "docs/bugzilla/dllmgr-21.txt",
       "prepared_on": "2026-11-08",
       "duplicate_search": "ALL FastStone and ALL combobox reviewed;9493 broad theme issues,43838 selection highlight,27669 Delphi doublebuffering are different.",
       "verification_file": "experiments/path-dropdown/owner-close-2026-11-08/README.md",
-      "verified_ci": "https://github.com/unxed/dllmgr/actions/runs/42499612512"
+      "verified_ci": "https://github.com/unxed/dllmgr/actions/runs/42499612512",
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=60720#c0",
+      "posted_at_utc": "2026-11-08T16:33:54Z",
+      "posted_by": "agent, explicitly authorized by owner"
     }
   ]
 }
