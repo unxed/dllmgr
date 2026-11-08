@@ -1,0 +1,10 @@
+I investigated the mouse-wheel part of this bug with FastStone Image Viewer 8.5 (32-bit), Wine 11.0, a win64 prefix and 192 DPI.
+
+The problem is in comctl32's icon-view mouse-wheel handling. Wine always scrolls vertically, so a list with only a horizontal scrollbar, such as the fullscreen thumbnail strip, does not move. In an ordinary thumbnail grid, it moves a fixed 37 pixels per wheel message, regardless of wheel delta or icon spacing. This also explains the very slow scrolling with larger thumbnails or higher DPI.
+
+Tests against Windows comctl32 v6 show that wheel deltas accumulate until they reach a full detent (120). The remainder is reset when the direction changes. Scrolling is horizontal when there is a horizontal scrollbar but no vertical one; otherwise it is vertical. With the default three scroll lines, each detent moves three times half the icon spacing on that axis, capped at one page.
+
+A local change implementing this behavior fixes the focused control tests. In FastStone's grid at 192 DPI, successive wheel events of half, half, one and two detents move 37/37/37/37 pixels on stock Wine, versus 0/426/426/852 pixels with the change. The fullscreen strip also scrolls with the wheel on the user's desktop after applying the fix.
+
+The missing thumbnails mentioned in the original report are a separate issue, tracked as bug 59609. This follow-up concerns wheel scrolling.
+

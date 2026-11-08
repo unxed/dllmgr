@@ -1,0 +1,7 @@
+The WIC decoder explanation in comment 3 is confirmed. FastStone 8.5 (32-bit) calls WIC's CreateDecoderFromStream for AVIF. On stock Wine 11.0 this fails with 0x88982f50 (WINCODEC_ERR_COMPONENTNOTFOUND).
+
+The attached avif_samle.avif is actually 626 x 417 pixels. The displayed 1 x 1 dimensions are a decoding-failure fallback, not the image's real size.
+
+Registering a local 32-bit WIC AVIF decoder built with libavif and libaom makes WIC decode the attachment at its correct dimensions. The attached image also opens in FastStone's Draw Board on my desktop. A separate generated 320 x 192 AVIF was checked before and after registration: stock Wine shows the extension notice; with the decoder, FastStone displays the image in the thumbnail, preview pane and fullscreen view, with correct dimensions.
+
+This works on Wine 11.0 in a win64 prefix at 192 DPI, without Microsoft codec binaries or changes to FastStone. Registration applies to 32-bit WIC clients in that prefix. It is an experimental external workaround, not an upstream Wine fix; full AVIF support, HDR and animation are not claimed.

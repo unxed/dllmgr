@@ -1,0 +1,9 @@
+expected_center=f0cc5a screen=1024x768 app_pid=6140
+t_ms=1984 phase=image center=f0cc5a white_samples=0/1 capture_ms=32
+phase_window=0000000000050224 style=96000000 exstyle=00010000
+candidate hwnd=0000000000050224 class='TFullScreenWindow' title='' rect=0,0,1024,768 dpi=96
+candidate hwnd=00000000000401d6 class='TForm' title='' rect=0,0,1024,768 dpi=96
+candidate hwnd=000000000014001c class='TApplication' title='synthetic.jpg - FastStone' rect=512,384,512,384 dpi=96
+first_image_ms=1984 white_after_image_ms=0 restored_ms=0 samples=242 skipped=131
+max_capture_ms=47
+observed_image_white_image=0

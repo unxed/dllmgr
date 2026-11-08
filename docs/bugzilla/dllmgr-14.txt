@@ -1,0 +1,15 @@
+FastStone Image Viewer 8.5: thumbnails and format labels overflow their tiles
+
+Environment: FastStone Image Viewer 8.5 (32-bit), WineHQ stable 11.0, Linux Mint 22.3 x86-64, win64 prefix, 192 DPI.
+
+Application download: https://www.faststonesoft.net/DN/FSViewerSetup85.exe
+
+Open a folder containing several images and subfolders in FastStone, then select the thumbnail view. Image thumbnails, folder previews and file-format badges extend past their tile frames. Selection frames are also misaligned. These elements should fit inside their corresponding tiles, as they do on Windows.
+
+The application uses LVM_GETITEMRECT with LVIR_ICON for the tile geometry. With native comctl32 v6, FastStone's 138-pixel horizontal icon spacing at 96 DPI produces a 138-pixel-wide rectangle. Wine 11.0 at 192 DPI reports only the centered 240-pixel image width inside a 276-pixel cell.
+
+The difference also occurs in a standalone icon-view ListView with a normal 32 x 32 image list and default spacing, without FastStone: native v6 returns an icon rectangle 74 pixels wide, while Wine returns only 32 pixels. Empty text, a space and a filename all show the difference.
+
+A local change restricted to comctl32 v6 large-icon view, with a normal image list and no state image list, makes the public LVIR_ICON rectangle cover the cell width and start at the cell's top. Internal painting and hit-testing metrics remain unchanged. The focused check fails on stock Wine and passes with this change alone. In the actual FastStone comparison, adding this change to the same baseline fixes the overflowing previews, badges and frames. I have also confirmed the result visually on my desktop.
+
+This is separate from bug 48872, which concerns missing filenames and the LVIR_LABEL rectangle. Behavior in other views or image-list configurations is not claimed.

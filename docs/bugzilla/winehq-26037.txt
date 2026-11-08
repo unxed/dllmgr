@@ -1,0 +1,7 @@
+This still affects Cyrillic in Wine 11.0's own Tahoma Bold. In FastStone Image Viewer 8.5, the Russian fullscreen-panel headings "Файл, слайдшоу" and "Поворот, размеры, текст" mix bold and regular-looking letters, with uneven gaps. Environment: WineHQ stable 11.0, 32-bit FastStone in a win64 prefix, 192 DPI.
+
+Comparing Wine's tahomabd.ttf with tahoma.ttf shows that а, с, о, р and е have bold outlines: their enclosed outline areas are about 1.65-1.88 times those of the regular face. However, Ф, й, л, д, ш, у, П, в, т, з, м, ы and к have exactly the same outline areas as the regular face, despite wider advance widths in the bold face. Both fonts contain these characters, so this is not missing-glyph fallback.
+
+Rendering the same headings directly from these font files reproduces the mixed-weight pattern outside FastStone. The regular outlines combined with wider advances also explain the apparent extra spacing.
+
+A locally corrected Wine font, with the affected Cyrillic outlines emboldened and the original advance widths preserved, removes the mixed-weight appearance in the same FastStone panel. Minor weight balancing remains, so exact Windows glyph-shape parity is not claimed. The underlying issue is that these Cyrillic glyphs in the bold face still use regular outlines.

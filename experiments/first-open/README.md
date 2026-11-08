@@ -153,3 +153,20 @@ white. A white phase still requires9/9 white points and foreground ownership
 before/after sampling. Output records actual points read and capture duration.
 This reduces routine capture overhead; measured sampling density must still be
 checked on native Windows. It does not make the probe frame-exhaustive.
+
+[CI42501621932](https://github.com/unxed/dllmgr/actions/runs/42501621932)
+at95b96de succeeded: native Windows96DPI collected242 valid samples instead
+of44 over the same observation interval. Routine capture was32ms, maximum47ms.
+It observed the expected image at1984ms and no sampled subsequent white. The
+headless stock Wine192DPI run still reproduces image1867 → white1890 → image2125,
+with633 valid samples and maximum10ms capture. Raw centre-first timelines are
+saved alongside the older nine-read timelines. This strengthens the native
+comparison but does not remove DPI/resolution or exhaustive-capture limits.
+
+A closer trace read shows ShowWindow of the fullscreen HWND, followed by
+SetWindowPos(HWND_TOP,SWP_NOSIZE|SWP_NOMOVE) at128933.104s. That call reuses
+and flushes the newly white-initialized surface before the later full paint.
+The diagnostic now records that same-size positioning separately and then a
+16x16 corner paint before the final full paint. This tests which operation
+exposes the blank centre; it is not a proposed fix or a contract for unpainted
+window pixels.

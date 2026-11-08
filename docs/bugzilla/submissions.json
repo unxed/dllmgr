@@ -159,6 +159,28 @@
       "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=60721#c0",
       "posted_at_utc": "2026-11-08T16:43:57Z",
       "posted_by": "agent, explicitly authorized by owner"
+    },
+    {
+      "id": "winehq-26037-published-c15",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=26037",
+      "kind": "follow-up",
+      "topic": "Detailed successful font preparation and rejected intermediate glyphs",
+      "status": "posted",
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=26037#c15",
+      "posted_at_utc": "2026-11-07T20:50:30Z",
+      "posted_by": "owner",
+      "text_file": "docs/bugzilla/winehq-26037-c15-published.txt"
+    },
+    {
+      "id": "winehq-26037-published-c16",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=26037",
+      "kind": "follow-up",
+      "topic": "Owner provenance clarification",
+      "status": "posted",
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=26037#c16",
+      "posted_at_utc": "2026-11-07T20:52:54Z",
+      "posted_by": "owner",
+      "text_file": "docs/bugzilla/winehq-26037-c16-published.txt"
     }
   ]
 }

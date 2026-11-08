@@ -1,0 +1,9 @@
+Confirmed with FastStone Image Viewer 8.5 (32-bit), Wine 11.0, a win64 prefix and 192 DPI. My earlier successful test with FastStone 5.6 does not cover this version.
+
+The cause is in gdiplus. FastStone draws pencil strokes with a GDI+ pen on an HDC whose GDI raster operation is R2_BLACK. Wine inherits that operation, so the stroke becomes black regardless of the pen colour.
+
+A focused test draws a red GDI+ line on 24-bit and 32-bit DIBs with several HDC ROP2 settings. On Windows the line stays red and the caller's ROP2 is preserved. Stock Wine draws black with R2_BLACK.
+
+The correction is to use R2_COPYPEN inside GDI+'s prepare_dc path after saving the DC, then restore the caller's original DC state afterwards. The focused test passes with this change, including preservation of the caller's ROP2.
+
+In the actual application, replacing only Wine's gdiplus with the corrected build, while keeping stock comctl32, changes the same pencil stroke from black to red. I have also visually confirmed on my desktop that the pencil now draws the selected colour, including cyan.

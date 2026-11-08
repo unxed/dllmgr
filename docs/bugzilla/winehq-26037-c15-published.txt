@@ -1,0 +1,36 @@
+[reply] [−]
+Comment 15
+unxed 2026-11-07 20:50:30 UTC
+[WineHQ bug 26037 — Tahoma Bold is not bold](https://bugs.winehq.org/show_bug.cgi?id=26037)
+
+---
+
+Additional details about the locally corrected font may help reproduce the improved result. Simply emboldening the affected outlines was insufficient: intermediate attempts produced filled counters, a thin right stem in Ы, or merged components in ы.
+
+The starting point was Wine 11.0’s fonts/tahomabd.ttf, from Wine revision db11d0fe6a169c457e23d007e20404643d067aa8. Its SHA256 is 508a2acc88cd6abdd399ae79c9965db43fba75a46bb115117b55d2be2272d889.
+
+The affected set contains 66 glyphs:
+
+U+0404, U+040E, U+0411, U+0413–U+0414, U+0416–U+0419, U+041B, U+041F, U+0423–U+0424, U+0426–U+042F, U+0431–U+0434, U+0436–U+043D, U+043F, U+0442–U+0444, U+0446–U+044F, U+0454, U+0456–U+0457, U+045E, U+0490–U+0493, U+049A–U+049B, U+04A3, U+04AE–U+04AF, U+04BA, U+04D8, U+04E8–U+04E9.
+
+The successful process was:
+
+1. **Normalize the original contour directions before emboldening.** Resolve existing self-intersections before correcting direction, then round coordinates and recheck. This matters for Ы: its original contours have inconsistent directions, which caused the separate right stem to shrink during emboldening.
+
+2. **Embolden using FreeType’s outline operation**, with a strength of 120 font units horizontally and vertically, for this 2048-units-per-em font. Coordinates were temporarily scaled by 64 during the operation to retain fractional precision.
+
+3. **Preserve gaps between disconnected horizontal components.** Group original contours by overlapping horizontal projections, keeping inner contours with their surrounding body. After emboldening, translate complete groups to retain the original gap before the final fit. In ы, the original gap is only 100 units, so a 120-unit expansion otherwise joins the two parts.
+
+4. **Preserve the original advance widths.** Fit the outlines vertically to their pre-offset bounds. Horizontally, fit within the unchanged advance with a 16-unit margin on each side when necessary, then center the glyph. Update the left side bearing to the resulting minimum horizontal coordinate.
+
+5. **Clean the resulting outlines in the correct order:** remove overlaps first, then correct contour direction and round. Correcting direction before resolving crossing contours destroyed counters in several letters. Recheck after rounding; a second cleanup was needed for a small crossing in U+04E9.
+
+6. **Merge only the affected outlines back into the original font.** Preserve all original advance widths and unrelated glyph outlines.
+
+7. **Run ttfautohint 1.8.4 over the complete font using its default settings.** This was an important part of improving small-size rendering. Hinting is regenerated for the whole face, so rasterized pixel metrics can change even where outlines and font-unit advances remain unchanged. FontForge 20230101 was used for outline processing.
+
+For temporary selection under Wine, the corrected face retained the Tahoma family and bold style, but received a distinct internal identity and a higher numeric font revision. Changing only the textual version name was insufficient. Actual selection was checked through Wine GDI rather than inferred from the font file’s presence.
+
+Validation covered all 66 glyphs, including unchanged advances and unrelated outlines. At 256 pixels per em without hinting, the checks compared enclosed counters and disconnected ink components. They rejected lost or additional components, counters reduced below 10% of their original area, and ink components reduced below 80%. The rejected intermediate fonts fail these checks; the final candidate passes. These checks supplement visual inspection, rather than establish visual quality by themselves.
+
+The final result was also checked in FastStone Image Viewer 8.5 under Wine 11.0, using a win64 prefix, 192 DPI and grayscale font smoothing. The user described it as nearly ideal. The original, unchanged capital В still appears slightly heavier than its neighbors. Exact Windows glyph-shape parity has not been established.

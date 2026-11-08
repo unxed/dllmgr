@@ -1,0 +1,41 @@
+Local fix: dllmgr-14
+Wine report: https://bugs.winehq.org/show_bug.cgi?id=60711#c0
+Published by the owner on 2026-11-07 at 20:40:18 UTC; publication verified in the browser.
+
+Actual-app comparison recorded in the catalog:
+https://github.com/unxed/dllmgr/actions/runs/42256224744
+Artifact faststone85-192-comparison compares the same application with the existing fixes and with the additional public LVIR_ICON rectangle change.
+
+Later deep validation:
+https://github.com/unxed/dllmgr/actions/runs/42278157255
+Source SHA 255f086b95ed9cc751f80d945384ec021f130b71.
+Checked live on 2026-11-07: build, windows, wine, patched, faststone85 (96/144/192) and windows-app all completed successfully.
+
+Archived standalone measurements reviewed for report preparation:
+validation-current/windows-baseline/windows-v6.txt
+  Empty text: LVIR_ICON=(2,0,76,36), width 74.
+  Space: LVIR_ICON=(0,0,74,36), width 74.
+  Filename: LVIR_ICON=(1,0,75,36), width 74.
+validation-current/fixed-modules/dllmgr/dllmgr/results/before-controls6.exe.txt
+  All three texts: LVIR_ICON=(21,4,53,36), width 32.
+  All three have the explicit icon-cell check failure. The complete combined baseline has 7 failures, including other independently tracked defects.
+validation-current/fixed-modules/dllmgr/dllmgr/results/dllmgr-14-v6.txt
+  All three texts: LVIR_ICON=(0,0,75,36), width 75, matching Wine's own cell width.
+  Focused check: Failures: 0. Other known defects remain present, as expected for an isolated fix.
+validation-current/fixed-modules/dllmgr/dllmgr/out/dllmgr-14/SOURCE.txt
+  wine-11.0 db11d0fe6a169c457e23d007e20404643d067aa8 + dllmgr-14
+
+Archived actual-app geometry:
+  Windows, FastStone 8.5, 96 DPI: horizontal icon spacing 138; first LVIR_ICON=(2,0,140,124), width 138.
+  Wine 11.0, FastStone 8.5, 192 DPI, before cell change: spacing 276; first LVIR_ICON=(18,4,258,244), width 240.
+  Same Wine application with cell change: first LVIR_ICON=(0,0,276,244), width 276.
+
+Owner visual confirmation, 2026-11-06:
+https://github.com/unxed/dllmgr/issues/8#issuecomment-6693158826
+Thumbnails and folder previews fit their tiles after applying the fix.
+
+Duplicate search checked in the browser, 2026-11-07:
+ALL LVIR_ICON: only Wine 9491, read through its final comment. It concerns LVM_GETSUBITEMRECT/report-mode behavior and was closed fixed; it is not this large-icon LVM_GETITEMRECT case.
+ALL FastStone: 18 reports; no matching tile-overflow report found. Existing 48872 is the separate label-rectangle issue.
+
+Scope: native v6 and Wine v6 large-icon view with a normal image list, without state images. No parity claim for other views or image-list configurations.

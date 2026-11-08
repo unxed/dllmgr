@@ -45,6 +45,19 @@ int main(void)
     if(!popup){DestroyWindow(bottom);return 4;}
     ShowWindow(popup,SW_SHOW);GdiFlush();Sleep(50);sample("shown-before-paint");
     Sleep(250);sample("still-unpainted");
+    /* FastStone's traced show is followed by this same-size Z-order call
+     * before its full repaint. Separate that transition from image drawing. */
+    if(!SetWindowPos(popup,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE)) {
+        DestroyWindow(popup);DestroyWindow(bottom);return 5;
+    }
+    GdiFlush();Sleep(100);sample("positioned-before-paint");
+    {
+        HDC dc=GetDC(popup);RECT corner={0,0,16,16};
+        HBRUSH brush=CreateSolidBrush(RGB(90,150,220));
+        if(!dc || !brush)return 6;
+        FillRect(dc,&corner,brush);DeleteObject(brush);ReleaseDC(popup,dc);
+    }
+    GdiFlush();Sleep(100);sample("partially-painted-popup");
     paint_popup=TRUE;InvalidateRect(popup,NULL,FALSE);UpdateWindow(popup);
     GdiFlush();Sleep(100);sample("painted-popup");
     DestroyWindow(popup);DestroyWindow(bottom);return 0;

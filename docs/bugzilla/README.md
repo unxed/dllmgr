@@ -38,3 +38,11 @@ sentence in the current fix-it-in-wine skill/template is a local instruction,
 not a requirement found in these Wine rules. This owner decision overrides it
 for dllmgr reports. A corresponding patch for that repository is in
 `contrib/fix-it-in-wine-report-disclosure.patch`.
+
+## Recovered historical texts
+
+The individual report .txt files restored from checkpoint991a22b are prepared
+versions retained for recovery; the live posted comment and exact ledger URL
+are authoritative if the owner edited them before publication. Do not repost
+these files. The font c15/c16 files are readbacks of already-published comments
+verified2026-11-08, including the owner's formatting/provenance note.

@@ -1,0 +1,9 @@
+Confirmed with FastStone Image Viewer 8.5 (32-bit), Wine 11.0, a win64 prefix and 192 DPI. My earlier successful test with FastStone 5.6 does not cover this version.
+
+FastStone draws file and folder names itself, while the corresponding list-view item text is empty. Wine returns a zero-width label rectangle from LVM_GETITEMRECT with LVIR_LABEL, leaving no space for the application to draw the name.
+
+Tests against Windows comctl32 v6 show that an empty icon-view label still has a full-width rectangle below the icon. Selecting the item does not paint a label selection background there. Replacing empty text with a space changes that painting behavior, so geometry and painting need to be handled separately.
+
+A local change makes LISTVIEW_GetItemRect return a full-item-width, one-line-high label rectangle for empty icon-view labels and include that area in LVIR_SELECTBOUNDS. Internal painting metrics remain unchanged, preserving the empty label's lack of selection background.
+
+In FastStone at 192 DPI, the label width changes from 0 to 276 pixels and names appear under files and folders, including Cyrillic names. The focused test checks both usable label geometry and the absence of unwanted selection painting. I have also visually confirmed that the names are displayed correctly on my desktop.
