@@ -37,6 +37,10 @@ and must not be used for reports.
   (`control.exe appwiz.cpl install_mono`); fix:
   `WINEDLLOVERRIDES='mscoree,mshtml='` at prefix creation. CS2 does not need
   Mono/Gecko. If a later bug turns out to depend on them, record that.
+- Processes detached with `setsid`/`&` (Xvfb, Muffin) are killed a few
+  minutes after the assistant's reply ends. Run the X session as a
+  long-lived background task of the assistant's shell tool instead
+  (max ~2 h per task, then restart with `sandbox-stand.sh up`).
 - dbus `Failed to set fd limit` and xkbcomp keysym warnings are harmless.
 - `experiments/photoshop-handoff/headless.py` hardcodes the owner's unpacked
   Xvfb path and the repo-relative prefix; do not run it as-is here. The
