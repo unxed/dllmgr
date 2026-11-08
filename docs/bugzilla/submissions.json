@@ -1,0 +1,147 @@
+{
+  "description": "WineHQ feedback ledger. prepared is not posted. Set status to posted only after verifying the published comment or new bug; record its exact URL and UTC publication time. Check this ledger and the live ticket before preparing or sending another update.",
+  "problem_record": "docs/faststone.md#published-wine-feedback",
+  "reports": [
+    {
+      "id": "dllmgr-14-tile-overflow-2026-11-07",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=60711",
+      "local_issue_url": "https://github.com/unxed/dllmgr/issues/14",
+      "fix_id": "dllmgr-14",
+      "upstream_id": "winehq-60711",
+      "fix_record": "catalog/fixes/dllmgr-14.md",
+      "kind": "new-bug",
+      "topic": "FastStone thumbnails and badges overflow tiles because LVIR_ICON returns image bounds",
+      "status": "posted",
+      "prepared_on": "2026-11-07",
+      "text_file": "docs/bugzilla/dllmgr-14.txt",
+      "verification_file": "docs/bugzilla/dllmgr-14-validation.txt",
+      "new_bug_form": "https://bugs.winehq.org/enter_bug.cgi?product=Wine",
+      "component": "comctl32",
+      "wine_version": "11.0",
+      "duplicate_search": "ALL LVIR_ICON and ALL FastStone checked on 2026-11-07; Wine 9491 read and excluded as a different report-view/subitem case.",
+      "owner_visual_confirmation": "https://github.com/unxed/dllmgr/issues/8#issuecomment-6693158826",
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=60711#c0",
+      "posted_at_utc": "2026-11-07T20:40:18Z",
+      "posted_by": "owner"
+    },
+    {
+      "id": "winehq-48874-pencil-findings-2026-11-07",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=48874",
+      "fix_record": "catalog/fixes/winehq-48874.md",
+      "kind": "follow-up",
+      "topic": "GDI+ incorrectly inherits HDC ROP2 for pencil strokes",
+      "status": "posted",
+      "prepared_on": "2026-11-07",
+      "text_file": "docs/bugzilla/winehq-48874.txt",
+      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=48874#c8",
+      "owner_visual_confirmation": {
+        "date": "2026-11-07",
+        "result": "Pencil draws the selected colour; supplied screenshots show cyan matching the selector at 100% and 300% zoom."
+      },
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=48874#c9",
+      "posted_at_utc": "2026-11-07T19:28:14Z",
+      "posted_by": "owner"
+    },
+    {
+      "id": "winehq-59251-wheel-findings-2026-11-07",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=59251",
+      "fix_record": "catalog/fixes/winehq-59251.md",
+      "kind": "follow-up",
+      "topic": "Icon-view mouse-wheel axis, delta accumulation and spacing",
+      "status": "posted",
+      "prepared_on": "2026-11-07",
+      "text_file": "docs/bugzilla/winehq-59251.txt",
+      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=59251#c3",
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=59251#c4",
+      "posted_at_utc": "2026-11-07T19:13:02Z",
+      "posted_by": "owner"
+    },
+    {
+      "id": "winehq-59609-coordinate-results-2026-11-06",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=59609",
+      "fix_record": "catalog/fixes/winehq-59609.md",
+      "kind": "follow-up",
+      "topic": "Windows and Wine 9.0/11.0/11.21 coordinate comparison",
+      "status": "posted",
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=59609#c8",
+      "posted_at_utc": "2026-11-06T04:01:17Z"
+    },
+    {
+      "id": "winehq-59609-apply-undo-2026-11-06",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=59609",
+      "fix_record": "catalog/fixes/winehq-59609.md",
+      "kind": "follow-up",
+      "topic": "FastStone one-step apply and undo instructions",
+      "status": "posted",
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=59609#c9",
+      "posted_at_utc": "2026-11-06T04:41:57Z"
+    },
+    {
+      "id": "winehq-60703-wic-decoder-findings-2026-11-07",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=60703",
+      "fix_record": "docs/avif.md",
+      "kind": "follow-up",
+      "topic": "Missing WIC AVIF decoder confirmed; sample dimensions and local workaround",
+      "status": "posted",
+      "prepared_on": "2026-11-07",
+      "text_file": "docs/bugzilla/winehq-60703.txt",
+      "verification_file": "docs/avif.md",
+      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=60703#c3",
+      "owner_visual_evidence": "2026-11-07: supplied Draw Board screenshots display the attached AVIF with 626x417 dimensions at 100% and 300% zoom.",
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=60703#c4",
+      "posted_at_utc": "2026-11-07T19:30:55Z",
+      "posted_by": "owner"
+    },
+    {
+      "id": "winehq-48872-label-findings-2026-11-07",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=48872",
+      "fix_record": "catalog/fixes/winehq-48872.md",
+      "kind": "follow-up",
+      "topic": "Empty list-view label geometry hides FastStone file and folder names",
+      "status": "posted",
+      "prepared_on": "2026-11-07",
+      "text_file": "docs/bugzilla/winehq-48872.txt",
+      "verification_file": "catalog/fixes/winehq-48872.md",
+      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=48872#c6",
+      "owner_visual_confirmation": {
+        "date": "2026-11-07",
+        "result": "Owner confirmed that file and folder names are visible under tiles in the ordinary thumbnail grid with the installed fix."
+      },
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=48872#c7",
+      "posted_at_utc": "2026-11-07T19:40:32Z",
+      "posted_by": "owner"
+    },
+    {
+      "id": "winehq-26037-cyrillic-findings-2026-11-07",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=26037",
+      "fix_record": "docs/fonts.md",
+      "kind": "follow-up",
+      "topic": "Wine 11.0 Tahoma Bold retains regular Cyrillic outlines with bold advances",
+      "status": "posted",
+      "prepared_on": "2026-11-07",
+      "text_file": "docs/bugzilla/winehq-26037.txt",
+      "verification_file": "docs/fonts.md",
+      "last_existing_comment": "https://bugs.winehq.org/show_bug.cgi?id=26037#c13",
+      "owner_visual_confirmation": {
+        "date": "2026-11-07",
+        "source": "docs/handoff.md and docs/fonts.md: owner's feedback recorded by the main dialogue",
+        "result": "Candidate .009 nearly ideal; unchanged capital Cyrillic \u0412 looks slightly heavier. Exact Windows glyph-shape parity is not claimed."
+      },
+      "posted_url": "https://bugs.winehq.org/show_bug.cgi?id=26037#c14",
+      "posted_at_utc": "2026-11-07T19:43:24Z",
+      "posted_by": "owner"
+    },
+    {
+      "id": "dllmgr-21-themed-combo-2026-11-08",
+      "bug_url": null,
+      "local_issue_url": "https://github.com/unxed/dllmgr/issues/21",
+      "kind": "new-bug",
+      "status": "prepared",
+      "text_file": "docs/bugzilla/dllmgr-21.txt",
+      "prepared_on": "2026-11-08",
+      "duplicate_search": "ALL FastStone and ALL combobox reviewed;9493 broad theme issues,43838 selection highlight,27669 Delphi doublebuffering are different.",
+      "verification_file": "experiments/path-dropdown/owner-close-2026-11-08/README.md",
+      "verified_ci": "https://github.com/unxed/dllmgr/actions/runs/42499612512"
+    }
+  ]
+}

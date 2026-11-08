@@ -1,0 +1,13 @@
+FastStone Image Viewer 8.5: themed combo button loses its pressed appearance while the dropdown remains open
+
+Environment: official FastStone Image Viewer8.5,32-bit, WineHQ stable11.0, win64 prefix, x86-64 Linux. Reproduced with Wine's Light theme at96 and192DPI and with a clean portable profile. The corresponding Windows comparison used the same executable at96DPI.
+
+Open a folder of synthetic images. In browser mode, press and hold the arrow at the right end of the folder-path control above the thumbnails, then release without moving the pointer. The dropdown remains open. On native Windows the arrow keeps the same pressed appearance until the list closes. Stock Wine changes it back to the released appearance immediately on mouse-up.
+
+The public state itself agrees: both systems clear the public pressed flag and capture on release while keeping the list visible. The discrepancy is visual. At matching481x24 control size on96DPI, Windows changed330 button pixels from hover to press and zero from press to release; stock Wine changed300 on release. Wine192DPI shows the same transition discrepancy. Different theme colours are not compared as if they must match.
+
+The cause is in comctl32 v6's themed combo painting: it chooses the pressed appearance only from the held-button state and ignores the open-list state. A local change that also considers whether the list is dropped keeps the open button stable, without changing public pressed/capture flags, input handling or classic painting.
+
+There is an important second part to this correction. After adding that open-list appearance, close the list with a second click without intervening pointer movement. Some listbox close paths repaint only the combo's text rectangle, leaving the previously pressed button visible until pointer movement. The themed close path must also invalidate/repaint the button when the list closes. This latter stale-image symptom was reproduced with the locally changed DLL; it is not being claimed as an additional stock-Wine regression.
+
+The combined local correction has been checked in the actual portable FastStone with the dropdown opened, released, held stationary, closed by a second click, held stationary again, then with movement inside and outside the button. Separate and composed builds passed at96 and192DPI, with native module loading and restoration of the original DLL checked. The user's installed correction still awaits the final visual recheck.
