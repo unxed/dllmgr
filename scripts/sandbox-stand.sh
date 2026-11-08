@@ -1,0 +1,72 @@
+#!/bin/sh
+# Rebuild the headless Photoshop CS2 test stand in a disposable Ubuntu 24.04
+# (noble) sandbox, e.g. a Claude cloud session. See docs/sandbox-stand.md.
+#
+# Usage: sudo sh scripts/sandbox-stand.sh [install|up|prefix|all]
+#   install  pinned Wine 11.0 from WineHQ + X/WM tools (needs root, network)
+#   up       start Xvfb + Muffin on $STAND_DISPLAY (idempotent)
+#   prefix   create a clean $WINEPREFIX without Mono/Gecko
+#   all      install + up + prefix (default)
+#
+# Never point this at the owner's desktop DISPLAY or ~/.wine.
+set -eu
+
+WINE_VER=11.0.0.0~noble-1
+STAND_DIR=${STAND_DIR:-/home/claude/work/photoshop-cs2}
+STAND_DISPLAY=${STAND_DISPLAY:-:92}
+export DISPLAY=$STAND_DISPLAY
+export WINEPREFIX=${WINEPREFIX:-$STAND_DIR/prefix110}
+export WINEDEBUG=${WINEDEBUG:-fixme-all}
+export GSETTINGS_BACKEND=memory
+WINE=/opt/wine-stable/bin
+
+install_pkgs() {
+	dpkg --print-foreign-architectures | grep -qx i386 || dpkg --add-architecture i386
+	mkdir -pm755 /etc/apt/keyrings
+	curl -fsSL https://dl.winehq.org/wine-builds/winehq.key \
+		-o /etc/apt/keyrings/winehq-archive.key
+	curl -fsSL https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources \
+		-o /etc/apt/sources.list.d/winehq-noble.sources
+	apt-get update -qq
+	# Pin exactly 11.0: results on other Wine versions must not be reported.
+	DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --install-recommends \
+		winehq-stable=$WINE_VER wine-stable=$WINE_VER \
+		wine-stable-amd64=$WINE_VER wine-stable-i386=$WINE_VER \
+		muffin metacity xdotool x11-utils x11-apps imagemagick dbus-x11
+	# Muffin aborts at start without the org.cinnamon.settings-daemon.* schemas.
+	DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+		cinnamon-settings-daemon
+	"$WINE/wine" --version
+}
+
+up() {
+	mkdir -p "$STAND_DIR"
+	if [ ! -e "/tmp/.X11-unix/X${STAND_DISPLAY#:}" ]; then
+		setsid Xvfb "$STAND_DISPLAY" -screen 0 3072x1728x24 -nolisten tcp -dpi 192 \
+			>"$STAND_DIR/xvfb.log" 2>&1 &
+		sleep 2
+	fi
+	if ! xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null | grep -q 'window id'; then
+		setsid dbus-run-session -- muffin --sm-disable --x11 >"$STAND_DIR/wm.log" 2>&1 &
+		sleep 3
+	fi
+	xprop -root _NET_SUPPORTING_WM_CHECK
+	xdpyinfo | grep -E 'dimensions|resolution'
+}
+
+prefix() {
+	[ -e "$WINEPREFIX" ] && { echo "exists: $WINEPREFIX (delete it yourself)"; return 0; }
+	# Without the overrides wineboot blocks forever on the invisible Mono prompt.
+	WINEDLLOVERRIDES='mscoree,mshtml=' timeout 300 "$WINE/wineboot" -i \
+		>"$STAND_DIR/wineboot.log" 2>&1
+	timeout 60 "$WINE/wineserver" -w
+	echo "prefix ready: $WINEPREFIX"
+}
+
+case "${1:-all}" in
+	install) install_pkgs ;;
+	up) up ;;
+	prefix) prefix ;;
+	all) install_pkgs; up; prefix ;;
+	*) echo "usage: $0 [install|up|prefix|all]" >&2; exit 2 ;;
+esac

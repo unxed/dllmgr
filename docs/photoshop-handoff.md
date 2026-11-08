@@ -42,6 +42,8 @@ no code, code attachments or code links, and must avoid duplicate reports.
 
 ## Local stand: preserve and revalidate before use
 
+Disposable cloud-sandbox rebuild of the stand: docs/sandbox-stand.md.
+
 Root: /home/unxed/Documents/Codex/2026-11-07/pfl. Research: work/photoshop-cs2/
 and work/topplan/. The independent2.6GB prefix is work/photoshop-cs2/prefix110;
 never substitute the normal ~/.wine for it. Photoshop EXE SHA256:
