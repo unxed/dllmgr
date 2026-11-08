@@ -1,0 +1,11 @@
+# window-first-paint.exe (tests/wine/window-first-paint.c), centre pixel per stage
+# Wine 11.0 db11d0fe, x86_64 win32u.so/winex11.so built from source with
+# research-env-gated.patch; Xvfb 3072x1728 192 DPI, Metacity --compositor=none.
+# Stock behaviour of the patched build with no env set equals /opt/wine-stable.
+stock:      underlay=f0cc5a shown=000000 unpainted=000000 pumped=ffffff positioned=ffffff partial=ffffff painted=f0cc5a
+A only:     underlay=f0cc5a shown=000000 unpainted=000000 pumped=000000 positioned=000000 partial=000000 painted=f0cc5a
+B only:     underlay=f0cc5a shown=f0cc5a unpainted=f0cc5a pumped=ffffff positioned=ffffff partial=ffffff painted=f0cc5a
+A+B:        underlay=f0cc5a shown=f0cc5a unpainted=f0cc5a pumped=f0cc5a positioned=f0cc5a partial=f0cc5a painted=f0cc5a
+windows:    all stages f0cc5a (popup-pump-windows.txt)
+# A = DLLMGR_EXP27=1  (win32u expose_window_surface does not add exposed rect to surface bounds)
+# B = DLLMGR_EXP27B=1 (winex11 X window background_pixmap None instead of background_pixel 0)
