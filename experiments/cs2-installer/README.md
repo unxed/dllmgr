@@ -34,3 +34,27 @@ SetServiceObjectSecurity semi-stubs) is a separate path: likely a custom
 action configuring a service; relates to Wine 53571 (installer custom action
 page fault). Priority: below the runtime crashes (docs/photoshop-wine-audit.md
 work order item 6); installation completes despite both.
+
+## F13 run 1 (2026-11-09, agent claude-cloud-ada0)
+
+Fresh 192 DPI prefix, `scripts/sandbox-install-cs2.sh` with
+`WINEDEBUG=+relay,+msi` and RelayInclude limited to
+user32.SetWindowText[AW]/SetDlgItemText[AW] (log 45 MB, kept locally in
+/home/claude/work/f13/install-run1.log). Result:
+- The "&Finish everywhere" dialog is **not** Wine's internal MSI dialog: it
+  belongs to Adobe's custom action `CA_InstallFinishDisplay` (type 41,
+  NewBinary20!PerformSubInstalls), running in the custom-action process
+  (thread with `__wine_msi_call_dll_function`). Its own dialog proc
+  (WM_INITDIALOG at 10017B98, module based at 0x10000000) calls
+  SetDlgItemTextA for every control id (0x7d3, 0x7d2, 2, 0xfa1, 0xfaf,
+  0xfa0, 0xfa3) and SetWindowTextA for the caption, always from the same
+  buffer, which holds "&Finish".
+- No MSI API trace in that thread between those calls; meanwhile the main
+  process answers remote property queries (`SELECT Value FROM _Property
+  WHERE _Property=?`).
+- Checked in source and ruled out: MsiGetPropertyA remote path with an empty
+  value writes the terminating NUL (msi_strncpyWtoA), so "stale buffer after
+  an empty property" is not it in the simple form.
+Next (run 2): relay all msi exports plus LoadStringA, GetDlgItemTextA,
+GetPrivateProfileStringA, lstrcpyA, FindResourceA to see where the strings
+come from.
