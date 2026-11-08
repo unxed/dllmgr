@@ -29,3 +29,9 @@ The ZIP manifest records each payload SHA256 and the original packaged Wine
 launcher/ntdll SHA256 values. The complete modified Wine source is a separate
 .tar.xz; it is not installed into the runtime. The ZIP includes the build/check
 scripts used by CI. The source tree has no build directory or .git metadata.
+
+Runtime assembly copies /opt/wine-stable and overlays the three ntdll files under
+lib/wine/{i386-windows,x86_64-windows,x86_64-unix}/. ZIP bin/wine is the Wine
+`tools/wine/wine` launcher and is installed as runtime/bin/wine. The distinct
+`loader/wine` binary belongs beside ntdll.so; the stock runtime copy already
+contains this unmodified loader at lib/wine/x86_64-unix/wine.

@@ -8,6 +8,7 @@ root=$RUNNER_TEMP/isolation-tests
 mkdir -p "$runtime" "$root/target Юникод" "$root/other" "$root/private Юникод" results
 (cd /opt/wine-stable && sha256sum lib/wine/{i386-windows/ntdll.dll,x86_64-windows/ntdll.dll,x86_64-unix/ntdll.so} bin/wine) > out/isolation/BASE-SHA256SUMS
 /opt/wine-stable/bin/wine --version > out/isolation/BASE-VERSION.txt
+test "$(cat out/isolation/BASE-VERSION.txt)" = wine-11.0
 cp -a /opt/wine-stable/. "$runtime/"
 for arch in i386 x86_64; do
     cp "out/isolation/$arch-windows/ntdll.dll" "$runtime/lib/wine/$arch-windows/ntdll.dll"
