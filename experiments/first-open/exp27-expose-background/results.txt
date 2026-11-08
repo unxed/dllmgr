@@ -48,3 +48,12 @@ faststone proxy 1: image 626 -> black 1165 -> image 1188 (black 23 ms)        no
 faststone proxy 2: image 789 -> black 1206 -> image 1227 (black 21 ms)        no white
 faststone proxy 3: image 663 -> black 1482 -> image 1510 (black 28 ms)        no white
 window-prefill.exe (synthetic): plain black 23 ms + white 1010 ms; prefill black 10-12 ms, no white
+
+# End to end through dllmgr: CI run 42508905543 (0fb9be4) built the private runtime
+# with winehq-60721.patch (package sha256 8fdc44d977d742737bffc01f737650953e9c0ab0f4fcae7d89332d52eef8fcf3,
+# x86_64-unix win32u.so + winex11.so as optional overlay group). Sandbox:
+# private-app.py install --runtime-package <that zip>, then private-app.py run,
+# tests/wine/first-open-private.sh (X-pixel verdict, settings reset per run):
+private runtime 1: image 785, no interruption   pass
+private runtime 2: image 789, no interruption   pass
+private runtime 3: image 752, no interruption   pass

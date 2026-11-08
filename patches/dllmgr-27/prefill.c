@@ -14,6 +14,11 @@
  *
  * Build (i686 for 32-bit FastStone): see build.sh. */
 #include <windows.h>
+#include <stdio.h>
+
+/* DLLMGR27_DEBUG=1: one line per decision on stderr (compact). */
+static int debug;
+#define TRACE(...) do { if (debug) { fprintf(stderr, "dllmgr27: " __VA_ARGS__); fflush(stderr); } } while (0)
 
 static BOOL (WINAPI *real_show_window)(HWND, int);
 
@@ -102,13 +107,120 @@ static BOOL hook_import(HMODULE module, const char *dll, const char *name, void 
     return found;
 }
 
+/* Message-hook mode (default): works for whatever module creates the windows
+ * (Photoshop's UI lives in DLLs, its exe imports no user32). Per-thread hooks
+ * only, never global ones, so other processes are untouched. A window shown
+ * via ShowWindow or SetWindowPos(SWP_SHOWWINDOW) gets WM_WINDOWPOSCHANGING
+ * (still hidden: capture the screen under its target rect) and then
+ * WM_WINDOWPOSCHANGED (shown, not painted yet: draw the capture, flush). */
+struct capture { HWND hwnd; HDC mem; HBITMAP bitmap, old; RECT rect; };
+static struct capture captures[16];
+static HINSTANCE self;
+
+static struct capture *find_capture(HWND hwnd)
+{
+    for (int i = 0; i < 16; i++) if (captures[i].hwnd == hwnd) return &captures[i];
+    return NULL;
+}
+
+static void release_capture(struct capture *c)
+{
+    SelectObject(c->mem, c->old);
+    DeleteObject(c->bitmap);
+    DeleteDC(c->mem);
+    c->hwnd = NULL;
+}
+
+static void capture_under(HWND hwnd, const WINDOWPOS *pos)
+{
+    struct capture *c = find_capture(NULL);
+    RECT rect;
+    HDC screen;
+    int w, h;
+
+    char cls[64] = "";
+    GetClassNameA(hwnd, cls, sizeof(cls));
+    TRACE("capture tid=%04lx hwnd=%p class=%s flags=%04x\n", GetCurrentThreadId(), (void *)hwnd, cls, pos->flags);
+    if (!c || find_capture(hwnd) || !GetWindowRect(hwnd, &rect)) return;
+    if (!(pos->flags & SWP_NOMOVE)) OffsetRect(&rect, pos->x - rect.left, pos->y - rect.top);
+    if (!(pos->flags & SWP_NOSIZE)) { rect.right = rect.left + pos->cx; rect.bottom = rect.top + pos->cy; }
+    w = rect.right - rect.left; h = rect.bottom - rect.top;
+    if (w <= 0 || h <= 0 || !(screen = GetDC(NULL))) return;
+    c->mem = CreateCompatibleDC(screen);
+    c->bitmap = c->mem ? CreateCompatibleBitmap(screen, w, h) : NULL;
+    if (c->bitmap) {
+        c->old = SelectObject(c->mem, c->bitmap);
+        BitBlt(c->mem, 0, 0, w, h, screen, rect.left, rect.top, SRCCOPY);
+        c->rect = rect;
+        c->hwnd = hwnd;
+    } else if (c->mem) DeleteDC(c->mem);
+    ReleaseDC(NULL, screen);
+}
+
+static void present_capture(HWND hwnd)
+{
+    struct capture *c = find_capture(hwnd);
+    RECT now;
+    HDC dc;
+
+    if (!c) return;
+    TRACE("present hwnd=%p\n", (void *)hwnd);
+    if (GetWindowRect(hwnd, &now) && (dc = GetDCEx(hwnd, NULL, DCX_WINDOW | DCX_CACHE))) {
+        BitBlt(dc, c->rect.left - now.left, c->rect.top - now.top, c->rect.right - c->rect.left,
+               c->rect.bottom - c->rect.top, c->mem, 0, 0, SRCCOPY);
+        ReleaseDC(hwnd, dc);
+        GdiFlush();
+    }
+    release_capture(c);
+}
+
+static BOOL top_level_hidden(HWND hwnd)
+{
+    return !(GetWindowLongW(hwnd, GWL_STYLE) & WS_CHILD) && !IsWindowVisible(hwnd);
+}
+
+static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
+{
+    const CWPSTRUCT *m = (const CWPSTRUCT *)lparam;
+    if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGING &&
+        (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW) && top_level_hidden(m->hwnd))
+        capture_under(m->hwnd, (WINDOWPOS *)m->lParam);
+    return CallNextHookEx(NULL, code, wparam, lparam);
+}
+
+static LRESULT CALLBACK after(int code, WPARAM wparam, LPARAM lparam)
+{
+    const CWPRETSTRUCT *m = (const CWPRETSTRUCT *)lparam;
+    if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGED &&
+        (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW))
+        present_capture(m->hwnd);
+    return CallNextHookEx(NULL, code, wparam, lparam);
+}
+
+static void hook_thread(void)
+{
+    DWORD tid = GetCurrentThreadId();
+    TRACE("hook thread %04lx\n", tid);
+    SetWindowsHookExW(WH_CALLWNDPROC, before, self, tid);
+    SetWindowsHookExW(WH_CALLWNDPROCRET, after, self, tid);
+}
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
+    char mode[8] = "";
+    if (GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0)) return TRUE;
+    GetEnvironmentVariableA("DLLMGR27_MODE", mode, sizeof(mode));
     if (reason == DLL_PROCESS_ATTACH) {
-        DisableThreadLibraryCalls(instance);
-        if (!GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0))
+        debug = GetEnvironmentVariableA("DLLMGR27_DEBUG", NULL, 0) != 0;
+        self = instance;
+        if (!lstrcmpiA(mode, "iat")) {
+            /* legacy mode: only ShowWindow imported by the exe itself */
+            DisableThreadLibraryCalls(instance);
             hook_import(GetModuleHandleW(NULL), "user32.dll", "ShowWindow", (void *)show_prefilled,
                         (void **)&real_show_window);
+        } else hook_thread();
+    } else if (reason == DLL_THREAD_ATTACH && lstrcmpiA(mode, "iat")) {
+        hook_thread();
     }
     return TRUE;
 }
