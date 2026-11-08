@@ -1,0 +1,27 @@
+strace: Process 278 attached with 3 threads
+[pid   307] [ Process PID=307 runs in 32 bit mode. ]
+[pid   289] [ Process PID=289 runs in 32 bit mode. ]
+[pid   278] [ Process PID=278 runs in 32 bit mode. ]
+strace: Process 278 detached
+strace: Process 307 detached
+strace: Process 289 detached
+System call usage summary for 32 bit mode:
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 41.92    2.769711         545      5073      1985 statx
+ 31.66    2.091506         786      2658           openat
+ 11.20    0.739761         279      2648           getdents64
+  7.97    0.526525         197      2665           close
+  1.86    0.122816          46      2654           fcntl64
+  1.60    0.105601         158       667           fstatfs64
+  1.22    0.080817          60      1335      1335 ioctl
+  0.97    0.064396          96       668           writev
+  0.85    0.056037          40      1396           rt_sigprocmask
+  0.65    0.043003          62       692           read
+  0.04    0.002949         245        12        12 getxattr
+  0.02    0.001342          74        18           write
+  0.01    0.000889         148         6           recvmsg
+  0.01    0.000728          40        18           _llseek
+  0.01    0.000526          43        12           fchdir
+------ ----------- ----------- --------- --------- ----------------
+100.00    6.606607         321     20522      3332 total

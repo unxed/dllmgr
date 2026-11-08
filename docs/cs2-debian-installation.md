@@ -211,3 +211,42 @@ The synthetic settings directory contains a zero-byte Prefs.psp created at
 The reviewed screenshot36 is committed. PID278/Wine PID444 and all HWNDs are
 historical observations; enumerate again before interacting. No code patch,
 activation workaround, trial reset, hardware change or reinstall was applied.
+
+### Resume an existing prefix safely
+
+Do not replay historical request JSON files. Once the old VM/controller is
+confirmed stopped, archive `control/requests/*.json` and remove the old
+`control/ready.json` before starting the controller. Retain responses and the
+action journal. Restore controls with prepare-controls.py if needed; this
+does not create a trial prefix or launch an application.
+
+Start the VM/controller with the command above, wait for a newly written
+ready.json, then check registration:
+
+```sh
+python3 /workspace/work/photoshop-cs2/control/client.py \
+  '{"action":"run","argv":["wine","/workspace/work/photoshop-cs2/control/product-state.exe"],"timeout":120}'
+```
+
+If no Photoshop process is already running, start it from the installed folder:
+
+```sh
+python3 /workspace/work/photoshop-cs2/control/client.py \
+  '{"action":"launch","argv":["/usr/bin/python3","/workspace/work/photoshop-cs2/control/launch-in-dir.py","/workspace/work/photoshop-cs2/prefix110/drive_c/Program Files/Adobe/Adobe Photoshop CS2","Photoshop.exe"]}'
+```
+
+Inspect fresh windows.exe output and X screenshots before choosing any normal
+trial continuation. A splash or successful process launch alone does not prove
+readiness. To shut down after closing the app normally, send
+`{"action":"stop"}` through client.py; the controller terminates only its own
+prefix/server and the runner powers off the guest. Preserve prefix110 for the
+next session. A completely fresh workspace must reinstall from the exact
+verified official source using the observed normal trial choices above; no
+prefix snapshot, activation data or Adobe binaries are in Git.
+
+A20-second Linux syscall summary at22:11 and a5-second filesystem-only sample
+at22:12 show active directory enumeration, including Plug-Ins and repeated
+ancestor desktop.ini lookups. Summaries are retained alongside the checkpoint.
+No Adobe code or file contents were inspected. Timeout exit124 belongs to the
+bounded tracer, not Photoshop. The raw path trace stays local. This has not
+established the cause of delay.

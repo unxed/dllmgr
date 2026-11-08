@@ -104,3 +104,13 @@ token-cheap GUI work). State on main:
 - Findings to fix last: docs/sandbox-findings.md (F1-F19).
 - Not yet touched in the sandbox: #11412 (submenu vs Tools palette, palettes
   above other apps), #34 TopPlan.
+
+## Debian cloud continuation (2026-11-08, codex-debian-8c42)
+
+The separate unprivileged Debian/QEMU stand now has an installed CS2 trial.
+[Installation/recovery record](cs2-debian-installation.md), tracked in
+[#37](https://github.com/unxed/dllmgr/issues/37), preserves the source hashes,
+controls and evidence. Public MSI APIs report installed9.0 after VM restart;
+F13/F14 reproduced during Finish. First startup currently reaches the Tryout
+splash; full editor readiness is not yet verified. This is a different machine
+and prefix from the Claude sandbox and the owner’s local stand above.

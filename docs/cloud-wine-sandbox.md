@@ -8,6 +8,10 @@ Do not start the research merely because the stand exists.
 The owner requested this reusable setup on 2026-11-08. Existing Photoshop results
 and next steps remain in [photoshop-handoff.md](photoshop-handoff.md).
 
+The later owner-authorized CS2 trial installation and its current startup
+checkpoint are recorded in [cs2-debian-installation.md](cs2-debian-installation.md).
+Read that report before repeating installation or claiming editor readiness.
+
 ## Restore in a new dialog
 
 Use a managed **Debian 13 x86_64** environment with Python 3.11+, curl,

@@ -1,0 +1,89 @@
+{
+  "capture_utc": "2026-11-08T22:12:06Z",
+  "duration_seconds": 5,
+  "method": "strace Linux openat/statx only; no app code or file contents inspected",
+  "trace_lines": 1600,
+  "most_frequent_paths": [
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files",
+      199
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe",
+      178
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2",
+      154
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/Plug-Ins",
+      133
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:",
+      84
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/Plug-Ins/Adobe Photoshop Only",
+      66
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/Plug-Ins/File Formats",
+      50
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/desktop.ini",
+      42
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/desktop.ini",
+      42
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/desktop.ini",
+      42
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/desktop.ini",
+      42
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/Plug-Ins/desktop.ini",
+      40
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/Plug-Ins/Adobe Photoshop Only/File Formats",
+      35
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/Plug-Ins/Adobe Photoshop Only/desktop.ini",
+      22
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/desktop.ini?",
+      21
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/desktop.ini?",
+      21
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/desktop.ini?",
+      21
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/desktop.ini?",
+      20
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/Plug-Ins/desktop.ini?",
+      20
+    ],
+    [
+      "<TEST_PREFIX>/dosdevices/c:/Program Files/Adobe/Adobe Photoshop CS2/Plug-Ins/File Formats/desktop.ini",
+      20
+    ]
+  ],
+  "interpretation": "Active filesystem queries under installed Photoshop Plug-Ins and ancestor desktop.ini paths; no causal conclusion or readiness claim. Full raw trace retained locally only."
+}

@@ -1,0 +1,14 @@
+{
+  "agent_id": "codex-debian-8c42",
+  "issue": 37,
+  "scope": "Existing owner-authorized stand installation and first-start validation only",
+  "legacy_stand_directory": "/workspace/work/wine-stand",
+  "legacy_application_directory": "/workspace/work/photoshop-cs2",
+  "wineprefix": "/workspace/work/photoshop-cs2/prefix110",
+  "display": "Xvfb :191 inside isolated full-system guest; no host/owner desktop",
+  "ownership": "Both legacy directories were created by this chat before the claim protocol was added. They are exclusively owned by this task, not the owner machine prefix110 or Claude sandbox. Do not adopt another agents similarly named prefix.",
+  "new_resources_rule": "Create future work directories under /workspace/work/codex-debian-8c42 and derive/check each new display; do not rename a live prefix.",
+  "server_shutdown": "Only WINEPREFIX=/workspace/work/photoshop-cs2/prefix110 wineserver -k inside this task guest",
+  "claims": "GitHub issue37 claimed; reread confirms no earlier competing claim",
+  "main_updates": "fresh remote tree, expected-SHA non-force update; preserve concurrent commits"
+}
