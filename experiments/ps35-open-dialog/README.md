@@ -47,7 +47,12 @@ machine/VM or a Windows CI job installing the CS2 trial).
 ## Next: Windows CI comparison (owner decision 2026-11-08)
 
 Do it as a Windows job in this repo (next to first-open.yml): download the
-official CS2 trial installer (SHA256 in docs/sandbox-stand.md), unzip it
+CS2 trial installer **from the Wayback Machine, never from Adobe in CI**
+(owner: do not load Adobe's servers):
+https://web.archive.org/web/20240522171734/http://download.adobe.com/pub/adobe/photoshop/win/cs2/Photoshop_CS2.exe
+and verify SHA256 919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea
+(345,068,035 bytes); cache it with actions/cache so reruns do not download
+again. Unzip it
 (identical to the WinZip SFX output), install the trial unattended (owner
 approved the trial EULA; no serial), then drive File > Open > Use Adobe
 Dialog > Use OS Dialog with UI Automation and record the "Open" window rect
