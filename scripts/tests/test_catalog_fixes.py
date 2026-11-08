@@ -36,6 +36,15 @@ class CatalogFixesTest(unittest.TestCase):
         with self.assertRaises(KeyError):
             catalog_fixes.release("app", "wine-9.0", INDEX)
 
+    def test_fix_release_can_advance_without_replacing_old_release_bytes(self):
+        entry = {"kind": "fix", "id": "dllmgr-2",
+                 "binaries": "https://github.com/unxed/dllmgr/releases/tag/dllmgr-2-v2"}
+        self.assertEqual(catalog_fixes.release("dllmgr-2", "wine-11.0", [entry]), "dllmgr-2-v2")
+        self.assertEqual(catalog_fixes.release("winehq-1", "wine-11.0", INDEX), "winehq-1")
+        entry["binaries"] = "https://example.com/dllmgr-2-v2"
+        with self.assertRaisesRegex(ValueError, "unsupported binary release"):
+            catalog_fixes.release("dllmgr-2", "wine-11.0", [entry])
+
     def test_real_catalog_lists_the_faststone_bundle(self):
         self.assertIn("winehq-59609", catalog_fixes.resolve("faststone"))
 

@@ -9,6 +9,7 @@ installer, the tests and the release read it from here instead of copying it.
     catalog_fixes.py --release faststone wine-11.0 -> faststone-v2
 """
 import json
+import re
 from pathlib import Path
 import sys
 
@@ -35,9 +36,18 @@ def resolve(requested, index=None):
 
 
 def release(requested, wine, index=None):
-    """The prebuilt-module release of the bundle profile for a Wine tag."""
+    """The bundle profile or individual fix's immutable prebuilt release."""
     index = index if index is not None else load_index()
     for entry in index:
+        if entry["kind"] == "fix" and entry["id"] == requested:
+            binaries = entry.get("binaries")
+            if not binaries:
+                return entry["id"]
+            prefix = "https://github.com/unxed/dllmgr/releases/tag/"
+            tag = binaries.removeprefix(prefix)
+            if not binaries.startswith(prefix) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", tag):
+                raise ValueError(f"{requested}: unsupported binary release URL")
+            return tag
         if entry["kind"] == "bundle" and requested in (entry["id"], entry.get("application")):
             for profile in entry.get("profiles", []):
                 if profile["wine"] == wine and profile.get("release"):

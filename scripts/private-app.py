@@ -172,7 +172,7 @@ def modules(fix, temp):
     names = {'comctl32_v6' if n == 'comctl32' else n for n in names}
     if not names or not names <= {'comctl32_v6', 'gdiplus'}:
         raise Error('Unsupported private recipe modules')
-    release = catalog_fixes.release(fix, 'wine-11.0') if fix == 'faststone' else fix
+    release = catalog_fixes.release(fix, 'wine-11.0', index)
     url = 'https://github.com/unxed/dllmgr/releases/download/' + release + '/'
     sums = temp / 'SHA256SUMS'
     download(url + 'SHA256SUMS', sums)

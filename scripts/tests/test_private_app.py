@@ -380,14 +380,16 @@ class PrivateAppTest(unittest.TestCase):
                 dest.write_text(sha(raw) + "  " + name + "\n")
             else:
                 dest.write_bytes(raw)
+            self.assertIn("/releases/download/winehq-59609-v2/", url)
 
-        entry = {"id": "winehq-59609", "dlls": ["comctl32"]}
+        entry = {"kind": "fix", "id": "winehq-59609", "dlls": ["comctl32"],
+                 "binaries": "https://github.com/unxed/dllmgr/releases/tag/winehq-59609-v2"}
         with patch.object(private_app.catalog_fixes, "resolve", return_value=["winehq-59609"]), \
              patch.object(private_app.catalog_fixes, "load_index", return_value=[entry]), \
              patch.object(private_app, "download", side_effect=fake_download):
             release, payloads = private_app.modules("winehq-59609", self.root)
 
-        self.assertEqual(release, "winehq-59609")
+        self.assertEqual(release, "winehq-59609-v2")
         self.assertEqual(set(payloads), {"comctl32.dll"})
         self.assertEqual(payloads["comctl32.dll"][0x40:0x60], bytes(32))
         self.assertFalse((self.root / "gdiplus-wine-11.0-i386.dll").exists())
