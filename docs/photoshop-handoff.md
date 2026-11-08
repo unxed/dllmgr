@@ -82,3 +82,25 @@ The reproducible Wine 11.0 / Xvfb cloud stand is documented in
 scripts in `tools/wine-sandbox/`. It does not contain the local trial prefix
 or establish a Photoshop retest. The cloud host cannot run Linux i386 ELF
 natively; use the documented full-system QEMU fallback for 32-bit Wine.
+
+## Sandbox session checkpoint (2026-11-08 19:50, Claude cloud sandbox)
+
+Start a new session with docs/sandbox-agent-hints.md (stand, CS2 install,
+token-cheap GUI work). State on main:
+
+- #27 FastStone first-open flash: fixed Wine-side by patches/winehq-60721.patch,
+  delivered through private runtime v2 (scripts/private-runtime.json, release
+  app-isolation-wine-11.0-v2). Owner test pending:
+  `dllmgr uninstall faststone && dllmgr fix faststone`. PE-only fallback:
+  patches/dllmgr-27 (msimg32 proxy, removes white, 15-28 ms black remains).
+- #36 CS2 splash white rectangle: cause = Photoshop composes the splash over
+  its own window's initial 0xff surface. Fixed on stock Wine by the same
+  prefill code as a version.dll proxy (`patches/dllmgr-27/build.sh version`,
+  install with scripts/prefill-proxy.py). experiments/photoshop-splash/.
+  Open: faint 1 px line at the splash window edge (not compared with Windows).
+- #35 / Wine 34134 Open dialog width: Adobe's versioncueui.dll itself resizes
+  the OS dialog to the Adobe dialog rect; Wine just executes it. Needs one real
+  Windows run to decide. experiments/ps35-open-dialog/.
+- Findings to fix last: docs/sandbox-findings.md (F1-F19).
+- Not yet touched in the sandbox: #11412 (submenu vs Tools palette, palettes
+  above other apps), #34 TopPlan.
