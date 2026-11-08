@@ -1,0 +1,57 @@
+Fix for dllmgr issue 38 / PhialsBasement/wine-adobe-installers#6: Photoshop
+2024 aborts with "Unimplemented function USER32.dll.SetWindowFeedbackSetting"
+when opening or creating an image. Against wine-11.0 (db11d0fe); current
+master (78e52205) still lacks the export.
+
+user32 did not export SetWindowFeedbackSetting (spec line commented out), so
+the loader bound an aborting stub to the application's import. The function
+configures touch/pen visual feedback per window; Wine draws no such feedback,
+so the implementation accepts the setting for a valid window and fails with
+ERROR_INVALID_WINDOW_HANDLE otherwise. GetWindowFeedbackSetting is left
+unexported until its default values are compared with Windows.
+
+PE-only change (user32.dll). Reproducer: tests/wine/feedback-setting.c.
+
+diff --git a/dlls/user32/user32.spec b/dlls/user32/user32.spec
+index 0645792a..be6e1e6e 100644
+--- a/dlls/user32/user32.spec
++++ b/dlls/user32/user32.spec
+@@ -1108,7 +1108,7 @@
+ # @ stub SetWindowCompositionTransition
+ @ stdcall SetWindowContextHelpId(long long) NtUserSetWindowContextHelpId
+ @ stdcall SetWindowDisplayAffinity(long long)
+-# @ stub SetWindowFeedbackSetting
++@ stdcall SetWindowFeedbackSetting(long long long long ptr)
+ @ stdcall SetWindowLongA(long long long)
+ @ stdcall -arch=win64 SetWindowLongPtrA(long long long)
+ @ stdcall -arch=win64 SetWindowLongPtrW(long long long)
+diff --git a/dlls/user32/win.c b/dlls/user32/win.c
+index cef0beea..56baa686 100644
+--- a/dlls/user32/win.c
++++ b/dlls/user32/win.c
+@@ -1621,6 +1621,25 @@ BOOL WINAPI SetWindowDisplayAffinity(HWND hwnd, DWORD affinity)
+     return FALSE;
+ }
+ 
++/*****************************************************************************
++ *              SetWindowFeedbackSetting (USER32.@)
++ *
++ * Configures touch and pen visual feedback for a window. Wine draws no such
++ * feedback, so accept the setting for a valid window.
++ */
++BOOL WINAPI SetWindowFeedbackSetting( HWND hwnd, FEEDBACK_TYPE feedback, DWORD flags, UINT32 size,
++                                      const void *config )
++{
++    FIXME( "(%p, %d, %#lx, %u, %p): semi-stub\n", hwnd, feedback, flags, size, config );
++
++    if (!IsWindow( hwnd ))
++    {
++        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
++        return FALSE;
++    }
++    return TRUE;
++}
++
+ /**********************************************************************
+  *              SetWindowCompositionAttribute (USER32.@)
+  */

@@ -19,6 +19,8 @@ patch list with the output.
   on 24-bit DIBs.
 - `winehq-59251.patch`: candidate horizontal icon-list wheel handling; separate
   from the thumbnail-drawing coordinate correction.
+- `dllmgr-38.patch`: user32 exports SetWindowFeedbackSetting (Photoshop 2024
+  abort, PhialsBasement/wine-adobe-installers#6). PE-only.
 - `winehq-60721.patch`: FastStone first-open white/black flash (dllmgr
   issue 27): Expose re-presents only drawn surface areas, X windows get no
   background. Unix-side win32u/winex11; changes `struct window_surface`.
