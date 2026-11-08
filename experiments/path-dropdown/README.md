@@ -84,3 +84,15 @@ The local catalog generator could not start with system Go1.22:
 `go: download go1.24 for linux/amd64: toolchain not available`.
 The JSON update uses the existing entry field order locally; hosted catalog CI
 regenerates with the project's Go version and requires byte-for-byte equality.
+
+
+## Delivered private recipe (2026-11-08)
+
+`dllmgr-21` and `faststone-v3` are published and main15a038c is installed on
+the owner's laptop. [Sanitized installed-v3 evidence](laptop-private-v3.json)
+records1242 hover/down changed pixels,0 held/down and0 release/down at192DPI.
+Both DLLs mapped natively from the private app directory; shared DLLs and
+separate font/AVIF assets were preserved, and installed settings restored.
+Owner visual acceptance and the separate intermittent row corruption remain
+open in issue21. The old shared-install steps above describe disposable CI
+history only; product installation uses docs/app-isolation.md.

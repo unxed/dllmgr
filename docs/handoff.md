@@ -15,16 +15,18 @@ Photoshop incident (#25) covered only the self-extractor initial window; the
 new CS2 trial compatibility audit is tracked separately in #31.
 
 - [#21](https://github.com/unxed/dllmgr/issues/21): deliver the proven dropdown
-  paint correction through private install; owner acceptance and the separate
-  intermittent severe path-row corruption remain. Branch `research/faststone-path`
-  at `8ea884f`; final CI passed. Its old shared installer must not be reused.
+  paint correction is delivered and installed privately in `faststone-v3`
+  (main `15a038c`); owner acceptance and the separate intermittent severe
+  path-row corruption remain. See experiments/path-dropdown/laptop-private-v3.json.
+  Its old research shared installer must not be reused.
 - [#22](https://github.com/unxed/dllmgr/issues/22): startup/Draw latency. The
   font-cache enlargement was rejected after actual-app A/B; branch
   `research/faststone-font-cache` at `643b39a` preserves the negative result.
 - [#23](https://github.com/unxed/dllmgr/issues/23): one composed selection with
   explicit distinction between private DLLs and prefix-wide font/WIC assets.
 - [#27](https://github.com/unxed/dllmgr/issues/27): first-open full white-screen
-  flash, newly reported; cause/reproduction not yet established.
+  flash: current active investigation, starting an owned-window synthetic-image
+  sampling probe. Cause/reproduction not yet established; do not call absence fixed.
 - [#28](https://github.com/unxed/dllmgr/issues/28): accepted font .009 final
   polish (capital В); preserve the accepted improvements and rejected fixtures.
 - [#29](https://github.com/unxed/dllmgr/issues/29): remaining middle-button/mode,

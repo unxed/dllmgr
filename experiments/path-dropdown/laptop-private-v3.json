@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-08",
+  "recipe": "faststone-v3",
+  "commit": "15a038ca18f7b75ebd0b00e1bf29d94faac5fbb0",
+  "wine": "wine-11.0",
+  "dpi": 192,
+  "exe_sha256": "05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621",
+  "private_modules": {
+    "comctl32.dll": "638b7d67f989c125fe8cabbd655012814d2f1e1bd9a7dfb18c2251e66f25b599",
+    "gdiplus.dll": "a9baafe5a4de3b30e2288a60c59dc47760265d3d97195a829ed7217191414d67"
+  },
+  "module_load": "native from owned private application directory",
+  "pixel_check": {
+    "hover_to_down_pixels": 1242,
+    "down_to_held_pixels": 0,
+    "down_to_up_pixels": 0
+  },
+  "installed_settings_restored": true,
+  "shared_dlls_unchanged": true,
+  "owner_visual_acceptance": "pending",
+  "intermittent_severe_path_corruption": "not reproduced, unresolved"
+}
