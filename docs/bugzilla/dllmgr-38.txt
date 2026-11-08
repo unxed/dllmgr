@@ -1,7 +1,8 @@
 Where: https://bugs.winehq.org/enter_bug.cgi?product=Wine  (new bug)
 Product: Wine   Component: user32   Version: 11.0   Severity: normal
-Status: prepared 2026-11-08, NOT posted (owner posts; then record the URL here
-and in issue #38). Words only: no code, no links to code.
+Status: POSTED by the owner 2026-11-08 22:50 UTC as
+https://bugs.winehq.org/show_bug.cgi?id=60726 (user32, 11.0, UNCONFIRMED);
+text as below plus a link to the original fork issue. Do not repost.
 
 Summary:
 user32: SetWindowFeedbackSetting/GetWindowFeedbackSetting are not exported (Adobe Photoshop 2024 aborts when opening an image)

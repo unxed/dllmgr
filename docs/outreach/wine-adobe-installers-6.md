@@ -1,7 +1,9 @@
 # Prepared reply: PhialsBasement/wine-adobe-installers#6 (not posted)
 
 Target: https://github.com/PhialsBasement/wine-adobe-installers/issues/6
-Status: prepared 2026-11-08 by Claude (dllmgr #38); the owner posts it.
+Status: prepared 2026-11-08 by Claude (dllmgr #38); owner reported posting it
+2026-11-08 ~23:50 CET (not yet visible to the agent's page fetch; verify).
+WineHQ bug filed for it: https://bugs.winehq.org/show_bug.cgi?id=60726
 After posting, record the comment URL here and in issue #38.
 
 ---
