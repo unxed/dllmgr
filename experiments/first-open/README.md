@@ -187,3 +187,10 @@ between ShowWindow and the128933.104s flush, then reproduce that public-API
 sequence on Windows/Wine. Local source/trace locations are in the handoff;
 all useful diagnostic source and sanitized timelines are already on main.
 Do not replace white initialization with black as a speculative product fix.
+
+## Rejected direct-drawing setting
+
+[ClientSideGraphics A/B/undo](client-side-graphics/README.md) changes the white
+interruption to a black-centre interruption of162ms, then undo restores white.
+This is not a usable solution and was never installed in the normal prefix.
+Do not accept observed_image_white_image=0 as a no-flicker gate.

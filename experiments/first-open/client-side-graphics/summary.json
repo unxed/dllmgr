@@ -1,0 +1,14 @@
+{
+  "stock-before": {
+    "exit": 0,
+    "observed_flash": true
+  },
+  "direct-drawing": {
+    "exit": 0,
+    "observed_flash": false
+  },
+  "stock-restored": {
+    "exit": 0,
+    "observed_flash": true
+  }
+}
