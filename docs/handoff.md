@@ -25,8 +25,10 @@ new CS2 trial compatibility audit is tracked separately in #31.
 - [#23](https://github.com/unxed/dllmgr/issues/23): one composed selection with
   explicit distinction between private DLLs and prefix-wide font/WIC assets.
 - [#27](https://github.com/unxed/dllmgr/issues/27): first-open full white-screen
-  flash: current active investigation, starting an owned-window synthetic-image
-  sampling probe. Cause/reproduction not yet established; do not call absence fixed.
+  flash: reproduced image→white→image with a synthetic JPEG; the white
+  interval was 251 ms. Probe and timeline: `experiments/first-open/`. Cause and
+  fix remain open. All further GUI tests must use a separate headless display
+  and disposable prefix or hosted CI; no test windows on the owner's desktop.
 - [#28](https://github.com/unxed/dllmgr/issues/28): accepted font .009 final
   polish (capital В); preserve the accepted improvements and rejected fixtures.
 - [#29](https://github.com/unxed/dllmgr/issues/29): remaining middle-button/mode,
