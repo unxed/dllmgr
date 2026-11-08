@@ -34,11 +34,12 @@ real FastStone first-open probe (32-bit, i386-unix build) at 192 DPI.
   rect, not a region (two painted corners mark the middle painted too).
   Adding fields to `struct window_surface` needs win32u.so and winex11.so
   rebuilt together (driver structs embed it); fine for a Wine source patch.
-- Regression gate `tests/wine/window-occlusion.c` is **not valid yet**: the
-  topmost blue cover never showed at the sampled centre (`covered` stage read
-  yellow), so even naive A passes it. Fix the probe first (cover must be seen
-  at the `covered` stage), then require naive A to FAIL it, then the proper
-  design to pass both probes.
+- Regression gate is valid now: `tests/wine/window-occlusion.sh` runs
+  `window-occlusion.c`, covers the centre with an external `xlogo` (an
+  in-process second popup never got an X window), uncovers it and judges by
+  the X server's pixel. Stock: `xuncovered F0CC5A verdict=pass`; naive A:
+  `000000 verdict=FAIL`. The probe's own GetPixel said yellow in both cases
+  (F18), so screen-DC sampling is not trusted for this gate.
 - Then: i386 build (FastStone 8.5 is PE32 and stock WineHQ uses i386-unix),
   real first-open probe (tests/wine/first-open-probe.c) at 192 DPI.
 - Sandbox build recipe: `apt` deps in docs/sandbox-stand.md; Wine source

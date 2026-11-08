@@ -69,7 +69,8 @@ up() {
 session() {
 	mkdir -p "$STAND_DIR"
 	rm -f "/tmp/.X${STAND_DISPLAY#:}-lock" "/tmp/.X11-unix/X${STAND_DISPLAY#:}"
-	Xvfb "$STAND_DISPLAY" -screen 0 3072x1728x24 -nolisten tcp -dpi 192 \
+	# shellcheck disable=SC2086
+	Xvfb "$STAND_DISPLAY" -screen 0 3072x1728x24 -nolisten tcp -dpi 192 ${STAND_XVFB_ARGS:-} \
 		>"$STAND_DIR/xvfb.log" 2>&1 &
 	xpid=$!
 	# The socket file appears before Xvfb accepts clients: poll a real client.

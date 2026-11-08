@@ -56,7 +56,7 @@ int main(void)
 {
     WNDCLASSW cls = {0};
     int cx = GetSystemMetrics(SM_CXSCREEN), cy = GetSystemMetrics(SM_CYSCREEN);
-    HWND main_window, cover;
+    HWND main_window;
     COLORREF final;
 
     cls.lpfnWndProc = proc;
@@ -72,16 +72,10 @@ int main(void)
     pump_for(500);
     sample("painted");
 
-    cover = CreateWindowExW(WS_EX_TOPMOST, cls.lpszClassName, L"cover", WS_POPUP, cx / 2 - 100, cy / 2 - 100,
-                            200, 200, NULL, NULL, cls.hInstance, NULL);
-    SetWindowLongPtrW(cover, GWLP_USERDATA, 2);
-    ShowWindow(cover, SW_SHOWNOACTIVATE);
-    UpdateWindow(cover);
-    pump_for(500);
-    sample("covered");
-
-    DestroyWindow(cover);
-    pump_for(700);
+    /* An external X client (scripts/: xlogo over the screen centre, then
+     * killed) covers and uncovers the window meanwhile; this pumps messages
+     * so the Expose is processed like in a real app. */
+    pump_for(4000);
     final = sample("uncovered");
 
     DestroyWindow(main_window);
