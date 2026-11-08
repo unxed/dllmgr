@@ -1,0 +1,15 @@
+{
+  "dpi": 96,
+  "utc": "2026-11-08T23:06:55.5209030Z",
+  "interactive": true,
+  "run_id": 42533552247,
+  "url": "https://github.com/unxed/dllmgr/actions/runs/42533552247",
+  "conclusion": "success",
+  "source_downloaded": false,
+  "app_installed": false,
+  "public_api_probe": "Win32 EnumWindows/GetWindowRect/GetClientRect/GetDpiForSystem; UIAutomation tree enumeration; CopyFromScreen",
+  "artifact_id": 13637579345,
+  "artifact_sha256": "83a86064b4cd28cb42473b791ed5f9ec93101c57dc9b1cc76d98c27b198576ab",
+  "desktop_capture_sha256": "e46c75fd7a2744cad81f6e5704b8ae7ec6f46e89baa0eff4889a58a999290551",
+  "desktop_capture_review": "Nonblack interactive hosted-runner desktop; infrastructure console visible, so raw desktop image not copied into permanent task result. Photoshop comparison captures will cover the app itself."
+}

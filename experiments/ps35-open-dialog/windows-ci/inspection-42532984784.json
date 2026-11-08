@@ -1,0 +1,12 @@
+{
+  "url": "https://web.archive.org/web/20240522171734id_/http://download.adobe.com/pub/adobe/photoshop/win/cs2/Photoshop_CS2.exe",
+  "sha256": "919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea",
+  "bytes": 345068035,
+  "cache_hit": "",
+  "run_id": 42532984784,
+  "conclusion": "success",
+  "cache_saved": true,
+  "cache_key": "ps35-cs2-919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea",
+  "artifact_id": 13638631437,
+  "artifact_sha256": "4d6e81cc88898b511fe1d29b7ae46e977587103e92a996d6e07ab68cae959880"
+}

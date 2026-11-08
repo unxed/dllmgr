@@ -80,3 +80,25 @@ without waiting for or duplicating the345MB download. `ps35-uia.ps1` records
 outer/client rectangles, DPI and HWNDs; missing named UIA buttons after two
 attempts stop with screenshots/trees rather than guessed mouse coordinates.
 The helper is pending its first Windows probe; no comparison result yet.
+
+Source-free run42533552247 passed on real Windows: interactive desktop,
+DPI96, compiled public window probes, UI Automation tree and screenshot.
+Probe metadata and artifact checksum: `windows-ci/probe-42533552247.json`.
+The initial archive download remains pending; no installed-CS2 measurement yet.
+Cache key is the exact source SHA256, shared between task runs on main; save
+occurs immediately after successful hash verification and before MSI inspection
+or installation. `stage=probe` skips both archive restore and download.
+
+A concurrent main update rejected one expected-SHA ref move. An early probe
+dispatch then returned422 because the new stage was not yet published; no run
+was created. The publish loop was corrected to confirm success before dispatch,
+re-read main and retry without force. Preserve that ordering in future sessions.
+
+Inspection42532984784 succeeded: pinned Wayback bytes/hash verified and cache
+saved before MSI work. Public Control/ControlEvent metadata identifies
+`UNITYSELECTION=TRYOUT` as the normal trial radio path; `ACCEPTEDEULA=1` is
+already a package default. Vendor UI assigns its own trial identifier internally;
+no serial value is exported or passed by our script. Selected metadata only is
+in `windows-ci/trial-mode-public-msi-metadata.json` (full RTF/EULA omitted).
+Next: try normal `/qn` with the trial flag; if that refuses, drive the stock
+wizard via UIA. Do not invent a serial or bypass an activation/expiry prompt.

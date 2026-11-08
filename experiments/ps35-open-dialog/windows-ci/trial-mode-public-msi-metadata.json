@@ -1,0 +1,47 @@
+{
+  "properties": [
+    [
+      "AgreeToLicense",
+      "No"
+    ],
+    [
+      "UNITYSELECTION",
+      "RETAIL"
+    ],
+    [
+      "ACCEPTEDEULA",
+      "1"
+    ],
+    [
+      "ISReleaseFlags",
+      "RETAIL,HONESTY"
+    ]
+  ],
+  "control_events": [
+    [
+      "AdobeUserInformationUnity",
+      "Next",
+      "NewDialog",
+      "DestinationFolder",
+      "((UNITYSELECTION=\"RETAIL\" AND NOT EPIC_PRODUCT_UPGRADE) OR (UNITYSELECTION=\"TRYOUT\" AND TRYOUTRELEASE)) AND (EPIV) AND USERNAME<>\"\" AND SERIALNUMBER<>\"\" AND USERNAME_EMPTY_AFTERTRIM<>\"1\"",
+      "7"
+    ],
+    [
+      "AdobeUserInformationUnity",
+      "Next",
+      "[SERIALNUMBER]",
+      "[SERIALNUMBERTRYOUT]",
+      "UNITYSELECTION=\"TRYOUT\"",
+      "2"
+    ],
+    [
+      "AdobeUserInformationUnity",
+      "Next",
+      "[SERIALNUMBER]",
+      "[SERIALNUMBERTEMP]",
+      "UNITYSELECTION=\"RETAIL\"",
+      "3"
+    ]
+  ],
+  "interpretation": "UNITYSELECTION=TRYOUT is the normal vendor trial radio-group path. Vendor UI assigns its own bundled trial identifier; no serial value is read, exported or supplied by this test."
+}
