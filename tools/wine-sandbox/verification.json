@@ -1,12 +1,11 @@
 {
   "date": "2026-11-08",
-  "status": "passed on rebuilt runtime with existing initialized prefix",
+  "status": "passed on rebuilt runtime and fresh prefix",
   "arch": "win32",
   "wine_version": "wine-11.0",
   "kernel": "6.12.115+deb13.1-amd64",
   "pe_machine": "0x14c",
   "saved_text": "Wine 11.0 win32: Xvfb input and save verified.",
-  "elapsed_seconds": 120.9,
   "checks": [
     "wineboot --init",
     "cmd echo",
@@ -20,5 +19,128 @@
     "Photoshop CS2",
     "real Windows",
     "owner desktop parity"
+  ],
+  "warm_elapsed_seconds": 120.9,
+  "cold_elapsed_seconds": 249.7,
+  "cold_prefix_created": true,
+  "cold_document_title_wait_verified": true,
+  "cold_checks": [
+    {
+      "command": [
+        "--version"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "wineboot",
+        "--init"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "cmd",
+        "/c",
+        "echo WINE_SANDBOX_OK"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "reg",
+        "add",
+        "HKCU\\Control Panel\\Desktop",
+        "/v",
+        "LogPixels",
+        "/t",
+        "REG_DWORD",
+        "/d",
+        "192",
+        "/f"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "reg",
+        "query",
+        "HKCU\\Control Panel\\Desktop",
+        "/v",
+        "LogPixels"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/workspace/work/wine-stand/root/usr/bin/xdotool",
+        "getwindowname",
+        "14680065"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/workspace/work/wine-stand/root/usr/bin/xdotool",
+        "windowactivate",
+        "--sync",
+        "14680065"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/workspace/work/wine-stand/root/usr/bin/xdotool",
+        "windowfocus",
+        "--sync",
+        "14680065"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "import",
+        "-window",
+        "root",
+        "/workspace/work/wine-stand/artifacts/before-input.png"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/workspace/work/wine-stand/root/usr/bin/xdotool",
+        "key",
+        "--clearmodifiers",
+        "ctrl+a"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/workspace/work/wine-stand/root/usr/bin/xdotool",
+        "type",
+        "--clearmodifiers",
+        "Wine 11.0 win32: Xvfb input and save verified."
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/workspace/work/wine-stand/root/usr/bin/xdotool",
+        "key",
+        "--clearmodifiers",
+        "ctrl+s"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "import",
+        "-window",
+        "root",
+        "/workspace/work/wine-stand/artifacts/smoke.png"
+      ],
+      "returncode": 0
+    }
   ]
 }

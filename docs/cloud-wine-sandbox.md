@@ -150,8 +150,14 @@ can be visible with the title `Untitled - Notepad` before the requested document
 is loaded; the runner now waits for the document title, sets focus explicitly
 and verifies the saved contents. Window visibility or xdotool's exit code alone
 is insufficient. Failure screenshots and a live guest process list are retained.
-A separate clean-prefix run verifies first initialization; do not confuse a
-successful warm run with that result.
+The final runner also passed from a **fresh prefix** in **249.7 seconds**:
+Wine reported creating the prefix, every command returned zero, the document
+title readiness check completed, keyboard input was saved and read back, and
+the screenshot was captured. Both runs powered off their VM; no Photoshop
+process was started. Package downloads were cached for the final rebuild,
+verified again, and extracted into a new runtime directory. An independent
+locked Debian snapshot URL was also downloaded and hash-checked. Preparation
+correctly refused to modify the stand while its run lock was held.
 
 Photoshop CS2 has **not** been downloaded, installed or tested during this setup.
 The owner's local research files and licensed trial prefix are not present in
