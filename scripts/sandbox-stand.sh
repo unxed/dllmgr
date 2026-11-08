@@ -76,7 +76,10 @@ session() {
 	for _ in $(seq 100); do xdpyinfo >/dev/null 2>&1 && break; sleep .1; done
 	dbus-run-session -- muffin --sm-disable --x11 >"$STAND_DIR/wm.log" 2>&1 &
 	wpid=$!
-	trap '"$WINE/wineserver" -k 2>/dev/null; kill $wpid $xpid 2>/dev/null; :' EXIT
+	# set -e is active inside traps too: every teardown step must not fail, or
+	# the shell exits with 1 before killing X (that leaked Xvfb/Muffin before).
+	trap '"$WINE/wineserver" -k 2>/dev/null || :; pkill -P $wpid 2>/dev/null || :
+		kill $wpid $xpid 2>/dev/null || :' EXIT
 	trap 'exit 130' INT TERM
 	for _ in $(seq 150); do
 		xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null | grep -q 'window id' && break
