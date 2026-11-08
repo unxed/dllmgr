@@ -1,0 +1,8 @@
+{
+  "action": "run",
+  "ok": true,
+  "pid": 10125,
+  "code": 0,
+  "output": "    PID STAT COMMAND\nNo-Photoshop-process\n0124:err:twain:twain_add_onedriver Source->(DG_CONTROL,DAT_IDENTITY,MSG_GET) failed!\n0194:err:sync:RtlpWaitForCriticalSection section 01502750 \"?\" wait timed out in thread 0194, blocked by 0124, retrying (60 sec)\n0194:err:sync:RtlpWaitForCriticalSection section 01502750 \"?\" wait timed out in thread 0194, blocked by 0124, retrying (60 sec)\n0194:err:sync:RtlpWaitForCriticalSection section 01502750 \"?\" wait timed out in thread 0194, blocked by 0124, retrying (60 sec)\n1726c34a26069626be2840f32c0aa05894d1dff83d55c905c64b39e4b0c59516  /home/runner/work/dllmgr/dllmgr/session-evidence/install-cs2.log\n7ca5bf6394befa717258999c6cbf80131a4a52b4a641e4facd76f3b519613691  /home/runner/work/dllmgr/dllmgr/session-evidence/installer-steps.log\n71edad4dd45f8c0b1d9a3fd5215c05d01f996aa771c2edd60db4d2dbcc46eff8  /home/runner/work/dllmgr/dllmgr/session-evidence/photoshop.log\na56de8e2270d09754b161d6bc3529a37ed74575b15690dd99ed83c4b8ab88d04  /home/runner/work/dllmgr/dllmgr/session-evidence/prefix.log\n               total        used        free      shared  buff/cache   available\nMem:           15983        1082        7505          46        7789       14901\nSwap:           3071           0        3071\n",
+  "utc": "2026-11-08T22:29:02Z"
+}
