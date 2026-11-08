@@ -1,0 +1,15 @@
+{
+  "updated_utc": "2026-11-08T17:50:59.622736+00:00",
+  "priority": "all newly found issues after existing bugs",
+  "source_verified": true,
+  "archive_crc_ok": true,
+  "extracted_files_verified": 404,
+  "extractor_result": "404 file(s) unzipped successfully",
+  "msi_installed": false,
+  "photoshop_launched": false,
+  "current_stage": "Adobe autorun language picker, after correcting working directory",
+  "prefix": "/workspace/work/photoshop-cs2/prefix110",
+  "controller": "/workspace/work/photoshop-cs2/control/controller.py",
+  "display": "guest :191 only",
+  "next_step": "Choose language, accept normal EULA, install trial via stock Setup; do not type an unowned serial or bypass activation."
+}

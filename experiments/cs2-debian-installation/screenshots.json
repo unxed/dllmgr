@@ -1,0 +1,38 @@
+[
+  {
+    "file": "01-extractor-initial.png",
+    "sha256": "cd9f0f74c67fc09b6cb93a1cced69d1b4c83e688f46a5c84c41a987b353f9dfa",
+    "bytes": 783,
+    "storage": "local only; no user documents"
+  },
+  {
+    "file": "02-extractor-ready.png",
+    "sha256": "a8fd12626edabf8fc52e32c1f670f43121469e116a8638a489ec8234673808ae",
+    "bytes": 25035,
+    "storage": "local only; no user documents"
+  },
+  {
+    "file": "03-extracting.png",
+    "sha256": "7822b133cc33745f355bc72e3145906c8d60bbf14e19e42fbb3402f8f55ea50e",
+    "bytes": 25588,
+    "storage": "local only; no user documents"
+  },
+  {
+    "file": "04-extraction-state.png",
+    "sha256": "d842bb3c468e997b62e91ac8e433a597cd870ac5697fe1868af605a5cff29e0d",
+    "bytes": 25605,
+    "storage": "local only; no user documents"
+  },
+  {
+    "file": "05-setup-launch.png",
+    "sha256": "1aa12abbc6bfbaddd829db37d1a523f61b4a3d38a01ffc1e84f0073dd21c19cf",
+    "bytes": 20703,
+    "storage": "local only; no user documents"
+  },
+  {
+    "file": "06-setup-correct-directory.png",
+    "sha256": "17947834a8b6a26419f61922e7eed9d84ac8ea22865e2cffb8c446cd58481e54",
+    "bytes": 20324,
+    "storage": "local only; no user documents"
+  }
+]
