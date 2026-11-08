@@ -75,8 +75,15 @@ Design (implement in this order, each step tested):
    instance. Test both orders: private running + stock launch (second start
    must reach the private instance), and nothing running.
 
-Remaining measurements before coding step 3: FastStone's single-instance
-behaviour (does a second process forward arguments and exit?); exit status
+Measured 2026-11-08 (stock Wine 11.0, Metacity, :96, tests in
+/home/claude/work/tramp/single.sh): FastStone 8.5 is single-instance. Start A
+(`a.jpg`, window after 8 s), then B (`b.jpg`): within 1 s the running window
+shows `b.jpg - FastStone`, there is still exactly 1 FSViewer.exe process and
+the second launcher has exited. So a trampolined start while a private
+instance runs is forwarded there and exits; the trampoline must not treat a
+quick exit 0 of the child as failure.
+
+Remaining measurements before coding step 3: exit status
 of `dllmgr run` while the target keeps running (execve: it is the target's
 own lifetime, so step 4 must not wait for exit — only watch for an early
 failure); cost of the extra start (time from double click to first image,
