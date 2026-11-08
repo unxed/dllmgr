@@ -37,3 +37,47 @@ standing permission to publish runtime releases after tests pass.
 
 Also done in this session: progress bars for runtime download/copy/check
 (843e466), `dllmgr diag` read-only report (d5feb3d).
+
+## Trampoline design (Opus, 2026-11-08 23:40)
+
+Measured facts:
+- A Wine process can start a native ELF with CreateProcessW; the command line
+  is split Windows-style (double quotes, not single).
+- The native child inherits the Unix environment of the Wine process
+  (WINEPREFIX, PATH, HOME, custom variables) and its Unix cwd.
+- `private-app.py run` (= `dllmgr run faststone -- ARGS`) passes arguments
+  that are not existing Unix files unchanged, so Windows paths from menu and
+  MIME launchers (`Z:\...`, `C:\...`) reach FastStone as given; it then
+  execve()s the private runtime with WINEPREFIX of the caller. The private
+  runtime's wineserver is an unmodified copy of the base one (same protocol),
+  so a stock-Wine process and a private-runtime process may share a prefix.
+
+Design (implement in this order, each step tested):
+1. Where: the proxy DLL already loaded into FastStone under any Wine
+   (msimg32 for FastStone 8.5). Install it with `dllmgr fix faststone`
+   (CI-built binary; FS-1 step 1).
+2. When: only if `DLLMGR_TARGET_EXE` is absent (stock Wine, not the private
+   runtime) and `DLLMGR_TRAMPOLINED` is absent (loop guard).
+3. Not in DllMain (loader lock): DllMain only hooks the exe's first
+   window-creating import (`CreateWindowExW`/`CreateWindowExA`, IAT slots
+   matched by address as in prefill.c). On the first call, before any window
+   exists: build the command `dllmgr run faststone -- <original args>` from
+   GetCommandLineW (keep FastStone's own argument quoting), set
+   DLLMGR_TRAMPOLINED=1 in the environment, CreateProcessW the launcher with
+   the absolute Unix path written at install time into a companion file next
+   to the proxy (`msimg32.dllmgr`, hash-checked by `status`), then
+   ExitProcess(0) without returning to the app.
+4. Fail-safe: if the companion file is missing, the launcher cannot be
+   started, or the child exits non-zero within ~2 s, continue normally under
+   stock Wine (the prefill backstop still removes the white flash). Never
+   loop, never show a dialog.
+5. Single instance: FastStone forwards a second start to the running
+   instance. Test both orders: private running + stock launch (second start
+   must reach the private instance), and nothing running.
+
+Remaining measurements before coding step 3: FastStone's single-instance
+behaviour (does a second process forward arguments and exit?); exit status
+of `dllmgr run` while the target keeps running (execve: it is the target's
+own lifetime, so step 4 must not wait for exit — only watch for an early
+failure); cost of the extra start (time from double click to first image,
+stock vs trampolined, Metacity, 5 runs each).
