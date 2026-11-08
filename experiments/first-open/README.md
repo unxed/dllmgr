@@ -50,6 +50,27 @@ prefix. The owner explicitly requests no test windows on the active desktop.
 Do not reuse an existing user-prefix Wine server on another display. Full-screen
 captures remain private until inspected for unrelated desktop content.
 
-Next: reproduce headlessly, compare Windows, then locate the repaint/window
-transition causing the white interval. The native path-button correction is
-already delivered separately (issue21).
+## Headless stock Wine (2026-11-08)
+
+A separate Xvfb :93 (3072x1728, 192 DPI), Metacity, and the existing disposable
+`avif-wine-validation/prefix` reproduced the sequence with portable FastStone8.5
+and **stock** Wine11.0: image2114 ms → white2140 ms → image2315 ms (175 ms).
+See [untraced timeline](headless-stock.txt). No test used the active display or
+normal prefix. This does not implicate the installed private DLL fixes.
+
+A separate `timestamp,+win` diagnostic run also reproduced it. The foreground
+TFullScreenWindow HWND, style and geometry remained the same at all sampled
+phases; see [traced timeline](headless-traced.txt). A second visible full-screen
+TForm existed underneath. The trace contains window creation, reparenting and
+surface changes during startup. These are leads, not an established cause.
+Traced timing (356 ms white interval) must not be used as performance evidence.
+
+The Xvfb executable was reused read-only from another local investigation's
+unpacked Ubuntu package, on our own separate display. No system package was
+installed, and no other display/server was stopped.
+
+Next: compare the cold-launch sequence with real Windows via the manual
+`First-open research` workflow, then locate the repaint/window transition. A
+missing expected image fails the probe; absence of a sampled flash alone does
+not establish a fix. The native path-button correction is delivered separately
+(issue21).

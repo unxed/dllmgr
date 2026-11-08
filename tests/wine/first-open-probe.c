@@ -54,6 +54,10 @@ int wmain(int argc, WCHAR **argv)
         if(phase!=last) {
             printf("t_ms=%lu phase=%s center=%06x white_samples=%u/9\n",now,
                    phase==2?"image":phase==3?"white":"other",colors[4],white);
+            printf("phase_window=%p style=%08lx exstyle=%08lx\n",window,
+                   (unsigned long)GetWindowLongW(window,GWL_STYLE),
+                   (unsigned long)GetWindowLongW(window,GWL_EXSTYLE));
+            EnumWindows(describe_visible_window,0);
             fflush(stdout);last=phase;
         }
         if(phase==2 && !first_image)first_image=now;

@@ -1,0 +1,7 @@
+expected_center=f0cc5a screen=3072x1728 app_pid=292
+t_ms=2114 phase=image center=f0cc5a white_samples=0/9
+t_ms=2125 phase=other center=000000 white_samples=0/9
+t_ms=2140 phase=white center=ffffff white_samples=9/9
+t_ms=2315 phase=image center=f0cc5a white_samples=0/9
+first_image_ms=2114 white_after_image_ms=2140 restored_ms=2315 samples=607 skipped=168
+observed_image_white_image=1

@@ -1,0 +1,42 @@
+name: First-open research
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tests/wine/ci-install.sh gcc-mingw-w64-x86-64
+        timeout-minutes: 6
+      - run: x86_64-w64-mingw32-gcc -O2 -Wall -municode -o first-open-probe.exe tests/wine/first-open-probe.c tests/wine/listview-probe.c -lgdi32 -lshell32
+      - uses: actions/upload-artifact@v4
+        with:
+          name: first-open-probe
+          path: first-open-probe.exe
+  windows:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: first-open-probe
+      - shell: bash
+        run: |
+          set -euo pipefail
+          curl --max-time 90 -fsSL https://www.faststonesoft.net/DN/FSViewer85.zip -o fs85.zip
+          echo '685282a063b91daf4388b84be9e0daf3c5feed4073651137eb9fe9421cf39439  fs85.zip' | sha256sum -c
+          mkdir -p /c/dllmgr-first-open captures
+          cp tests/wine/fixtures/first-open.jpg /c/dllmgr-first-open/synthetic.jpg
+          unzip -q fs85.zip -d /c/dllmgr-first-open
+          cd captures
+          ../first-open-probe.exe 'C:\dllmgr-first-open\FSViewer85\FSViewer.exe' 'C:\dllmgr-first-open\synthetic.jpg' f0cc5a >observations.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: first-open-windows
+          path: captures/

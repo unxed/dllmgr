@@ -42,6 +42,11 @@ new CS2 trial compatibility audit is tracked separately in #31.
   protocols. Far3's standing Lunobot assignment remains `unxed/lunobot#322`;
   the added hiew/protocol scope is recorded only for now.
 
+- [#36](https://github.com/unxed/dllmgr/issues/36): Photoshop CS2 splash
+  background transparency, reported by the owner; start with existing Wine
+  #34133/#10091 and the other Photoshop session's saved evidence. Keep separate
+  from FastStone's white flash and coordinate with #31/#35.
+
 Broader recorded project tasks: [#31](https://github.com/unxed/dllmgr/issues/31)
 (Photoshop CS2 compatibility audit and composed recipe),
 [#32](https://github.com/unxed/dllmgr/issues/32) (quick winetricks-style recipes),
