@@ -18,8 +18,9 @@ cp out/isolation/bin/wine "$runtime/bin/wine"
 # The packaged launcher and ntdll are tested together in a copied runtime.
 wine=$runtime/bin/wine
 export PATH="$runtime/bin:$PATH"
-"$wine" wineboot -u
-"$runtime/bin/wineserver" -w
+# Initialise with stock Wine: the first private launch must preserve these files too.
+/opt/wine-stable/bin/wine wineboot -u
+/opt/wine-stable/bin/wineserver -w
 for arch in i386 x86_64; do
     compiler=i686-w64-mingw32
     [ "$arch" != x86_64 ] || compiler=x86_64-w64-mingw32

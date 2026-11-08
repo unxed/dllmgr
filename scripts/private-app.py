@@ -83,6 +83,17 @@ def select(prefix, requested):
     return exe
 
 
+def verify_prefix(prefix, base):
+    # Do not let a private Wine bootstrap/update shared prefix core DLLs.
+    # Initialisation and version upgrades must happen with stock Wine first.
+    for directory, arch in [('system32', 'x86_64'), ('syswow64', 'i386')]:
+        if digest(prefix / 'drive_c/windows' / directory / 'ntdll.dll') != digest(base / 'lib/wine' / (arch + '-windows') / 'ntdll.dll'):
+            raise Error('Prefix does not match stock Wine11; initialise/update it with stock Wine first')
+    timestamp = (prefix / '.update-timestamp').read_text().strip()
+    if timestamp != str(int((base / 'share/wine/wine.inf').stat().st_mtime)):
+        raise Error('Prefix needs a stock-Wine update before private runtime launch')
+
+
 def legacy_guard(prefix):
     path = prefix / 'fix-it-in-wine/state.json'
     if path.exists():
@@ -221,6 +232,7 @@ def install(args, prefix):
     base = args.base_wine.resolve(strict=True)
     if subprocess.check_output([str(base / 'bin/wine'), '--version'], text=True).strip() != 'wine-11.0':
         raise Error('Only Wine 11.0 is supported')
+    verify_prefix(prefix, base)
     cache = Path(os.environ.get('XDG_DATA_HOME', str(Path.home() / '.local/share'))) / 'dllmgr/runtimes'
     with tempfile.TemporaryDirectory(prefix='dllmgr-private-') as directory:
         temp = Path(directory)
@@ -351,6 +363,7 @@ def launch(args, prefix):
     directory = checked_files(prefix, state)
     runtime = Path(state['runtime'])
     verify(runtime, state['package_sha256'], Path(state['base']))
+    verify_prefix(prefix, Path(state['base']))
     env = dict(os.environ)
     for name in RULES:
         env.pop(name, None)

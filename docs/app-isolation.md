@@ -20,7 +20,9 @@ installer rejects another build rather than mixing incompatible core modules.
 A private copy of Unix modules and launcher files avoids writes through links
 into system Wine. Unchanged PE/data files are links; a base upgrade is detected
 before launching. The private runtime uses Wine 11's new WoW64 mode for this
-verified win64-prefix profile. This does not change the system Wine launcher.
+verified win64-prefix profile. This does not change the system Wine launcher. The prefix must already match
+the stock Wine core DLLs and wine.inf update timestamp; private launch refuses
+a prefix needing initialization or a Wine upgrade.
 
 ```sh
 dllmgr fix faststone

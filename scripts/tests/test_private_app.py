@@ -176,6 +176,16 @@ class PrivateAppTest(unittest.TestCase):
         self.base = self.root / "base-wine"
         (self.base / "bin").mkdir(parents=True)
         (self.base / "bin/wine").write_bytes(b"wine-11.0")
+        for directory, arch in [('system32', 'x86_64'), ('syswow64', 'i386')]:
+            data = ('stock ntdll ' + arch).encode()
+            for path in [self.drive_c / 'windows' / directory / 'ntdll.dll',
+                         self.base / 'lib/wine' / (arch + '-windows') / 'ntdll.dll']:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+        inf = self.base / 'share/wine/wine.inf'
+        inf.parent.mkdir(parents=True)
+        inf.write_text('stock Wine setup data')
+        (self.prefix / '.update-timestamp').write_text(str(int(inf.stat().st_mtime)))
         self.runtime = self.root / "private-runtime"
         self.package = self.root / "runtime.zip"
         self.package.write_bytes(b"test package fingerprint")
@@ -216,9 +226,9 @@ class PrivateAppTest(unittest.TestCase):
 
     def test_install_uses_exact_target_and_does_not_write_shared_prefix_dlls(self):
         windows = self.drive_c / "windows"
-        windows.mkdir()
+        windows.mkdir(exist_ok=True)
         shared = windows / "syswow64/gdiplus.dll"
-        shared.parent.mkdir(parents=True)
+        shared.parent.mkdir(parents=True, exist_ok=True)
         shared.write_bytes(b"stock shared gdiplus")
         system_before = (self.prefix / "system.reg").read_bytes()
         shared_before = shared.read_bytes()
@@ -314,6 +324,12 @@ class PrivateAppTest(unittest.TestCase):
         self.assertEqual(desktop.read_bytes(), b"preexisting desktop\r\n")
         default_desktop = self.data_home / "applications" / ("dllmgr-" + state["id"] + ".desktop")
         self.assertFalse(default_desktop.exists())
+
+    def test_outdated_prefix_is_rejected_before_private_launch(self):
+        private_app.verify_prefix(self.prefix, self.base)
+        (self.prefix / '.update-timestamp').write_text('0')
+        with self.assertRaisesRegex(private_app.Error, 'stock-Wine update'):
+            private_app.verify_prefix(self.prefix, self.base)
 
     def test_interrupted_launcher_update_rolls_back_on_recovery(self):
         self.install()
