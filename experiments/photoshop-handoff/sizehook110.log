@@ -1,0 +1,50 @@
+128762633 before hwnd=00030a54 class=#32770 msg=46 xy=0,0 size=565,421 flags=36
+128762634 before hwnd=00030a54 class=#32770 min=140,34 max=1548,876
+128762634 after hwnd=00030a54 class=#32770 min=140,34 max=1548,876
+128762635 after hwnd=00030a54 class=#32770 msg=46 xy=0,0 size=565,421 flags=36
+128762636 before hwnd=00030a54 class=#32770 msg=47 xy=3,22 size=565,421 flags=3e
+128762637 after hwnd=00030a54 class=#32770 msg=47 xy=3,22 size=565,421 flags=3e
+128762718 before hwnd=00030a54 class=#32770 msg=46 xy=0,0 size=604,602 flags=6
+128762719 before hwnd=00030a54 class=#32770 min=140,34 max=1548,876
+128762721 after hwnd=00030a54 class=#32770 min=140,34 max=1548,876
+128762722 after hwnd=00030a54 class=#32770 msg=46 xy=0,0 size=604,602 flags=6
+128762727 before hwnd=00030a54 class=#32770 msg=47 xy=3,22 size=604,602 flags=100a
+128762728 after hwnd=00030a54 class=#32770 msg=47 xy=3,22 size=604,602 flags=100a
+128763016 before hwnd=00030a54 class=#32770 msg=46 xy=465,74 size=0,0 flags=215
+128763016 after hwnd=00030a54 class=#32770 msg=46 xy=465,74 size=0,0 flags=215
+128763017 before hwnd=00030a54 class=#32770 msg=47 xy=465,74 size=604,602 flags=a1d
+128763018 after hwnd=00030a54 class=#32770 msg=47 xy=465,74 size=604,602 flags=a1d
+128763034 before hwnd=00030a54 class=#32770 msg=46 xy=465,74 size=768,602 flags=1c
+128763035 before hwnd=00030a54 class=#32770 min=140,34 max=1548,876
+128763036 after hwnd=00030a54 class=#32770 min=140,34 max=1548,876
+128763036 after hwnd=00030a54 class=#32770 msg=46 xy=465,74 size=768,602 flags=1c
+128763038 before hwnd=00030a54 class=#32770 msg=47 xy=465,74 size=768,602 flags=101e
+128763039 after hwnd=00030a54 class=#32770 msg=47 xy=465,74 size=768,602 flags=101e
+128763154 before hwnd=00030a54 class=#32770 msg=46 xy=0,0 size=0,0 flags=43
+128763154 after hwnd=00030a54 class=#32770 msg=46 xy=0,0 size=0,0 flags=43
+128763182 before hwnd=00030a54 class=#32770 msg=47 xy=465,74 size=768,602 flags=1843
+128763183 after hwnd=00030a54 class=#32770 msg=47 xy=465,74 size=768,602 flags=1843
+128816904 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=383,144 size=0,0 flags=215
+128816905 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=383,144 size=0,0 flags=215
+128816905 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=383,144 size=768,534 flags=a1d
+128816906 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=383,144 size=768,534 flags=a1d
+128817141 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=0,0 size=770,522 flags=216
+128817142 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=0,0 size=770,534 flags=216
+128817143 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=383,144 size=770,534 flags=121e
+128817237 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=383,144 size=770,534 flags=121e
+128817289 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=465,74 size=768,602 flags=214
+128817289 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=465,74 size=768,602 flags=214
+128817291 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=465,74 size=768,602 flags=21c
+128817399 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=465,74 size=768,602 flags=21c
+128817745 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=0,0 size=0,0 flags=43
+128817745 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=0,0 size=0,0 flags=43
+128817885 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=465,74 size=768,602 flags=1843
+128817886 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=465,74 size=768,602 flags=1843
+128818543 before hwnd=00030a54 class=#32770 msg=46 xy=0,0 size=0,0 flags=83
+128818543 after hwnd=00030a54 class=#32770 msg=46 xy=0,0 size=0,0 flags=83
+128818557 before hwnd=00030a54 class=#32770 msg=47 xy=465,74 size=768,602 flags=1883
+128818558 after hwnd=00030a54 class=#32770 msg=47 xy=465,74 size=768,602 flags=1883
+128818777 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=0,0 size=0,0 flags=3
+128818788 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=46 xy=0,0 size=0,0 flags=3
+128818789 before hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=465,74 size=768,602 flags=1803
+128818789 after hwnd=00020abc class=SCLNoFlickerWindowClass msg=47 xy=465,74 size=768,602 flags=1803

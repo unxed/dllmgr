@@ -1,0 +1,55 @@
+diff --git a/tests/test_catalog.py b/tests/test_catalog.py
+index 43121fe..7f3fdb7 100644
+--- a/tests/test_catalog.py
++++ b/tests/test_catalog.py
+@@ -106,6 +106,34 @@ class CatalogTest(unittest.TestCase):
+         with self.assertRaises(catalog.CatalogError):
+             catalog.load_index(path)
+ 
++    def test_current_dllmgr_envelope_search_and_show(self):
++        path = os.path.join(self.tmpdir, "format1.json")
++        with open(path, "w", encoding="utf-8") as f:
++            json.dump({"format": 1, "entries": SAMPLE}, f)
++        with mock.patch.dict(os.environ, {"FIW_CATALOG": path}):
++            code, out, err = self.run_main(["search", "--program", "FSViewer.exe"])
++            self.assertEqual(code, 0, err)
++            self.assertIn("winehq-59609", out)
++            code, out, err = self.run_main(["show", "winehq-59609"])
++            self.assertEqual(code, 0, err)
++            self.assertIn("programs: FSViewer.exe", out)
++
++    def test_rejects_unsupported_envelope_version(self):
++        path = os.path.join(self.tmpdir, "future.json")
++        with open(path, "w", encoding="utf-8") as f:
++            json.dump({"format": 2, "entries": SAMPLE}, f)
++        with self.assertRaisesRegex(catalog.CatalogError, "unsupported catalog format"):
++            catalog.load_index(path)
++
++    def test_rejects_invalid_envelope_entries(self):
++        path = os.path.join(self.tmpdir, "bad-entries.json")
++        for entries in (None, {}, ["not an object"]):
++            with self.subTest(entries=entries):
++                with open(path, "w", encoding="utf-8") as f:
++                    json.dump({"format": 1, "entries": entries}, f)
++                with self.assertRaises(catalog.CatalogError):
++                    catalog.load_index(path)
++
+     def test_load_missing_file(self):
+         with self.assertRaises(catalog.CatalogError):
+             catalog.load_index(os.path.join(self.tmpdir, "missing.json"))
+diff --git a/tools/catalog.py b/tools/catalog.py
+index 2876389..247f57d 100755
+--- a/tools/catalog.py
++++ b/tools/catalog.py
+@@ -47,6 +47,11 @@ def load_index(source):
+         entries = json.loads(raw.decode("utf-8"))
+     except ValueError:
+         raise CatalogError("%s is not a JSON index" % source)
++    if isinstance(entries, dict):
++        version = entries.get("format")
++        if type(version) is not int or version != 1:
++            raise CatalogError("%s: unsupported catalog format %r" % (source, version))
++        entries = entries.get("entries")
+     if not isinstance(entries, list) or not all(isinstance(e, dict) for e in entries):
+         raise CatalogError("%s: the index must be a JSON array of objects" % source)
+     return entries
