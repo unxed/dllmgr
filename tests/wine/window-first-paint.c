@@ -18,6 +18,16 @@ static LRESULT CALLBACK procedure(HWND window,UINT message,WPARAM wparam,LPARAM 
     }
     return DefWindowProcW(window,message,wparam,lparam);
 }
+static void pump_for(DWORD milliseconds)
+{
+    DWORD start=GetTickCount();MSG message;
+    while(GetTickCount()-start<milliseconds) {
+        while(PeekMessageW(&message,NULL,0,0,PM_REMOVE)) {
+            TranslateMessage(&message);DispatchMessageW(&message);
+        }
+        Sleep(10);
+    }
+}
 static void sample(const char *stage)
 {
     HDC dc=GetDC(NULL);
@@ -45,6 +55,9 @@ int main(void)
     if(!popup){DestroyWindow(bottom);return 4;}
     ShowWindow(popup,SW_SHOW);GdiFlush();Sleep(50);sample("shown-before-paint");
     Sleep(250);sample("still-unpainted");
+    /* Unlike Sleep, a message loop also consumes driver expose events. The
+     * popup handler validates WM_PAINT without drawing while paint_popup=FALSE. */
+    pump_for(250);GdiFlush();sample("pumped-before-paint");
     /* FastStone's traced show is followed by this same-size Z-order call
      * before its full repaint. Separate that transition from image drawing. */
     if(!SetWindowPos(popup,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE)) {

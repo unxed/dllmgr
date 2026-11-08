@@ -200,3 +200,21 @@ to the white-specific one. Black candidates are also verified at9/9 points.
 A captured non-image phase after the expected image remains a failure of a
 flicker-free result even if it is black rather than white. The probe's exit0
 means successful observation, not that a workaround fixed the interruption.
+
+## Message-loop exposure isolates the white transition
+
+The earlier minimal popup slept after showing and did not process its event
+queue. Therefore it did not exercise the exposure path seen by a real app.
+Adding a bounded message pump changes the stock Wine popup's centre from
+black to white before any popup content is drawn; a later16x16 corner paint
+leaves the centre white, and the final full paint restores yellow. See
+popup-pump-wine.txt. The handler validates WM_PAINT without drawing while
+paint_popup is false, and there is no class background brush.
+
+This is now a public-API reproducer of the white exposure transition without
+FastStone, not yet proof of a contract for unpainted pixels or a correct fix.
+Compare the same pumped sequence on native Windows next.
+
+The expanded actual-app observer separately confirms the stock white and
+direct-drawing black interruptions, with9/9 blank-point validation and
+observed_image_interruption_image=1 for both. Direct drawing remains rejected.

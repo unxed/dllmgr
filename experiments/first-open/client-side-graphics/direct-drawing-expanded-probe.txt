@@ -1,0 +1,20 @@
+expected_center=f0cc5a screen=3072x1728 app_pid=360
+t_ms=1744 phase=image center=f0cc5a white_samples=0/1 black_samples=0/1 capture_ms=0
+phase_window=0000000000090238 style=96000000 exstyle=00010000
+candidate hwnd=0000000000090238 class='TFullScreenWindow' title='' rect=0,0,3072,1728 dpi=192
+candidate hwnd=0000000000040108 class='TForm' title='' rect=0,0,3072,1728 dpi=192
+candidate hwnd=000000000004027c class='TApplication' title='synthetic-first-open.jpg - FastStone' rect=1536,864,1536,864 dpi=192
+t_ms=1757 phase=black center=000000 white_samples=0/9 black_samples=9/9 capture_ms=1
+phase_window=0000000000090238 style=96000000 exstyle=00010000
+candidate hwnd=0000000000090238 class='TFullScreenWindow' title='' rect=0,0,3072,1728 dpi=192
+candidate hwnd=0000000000040108 class='TForm' title='' rect=0,0,3072,1728 dpi=192
+candidate hwnd=000000000004027c class='TApplication' title='synthetic-first-open.jpg - FastStone' rect=1536,864,1536,864 dpi=192
+t_ms=1880 phase=image center=f0cc5a white_samples=0/1 black_samples=0/1 capture_ms=0
+phase_window=0000000000090238 style=96000000 exstyle=00010000
+candidate hwnd=0000000000090238 class='TFullScreenWindow' title='' rect=0,0,3072,1728 dpi=192
+candidate hwnd=0000000000040108 class='TForm' title='' rect=0,0,3072,1728 dpi=192
+candidate hwnd=000000000004027c class='TApplication' title='synthetic-first-open.jpg - FastStone' rect=1536,864,1536,864 dpi=192
+first_image_ms=1744 white_after_image_ms=0 restored_ms=0 samples=663 skipped=164
+interrupted_ms=1757 resumed_ms=1880 observed_image_interruption_image=1
+max_capture_ms=1
+observed_image_white_image=0
