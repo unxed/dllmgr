@@ -19,10 +19,18 @@ Complements docs/photoshop-handoff.md (owner's laptop stand) and issue #31.
   GitHub app (`add_repo` with `access: push`); that clone lives at
   `/home/claude/dllmgr`. The anonymous read-only clone cannot push.
 
+## Working mode in this sandbox
+
+Maximum autonomy (owner, 2026-11-08): push every finished small atomic change
+straight to `main` from `/home/claude/dllmgr`, without waiting or batching,
+per [development.md](development.md). Problems hit along the way go to
+[sandbox-findings.md](sandbox-findings.md) and are fixed last, after the
+already existing bugs.
+
 ## Rebuild
 
     sh scripts/sandbox-stand.sh install    # once per sandbox
-    sh scripts/sandbox-stand.sh prefix     # clean prefix, once
+    sh scripts/sandbox-stand.sh session sh scripts/sandbox-stand.sh prefix  # clean prefix, once
     sh scripts/sandbox-stand.sh session CMD...   # every experiment
 
 Every experiment is one self-contained `session` run: it starts its own
@@ -44,10 +52,12 @@ and must not be used for reports.
 - Muffin dies at startup with `Settings schema
   'org.cinnamon.settings-daemon.peripherals.touchscreen' is not installed`;
   fix: `cinnamon-settings-daemon` (`--no-install-recommends`).
-- `wineboot -i` hangs forever on the invisible Mono install prompt
-  (`control.exe appwiz.cpl install_mono`); fix:
-  `WINEDLLOVERRIDES='mscoree,mshtml='` at prefix creation. CS2 does not need
-  Mono/Gecko. If a later bug turns out to depend on them, record that.
+- `wineboot -i` hangs forever on the invisible Mono download prompt
+  (`control.exe appwiz.cpl install_mono`). Decision (2026-11-08): `install`
+  puts the official Gecko 2.47.4 (x86, x86_64) and Mono 10.4.1 MSIs into
+  `/opt/wine-stable/share/wine/{gecko,mono}`, so wineboot installs them
+  silently, like stock Wine on a desktop where the prompt is accepted. Closer
+  to the owner's prefix than disabling `mscoree,mshtml`. Prefix: ~1.8 GB.
 - Processes detached with `setsid`/`&` (Xvfb, Muffin) are killed a few
   minutes after the assistant's reply ends, and a background shell task is
   capped at ~2 h. Hence no long-lived desktop: use `session` per experiment;

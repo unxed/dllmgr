@@ -36,6 +36,15 @@ install_pkgs() {
 	# Muffin aborts at start without the org.cinnamon.settings-daemon.* schemas.
 	DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
 		cinnamon-settings-daemon
+	# Official add-ons where stock Wine looks for them, so wineboot installs
+	# them silently like a normal desktop Wine (versions from appwiz.cpl).
+	mkdir -p /opt/wine-stable/share/wine/gecko /opt/wine-stable/share/wine/mono
+	for a in x86 x86_64; do
+		f=/opt/wine-stable/share/wine/gecko/wine-gecko-2.47.4-$a.msi
+		[ -s "$f" ] || curl -fsS -o "$f" https://dl.winehq.org/wine/wine-gecko/2.47.4/${f##*/}
+	done
+	f=/opt/wine-stable/share/wine/mono/wine-mono-10.4.1-x86.msi
+	[ -s "$f" ] || curl -fsS -o "$f" https://dl.winehq.org/wine/wine-mono/10.4.1/${f##*/}
 	"$WINE/wine" --version
 }
 
@@ -82,10 +91,10 @@ session() {
 
 prefix() {
 	[ -e "$WINEPREFIX" ] && { echo "exists: $WINEPREFIX (delete it yourself)"; return 0; }
-	# Without the overrides wineboot blocks forever on the invisible Mono prompt.
-	WINEDLLOVERRIDES='mscoree,mshtml=' timeout 300 "$WINE/wineboot" -i \
-		>"$STAND_DIR/wineboot.log" 2>&1
-	timeout 60 "$WINE/wineserver" -w
+	# Needs a display: run as `session` (sandbox-stand.sh session sh ... prefix)
+	# or inside one. Add-ons from install_pkgs are installed silently.
+	timeout 600 "$WINE/wineboot" -i >"$STAND_DIR/wineboot.log" 2>&1
+	timeout 120 "$WINE/wineserver" -w
 	echo "prefix ready: $WINEPREFIX"
 }
 
