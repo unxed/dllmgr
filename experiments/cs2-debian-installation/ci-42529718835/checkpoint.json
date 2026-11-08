@@ -1,0 +1,59 @@
+{
+  "run": 42529718835,
+  "url": "https://github.com/unxed/dllmgr/actions/runs/42529718835",
+  "source_commit": "63f3886a8926262a7f1b955ef26afab48fae71cf",
+  "temporary_client_fix_commit": "d456e46b8ef2d10e9ff19271df0936f86a50b2f3",
+  "temporary_branch": "session/codex-debian-8c42-cs2-ci",
+  "scope": "This session/task only; not project policy. Workflow not merged into main.",
+  "wine": "11.0 (11.0.0.0~noble-1)",
+  "os": "Ubuntu24.04 native x86_64, 4CPUs, kernel7.0.0-1017-azure",
+  "prefix_arch": "win64 (32-bit app through stock old WoW64)",
+  "wm": "Metacity non-compositing",
+  "xvfb": ":151,3072x1728x24,DPI192",
+  "windows_logpixels": 192,
+  "msi_product_state": 5,
+  "product_version": "9.0",
+  "installer_harness_exit": 0,
+  "installer_clean": false,
+  "msi_exception": "0x000006a6",
+  "photoshop_exe_sha256": "98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30",
+  "serial_entered": false,
+  "trial_selection": "30-day trial",
+  "workspace_verified_utc": "2026-11-08T22:25:38Z",
+  "synthetic_bmp_open_verified_utc": "2026-11-08T22:27:00Z",
+  "workspace_verified": true,
+  "document_open_verified": true,
+  "deferred_findings": [
+    "F13/F14 during installer",
+    "F15 critical-section timeouts, UI still usable",
+    "TWAIN source identity query failed; no scanning test performed"
+  ],
+  "screenshots": [
+    {
+      "path": "workspace.png",
+      "sha256": "53a528d7a8c131a5799bf7db56a6c8cc7734de0a14f074a15ca697339d65978e",
+      "bytes": 171730
+    },
+    {
+      "path": "document-open.png",
+      "sha256": "7c986ec5ab837fdeae8f444085d91072a8c07d56b4eef2a273887c28322c2464",
+      "bytes": 201004
+    }
+  ],
+  "job_conclusion": "success",
+  "artifact_id": 13637021596,
+  "artifact_name": "cs2-session-37-42529718835",
+  "artifact_sha256": "85687a49d0f2ff9cc6f0192a15f745b968ba6b0b17c8343343442b9da78767d3",
+  "artifact_bytes": 373885,
+  "ram_mb": 15983,
+  "normal_WM_CLOSE_verified": true,
+  "photoshop_processes_after_close": 0,
+  "original_main_process_exit_status": "not captured; no active process/window remained after normal close",
+  "secondary_open_invocation_exit": 1,
+  "secondary_open_invocation_note": "Document was visibly opened in original GUI; no cause for secondary launcher exit1 established",
+  "session_stop_utc": "2026-11-08T22:29:26Z",
+  "ci_session_running": false,
+  "runner_image": "ubuntu-24.04",
+  "runner_image_version": "20261101.360.1",
+  "runner_image_software_manifest": "https://github.com/actions/runner-images/blob/ubuntu24/20261101.360/images/ubuntu/Ubuntu2404-Readme.md"
+}

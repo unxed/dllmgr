@@ -1,0 +1,87 @@
+{
+  "id": 128881021498,
+  "run_id": 42529718835,
+  "status": "completed",
+  "conclusion": "success",
+  "started_at": "2026-11-08T22:20:11Z",
+  "completed_at": "2026-11-08T22:29:37Z",
+  "runner_name": "GitHub Actions 1000290027",
+  "runner_group_name": "GitHub Actions",
+  "labels": [
+    "ubuntu-24.04"
+  ],
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1,
+      "started_at": "2026-11-08T22:20:12Z",
+      "completed_at": "2026-11-08T22:20:13Z"
+    },
+    {
+      "name": "Run actions/checkout@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2,
+      "started_at": "2026-11-08T22:20:13Z",
+      "completed_at": "2026-11-08T22:20:14Z"
+    },
+    {
+      "name": "Scope this temporary runner",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3,
+      "started_at": "2026-11-08T22:20:14Z",
+      "completed_at": "2026-11-08T22:20:14Z"
+    },
+    {
+      "name": "Native Wine 11.0 and headless tools",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4,
+      "started_at": "2026-11-08T22:20:14Z",
+      "completed_at": "2026-11-08T22:21:42Z"
+    },
+    {
+      "name": "Exact authorized trial source",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 5,
+      "started_at": "2026-11-08T22:21:42Z",
+      "completed_at": "2026-11-08T22:22:06Z"
+    },
+    {
+      "name": "Install ordinary trial and expose temporary HTTPS command session",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 6,
+      "started_at": "2026-11-08T22:22:06Z",
+      "completed_at": "2026-11-08T22:29:32Z"
+    },
+    {
+      "name": "Preserve this run's evidence only",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 7,
+      "started_at": "2026-11-08T22:29:32Z",
+      "completed_at": "2026-11-08T22:29:34Z"
+    },
+    {
+      "name": "Post Run actions/checkout@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 14,
+      "started_at": "2026-11-08T22:29:34Z",
+      "completed_at": "2026-11-08T22:29:34Z"
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 15,
+      "started_at": "2026-11-08T22:29:34Z",
+      "completed_at": "2026-11-08T22:29:34Z"
+    }
+  ]
+}

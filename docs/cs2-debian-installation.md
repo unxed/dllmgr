@@ -6,10 +6,12 @@ messages; new problems are deferred **after existing bugs**, including #31,
 The separate Ubuntu/Claude stand has its own [findings](sandbox-findings.md);
 do not merge results from different environments or duplicate those issues.
 
-**Latest verified installer result:** product state5, version9.0; exact EXE
-hash matches. Installer had F13/F14. Local first startup was stopped after
-22minutes at the splash; full workspace not verified. Temporary native CI
-offload is scoped to this session/task only. See checkpoint.json for the last timestamp.
+**Latest result:** CS2 trial is installed and opens a synthetic BMP on the
+temporary native Ubuntu/Wine11 Actions stand (run42529718835). Workspace and
+document screenshots are preserved below. The original Debian/TCG prefix is
+installed but its first startup was stopped after22minutes at the splash.
+These are separate baselines. Both installer runs had F13/F14; not clean.
+Actions offload applies only to this chat/task, with no main workflow change.
 
 ## Exact environment and source
 
@@ -299,3 +301,68 @@ trial state are not uploaded. Reviewed screenshots/logs are in per-run output
 branches and a7-day Actions evidence artifact. Only task results and recovery
 references belong in main. The original proprietary source hash remains
 verified, and no serial is entered or activation bypass applied.
+
+## Native CI readiness verified (2026-11-08 22:25–22:27 UTC)
+
+Temporary run42529718835 passed installation, public product-state5/version9.0
+and the expected Photoshop.exe SHA256. Wine11.0 ran natively on Ubuntu24.04
+(4CPUs, kernel7.0.0-1017-azure), a separate win64 prefix with the32-bit app,
+Xvfb3072x1728/DPI192, and Metacity without compositing. It is not the original
+Debian pure-win32/Openbox/TCG baseline.
+
+Package setup took88seconds, verified345MB download24seconds, prefix plus
+normal GUI trial installation approximately118seconds (step start22:22:06,
+live-session metadata22:24:04). Full workspace was visible in the X screenshot
+at22:25:38. There was no activation workaround or entered serial.
+A128×12824-bit BMP with four synthetic colour quadrants was generated with
+Python's standard library and sent to the existing Photoshop instance through
+its normal command line. The second reviewed X screenshot shows the image at
+100%, RGB/8, Background layer and History→Open. This verifies actual document
+opening and an updating UI; it is not a comprehensive compatibility audit.
+
+Permanent reviewed evidence is in
+`experiments/cs2-debian-installation/ci-42529718835/`: workspace/document PNGs,
+registration/EXE verification, installer/runtime diagnostics, timestamps, and
+synthetic-file generation/open commands. No proprietary file contents are
+included. Raw window IDs and PIDs in those outputs are historical.
+
+Deferred observations from this separate run:
+
+- F13/F14 reproduced; installer log includes msiexec0x000006a6. The install
+  harness returned0 after dismissing the error and verifying the EXE; that does
+  not mean the MSI run was clean.
+- F15 reproduced: RtlpWaitForCriticalSection timeout/retry messages while
+  workspace and document opening remained usable.
+- `err:twain:twain_add_onedriver Source->(DG_CONTROL,DAT_IDENTITY,MSG_GET) failed!`
+  No scanner workflow was tested, so no effect on scanning is established.
+- MSI `dialog_bitmap_control Failed to load bitmap (null)` repeated3times;
+  ALSA missing-card/default-PCM warnings remain environment observations.
+
+These are logged for later, **after the existing bug queue**. No fix, runtime
+pin, release, #35 comparison or #36 delivery was attempted in this stand task.
+
+### CI close, retained evidence and limits
+
+Normal WM_CLOSE was sent to the freshly enumerated Photoshop main window.
+Subsequent public enumeration and process listing show no Photoshop window or
+process. Original main-process exit status was not captured. The secondary
+command-line invocation used to send the BMP returned1 even though the file
+visibly opened in the editor; that exit value is retained without guessing
+its cause. It is another deferred observation, not a failed document-open
+result or a claim of clean process exit0.
+
+The session received stop at22:29:26 UTC and Actions concluded **success**.
+The7-day artifact ID13637021596 contains logs/screenshots only. Its checksum
+and a complete35-file manifest are retained; the reviewed installer, prefix,
+Photoshop and step logs are copied into permanent experiment evidence so
+artifact expiration will not lose the findings. No live runner remains.
+The16GB/4CPU native stand completed prefix plus installation in about2minutes;
+the earlier local Debian startup delay remains an unresolved observation,
+not proven to have a single cause.
+
+The first remote diagnostic command assumed LAB_OUT would be inherited by a
+child; the transport deliberately passes only app-related environment variables,
+so it tried `/product-state.txt` and returned1. It was corrected to the known
+absolute evidence path. The failed request is retained as harness evidence,
+not a Wine/Photoshop defect. Temporary command-branch commits include [skip ci]
+to avoid unrelated push workflows; output branches are written by GITHUB_TOKEN.

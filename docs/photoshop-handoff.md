@@ -114,3 +114,17 @@ controls and evidence. Public MSI APIs report installed9.0 after VM restart;
 F13/F14 reproduced during Finish. First startup currently reaches the Tryout
 splash; full editor readiness is not yet verified. This is a different machine
 and prefix from the Claude sandbox and the owner’s local stand above.
+
+## Native CI stand verified (2026-11-08 22:29 UTC, codex-debian-8c42)
+
+Task37 stand verification completed on temporary Actions run
+[42529718835](https://github.com/unxed/dllmgr/actions/runs/42529718835):
+stock Wine11.0/Ubuntu24.04, Metacity/Xvfb192DPI, normal CS2 trial, installed
+state5/version9.0 and expected EXE hash. Reviewed X screenshots confirm full
+workspace and opening a synthetic BMP; normal WM_CLOSE removed the app, then
+the job stopped successfully. [Detailed evidence and deferred errors](cs2-debian-installation.md).
+The Debian/TCG prefix remains installed but its first start did not leave the
+splash during22minutes. Do not conflate those results. The Actions workflow
+exists only on the agent's temporary session branch; the owner explicitly
+scoped offload to this chat/task. No project-wide execution policy changed,
+and no #35/#36 fix or WineHQ publication was performed.

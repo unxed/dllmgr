@@ -1,0 +1,1 @@
+product={236BB7C4-4419-42FD-0409-1E257A25E34D} state=5 version_status=0 version=9.0 name_status=0 name=Adobe Photoshop CS2

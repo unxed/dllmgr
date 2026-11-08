@@ -1,0 +1,8 @@
+{
+  "action": "run",
+  "ok": true,
+  "pid": 9800,
+  "code": 0,
+  "output": "Closing-fresh-HWND=00010068\n    PID STAT COMMAND\n   9408 Zs   Photoshop.exe\nApp-still-running\n",
+  "utc": "2026-11-08T22:27:57Z"
+}

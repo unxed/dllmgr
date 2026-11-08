@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-11-08T22:22:10.771437+00:00",
+  "updated_utc": "2026-11-08T22:31:09.803343+00:00",
   "priority": "all newly found issues after existing bugs",
   "source_verified": true,
   "archive_crc_ok": true,
@@ -7,15 +7,15 @@
   "extractor_result": "404 file(s) unzipped successfully",
   "msi_installed": true,
   "photoshop_launched": true,
-  "current_stage": "Local Debian/TCG first start stopped after22min at splash; VM/controller shut down cleanly, installed prefix retained. Temporary native CI stand starting.",
+  "current_stage": "Stand validation complete: native CI installed CS2 trial, full workspace, synthetic BMP opened, normal close and successful job shutdown. Original Debian prefix retained with delayed startup observation.",
   "prefix": "/workspace/work/photoshop-cs2/prefix110",
   "controller": "/workspace/work/photoshop-cs2/control/controller.py",
   "display": "guest :191 only",
-  "next_step": "Follow temporary Actions run42529718835 under claim37; install ordinary trial and verify complete workspace, preserve results separately.",
+  "next_step": "Stand task37 ready for release. Do not adopt session-only Actions offload as project policy. Existing bug queue stays separate.",
   "trial_mode": "Install 30-day trial version",
   "serial_entered": false,
   "installer_ui_confirmed": true,
-  "repo_context_reviewed": "6816305",
+  "repo_context_reviewed": "2d79291",
   "existing_findings_to_watch": [
     "F11",
     "F12",
@@ -46,5 +46,10 @@
   "local_stop_reason": "Owner-requested offload; WM_CLOSE posted to freshly verified HWND10070, process remained active after10sec; controller stop then own-prefix wineserver termination",
   "temporary_ci_run": 42529718835,
   "temporary_ci_branch": "session/codex-debian-8c42-cs2-ci",
-  "ci_scope": "This session/task only; not a main workflow or global execution rule"
+  "ci_scope": "This session/task only; not a main workflow or global execution rule",
+  "ci_workspace_verified": true,
+  "ci_document_open_verified": true,
+  "ci_evidence": "ci-42529718835/checkpoint.json",
+  "ci_job_conclusion": "success",
+  "ci_session_running": false
 }

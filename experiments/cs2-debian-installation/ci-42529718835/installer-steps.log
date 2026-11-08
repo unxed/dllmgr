@@ -1,0 +1,16 @@
+== verify installer
+/home/runner/work/_temp/codex-debian-8c42/cs2/dl/Photoshop_CS2.exe: OK
+== unpack (unzip == WinZip SFX output, verified identical)
+== language picker
+== EULA: Accept (trial, owner-approved)
+== AutoPlay: Install Photoshop CS2
+== MSI welcome: Next
+== Customer information: user Tester, 30-day trial
+== Destination folder: default, Next
+== File association (996x681 custom dialog): defaults, Next
+== Ready to install: Install
+== wait for final dialog (F13: all texts read &Finish)
+== dismiss msiexec crash (F14), if it happens
+== verify
+/home/runner/work/_temp/codex-debian-8c42/cs2/prefix/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2/Photoshop.exe: OK
+CS2 trial installed into /home/runner/work/_temp/codex-debian-8c42/cs2/prefix

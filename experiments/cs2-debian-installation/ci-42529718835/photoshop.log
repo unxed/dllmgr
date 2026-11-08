@@ -1,0 +1,4 @@
+0124:err:twain:twain_add_onedriver Source->(DG_CONTROL,DAT_IDENTITY,MSG_GET) failed!
+0194:err:sync:RtlpWaitForCriticalSection section 01502750 "?" wait timed out in thread 0194, blocked by 0124, retrying (60 sec)
+0194:err:sync:RtlpWaitForCriticalSection section 01502750 "?" wait timed out in thread 0194, blocked by 0124, retrying (60 sec)
+0194:err:sync:RtlpWaitForCriticalSection section 01502750 "?" wait timed out in thread 0194, blocked by 0124, retrying (60 sec)
