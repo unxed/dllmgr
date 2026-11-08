@@ -325,6 +325,17 @@ class PrivateAppTest(unittest.TestCase):
         default_desktop = self.data_home / "applications" / ("dllmgr-" + state["id"] + ".desktop")
         self.assertFalse(default_desktop.exists())
 
+    def test_routing_preserves_hidden_mime_entry_metadata(self):
+        original = b'[Desktop Entry]\nName=Existing handler\nNoDisplay=true\nIcon=existing-icon\nExec=old-wine %f\n'
+        desired = private_app.desktop_content(self.prefix, self.exe)
+        routed = private_app.routed_desktop(original, desired)
+        self.assertIn(b'NoDisplay=true\n', routed)
+        self.assertIn(b'Icon=existing-icon\n', routed)
+        self.assertIn(b'Name=Existing handler\n', routed)
+        self.assertNotIn(b'Exec=old-wine', routed)
+        self.assertEqual(routed.count(b'Exec='), 1)
+        self.assertIn(b' -- %F', routed)
+
     def test_outdated_prefix_is_rejected_before_private_launch(self):
         private_app.verify_prefix(self.prefix, self.base)
         (self.prefix / '.update-timestamp').write_text('0')

@@ -75,3 +75,30 @@
  - the exact undo command;
  - that the change stays after a Wine update and is not updated with it. After a Wine update, run `tools/override.py status` and check again.
  
+--- a/tests/test_override.py
++++ b/tests/test_override.py
+@@ -103,7 +103,7 @@
+ 
+     def apply(self, exe="app.exe", dll=None, *extra):
+         return self.run_tool("apply", "--prefix", self.prefix, "--exe", exe,
+-                             "--dll", dll or self.dll, *extra)
++                             "--dll", dll or self.dll, "--allow-shared-prefix", *extra)
+ 
+     def undo(self, exe="app.exe", name="comctl32", *extra):
+         return self.run_tool("undo", "--prefix", self.prefix, "--exe", exe,
+@@ -121,6 +121,15 @@
+             return f.read()
+ 
+     # ---- cases ----
++
++    def test_shared_apply_requires_explicit_scope_opt_in(self):
++        rc, _, err = self.run_tool("apply", "--prefix", self.prefix,
++                                   "--exe", "app.exe", "--dll", self.dll)
++        self.assertNotEqual(rc, 0)
++        self.assertIn("not isolation", err)
++        self.assertEqual(self.read(self.dest), self.orig)
++        self.assertEqual(self.wine_calls(), [])
++        self.assertFalse(os.path.exists(os.path.join(self.prefix, "fix-it-in-wine")))
+ 
+     def test_apply_writes_unmarked_bytes_backup_and_registry(self):
+         rc, out, err = self.apply()

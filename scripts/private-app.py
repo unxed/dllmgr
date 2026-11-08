@@ -214,6 +214,30 @@ def desktop_content(prefix, exe):
             'Terminal=false\nStartupWMClass=fsviewer.exe\nMimeType=image/jpeg;image/png;image/webp;image/avif;\n').encode()
 
 
+def routed_desktop(original, desired):
+    if original is None or b'[Desktop Entry]' not in original:
+        return desired
+    command = next(line for line in desired.decode().splitlines() if line.startswith('Exec='))
+    lines = original.decode('utf-8').splitlines(keepends=True)
+    output, section, wrote = [], False, False
+    for line in lines:
+        if line.strip().startswith('['):
+            if section and not wrote:
+                output.append(command + '\n')
+                wrote = True
+            section = line.strip() == '[Desktop Entry]'
+        if section and line.startswith('Exec='):
+            output.append(command + ('\r\n' if line.endswith('\r\n') else '\n'))
+            wrote = True
+        else:
+            output.append(line)
+    if section and not wrote:
+        if output and not output[-1].endswith('\n'):
+            output.append('\n')
+        output.append(command + '\n')
+    return ''.join(output).encode('utf-8')
+
+
 def install(args, prefix):
     exe = select(prefix, args.exe)
     target = winpath(prefix, exe)
@@ -258,7 +282,8 @@ def install(args, prefix):
         owned = copy.deepcopy(old.get('desktops', [])) if old else []
         default_desktop = Path(os.environ.get('XDG_DATA_HOME', str(Path.home() / '.local/share'))) / 'applications' / ('dllmgr-' + ident + '.desktop')
         desktops = [default_desktop, *args.desktop_entry]
-        desired = desktop_content(prefix, exe)
+        template = desktop_content(prefix, exe)
+        outputs = {}
         for path in desktops:
             path = path.absolute()
             existing = next((d for d in owned if d['path'] == str(path)), None)
@@ -270,6 +295,9 @@ def install(args, prefix):
                     raise Error('Refusing a symlink desktop entry')
                 existing = dict(path=str(path), before_hex=path.read_bytes().hex() if path.exists() else None)
                 owned.append(existing)
+            original = bytes.fromhex(existing['before_hex']) if existing.get('before_hex') is not None else (existing['before'].encode() if existing.get('before') is not None else None)
+            desired = routed_desktop(original, template)
+            outputs[path] = desired
             existing['installed_sha256'] = hashlib.sha256(desired).hexdigest()
         state = dict(schema=1, phase='installed', id=ident, prefix=str(prefix), exe=str(exe),
                      target=target, exe_sha256=EXE_SHA, fix=args.fix, release=release,
@@ -277,12 +305,12 @@ def install(args, prefix):
                      package_sha256=digest(package), desktops=owned)
         changes = [dict(path=str(p.absolute()),
                         before_hex=p.read_bytes().hex() if p.exists() else None,
-                        after_sha256=hashlib.sha256(desired).hexdigest()) for p in desktops]
+                        after_sha256=hashlib.sha256(outputs[p.absolute()]).hexdigest()) for p in desktops]
         pending = dict(state, phase='pending', transaction=dict(previous=old, desktops=changes))
         save(state_path, pending)
         try:
             for path in desktops:
-                atomic(path.absolute(), desired)
+                atomic(path.absolute(), outputs[path.absolute()])
             save(state_path, state)
         except BaseException:
             recover(prefix, state_path)

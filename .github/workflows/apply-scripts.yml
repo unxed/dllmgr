@@ -55,3 +55,18 @@ jobs:
         env:
           FIW_TOOLS: ${{ github.workspace }}/fiw/tools
         run: xvfb-run -a bash scripts/tests/real-wine.sh
+
+  scope-patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: unxed/fix-it-in-wine
+          ref: f5334a13e61da0f2c2a7ccf215f0da76b4295e56
+          path: fiw-scope
+      - name: Validate the supplied upstream scope correction
+        working-directory: fiw-scope
+        run: |
+          git apply ../contrib/fix-it-in-wine-shared-scope.patch
+          python3 -m unittest discover -s tests -v
