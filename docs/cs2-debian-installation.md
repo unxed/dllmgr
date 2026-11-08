@@ -7,8 +7,9 @@ The separate Ubuntu/Claude stand has its own [findings](sandbox-findings.md);
 do not merge results from different environments or duplicate those issues.
 
 **Latest verified installer result:** product state5, version9.0; exact EXE
-hash matches. Installer had F13/F14. First application startup is in progress;
-full workspace not yet verified. See checkpoint.json for the last timestamp.
+hash matches. Installer had F13/F14. Local first startup was stopped after
+22minutes at the splash; full workspace not verified. Temporary native CI
+offload is scoped to this session/task only. See checkpoint.json for the last timestamp.
 
 ## Exact environment and source
 
@@ -269,3 +270,32 @@ that dependency. vmlab’s design supports that transport, unique per-session
 buses and artifacts. Its KVM availability figures are historical observations,
 not a guarantee for every runner. For Wine/Linux, a native Ubuntu Actions
 runner can avoid QEMU entirely; retain a distinct baseline from Debian/TCG.
+
+## Local stop and temporary Actions transfer (2026-11-08 22:21 UTC)
+
+At22:20:50 the reviewed X screenshot40 still showed Tryout Version / Looking
+for preferences. Fresh window enumeration confirmed the app HWND before
+posting normal WM_CLOSE. After10seconds the process was still active, with
+22:47 elapsed and9:35 CPU time; rchar7476594, wchar6904977. Its stderr log
+remained empty. The controller was stopped normally at22:21:26 and its own
+prefix server terminated during cleanup. Runner returned0/ok:true after
+1459seconds. That is a clean **harness shutdown**, not a completed Photoshop
+startup or proof of normal application exit. The installed prefix is retained.
+
+All expensive further runs for this task are temporarily offloaded to Actions
+at the owner's request. This is **only this session and task**, not a project
+execution rule. No workflow or instruction-file change is merged into main.
+Temporary source commit63f3886 on `session/codex-debian-8c42-cs2-ci` contains
+`.session-lab/{lab.py,session.sh}` and replaces first-open.yml **on that branch
+only** to reuse its registered manual dispatch. Native Wine11.0/Ubuntu24.04,
+Metacity without compositing and Xvfb:151 (derived from agent ID) are separate
+from the Debian/TCG baseline. Stand/prefix directories include the agent ID.
+
+Run: https://github.com/unxed/dllmgr/actions/runs/42529718835 . The temporary
+transport uses unique `session-codex-8c42-<run>-cmd/out` branches and ordinary
+HTTPS GitHub API calls. It does not need SSH inbound access. Session ends after
+60minutes or20minutes idle; job bound110minutes. Prefix/installer binaries and
+trial state are not uploaded. Reviewed screenshots/logs are in per-run output
+branches and a7-day Actions evidence artifact. Only task results and recovery
+references belong in main. The original proprietary source hash remains
+verified, and no serial is entered or activation bypass applied.

@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-11-08T22:16:06.815541+00:00",
+  "updated_utc": "2026-11-08T22:22:10.771437+00:00",
   "priority": "all newly found issues after existing bugs",
   "source_verified": true,
   "archive_crc_ok": true,
@@ -7,15 +7,15 @@
   "extractor_result": "404 file(s) unzipped successfully",
   "msi_installed": true,
   "photoshop_launched": true,
-  "current_stage": "First-start Tryout splash still Looking for preferences at22:15 UTC; active directory enumeration; full workspace unverified",
+  "current_stage": "Local Debian/TCG first start stopped after22min at splash; VM/controller shut down cleanly, installed prefix retained. Temporary native CI stand starting.",
   "prefix": "/workspace/work/photoshop-cs2/prefix110",
   "controller": "/workspace/work/photoshop-cs2/control/controller.py",
   "display": "guest :191 only",
-  "next_step": "Preserve local evidence; evaluate native Wine GitHub Actions offload under issue37. Keep original same-prefix startup evidence separate from CI.",
+  "next_step": "Follow temporary Actions run42529718835 under claim37; install ordinary trial and verify complete workspace, preserve results separately.",
   "trial_mode": "Install 30-day trial version",
   "serial_entered": false,
   "installer_ui_confirmed": true,
-  "repo_context_reviewed": "96cebd3",
+  "repo_context_reviewed": "6816305",
   "existing_findings_to_watch": [
     "F11",
     "F12",
@@ -41,5 +41,10 @@
   "tracking_issue": 37,
   "msi_registration_persisted_after_restart": true,
   "first_start_utc": "2026-11-08T21:58:21Z",
-  "latest_reviewed_screenshot": "36-resumed-startup.png"
+  "latest_reviewed_screenshot": "40-local-before-offload.png",
+  "local_vm_running": false,
+  "local_stop_reason": "Owner-requested offload; WM_CLOSE posted to freshly verified HWND10070, process remained active after10sec; controller stop then own-prefix wineserver termination",
+  "temporary_ci_run": 42529718835,
+  "temporary_ci_branch": "session/codex-debian-8c42-cs2-ci",
+  "ci_scope": "This session/task only; not a main workflow or global execution rule"
 }
