@@ -27,10 +27,14 @@ function Install-WithWizard {
             $Pattern=$null
             if($Trial.TryGetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern,[ref]$Pattern)){$Pattern.Select()}else{Invoke-UiElement $Trial}
             Start-Sleep -Milliseconds 500
-            $Edits=$Root.FindAll([System.Windows.Automation.TreeScope]::Descendants,(New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::ControlTypeProperty),([System.Windows.Automation.ControlType]::Edit)))
-            $Fields=@($Edits | Where-Object {$_.Current.IsEnabled -and -not $_.Current.IsOffscreen -and $_.Current.Name -notmatch '(?i)serial'} | Sort-Object {$_.Current.BoundingRectangle.Y})
+            $Edits=$Root.FindAll([System.Windows.Automation.TreeScope]::Descendants,[System.Windows.Automation.Condition]::TrueCondition)
+            $Fields=@($Edits | Where-Object {$_.Current.IsEnabled -and -not $_.Current.IsOffscreen -and $_.Current.ClassName -match '^(Edit|RichEdit20W)$' -and $_.Current.Name -notmatch '(?i)serial'} | Sort-Object {$_.Current.BoundingRectangle.Y})
             if($Fields.Count -ne 2){Save-UiTree $Root 'trial-fields';Save-Desktop 'trial-fields';throw 'Trial UI does not expose exactly two enabled non-serial identity fields'}
-            for($i=0;$i -lt 2;$i++){$P=$Fields[$i].GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern);$P.SetValue(@('Compatibility Test','CI task35')[$i])}
+            for($i=0;$i -lt 2;$i++){
+                $Value=@('Compatibility Test','CI task35')[$i];$ValuePattern=$null
+                if($Fields[$i].TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern,[ref]$ValuePattern)){$ValuePattern.SetValue($Value)}
+                elseif(-not [PS35.Native]::SetText([IntPtr]$Fields[$i].Current.NativeWindowHandle,$Value)){throw 'Public WM_SETTEXT failed for identified enabled identity field'}
+            }
             Save-Desktop 'trial-selected'
         }
         $Advanced=$false

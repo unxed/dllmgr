@@ -24,6 +24,11 @@ namespace PS35 {
   [DllImport("user32.dll")] public static extern uint GetDpiForSystem();
   [DllImport("msi.dll",CharSet=CharSet.Unicode)] public static extern int MsiQueryProductState(string product);
   [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h,uint m,IntPtr w,IntPtr l);
+  [DllImport("user32.dll",EntryPoint="SendMessageTimeoutW",CharSet=CharSet.Unicode,SetLastError=true)]
+  static extern IntPtr SendText(IntPtr h,uint m,IntPtr w,string text,uint flags,uint timeout,out IntPtr result);
+  public static bool SetText(IntPtr h,string text) {
+   IntPtr result;return SendText(h,0xC,IntPtr.Zero,text,2,5000,out result)!=IntPtr.Zero && result!=IntPtr.Zero;
+  }
   public static Window[] Windows() {
    var a=new List<Window>();
    EnumWindows((h,p)=>{
@@ -46,7 +51,7 @@ function Save-Desktop([string]$Name){
 function Save-UiTree([System.Windows.Automation.AutomationElement]$Root,[string]$Name){
     $Rows=@();$Elements=$Root.FindAll([System.Windows.Automation.TreeScope]::Descendants,[System.Windows.Automation.Condition]::TrueCondition)
     for($i=0;$i -lt [Math]::Min($Elements.Count,1200);$i++){
-        try{$C=$Elements[$i].Current;$Rows+=@{name=$C.Name;type=$C.ControlType.ProgrammaticName;class=$C.ClassName;handle=$C.NativeWindowHandle;enabled=$C.IsEnabled;offscreen=$C.IsOffscreen;automation_id=$C.AutomationId}}catch{}
+        try{$C=$Elements[$i].Current;$Rows+=@{name=$C.Name;type=$C.ControlType.ProgrammaticName;class=$C.ClassName;handle=$C.NativeWindowHandle;enabled=$C.IsEnabled;offscreen=$C.IsOffscreen;automation_id=$C.AutomationId;patterns=@($Elements[$i].GetSupportedPatterns() | ForEach-Object {$_.ProgrammaticName})}}catch{}
     }
     ConvertTo-Json -InputObject $Rows -Depth 5 | Set-Content (Join-Path $Out "$Name-uia.json")
 }

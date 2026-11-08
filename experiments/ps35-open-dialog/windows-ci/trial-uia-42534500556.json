@@ -1,0 +1,164 @@
+[
+  {
+    "handle": 131626,
+    "name": "",
+    "offscreen": false,
+    "enabled": true,
+    "class": "RichEdit20W",
+    "type": "ControlType.Pane",
+    "automation_id": "8087"
+  },
+  {
+    "handle": 197184,
+    "name": "",
+    "offscreen": false,
+    "enabled": true,
+    "class": "RichEdit20W",
+    "type": "ControlType.Pane",
+    "automation_id": "8097"
+  },
+  {
+    "handle": 131634,
+    "name": "",
+    "offscreen": false,
+    "enabled": false,
+    "class": "RichEdit20W",
+    "type": "ControlType.Pane",
+    "automation_id": "4703"
+  },
+  {
+    "handle": 131638,
+    "name": "Next >",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Button",
+    "type": "ControlType.Pane",
+    "automation_id": "4690"
+  },
+  {
+    "handle": 131618,
+    "name": "Cancel",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Button",
+    "type": "ControlType.Pane",
+    "automation_id": "4473"
+  },
+  {
+    "handle": 131644,
+    "name": "< Back",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Button",
+    "type": "ControlType.Pane",
+    "automation_id": "4632"
+  },
+  {
+    "handle": 131624,
+    "name": "",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Button",
+    "type": "ControlType.Pane",
+    "automation_id": "8093"
+  },
+  {
+    "handle": 131622,
+    "name": "Install 30-day trial version",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Button",
+    "type": "ControlType.Pane",
+    "automation_id": "8429"
+  },
+  {
+    "handle": 131620,
+    "name": "I have a serial number, install full version",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Button",
+    "type": "ControlType.Pane",
+    "automation_id": "4505"
+  },
+  {
+    "handle": 131642,
+    "name": "The following information must be entered before installation of Adobe Photoshop CS2 can be completed.",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Static",
+    "type": "ControlType.Pane",
+    "automation_id": "4659"
+  },
+  {
+    "handle": 131640,
+    "name": "Customer Information",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Static",
+    "type": "ControlType.Pane",
+    "automation_id": "4661"
+  },
+  {
+    "handle": 131636,
+    "name": "NewBinary26",
+    "offscreen": false,
+    "enabled": false,
+    "class": "Static",
+    "type": "ControlType.Pane",
+    "automation_id": "8013"
+  },
+  {
+    "handle": 131632,
+    "name": "InstallShield",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Static",
+    "type": "ControlType.Pane",
+    "automation_id": "8015"
+  },
+  {
+    "handle": 131630,
+    "name": "InstallShield",
+    "offscreen": false,
+    "enabled": false,
+    "class": "Static",
+    "type": "ControlType.Pane",
+    "automation_id": "8017"
+  },
+  {
+    "handle": 131628,
+    "name": "",
+    "offscreen": false,
+    "enabled": false,
+    "class": "Static",
+    "type": "ControlType.Pane",
+    "automation_id": "8020"
+  },
+  {
+    "handle": 131652,
+    "name": "User Name:",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Static",
+    "type": "ControlType.Pane",
+    "automation_id": "8102"
+  },
+  {
+    "handle": 131646,
+    "name": "Organization:",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Static",
+    "type": "ControlType.Pane",
+    "automation_id": "8107"
+  },
+  {
+    "handle": 131666,
+    "name": "Serial Number:",
+    "offscreen": false,
+    "enabled": true,
+    "class": "Static",
+    "type": "ControlType.Pane",
+    "automation_id": "8110"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "run_id": 42534500556,
+  "conclusion": "failure",
+  "cache_hit": true,
+  "trial_radio_visible": true,
+  "serial_field_disabled": true,
+  "enabled_identity_controls": [
+    {
+      "class": "RichEdit20W",
+      "uia_type": "Pane",
+      "count": 2
+    }
+  ],
+  "harness_failure": "Filtered on UIA ControlType.Edit, while classic MSI identity controls were exposed as Pane/RichEdit20W",
+  "buttons_found": true,
+  "measurement_completed": false,
+  "correction": "Match actual enabled Edit/RichEdit20W UIA elements; ValuePattern or documented WM_SETTEXT by their HWND. Use Windows PowerShell5.1 for classic UIA provider compatibility, and record supported patterns."
+}

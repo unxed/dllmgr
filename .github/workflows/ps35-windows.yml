@@ -55,7 +55,7 @@ jobs:
           path: ${{ runner.temp }}/ps35-download
           key: ps35-cs2-919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea
       - name: Inspect or measure through public Windows APIs
-        shell: pwsh
+        shell: powershell
         env:
           PS35_STAGE: ${{ inputs.stage }}
         run: '& tests/wine/ps35-windows.ps1 -Stage $env:PS35_STAGE'

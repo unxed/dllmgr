@@ -130,3 +130,14 @@ for a UIA-named standard Win32 Button with a real HWND, use its documented
 BM_CLICK action. Other unsupported controls still stop with evidence. Dump
 the trial UIA tree/screenshot before the next action. No coordinates, serial
 input, proprietary code changes or activation workaround.
+
+Second attempt42534500556 again restored the verified source cache. The
+normal trial choice was visible/selected and the serial field disabled. UIA
+reported the two enabled identity controls as Pane/RichEdit20W rather than
+ControlType.Edit, so the harness stopped before typing (tree retained in
+`windows-ci/trial-uia-42534500556.json`). No buttons were missing. Match the
+observed class and enabled state, then use ValuePattern or public WM_SETTEXT
+for those two known HWNDs only. The disabled serial control is excluded.
+The controller now uses Windows PowerShell5.1 and records supported UIA
+patterns to diagnose classic-provider compatibility; this is a task-specific
+controller adjustment, not a Photoshop/Wine fix or a completed comparison.
