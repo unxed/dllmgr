@@ -24,12 +24,19 @@ jobs:
       - name: Verify full executable path isolation
         timeout-minutes: 4
         run: xvfb-run -a bash tests/wine/app-isolation-check.sh
+      - name: Package tested runtime and complete modified source
+        run: |
+          cp tests/wine/app-isolation{.md,-build.sh,-check.sh,.c,-package.py} tests/wine/controls.{rc,manifest} out/isolation/
+          cp "$RUNNER_TEMP/wine-source/COPYING.LIB" out/isolation/
+          python3 tests/wine/app-isolation-package.py
+          tar --exclude=.git -C "$RUNNER_TEMP" -c wine-source | xz -T2 > out/wine-11.0-app-isolation-source.tar.xz
+          (cd out && sha256sum wine-11.0-app-isolation.zip wine-11.0-app-isolation-source.tar.xz > SHA256SUMS)
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: app-isolation
           path: |
-            out/isolation/
+            out/
             results/
             ${{ runner.temp }}/wine-build/configure.log
             ${{ runner.temp }}/wine-build/make.log

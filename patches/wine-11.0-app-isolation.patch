@@ -1,8 +1,8 @@
 diff --git a/dlls/ntdll/loader.c b/dlls/ntdll/loader.c
-index c5c3493..1cd1088 100644
+index c5c3493..87b030c 100644
 --- a/dlls/ntdll/loader.c
 +++ b/dlls/ntdll/loader.c
-@@ -3248,6 +3248,37 @@ done:
+@@ -3248,6 +3248,50 @@ done:
      return status;
  }
  
@@ -12,7 +12,8 @@ index c5c3493..1cd1088 100644
 +{
 +    const WCHAR *variable;
 +    UNICODE_STRING target, path;
-+    NTSTATUS status;
++    WCHAR *canonical;
++    ULONG size;
 +
 +    if (!wcsicmp( libname, L"gdiplus.dll" )) variable = L"DLLMGR_GDIPLUS";
 +    else if (!wcsicmp( libname, L"comctl32.dll" )) variable = L"DLLMGR_COMCTL32";
@@ -25,12 +26,24 @@ index c5c3493..1cd1088 100644
 +        return STATUS_SXS_KEY_NOT_FOUND;
 +    }
 +    RtlFreeUnicodeString( &target );
-+    if ((status = get_env_var( variable, 0, &path ))) return STATUS_DLL_NOT_FOUND;
++    if (get_env_var( variable, 0, &path )) return STATUS_DLL_NOT_FOUND;
 +    if (RtlDetermineDosPathNameType_U( path.Buffer ) != RtlPathTypeDriveAbsolute)
 +    {
 +        RtlFreeUnicodeString( &path );
 +        return STATUS_DLL_NOT_FOUND;
 +    }
++    /* The Unix load-order rule compares the final NT path. Refuse aliases
++     * that would normalize differently and bypass the native-only rule. */
++    size = RtlGetFullPathName_U( path.Buffer, 0, NULL, NULL );
++    canonical = RtlAllocateHeap( GetProcessHeap(), 0, size );
++    if (!canonical || !RtlGetFullPathName_U( path.Buffer, size, canonical, NULL ) ||
++        wcsicmp( path.Buffer, canonical ))
++    {
++        RtlFreeHeap( GetProcessHeap(), 0, canonical );
++        RtlFreeUnicodeString( &path );
++        return STATUS_DLL_NOT_FOUND;
++    }
++    RtlFreeHeap( GetProcessHeap(), 0, canonical );
 +    TRACE( "dllmgr redirects %s to %s\n", debugstr_w(libname), debugstr_w(path.Buffer) );
 +    *fullname = path.Buffer;
 +    return STATUS_SUCCESS;
@@ -40,7 +53,7 @@ index c5c3493..1cd1088 100644
  /***********************************************************************
   *	find_dll_file
   *
-@@ -3267,13 +3298,19 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
+@@ -3267,13 +3311,19 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
  
      if (!contains_path( libname ))
      {

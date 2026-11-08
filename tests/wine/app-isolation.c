@@ -1,6 +1,10 @@
+#ifndef UNICODE
 #define UNICODE
+#endif
 #define _UNICODE
 #include <windows.h>
+#include <commctrl.h>
+INT WINAPI GdiplusStartup(ULONG_PTR *, const void *, void *);
 #include <stdio.h>
 #include <wchar.h>
 
@@ -19,7 +23,16 @@ static int check(const WCHAR *name, const WCHAR *variable, int private_expected)
 int wmain(int argc, WCHAR **argv)
 {
     int failures, expect_private = argc > 1 && !wcscmp(argv[1], L"private");
-    failures = check(L"gdiplus.dll", L"DLLMGR_GDIPLUS", expect_private);
+    WCHAR system[32768];
+    InitCommonControls();
+    GdiplusStartup(NULL, NULL, NULL);
+    GetSystemDirectoryW(system, 32740);
+    wcscat(system, L"\\gdiplus.dll");
+    failures = check(system, L"DLLMGR_GDIPLUS", 0);
+    GetSystemDirectoryW(system, 32740);
+    wcscat(system, L"\\comctl32.dll");
+    failures += check(system, L"DLLMGR_COMCTL32", 0);
+    failures += check(L"gdiplus.dll", L"DLLMGR_GDIPLUS", expect_private);
     failures += check(L"comctl32.dll", L"DLLMGR_COMCTL32", expect_private);
     if (argc > 2)
     {
