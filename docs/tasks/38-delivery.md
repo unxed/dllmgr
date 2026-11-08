@@ -56,3 +56,12 @@ from outside the module.
   the windows-probes CI job). Without the override: abort (control).
 - A module loaded with LoadLibrary after start that imports the functions:
   patched through the DLL notification.
+
+## Prototype result (2026-11-09)
+
+patches/dllmgr-38/shim.c as an x86_64 version.dll proxy on stock Wine 11.0:
+tests/wine/feedback-shim.sh verdict=pass (18 cases identical to Windows,
+late LoadLibrary'd DLL patched through LdrRegisterDllNotification). Same exe
+without the shim: "Unimplemented function USER32.dll.GetWindowFeedbackSetting".
+Next: entry DLL of Photoshop 2024 (unknown 1), then a recipe that installs
+the shim with scripts/prefill-proxy.py and ships it CI-built.

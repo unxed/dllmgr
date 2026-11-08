@@ -1,0 +1,18 @@
+case=get_default ret=0 error=3735928559 size=4 value=0
+case=get_default_ancestors ret=0 error=3735928559 size=4 value=0
+case=set_off ret=1 error=3735928559
+case=get_after_set ret=1 error=3735928559 size=4 value=0
+case=get_child_no_ancestors ret=0 error=3735928559 size=4 value=0
+case=get_child_ancestors ret=1 error=3735928559 size=4 value=0
+case=get_size_query ret=1 error=3735928559 size=4 value=85
+case=set_on ret=1 error=3735928559
+case=get_after_on ret=1 error=3735928559 size=4 value=1
+case=set_reset_null ret=1 error=3735928559
+case=get_after_reset ret=0 error=3735928559 size=4 value=0
+case=set_bad_size ret=0 error=87
+case=set_bad_type0 ret=0 error=87
+case=set_bad_type99 ret=0 error=87
+case=set_bad_flags ret=0 error=87
+case=set_bad_hwnd ret=0 error=1400
+case=set_null_hwnd ret=0 error=1400
+case=get_bad_hwnd ret=0 error=1400 size=4 value=85
