@@ -42,12 +42,20 @@ and must not be used for reports.
   Xvfb path and the repo-relative prefix; do not run it as-is here. The
   script above starts the same Xvfb+Muffin session without launching Photoshop.
 
-## Installer: OPEN
+## Installer
 
-Expected: official `Photoshop_CS2.exe`, 345,068,035 bytes,
+Official `Photoshop_CS2.exe`, 345,068,035 bytes,
 SHA256 `919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea`
 (EXE inside: `98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30`).
-From the sandbox `web.archive.org` resets every connection (even with all
-domains allowed) while `archive.org` answers; `download.adobe.com` gives 403.
-The exact snapshot URL is not recorded in this repo yet. Record it here once
-known, and always verify the SHA256 before running anything.
+
+    curl -fsS -o Photoshop_CS2.exe \
+      https://download.adobe.com/pub/adobe/photoshop/win/cs2/Photoshop_CS2.exe
+    sha256sum Photoshop_CS2.exe
+
+- Use https: the `http://` form fails in the sandbox (the proxy does not
+  resolve plain-HTTP hosts). Verified 2026-11-08: size and SHA256 match.
+- Fallback mirror (owner-supplied, not reachable from the sandbox because
+  `web.archive.org` resets every connection there):
+  https://web.archive.org/web/20240522171734/http://download.adobe.com/pub/adobe/photoshop/win/cs2/Photoshop_CS2.exe
+- Keep it at `/home/claude/work/photoshop-cs2/dl/`, outside the repo; never
+  commit or upload the installer or prefix contents.
