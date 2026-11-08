@@ -54,7 +54,7 @@ class ApplyTest(unittest.TestCase):
         self.env = dict(os.environ, PATH=str(self.bin) + os.pathsep + os.environ["PATH"],
                         WINEPREFIX=str(self.prefix), FIW_WORK=str(self.root / "cache"),
                         LC_ALL="ru_RU.UTF-8", LANG="ru_RU.UTF-8", PYTHONUTF8="1",
-                        TEST_ROOT=str(self.root))
+                        TEST_ROOT=str(self.root), DLLMGR_UNSAFE_SHARED_RESEARCH="1")
         self.env.pop("FIW_WINE", None)
         if "FIW_TOOLS" not in self.env:
             raise RuntimeError("set FIW_TOOLS to an unmodified fix-it-in-wine/tools checkout")
@@ -110,6 +110,14 @@ pathlib.Path(sys.argv[sys.argv.index("-o") + 1]).write_bytes(data)
     def run_script(self, name="apply", fix="winehq-59609", **env):
         return subprocess.run([str(SCRIPTS / (name + "-" + fix + ".sh"))], env=dict(self.env, **env),
                               capture_output=True, text=True, timeout=30)
+
+    def test_product_apply_refuses_shared_changes_before_download(self):
+        result = self.run_script(DLLMGR_UNSAFE_SHARED_RESEARCH="0")
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("shared-prefix DLL installation is disabled", result.stderr)
+        self.assertEqual(self.dest.read_bytes(), self.original)
+        self.assertEqual(self.gdi.read_bytes(), self.gdi_original)
+        self.assertFalse((self.prefix / "fix-it-in-wine").exists())
 
     def test_russian_apply_and_separate_undo_restore_bytes_and_registry(self):
         result = self.run_script()

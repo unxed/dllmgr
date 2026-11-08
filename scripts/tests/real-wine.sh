@@ -2,6 +2,7 @@
 # GitHub CI only: exercise real localized registry output in a disposable prefix.
 set -euo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+export DLLMGR_UNSAFE_SHARED_RESEARCH=1  # Disposable CI prefix only.
 export WINEPREFIX=$RUNNER_TEMP/dllmgr-locale-prefix
 export FIW_WORK=$RUNNER_TEMP/dllmgr-locale-cache
 export LC_ALL=ru_RU.UTF-8 LANG=ru_RU.UTF-8 WINEDEBUG=-all

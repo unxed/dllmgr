@@ -89,3 +89,10 @@ subscriptions, unattended updates and GUI are described in the
 ## License
 
 BSD-3-Clause. See `LICENSE`.
+
+> **Safety correction (dllmgr#25):** the legacy FastStone DLL installer is
+> temporarily disabled. It replaced DLLs in the prefix's shared system/SxS
+> directories; an AppDefaults rule did not isolate those files from other
+> programs. Undo remains available. Do not re-enable the legacy installer on
+> a working prefix. A private-runtime replacement is being verified in
+> [#25](https://github.com/unxed/dllmgr/issues/25).

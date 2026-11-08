@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Enable catalog fix winehq-59609 (catalog/fixes/winehq-59609.md; FastStone thumbnail strip)
-# for FSViewer.exe only. A stand-in until the dllmgr CLI exists; it uses the tools of
+# with an FSViewer.exe load-order rule (legacy shared prefix files). A stand-in until the dllmgr CLI exists; it uses the tools of
 # https://github.com/unxed/fix-it-in-wine (cloned into the work dir, or FIW_TOOLS).
 #
 # Shared apply engine. Public entry points: apply-winehq-*.sh, apply-faststone.sh.
@@ -12,8 +12,9 @@
 #            fix-it-in-wine's tools/build_one_dll.sh).
 #
 # The DLL comes from https://github.com/unxed/dllmgr/releases/tag/winehq-59609 for your
-# exact `wine --version`, checked against SHA256SUMS. Other programs and the system Wine are
-# not changed. Undo: apply.sh --undo.
+# exact `wine --version`, checked against SHA256SUMS. System/SxS destinations
+# are shared by the whole prefix; AppDefaults does NOT isolate their contents.
+# Undo: apply.sh --undo.
 set -euo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 ui() { python3 "$here/ui.py" "$@"; }
@@ -41,6 +42,15 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+# Emergency safety gate (#25). The old engine physically replaces shared DLLs.
+# Keep undo available. Only disposable CI/research prefixes may opt into apply.
+if [ "$undo" = 0 ] && [ "${DLLMGR_UNSAFE_SHARED_RESEARCH:-0}" != 1 ]; then
+    echo 'dllmgr: shared-prefix DLL installation is disabled (dllmgr#25).' >&2
+    echo 'AppDefaults limits load order, not who can load a replaced system/SxS DLL.' >&2
+    echo 'Keep the existing backups. Use undo to restore them; a private-runtime installer is being verified.' >&2
+    exit 2
+fi
 
 if [ "$undo" = 0 ]; then
     tag=$("$DLLMGR_WINE" --version | cut -d' ' -f1)

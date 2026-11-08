@@ -76,6 +76,8 @@ def main():
     parser.add_argument("--slot",default="system")
     parser.add_argument("--plan",type=Path)
     args = parser.parse_args()
+    if args.command == "apply" and os.environ.get("DLLMGR_UNSAFE_SHARED_RESEARCH") != "1":
+        parser.error("shared-prefix DLL apply is disabled; see dllmgr#25 (undo remains available)")
     prefix = os.path.abspath(args.prefix)
     override.prefix_arch(prefix)
     # Lock the directory inode so different spellings of the same prefix serialize.
