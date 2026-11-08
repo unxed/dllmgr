@@ -88,3 +88,28 @@ of `dllmgr run` while the target keeps running (execve: it is the target's
 own lifetime, so step 4 must not wait for exit — only watch for an early
 failure); cost of the extra start (time from double click to first image,
 stock vs trampolined, Metacity, 5 runs each).
+
+Measured 2026-11-08 (tests/wine/spawn-env.c, stock Wine 11.0, 64- and 32-bit
+callers): CreateProcessW of a Unix program (ELF or `#!` script) succeeds and
+the script runs with Windows-split arguments and the caller's cwd, but
+1. `pi.hProcess` is not waitable (WaitForSingleObject -> WAIT_FAILED) and
+   GetExitCodeProcess gives nothing: the caller cannot see the child's exit;
+2. variables set with SetEnvironmentVariableW in the caller do NOT reach the
+   Unix child (it gets the Unix environment the Wine process started with).
+
+Design changes forced by this:
+- Loop guard: not an env variable. The private runtime itself is the guard:
+  `dllmgr run` sets DLLMGR_TARGET_EXE (Unix env, inherited by the private
+  FSViewer.exe) and the proxy does nothing when it is set; `dllmgr run` never
+  falls back to stock Wine, so there is no path back to the trampoline.
+- Fail-safe: the stock process creates a named event, starts the launcher
+  and waits up to DLLMGR27_TRAMP_WAIT ms (default 15000). The proxy inside
+  the private FSViewer.exe (DLLMGR_TARGET_EXE set) opens that event in
+  DllMain and sets it. Set -> the stock process ExitProcess(0)s (the private
+  instance either shows the window or forwards to an already running one).
+  Timeout or launcher not startable -> continue under stock Wine with the
+  prefill backstop. One event name per prefix (`dllmgr27-trampoline`):
+  two stock launches at the same second may both exit on one signal; both
+  then end up forwarded to the private instance, which is the intent.
+- When: per-thread WH_CBT hook, HCBT_CREATEWND of the first window in the
+  process (before any window exists; no IAT matching needed).

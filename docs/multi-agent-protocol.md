@@ -74,7 +74,9 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 5. (#34 TopPlan dropped by the owner: no installer, not a showcase.)
 
 FastStone queue: #27 every-launch-path follow-up
-(docs/tasks/27-every-launch-path.md), owner retests listed in docs/handoff.md.
+(docs/tasks/27-every-launch-path.md), then #39 (Esc ignored during startup
+until the first paint; owner report 2026-11-08), owner retests listed in
+docs/handoff.md.
 
 ## 6. Talking to the owner
 
