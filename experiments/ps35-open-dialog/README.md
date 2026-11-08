@@ -69,3 +69,14 @@ property values are redacted. No installer properties are guessed and no serial
 is entered. The `measure` implementation follows this inspection; it is not
 currently a completed comparison. No WineHQ comment is authorized by this task.
 This workflow is specific to35, not a project-wide requirement to run in CI.
+
+### CI flow checkpoint: source inspection in progress
+
+First inspection run: https://github.com/unxed/dllmgr/actions/runs/42532984784 .
+At23:04UTC it remained in the pinned Wayback download, before any installation
+or measurements. The next increment adds a source-free `stage=probe` so public
+Win32/UIA compilation, desktop screenshots and script parsing can be checked
+without waiting for or duplicating the345MB download. `ps35-uia.ps1` records
+outer/client rectangles, DPI and HWNDs; missing named UIA buttons after two
+attempts stop with screenshots/trees rather than guessed mouse coordinates.
+The helper is pending its first Windows probe; no comparison result yet.

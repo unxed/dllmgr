@@ -1,9 +1,20 @@
-param([ValidateSet('inspect','measure')][string]$Stage='inspect')
+param([ValidateSet('inspect','measure','probe')][string]$Stage='inspect')
 $ErrorActionPreference='Stop'
 $Out=Join-Path $env:GITHUB_WORKSPACE 'ps35-evidence'
 New-Item -ItemType Directory -Force $Out | Out-Null
 Start-Transcript -Path (Join-Path $Out 'transcript.txt') | Out-Null
 try {
+    if($Stage -eq 'probe'){
+        . (Join-Path $PSScriptRoot 'ps35-uia.ps1')
+        $Dpi=[PS35.Native]::GetDpiForSystem()
+        if($Dpi -le 0){throw 'Public DPI probe failed'}
+        Save-Desktop 'probe-desktop'
+        [PS35.Native]::Windows() | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $Out 'probe-windows.json')
+        Save-UiTree ([System.Windows.Automation.AutomationElement]::RootElement) 'probe-desktop'
+        @{dpi=$Dpi;interactive=[Environment]::UserInteractive;utc=[DateTime]::UtcNow.ToString('o')} | ConvertTo-Json | Set-Content (Join-Path $Out 'probe-result.json')
+        Write-Host "Public Win32/UIA/screenshot probe passed, DPI=$Dpi; no Adobe source download or installation."
+        return
+    }
     $Source=Join-Path $env:RUNNER_TEMP 'ps35-source'
     New-Item -ItemType Directory -Force $Source | Out-Null
     & 7z x (Join-Path $env:RUNNER_TEMP 'ps35-download/Photoshop_CS2.exe') "-o$Source" -y | Out-File (Join-Path $Out 'extraction.txt')
