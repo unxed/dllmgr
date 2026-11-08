@@ -16,10 +16,11 @@ new CS2 trial compatibility audit is tracked separately in #31.
 
 - [#21](https://github.com/unxed/dllmgr/issues/21): deliver the proven dropdown
   paint correction is delivered and installed privately in `faststone-v3`
-  (main `15a038c`). Owner says it is better, but reports that the button can
-  remain visually pressed after mouse-up until the cursor moves. Track that
-  as unfinished: compare stationary release, movement inside and outside the
-  button with Windows before changing it. Separate severe intermittent
+  (main `15a038c`). Owner's four screenshots clarified a second-click close: the list is gone
+  but the button stays blue until pointer movement. Exact sequence reproduced
+  headlessly with v3; the prior test moved before closing and masked it.
+  Candidate themed-close repaint and failing-before gate are on main2ea67cf;
+  CI42499612512 builds isolated/composed96/192DPI variants. Deliver once proved. Separate severe intermittent
   path-row corruption remains unreproduced. See experiments/path-dropdown/laptop-private-v3.json.
   Its old research shared installer must not be reused.
 - [#22](https://github.com/unxed/dllmgr/issues/22): startup/Draw latency. The
