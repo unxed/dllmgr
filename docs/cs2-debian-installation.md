@@ -250,3 +250,22 @@ ancestor desktop.ini lookups. Summaries are retained alongside the checkpoint.
 No Adobe code or file contents were inspected. Timeout exit124 belongs to the
 bounded tracer, not Photoshop. The raw path trace stays local. This has not
 established the cause of delay.
+
+## Offload checkpoint (2026-11-08 22:15 UTC)
+
+Owner requested saving all reusable evidence and moving expensive work to an
+SSH server or GitHub Actions, citing unxed/sandbox/vmlab. The same local first
+start still shows `Looking for preferences…`; no completed workspace is claimed.
+PID278 remains active and filesystem counters advance. Preserve this prefix
+for now; do not silently replace these observations with another environment’s
+result. Raw installers, app/prefix/trial state and unreviewed traces are excluded
+from Git; reproducible sources, hashes, public-API controls and reviewed
+evidence are saved.
+
+The current environment allows proxied HTTPS, but has no configured outbound
+raw-TCP domain/IP grants. SSH needs a reachable server, authorized application
+credentials and an allowed TCP route; HTTPS GitHub command transport avoids
+that dependency. vmlab’s design supports that transport, unique per-session
+buses and artifacts. Its KVM availability figures are historical observations,
+not a guarantee for every runner. For Wine/Linux, a native Ubuntu Actions
+runner can avoid QEMU entirely; retain a distinct baseline from Debian/TCG.

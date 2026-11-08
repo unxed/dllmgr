@@ -220,5 +220,17 @@
     "sha256": "51d7eea85f3650563a2c9f8247033043a7bb27f2f5a110a14f3de1ffd52397d6",
     "bytes": 184269,
     "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "38-startup-progress.png",
+    "sha256": "51d7eea85f3650563a2c9f8247033043a7bb27f2f5a110a14f3de1ffd52397d6",
+    "bytes": 184269,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "39-transfer-checkpoint.png",
+    "sha256": "51d7eea85f3650563a2c9f8247033043a7bb27f2f5a110a14f3de1ffd52397d6",
+    "bytes": 184269,
+    "storage": "local only, duplicate/transitional capture"
   }
 ]

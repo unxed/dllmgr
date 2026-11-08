@@ -405,3 +405,15 @@
 {"launch": ["timeout", "--signal=INT", "5", "strace", "-f", "-e", "trace=openat,statx", "-o", "/workspace/work/photoshop-cs2/evidence/startup-filesystem-local.txt", "-p", "278"], "pid": 524, "log": "1794175926419515560.log", "utc": "2026-11-08T22:12:06Z"}
 {"exit": "1794175926419515560", "code": 124, "utc": "2026-11-08T22:12:11Z"}
 {"request": {"action": "run", "argv": ["timeout", "--signal=INT", "5", "strace", "-f", "-e", "trace=openat,statx", "-o", "/workspace/work/photoshop-cs2/evidence/startup-filesystem-local.txt", "-p", "278"], "timeout": 30}, "ok": false, "code": 124, "output": "strace: Process 278 attached with 3 threads\nstrace: Process 289 detached\nstrace: Process 307 detached\nstrace: Process 278 detached\n", "utc": "2026-11-08T22:12:11Z"}
+{"launch": ["import", "-window", "root", "/workspace/work/photoshop-cs2/evidence/38-startup-progress.png"], "pid": 535, "log": "1794175964609246018.log", "utc": "2026-11-08T22:12:44Z"}
+{"exit": "1794175964609246018", "code": 0, "utc": "2026-11-08T22:12:51Z"}
+{"request": {"action": "snapshot", "name": "38-startup-progress"}, "ok": true, "image": "/workspace/work/photoshop-cs2/evidence/38-startup-progress.png", "utc": "2026-11-08T22:12:51Z"}
+{"launch": ["sh", "-c", "date -u; cat /proc/278/io; ps -p 278 -o pid,time,stat,comm"], "pid": 552, "log": "1794176042346538376.log", "utc": "2026-11-08T22:14:02Z"}
+{"exit": "1794176042346538376", "code": 0, "utc": "2026-11-08T22:14:02Z"}
+{"request": {"action": "run", "argv": ["sh", "-c", "date -u; cat /proc/278/io; ps -p 278 -o pid,time,stat,comm"], "timeout": 30}, "ok": true, "code": 0, "output": "Sun Nov  8 22:14:02 UTC 2026\nrchar: 5911174\nwchar: 4781298\nsyscr: 53139\nsyscw: 50490\nread_bytes: 8475910\nwrite_bytes: 0\ncancelled_write_bytes: 0\n  PID     TIME STAT COMMAND\n  278 00:06:27 Rsl  Photoshop.exe\n", "utc": "2026-11-08T22:14:02Z"}
+{"launch": ["sh", "-c", "sleep 45; date -u; cat /proc/278/io"], "pid": 558, "log": "1794176053666219198.log", "utc": "2026-11-08T22:14:13Z"}
+{"exit": "1794176053666219198", "code": 0, "utc": "2026-11-08T22:14:58Z"}
+{"request": {"action": "run", "argv": ["sh", "-c", "sleep 45; date -u; cat /proc/278/io"], "timeout": 55}, "ok": true, "code": 0, "output": "Sun Nov  8 22:14:58 UTC 2026\nrchar: 6158390\nwchar: 5114454\nsyscr: 57013\nsyscw: 54352\nread_bytes: 8475910\nwrite_bytes: 0\ncancelled_write_bytes: 0\n", "utc": "2026-11-08T22:14:58Z"}
+{"launch": ["import", "-window", "root", "/workspace/work/photoshop-cs2/evidence/39-transfer-checkpoint.png"], "pid": 575, "log": "1794176116039251383.log", "utc": "2026-11-08T22:15:16Z"}
+{"exit": "1794176116039251383", "code": 0, "utc": "2026-11-08T22:15:23Z"}
+{"request": {"action": "snapshot", "name": "39-transfer-checkpoint"}, "ok": true, "image": "/workspace/work/photoshop-cs2/evidence/39-transfer-checkpoint.png", "utc": "2026-11-08T22:15:23Z"}
