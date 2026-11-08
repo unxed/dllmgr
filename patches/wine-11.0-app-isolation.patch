@@ -80,7 +80,7 @@ index c5c3493..87b030c 100644
  
          if (status == STATUS_SUCCESS)
 diff --git a/dlls/ntdll/unix/loadorder.c b/dlls/ntdll/unix/loadorder.c
-index 6af4100..2f73ae5 100644
+index 6af4100..5362eba 100644
 --- a/dlls/ntdll/unix/loadorder.c
 +++ b/dlls/ntdll/unix/loadorder.c
 @@ -59,6 +59,7 @@ static HANDLE std_key;
@@ -91,7 +91,7 @@ index 6af4100..2f73ae5 100644
  
  
  /***************************************************************************
-@@ -364,12 +365,59 @@ void set_load_order_app_name( const WCHAR *app_name )
+@@ -364,12 +365,60 @@ void set_load_order_app_name( const WCHAR *app_name )
  {
      const WCHAR *p;
  
@@ -126,6 +126,7 @@ index 6af4100..2f73ae5 100644
 +
 +static BOOL dllmgr_native_path( const UNICODE_STRING *name )
 +{
++    static const WCHAR prefix[] = {'\\','?','?','\\'};
 +    static const char *variables[] = { "DLLMGR_GDIPLUS", "DLLMGR_COMCTL32" };
 +    const WCHAR *buffer = name->Buffer;
 +    unsigned int len = name->Length / sizeof(WCHAR), i;
@@ -136,7 +137,7 @@ index 6af4100..2f73ae5 100644
 +    match = !wcsicmp( path, dllmgr_app_name );
 +    free( path );
 +    if (!match) return FALSE;
-+    if (len > 4 && !wcsncmp( buffer, L"\\??\\", 4 )) { buffer += 4; len -= 4; }
++    if (len > 4 && !wcsncmp( buffer, prefix, ARRAY_SIZE(prefix) )) { buffer += 4; len -= 4; }
 +    for (i = 0; i < ARRAY_SIZE(variables); i++)
 +    {
 +        if (!(path = dllmgr_get_path( variables[i] ))) continue;
@@ -151,7 +152,7 @@ index 6af4100..2f73ae5 100644
  /***************************************************************************
   *	get_load_order   (internal)
   *
-@@ -384,6 +432,7 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
+@@ -384,6 +433,7 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
      unsigned int i, len = nt_name->Length / sizeof(WCHAR);
      WCHAR *module, *basename;
  

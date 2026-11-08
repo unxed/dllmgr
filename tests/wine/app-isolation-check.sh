@@ -29,13 +29,16 @@ done
 python3 - "$bld" "$root" <<'PY'
 from pathlib import Path
 import sys
+import struct
 build, root = map(Path, sys.argv[1:])
 for arch in ('i386', 'x86_64'):
     for module, name in [('gdiplus', 'gdiplus'), ('comctl32_v6', 'comctl32')]:
         data = (build / 'dlls' / module / f'{arch}-windows' / f'{module}.dll').read_bytes()
         marker = b'Wine builtin DLL'
         assert marker in data[:128], (module, arch)
-        data = data.replace(marker, b'\0' * len(marker), 1)
+        data = bytearray(data.replace(marker, b'\0' * len(marker), 1))
+        pe = struct.unpack_from('<I', data, 0x3c)[0]
+        struct.pack_into('<I', data, pe + 8, 0xd11a600d)
         (root / 'private Юникод' / f'{name}-{arch}.dll').write_bytes(data)
 PY
 hash_shared() {
@@ -49,6 +52,7 @@ for arch in i386 x86_64; do
     export DLLMGR_GDIPLUS="Z:${root//\//\\}\\private Юникод\\gdiplus-$arch.dll"
     export DLLMGR_COMCTL32="Z:${root//\//\\}\\private Юникод\\comctl32-$arch.dll"
     "$wine" "$root/target Юникод/probe-$arch.exe" private "Z:${root//\//\\}\\other\\probe-$arch.exe" | tee "results/target-child-$arch.txt"
+    WINEDLLOVERRIDES='gdiplus,comctl32=b;mscoree,mshtml=' "$wine" "$root/target Юникод/probe-$arch.exe" private | tee "results/forced-builtin-$arch.txt"
     "$wine" "$root/target Юникод/other-$arch.exe" stock | tee "results/other-exe-$arch.txt"
     "$wine" "$root/other/probe-$arch.exe" stock | tee "results/same-name-$arch.txt"
     DLLMGR_TARGET_EXE= "$wine" "$root/target Юникод/probe-$arch.exe" stock | tee "results/no-rule-$arch.txt"

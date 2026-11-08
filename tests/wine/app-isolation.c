@@ -13,9 +13,16 @@ static int check(const WCHAR *name, const WCHAR *variable, int private_expected)
     WCHAR actual[32768], expected[32768];
     HMODULE module = LoadLibraryW(name);
     int match;
+    IMAGE_NT_HEADERS *headers;
     if (!module || !GetModuleFileNameW(module, actual, 32768)) return 1;
     if (!GetEnvironmentVariableW(variable, expected, 32768)) return 2;
     match = !wcsicmp(actual, expected);
+    headers = (IMAGE_NT_HEADERS *)((BYTE *)module + ((IMAGE_DOS_HEADER *)module)->e_lfanew);
+    if ((headers->FileHeader.TimeDateStamp == 0xd11a600d) != private_expected)
+    {
+        fprintf(stderr, "Unexpected actual mapped DLL timestamp: %08lx\n", headers->FileHeader.TimeDateStamp);
+        return 1;
+    }
     wprintf(L"%ls: %ls (%ls)\n", name, actual, match ? L"private" : L"stock");
     return match != private_expected;
 }

@@ -6,7 +6,8 @@ not installation over a system Wine or shared prefix DLL. Wine is licensed under
 LGPL-2.1-or-later; the accompanying complete modified source archive includes
 COPYING.LIB and original source notices. Reproduce with app-isolation-build.sh.
 
-A launcher sets LC_ALL=C.UTF-8 and these Windows paths, canonicalized by winepath -w:
+A launcher preserves the user UTF-8 locale (CI uses LC_ALL=C.UTF-8) and sets
+these Windows paths, canonicalized by winepath -w:
 
 - DLLMGR_TARGET_EXE: complete target EXE path, including its directory.
 - DLLMGR_GDIPLUS: private, builtin-marker-cleared GDI+ DLL path.
