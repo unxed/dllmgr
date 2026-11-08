@@ -25,11 +25,18 @@ Rules (owner's, non-negotiable):
 - Never open windows on the owner's desktop or use their default prefix:
   headless stand only (`scripts/sandbox-stand.sh session`), disposable
   prefixes.
-- Lawful clean-room reverse engineering of the target programs is allowed
-  (owner, 2026-11-08): one agent studies the binary and writes a plain-text
-  description of the behaviour into the repo; another agent implements from
-  that description only. Never copy vendor code or disassembly into our
-  code. Code is never sent to Wine; Wine gets words-only descriptions.
+- Lawful clean-room reverse engineering of the **target programs**
+  (Photoshop, FastStone, ...) is allowed (owner, 2026-11-08): one agent
+  studies the binary and writes a plain-text description of the behaviour
+  into the repo; another agent implements from that description only. Never
+  copy vendor code or disassembly into our code.
+- **Microsoft components stay black-box only** (Wine Clean Room Guidelines,
+  fix-it-in-wine SKILL.md rule 6): no disassembly, symbols or +relay of
+  Windows DLLs; Windows behaviour comes from probes run on Windows (e.g.
+  .github/workflows/windows-probes.yml). Code is never sent to Wine; Wine
+  gets words-only descriptions.
+- General Wine-fixing method and measurement rules live in the
+  fix-it-in-wine skill (SKILL.md); this repo keeps project-specific plans.
 - Do not post to WineHQ Bugzilla or other public trackers without the
   owner's explicit approval. Comments on this repo's own issues are fine.
 - Accept EULAs only with explicit owner approval (CS2 trial: approved).
