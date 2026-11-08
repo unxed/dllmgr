@@ -5,6 +5,52 @@ patch and reproducer per Wine bug, and build the application's combined DLLs
 from those patches together. Installing independent builds of the same DLL
 one after another would lose the earlier fixes.
 
+## Current delivered state (2026-11-08)
+
+**faststone-v4** is installed privately for the owner's exact FastStone image
+path. The composed DLLs cover names, icon-cell geometry, item coordinates,
+wheel scrolling, GDI+ pencil colour and the themed path dropdown including
+second-click-close repaint. The latter passes isolated/composed96/192DPI
+[CI42499612512](https://github.com/unxed/dllmgr/actions/runs/42499612512)
+and a hidden laptop test using the exact installed generation. No open user
+window was restarted; the next managed launch uses v4. Final owner visual
+acceptance of the close correction remains pending.
+
+Corrected font .009 and the AVIF WIC decoder remain separately managed,
+explicitly prefix-wide assets; their installed hashes are unchanged by v4.
+Shared Wine/system/SxS DLLs must not be replaced. Current installation rules:
+[app isolation](app-isolation.md). The older v2/shared-slot research notes below
+are historical evidence, not current product installation instructions.
+
+Remaining work is indexed in [issue8](https://github.com/unxed/dllmgr/issues/8)
+and [handoff](handoff.md): intermittent path-row corruption, startup/Draw Board
+latency, final capital-В font balance, the remaining input/Crop/redraw audit,
+white flash and composed management of the separate assets. Do not treat
+unreproduced intermittent symptoms as fixed.
+
+## Published Wine feedback
+
+The exact publication URLs and UTC times are in
+[the submissions ledger](bugzilla/submissions.json). Prepared files are not
+proof of publication; read the live report before sending another update.
+
+| Topic | Published report |
+| --- | --- |
+| Thumbnail cell overflow | [60711](https://bugs.winehq.org/show_bug.cgi?id=60711#c0) |
+| Missing names | [48872 c7](https://bugs.winehq.org/show_bug.cgi?id=48872#c7) |
+| Wheel behavior | [59251 c4](https://bugs.winehq.org/show_bug.cgi?id=59251#c4) |
+| Item coordinates | [59609 c8](https://bugs.winehq.org/show_bug.cgi?id=59609#c8) |
+| Pencil colour | [48874 c9](https://bugs.winehq.org/show_bug.cgi?id=48874#c9) |
+| AVIF decoder | [60703 c4](https://bugs.winehq.org/show_bug.cgi?id=60703#c4) |
+| Cyrillic Tahoma Bold and outline process | [26037 c14](https://bugs.winehq.org/show_bug.cgi?id=26037#c14), [c15](https://bugs.winehq.org/show_bug.cgi?id=26037#c15) |
+| Themed path button | [60720](https://bugs.winehq.org/show_bug.cgi?id=60720#c0) |
+| First-open image→white→image, unfixed | [60721](https://bugs.winehq.org/show_bug.cgi?id=60721#c0) |
+
+The new reports60720/60721 were posted with the owner's explicit authorization
+on2026-11-08, words only, without code or code links. Earlier updates were
+already published and were not duplicated. Photoshop reports from the merged
+chat are recorded separately in [its handoff](photoshop-handoff.md).
+
 ## Bugzilla audit
 
 Read the descriptions and all comments of the nine open results from
