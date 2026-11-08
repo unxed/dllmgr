@@ -19,3 +19,19 @@ pointer movement**, release and dwell, then move inside/outside the button.
 Avoid redundant activation or movement which could refresh the stale image.
 Compare Windows and Wine, preserve the installed private recipe, and use only
 an invisible display/disposable prefix or hosted CI.
+
+## Reproduced on the invisible stand
+
+The exact no-intervening-motion closing sequence reproduces on portable8.5,
+private v3 modules and192DPI. Dropped/public pressed/list-visible all become0
+but the button remains pixel-identical to its open/pressed appearance. After
+moving outside it changes1216 pixels. See v3-before.txt and v3-before-pixels.json.
+The expanded check fails on that v3 capture as required. Native module loading
+was verified. The earlier test moved before closing and therefore masked it.
+
+Source lead: the listbox's close path calls CBRollUp without requesting a button
+redraw. For CBS_DROPDOWNLIST that path repaints only the text rectangle. The
+candidate makes themed closing include the button; classic painting and public
+state/input stay unchanged. Candidate source: ../close-repaint.patch. It is not
+installed/published as a product fix yet. Manual path-dropdown workflow input
+close_repaint_candidate=true builds/tests it isolated and composed at96/192DPI.

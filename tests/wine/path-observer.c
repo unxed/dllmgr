@@ -115,16 +115,18 @@ static int observe_path(HWND first)
     Sleep(250);ok=capture_state("04-up",browser) && ok;
     /* Owner follow-up: mouse-up alone must be observed separately from motion. */
     Sleep(750);ok=capture_state("04-stationary",browser) && ok;
-    pointer(p.x-2,p.y,0);Sleep(250);ok=capture_state("04-move-inside",browser) && ok;
-    pointer(r.left-20,r.top-20,0);Sleep(250);ok=capture_state("04-move-outside",browser) && ok;
-    pointer(p.x,p.y,0);Sleep(250);ok=capture_state("04-return",browser) && ok;
-    /* Repeat on the same button; release is unconditional even after a capture failure. */
-    if(!activate_owned_window(browser)) return 7;
+    /* Do not move or re-activate before the closing click: either can mask a
+     * stale button repaint. The first click already established foreground. */
+    if(GetForegroundWindow()!=browser) return 7;
     event.mi.dwFlags=MOUSEEVENTF_LEFTDOWN;held=SendInput(1,&event,sizeof(event))==1;
     if(!held)return 8;
     Sleep(250);ok=capture_state("05-second-down",browser) && ok;
     event.mi.dwFlags=MOUSEEVENTF_LEFTUP;SendInput(1,&event,sizeof(event));held=0;
     Sleep(250);ok=capture_state("06-second-up",browser) && ok;
+    Sleep(750);ok=capture_state("06-stationary",browser) && ok;
+    pointer(p.x-2,p.y,0);Sleep(250);ok=capture_state("06-move-inside",browser) && ok;
+    pointer(r.left-20,r.top-20,0);Sleep(250);ok=capture_state("06-move-outside",browser) && ok;
+    pointer(p.x,p.y,0);Sleep(250);ok=capture_state("06-return",browser) && ok;
     if(!activate_owned_window(browser))return 7;
     press_key(VK_ESCAPE);Sleep(250);ok=capture_state("07-escape",browser) && ok;
     return ok?0:9;

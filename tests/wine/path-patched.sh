@@ -39,7 +39,7 @@ for selection in isolated combined; do
             git -C "$src" apply "$repo/patches/$fix.patch"
         done
     fi
-    git -C "$src" apply "$repo/patches/dllmgr-21.patch"
+    git -C "$src" apply "$repo/${COMBO_PATCH:-patches/dllmgr-21.patch}"
     bash "$repo/fiw/tools/build_one_dll.sh" wine-11.0 comctl32_v6 >"$out/build-$selection.txt"
     dll=$(grep '/i386-windows/comctl32_v6.dll$' "$out/build-$selection.txt")
     test -f "$dll"

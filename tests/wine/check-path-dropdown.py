@@ -14,9 +14,11 @@ if 'control_themed=1' not in text:
     raise SystemExit('Themed-button check requires a verified themed control')
 stages = ['00-initial', '01-hover', '02-down', '03-held', '04-up', '05-second-down', '06-second-up', '07-escape']
 expected = [(0,0,0),(0,0,0),(1,8,1),(1,8,1),(1,0,1),(0,0,0),(0,0,0),(0,0,0)]
-# Motion states are observed before the second click, with the same open popup.
-stages[5:5] = ['04-stationary','04-move-inside','04-move-outside','04-return']
-expected[5:5] = [(1,0,1)] * 4
+# The reported stale blue button is after the second click closes the popup.
+stages[7:7] = ['06-stationary','06-move-inside','06-move-outside','06-return']
+expected[7:7] = [(0,0,0)] * 4
+stages.insert(5, '04-stationary')
+expected.insert(5, (1,0,1))
 images = {}
 
 def button_pixels(path, box):
@@ -56,12 +58,14 @@ def changes(a,b):
 
 result = {'hover_to_down_pixels': changes('01-hover','02-down'),
           'down_to_held_pixels': changes('02-down','03-held'),
-          'down_to_up_pixels': changes('02-down','04-up')}
+          'down_to_up_pixels': changes('02-down','04-up'),
+          'pressed_to_closed_pixels': changes('02-down','06-second-up')}
 result.update({
     'up_to_stationary_pixels': changes('04-up','04-stationary'),
-    'stationary_to_inside_pixels': changes('04-stationary','04-move-inside'),
-    'inside_to_outside_pixels': changes('04-move-inside','04-move-outside'),
-    'outside_to_return_pixels': changes('04-move-outside','04-return'),
+    'closed_stationary_to_inside_pixels': changes('06-stationary','06-move-inside'),
+    'closed_inside_to_outside_pixels': changes('06-move-inside','06-move-outside'),
+    'closed_outside_to_return_pixels': changes('06-move-outside','06-return'),
+    'closed_hover_to_up_pixels': changes('01-hover','06-second-up'),
 })
 (args.folder / 'pixel-check.json').write_text(json.dumps(result,indent=2)+'\n')
 print(json.dumps(result))
@@ -73,3 +77,6 @@ if args.expect_release_change:
 else:
     if result['down_to_up_pixels'] != 0:
         raise SystemExit('Button painting changed after release while the dropdown stayed open')
+
+if result['pressed_to_closed_pixels'] == 0:
+    raise SystemExit('Closed dropdown retained the open pressed button until pointer motion')

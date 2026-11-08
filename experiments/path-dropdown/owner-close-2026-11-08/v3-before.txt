@@ -1,0 +1,19 @@
+initial_window hwnd=0000000000070142 class='TFullScreenWindow' title='' rect=0,0,3072,1728 dpi=192
+combo_candidate class=TTntComboBox.UnicodeClass chars=34
+control_themed=1 global_themed=1
+path_combo hwnd=0000000000020296 class='TTntComboBox.UnicodeClass' title='' rect=805,231,1764,273 dpi=192
+client=1800x1200 theme_hr=00000000 theme_color=Blue theme_size=NormalSize classic=0
+combo_style=54000253 dpi=192
+stage=00-initial dropped=0 button_state=0 focus_combo=0 capture_combo=0 list_visible=0 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=01-hover dropped=0 button_state=0 focus_combo=0 capture_combo=0 list_visible=0 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=02-down dropped=1 button_state=8 focus_combo=1 capture_combo=1 list_visible=1 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=03-held dropped=1 button_state=8 focus_combo=1 capture_combo=1 list_visible=1 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=04-up dropped=1 button_state=0 focus_combo=1 capture_combo=0 list_visible=1 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=04-stationary dropped=1 button_state=0 focus_combo=1 capture_combo=0 list_visible=1 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=05-second-down dropped=0 button_state=0 focus_combo=0 capture_combo=0 list_visible=0 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=06-second-up dropped=0 button_state=0 focus_combo=0 capture_combo=0 list_visible=0 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=06-stationary dropped=0 button_state=0 focus_combo=0 capture_combo=0 list_visible=0 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=06-move-inside dropped=0 button_state=0 focus_combo=0 capture_combo=0 list_visible=0 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=06-move-outside dropped=0 button_state=0 focus_combo=0 capture_combo=0 list_visible=0 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=06-return dropped=0 button_state=0 focus_combo=0 capture_combo=0 list_visible=0 combo_rect=805,231,1764,273 button=923,2,957,40
+stage=07-escape dropped=0 button_state=0 focus_combo=0 capture_combo=0 list_visible=0 combo_rect=805,231,1764,273 button=923,2,957,40

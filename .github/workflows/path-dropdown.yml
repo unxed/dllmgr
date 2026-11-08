@@ -9,6 +9,10 @@ on:
         description: Rebuild isolated and composed DLLs (disable for observer-only research)
         type: boolean
         default: true
+      close_repaint_candidate:
+        description: Test the unpublished close-button repaint candidate
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -120,6 +124,7 @@ jobs:
     env:
       WINEDEBUG: -all
       WINEDLLOVERRIDES: mscoree,mshtml=
+      COMBO_PATCH: ${{ inputs.close_repaint_candidate && 'experiments/path-dropdown/close-repaint.patch' || 'patches/dllmgr-21.patch' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
