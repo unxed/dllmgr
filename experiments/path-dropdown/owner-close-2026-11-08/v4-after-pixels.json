@@ -1,0 +1,11 @@
+{
+  "hover_to_down_pixels": 1216,
+  "down_to_held_pixels": 0,
+  "down_to_up_pixels": 0,
+  "pressed_to_closed_pixels": 1216,
+  "up_to_stationary_pixels": 0,
+  "closed_stationary_to_inside_pixels": 0,
+  "closed_inside_to_outside_pixels": 148,
+  "closed_outside_to_return_pixels": 148,
+  "closed_hover_to_up_pixels": 0
+}

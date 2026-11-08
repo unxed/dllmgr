@@ -14,14 +14,16 @@ Shared system/SxS DLL apply must stay disabled for product use. The resolved
 Photoshop incident (#25) covered only the self-extractor initial window; the
 new CS2 trial compatibility audit is tracked separately in #31.
 
-- [#21](https://github.com/unxed/dllmgr/issues/21): deliver the proven dropdown
-  paint correction is delivered and installed privately in `faststone-v3`
-  (main `15a038c`). Owner's four screenshots clarified a second-click close: the list is gone
-  but the button stays blue until pointer movement. Exact sequence reproduced
-  headlessly with v3; the prior test moved before closing and masked it.
-  Candidate themed-close repaint and failing-before gate are on main2ea67cf;
-  CI42499612512 builds isolated/composed96/192DPI variants. Deliver once proved. Separate severe intermittent
-  path-row corruption remains unreproduced. See experiments/path-dropdown/laptop-private-v3.json.
+- [#21](https://github.com/unxed/dllmgr/issues/21): the original dropdown
+  appearance correction and second-click close repaint are delivered and
+  installed privately in **faststone-v4** (54ff7f3; catalog identity correction
+  961c36d). Exact owner sequence fails on v3 and passes with the new DLL
+  isolated/composed at96/192DPI in CI42499612512; the exact installed DLLs
+  also pass headlessly on this laptop at192DPI. No user window was restarted;
+  next managed launch gets v4. Owner visual acceptance remains pending.
+  [Wine60720](https://bugs.winehq.org/show_bug.cgi?id=60720#c0) is posted.
+  Separate severe intermittent path-row corruption remains unreproduced.
+  See experiments/path-dropdown/owner-close-2026-11-08/.
   Its old research shared installer must not be reused.
 - [#22](https://github.com/unxed/dllmgr/issues/22): startup/Draw latency. The
   font-cache enlargement was rejected after actual-app A/B; branch
