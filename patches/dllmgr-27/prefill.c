@@ -15,10 +15,12 @@
  * Build (i686 for 32-bit FastStone): see build.sh. */
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <wchar.h>
 
 /* DLLMGR27_DEBUG=1: one line per decision on stderr (compact). */
 static int debug;
-#define TRACE(...) do { if (debug) { fprintf(stderr, "dllmgr27: " __VA_ARGS__); fflush(stderr); } } while (0)
+#define TRACE(...) do { if (debug) { fprintf(stderr, "dllmgr27[%04lx]: ", GetCurrentProcessId()); fprintf(stderr, __VA_ARGS__); fflush(stderr); } } while (0)
 
 static BOOL (WINAPI *real_show_window)(HWND, int);
 
@@ -255,6 +257,113 @@ static void hook_thread(void)
     SetWindowsHookExW(WH_CALLWNDPROCRET, after, self, tid);
 }
 
+/* Trampoline (issue 27, docs/tasks/27-every-launch-path.md): a stock-Wine
+ * start of the exe relaunches itself through the private runtime when a
+ * companion file "<this dll name>.dllmgr" exists next to the proxy. Its one
+ * line (UTF-8) is a Windows command-line prefix whose first, double-quoted
+ * token is the launcher, e.g.
+ *   "Z:\home\u\dllmgr\dllmgr" run faststone --
+ * The exe's own arguments are appended unchanged. Facts it relies on: Wine
+ * starts Unix programs with CreateProcessW but gives no waitable handle and
+ * passes only the original Unix environment, so the private process reports
+ * success by setting a named event instead (see DllMain). */
+#define TRAMP_EVENT L"dllmgr27-trampoline"
+static BOOL tramp_pending, idle;
+static HHOOK cbt_hook;
+
+static WCHAR *read_companion(void)
+{
+    WCHAR path[MAX_PATH + 16], *dot, *text = NULL;
+    char buf[4096];
+    DWORD got = 0, i;
+    HANDLE file;
+    int len;
+
+    if (!GetModuleFileNameW(self, path, MAX_PATH) || !(dot = wcsrchr(path, '.'))) return NULL;
+    lstrcpyW(dot, L".dllmgr");
+    file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (file == INVALID_HANDLE_VALUE) return NULL;
+    if (ReadFile(file, buf, sizeof(buf) - 1, &got, NULL)) {
+        for (i = 0; i < got && buf[i] != '\r' && buf[i] != '\n'; i++);
+        got = i;
+    } else got = 0;
+    CloseHandle(file);
+    if (got && buf[0] == '"' && (len = MultiByteToWideChar(CP_UTF8, 0, buf, got, NULL, 0)) > 0 &&
+        (text = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR)))) {
+        MultiByteToWideChar(CP_UTF8, 0, buf, got, text, len);
+        text[len] = 0;
+    }
+    return text;
+}
+
+/* Arguments of the current process: GetCommandLineW minus argv[0]. */
+static const WCHAR *own_arguments(void)
+{
+    const WCHAR *p = GetCommandLineW();
+    if (*p == '"') {
+        for (p++; *p && *p != '"'; p++);
+        if (*p) p++;
+    } else while (*p && *p != ' ' && *p != '\t') p++;
+    while (*p == ' ' || *p == '\t') p++;
+    return p;
+}
+
+static void trampoline(void)
+{
+    STARTUPINFOW si = {sizeof(si)};
+    PROCESS_INFORMATION pi;
+    WCHAR *prefix = read_companion(), *app = NULL, *cmd = NULL, *end;
+    const WCHAR *args = own_arguments();
+    char wait_text[16] = "";
+    DWORD wait = 15000, n;
+    HANDLE event = NULL;
+
+    if (!prefix || !(end = wcschr(prefix + 1, '"'))) goto done;
+    n = end - prefix - 1;
+    app = HeapAlloc(GetProcessHeap(), 0, (n + 1) * sizeof(WCHAR));
+    cmd = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(prefix) + lstrlenW(args) + 2) * sizeof(WCHAR));
+    if (!app || !cmd) goto done;
+    memcpy(app, prefix + 1, n * sizeof(WCHAR));
+    app[n] = 0;
+    lstrcpyW(cmd, prefix);
+    if (*args) {
+        lstrcatW(cmd, L" ");
+        lstrcatW(cmd, args);
+    }
+    if (GetEnvironmentVariableA("DLLMGR27_TRAMP_WAIT", wait_text, sizeof(wait_text))) wait = atoi(wait_text);
+    if (!(event = CreateEventW(NULL, TRUE, FALSE, TRAMP_EVENT))) goto done;
+    ResetEvent(event);
+    if (!CreateProcessW(app, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        TRACE("trampoline: cannot start launcher (error %lu), staying on stock Wine\n", GetLastError());
+        goto done;
+    }
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    TRACE("trampoline: started %ls, waiting %lu ms\n", cmd, wait);
+    if (WaitForSingleObject(event, wait) == WAIT_OBJECT_0) {
+        TRACE("trampoline: private runtime took over, exiting\n");
+        ExitProcess(0);
+    }
+    TRACE("trampoline: no signal from the private runtime, staying on stock Wine\n");
+done:
+    if (event) CloseHandle(event);
+    HeapFree(GetProcessHeap(), 0, prefix);
+    HeapFree(GetProcessHeap(), 0, app);
+    HeapFree(GetProcessHeap(), 0, cmd);
+}
+
+/* Before the first window of the process exists (Delphi creates its hidden
+ * application window first): relaunch, so nothing is shown twice. */
+static LRESULT CALLBACK cbt(int code, WPARAM wparam, LPARAM lparam)
+{
+    if (code == HCBT_CREATEWND && tramp_pending) {
+        tramp_pending = FALSE;
+        UnhookWindowsHookEx(cbt_hook);
+        trampoline();
+    }
+    return CallNextHookEx(NULL, code, wparam, lparam);
+}
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     char mode[8] = "";
@@ -263,13 +372,36 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     if (reason == DLL_PROCESS_ATTACH) {
         debug = GetEnvironmentVariableA("DLLMGR27_DEBUG", NULL, 0) != 0;
         self = instance;
+        /* Started by `dllmgr run` (private runtime with the real fix): tell a
+         * waiting stock-Wine trampoline that we are up, and add nothing else. */
+        if (GetEnvironmentVariableA("DLLMGR_TARGET_EXE", NULL, 0)) {
+            HANDLE event = OpenEventW(EVENT_MODIFY_STATE, FALSE, TRAMP_EVENT);
+            TRACE("private runtime: proxy idle, trampoline event %s\n", event ? "set" : "absent");
+            if (event) {
+                SetEvent(event);
+                CloseHandle(event);
+            }
+            idle = TRUE; /* DisableThreadLibraryCalls alone did not stop
+                          * DLL_THREAD_ATTACH under Wine 11.0 */
+            DisableThreadLibraryCalls(instance);
+            return TRUE;
+        }
+        if (!GetEnvironmentVariableA("DLLMGR27_NO_TRAMPOLINE", NULL, 0)) {
+            WCHAR *companion = read_companion();
+            if (companion) {
+                HeapFree(GetProcessHeap(), 0, companion);
+                tramp_pending = TRUE;
+                cbt_hook = SetWindowsHookExW(WH_CBT, cbt, instance, GetCurrentThreadId());
+                TRACE("trampoline armed\n");
+            }
+        }
         if (!lstrcmpiA(mode, "iat")) {
             /* legacy mode: only ShowWindow imported by the exe itself */
             DisableThreadLibraryCalls(instance);
             hook_import(GetModuleHandleW(NULL), "user32.dll", "ShowWindow", (void *)show_prefilled,
                         (void **)&real_show_window);
         } else hook_thread();
-    } else if (reason == DLL_THREAD_ATTACH && lstrcmpiA(mode, "iat")) {
+    } else if (reason == DLL_THREAD_ATTACH && !idle && lstrcmpiA(mode, "iat")) {
         hook_thread();
     }
     return TRUE;

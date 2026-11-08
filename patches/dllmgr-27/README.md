@@ -37,3 +37,19 @@ flush; only the Wine-side patch removes it. Notes: the first proxy build
 crashed the loader (Delphi images have no OriginalFirstThunk; slots are found
 by resolved address now). Only `ShowWindow` is hooked; windows shown via
 `SetWindowPos(SWP_SHOWWINDOW)` are not covered yet.
+
+## Trampoline (every launch path, 2026-11-09)
+
+If a companion file `<proxy name>.dllmgr` (e.g. `msimg32.dllmgr`) lies next
+to the proxy, a stock-Wine start of the exe relaunches itself through the
+private runtime before its first window exists. The file has one UTF-8 line:
+a Windows command-line prefix whose first token is the double-quoted
+launcher, e.g. `"Z:\home\u\dllmgr\dllmgr" run faststone --`; the exe's own
+arguments are appended. The stock process waits for the named event
+`dllmgr27-trampoline`, which the proxy sets when it loads inside the private
+runtime (DLLMGR_TARGET_EXE in the environment; the proxy is otherwise idle
+there), then exits. No signal within `DLLMGR27_TRAMP_WAIT` ms (default
+15000) or launcher not startable: it stays on stock Wine with the prefill
+backstop. `DLLMGR27_NO_TRAMPOLINE=1` disables only the trampoline.
+Test: tests/wine/trampoline-e2e.sh. Design and measurements:
+docs/tasks/27-every-launch-path.md.

@@ -113,3 +113,25 @@ Design changes forced by this:
   then end up forwarded to the private instance, which is the intent.
 - When: per-thread WH_CBT hook, HCBT_CREATEWND of the first window in the
   process (before any window exists; no IAT matching needed).
+
+## Prototype result (2026-11-09, patches/dllmgr-27/prefill.c)
+
+Stand :96, Metacity, stock Wine 11.0, prefix with the private FastStone fix,
+proxy + companion next to the installed FSViewer.exe,
+WINEDLLOVERRIDES=msimg32=n,b:
+- tests/wine/trampoline-e2e.sh: stock `wine FSViewer.exe a.jpg` -> window
+  from the process with the cached runtime's winex11.so; second stock start
+  `b.jpg` -> forwarded, 1 FSViewer.exe process. verdict=pass.
+- first-open-x.sh (X pixels): trampolined stock start 3/3 pass (image at
+  1094-1289 ms, white=0); plain stock 2/2 FAIL (white flash; image at
+  782-899 ms). Cost of the trampoline: about +0.3 s to the first image.
+- Fail-safe: launcher path missing -> "cannot start launcher (error 3)",
+  window on stock Wine at once; launcher exits without starting the private
+  runtime (`/bin/false`) -> stock Wine after DLLMGR27_TRAMP_WAIT.
+- Found: Wine 11.0 still calls DllMain(DLL_THREAD_ATTACH) after
+  DisableThreadLibraryCalls; the proxy keeps its own `idle` flag.
+
+Next (delivery): `dllmgr fix faststone` installs the CI-built proxy, the
+companion line (absolute launcher path of this dllmgr checkout) and the
+AppDefaults override; `status` checks them; `undo` removes them. Needs the
+proxy binary in a CI-built package (FS-1 step 1).
