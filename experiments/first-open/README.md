@@ -6,8 +6,9 @@ background before the first image is a different observation.
 
 `tests/wine/first-open-probe.c` creates its own FastStone process with an
 explicit synthetic image and expected center RGB. It never injects input.
-It samples nine screen points only while that process owns the foreground
-fullscreen window, rejecting invalid reads and foreground switches. An image
+It samples the centre while that process owns the foreground fullscreen window,
+then checks the remaining eight points only for a white candidate, rejecting
+invalid reads and foreground switches. An image
 is recognized by the explicit fixture colour; white means all nine samples
 are white. Sampling is not exhaustive frame capture and can miss short events
 or frames before foreground acquisition. Failed reproduction is not resolution.
@@ -142,3 +143,13 @@ Next: examine whether the first partial image paint and later surface
 creation/flush replace already-painted pixels. Compare an explicitly
 partially painted synthetic popup on Windows and Wine. Keep all tests
 on a hidden display or hosted runners.
+
+## Denser native observation (in progress)
+
+The earlier Windows run spent nine slow desktop GetPixel calls on every
+iteration, even while a solid expected image was already visible. The observer
+now reads the centre first and checks the other eight only when the centre is
+white. A white phase still requires9/9 white points and foreground ownership
+before/after sampling. Output records actual points read and capture duration.
+This reduces routine capture overhead; measured sampling density must still be
+checked on native Windows. It does not make the probe frame-exhaustive.
