@@ -1,5 +1,7 @@
 # Sandbox stand (Claude cloud session)
 
+New session? Start with [sandbox-agent-hints.md](sandbox-agent-hints.md).
+
 How to rebuild the headless Photoshop CS2 stand from zero in a fresh,
 disposable sandbox, so a reset session does not have to rediscover it.
 Complements docs/photoshop-handoff.md (owner's laptop stand) and issue #31.
@@ -70,6 +72,10 @@ and must not be used for reports.
   script above starts the same Xvfb+Muffin session without launching Photoshop.
 
 ## CS2 trial install steps (sandbox, 2026-11-08)
+
+Automated: `sandbox-stand.sh session sh scripts/sandbox-install-cs2.sh` on a
+fresh 192 DPI prefix (verified end to end into `prefix-auto`, a few minutes).
+The manual path it replays:
 
 All inside one `session` on `:93` with the prefix at 192 DPI.
 

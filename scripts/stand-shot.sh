@@ -42,7 +42,9 @@ win)
 	echo "$w \"$(xdotool getwindowname "$w")\" $(identify -format %wx%h "$SHOT_DIR/$2.png") -> $SHOT_DIR/$2-s.png" ;;
 root)
 	import -window root "$SHOT_DIR/$2.png"
-	convert "$SHOT_DIR/$2.png" -trim -resize "${3:-33%}" "$SHOT_DIR/$2-s.png"
+	# -trim fails on a flat (single-colour) screen; fall back to no trim.
+	convert "$SHOT_DIR/$2.png" -trim +repage -resize "${3:-33%}" "$SHOT_DIR/$2-s.png" 2>/dev/null ||
+		convert "$SHOT_DIR/$2.png" -resize "${3:-33%}" "$SHOT_DIR/$2-s.png"
 	echo "$SHOT_DIR/$2-s.png" ;;
 *) sed -n '2,15p' "$0"; exit 2 ;;
 esac
