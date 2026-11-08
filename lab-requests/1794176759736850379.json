@@ -1,0 +1,1 @@
+{"action": "run", "argv": ["sh", "-c", "cat /home/runner/work/dllmgr/dllmgr/session-evidence/product-state.txt; cat /home/runner/work/dllmgr/dllmgr/session-evidence/installed-exe.sha256; tail -n 15 /home/runner/work/dllmgr/dllmgr/session-evidence/photoshop.log; /opt/wine-stable/bin/wine /home/runner/work/_temp/codex-debian-8c42/cs2/control/windows-install.exe"], "timeout": 120}
