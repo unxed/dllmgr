@@ -69,6 +69,36 @@ remaining-work index. Completed #25 must not be mistaken for an unresolved
 Photoshop installation task; historical notes below are evidence, not current
 instructions to restore the unsafe shared-file method.
 
+## Latest continuation checkpoint (2026-11-08, second save)
+
+Supersedes the earlier emergency checkpoint below. Research and all sanitized
+results are pushed directly to main through75cba8d; no research job is running.
+
+- Rejected per-FSViewer.exe ClientSideGraphics=N in the **disposable** prefix:
+  white becomes black, with123–162ms image interruption. Undo restores white.
+  Normal prefix untouched. Evidence: experiments/first-open/client-side-graphics/.
+- The application observer now detects image→interruption→image independently
+  of colour and verifies both white and black candidates at9/9 points. Stock
+  Wine and direct drawing both record interruption=1; native Windows records0.
+- **New isolation:** a bounded message pump in the minimal popup changes Wine's
+  black centre to white before content paint. The old sleeping diagnostic never
+  processed exposure events. Native Windows retains yellow at the same stages.
+  CI42502597593 atbad8c38df75751e92040c22efde6e7ff8b1899ab succeeded; timelines
+  popup-pump-wine.txt/popup-pump-windows.txt and source are on main.
+- This establishes a presentation difference, not a guaranteed contract for
+  unpainted pixels or a correct fix. The actual-app Windows runs remain at
+  96DPI/1024x768, Wine192DPI/3072x1728. White flash is still **unfixed**.
+- Next technical step: trace the exposure callback/dirty-surface handling in
+  the minimal test and actual FS, preserving existing content until real paint.
+  Do not ship a white-to-black change or an ordinary native override for this
+  core/Unix rendering path.
+- New words-only Wine60721 follow-up is **prepared, not posted**, in
+  docs/bugzilla/winehq-60721-exposure.txt and the submissions ledger. Live ticket
+  was read and contained only c0; do not mark the prepared text as published.
+  Existing60720/60721 initial reports are already published. Re-read live
+  comments before submitting the follow-up to avoid duplicates.
+- Owner requests an immediate save again. No further experiments started.
+
 ## Emergency continuation checkpoint (2026-11-08, owner quota limit)
 
 Everything useful from this session is pushed to main; no research job remains
