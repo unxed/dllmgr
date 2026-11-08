@@ -1,0 +1,1 @@
+{"action": "run", "argv": ["bash", "-c", "cat \"$LAB_OUT/product-state.txt\""], "timeout": 30}
