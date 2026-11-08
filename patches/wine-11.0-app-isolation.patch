@@ -1,0 +1,148 @@
+diff --git a/dlls/ntdll/loader.c b/dlls/ntdll/loader.c
+index c5c3493..1cd1088 100644
+--- a/dlls/ntdll/loader.c
++++ b/dlls/ntdll/loader.c
+@@ -3248,6 +3248,37 @@ done:
+     return status;
+ }
+ 
++/* Private dllmgr runtime: opt in by the complete Windows image path.
++ * Do not redirect explicit paths, or propagate a basename rule to children. */
++static NTSTATUS find_dllmgr_dll( const WCHAR *libname, WCHAR **fullname )
++{
++    const WCHAR *variable;
++    UNICODE_STRING target, path;
++    NTSTATUS status;
++
++    if (!wcsicmp( libname, L"gdiplus.dll" )) variable = L"DLLMGR_GDIPLUS";
++    else if (!wcsicmp( libname, L"comctl32.dll" )) variable = L"DLLMGR_COMCTL32";
++    else return STATUS_SXS_KEY_NOT_FOUND;
++
++    if (get_env_var( L"DLLMGR_TARGET_EXE", 0, &target )) return STATUS_SXS_KEY_NOT_FOUND;
++    if (!RtlEqualUnicodeString( &target, &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName, TRUE ))
++    {
++        RtlFreeUnicodeString( &target );
++        return STATUS_SXS_KEY_NOT_FOUND;
++    }
++    RtlFreeUnicodeString( &target );
++    if ((status = get_env_var( variable, 0, &path ))) return STATUS_DLL_NOT_FOUND;
++    if (RtlDetermineDosPathNameType_U( path.Buffer ) != RtlPathTypeDriveAbsolute)
++    {
++        RtlFreeUnicodeString( &path );
++        return STATUS_DLL_NOT_FOUND;
++    }
++    TRACE( "dllmgr redirects %s to %s\n", debugstr_w(libname), debugstr_w(path.Buffer) );
++    *fullname = path.Buffer;
++    return STATUS_SUCCESS;
++}
++
++
+ /***********************************************************************
+  *	find_dll_file
+  *
+@@ -3267,13 +3298,19 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
+ 
+     if (!contains_path( libname ))
+     {
+-        status = find_apiset_dll( libname, &fullname );
+-        if (status == STATUS_DLL_NOT_FOUND) return status;
+-
+-        if (status)
++        status = find_dllmgr_dll( libname, &fullname );
++        if (status == STATUS_SUCCESS) *redirected = TRUE;
++        else if (status != STATUS_SXS_KEY_NOT_FOUND) return status;
++        else
+         {
+-            status = find_actctx_dll( libname, &fullname );
+-            if (status == STATUS_SUCCESS) *redirected = TRUE;
++            status = find_apiset_dll( libname, &fullname );
++            if (status == STATUS_DLL_NOT_FOUND) return status;
++
++            if (status)
++            {
++                status = find_actctx_dll( libname, &fullname );
++                if (status == STATUS_SUCCESS) *redirected = TRUE;
++            }
+         }
+ 
+         if (status == STATUS_SUCCESS)
+diff --git a/dlls/ntdll/unix/loadorder.c b/dlls/ntdll/unix/loadorder.c
+index 6af4100..2f73ae5 100644
+--- a/dlls/ntdll/unix/loadorder.c
++++ b/dlls/ntdll/unix/loadorder.c
+@@ -59,6 +59,7 @@ static HANDLE std_key;
+ static HANDLE app_key;
+ static BOOL init_done;
+ static BOOL main_exe_loaded;
++static WCHAR *dllmgr_app_name;
+ 
+ 
+ /***************************************************************************
+@@ -364,12 +365,59 @@ void set_load_order_app_name( const WCHAR *app_name )
+ {
+     const WCHAR *p;
+ 
++    if ((dllmgr_app_name = malloc( (wcslen(app_name) + 1) * sizeof(WCHAR) )))
++        wcscpy( dllmgr_app_name, app_name );
+     if ((p = wcsrchr( app_name, '\\' ))) app_name = p + 1;
+     app_key = open_app_key( app_name );
+     main_exe_loaded = TRUE;
+ }
+ 
+ 
++/* Use Wine's Unix-to-UTF16 conversion, as used for the process environment. */
++static WCHAR *dllmgr_get_path( const char *name )
++{
++    const char *value = getenv( name );
++    WCHAR *path;
++    size_t len;
++
++    if (!value) return NULL;
++    len = strlen(value) + 1;
++    if (!(path = malloc( len * sizeof(WCHAR) ))) return NULL;
++    ntdll_umbstowcs( value, len, path, len );
++    path[len - 1] = 0;
++    /* Only canonical drive-absolute Windows paths are accepted. */
++    if (!path[0] || path[1] != ':' || path[2] != '\\')
++    {
++        free( path );
++        return NULL;
++    }
++    return path;
++}
++
++static BOOL dllmgr_native_path( const UNICODE_STRING *name )
++{
++    static const char *variables[] = { "DLLMGR_GDIPLUS", "DLLMGR_COMCTL32" };
++    const WCHAR *buffer = name->Buffer;
++    unsigned int len = name->Length / sizeof(WCHAR), i;
++    WCHAR *path;
++    BOOL match;
++
++    if (!dllmgr_app_name || !(path = dllmgr_get_path( "DLLMGR_TARGET_EXE" ))) return FALSE;
++    match = !wcsicmp( path, dllmgr_app_name );
++    free( path );
++    if (!match) return FALSE;
++    if (len > 4 && !wcsncmp( buffer, L"\\??\\", 4 )) { buffer += 4; len -= 4; }
++    for (i = 0; i < ARRAY_SIZE(variables); i++)
++    {
++        if (!(path = dllmgr_get_path( variables[i] ))) continue;
++        match = wcslen(path) == len && !wcsnicmp( path, buffer, len );
++        free( path );
++        if (match) return TRUE;
++    }
++    return FALSE;
++}
++
++
+ /***************************************************************************
+  *	get_load_order   (internal)
+  *
+@@ -384,6 +432,7 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
+     unsigned int i, len = nt_name->Length / sizeof(WCHAR);
+     WCHAR *module, *basename;
+ 
++    if (dllmgr_native_path( nt_name )) return LO_NATIVE;
+     if (!init_done) init_load_order();
+ 
+     if (len > 4 && !wcsncmp( path, prefixW, 4 ))

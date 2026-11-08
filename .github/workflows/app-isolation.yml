@@ -1,0 +1,36 @@
+name: app-isolation
+on:
+  push:
+    branches: ['experiment/app-isolation-loader']
+    paths: ['patches/wine-11.0-app-isolation.patch', 'tests/wine/app-isolation*', '.github/workflows/app-isolation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: app-isolation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  isolation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Wine 11 and build dependencies
+        timeout-minutes: 6
+        run: bash tests/wine/ci-install.sh --winehq --install-recommends winehq-stable git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 libfreetype-dev libfontconfig-dev xvfb
+      - name: Build pinned private runtime
+        timeout-minutes: 14
+        run: bash tests/wine/app-isolation-build.sh
+      - name: Verify full executable path isolation
+        timeout-minutes: 4
+        run: xvfb-run -a bash tests/wine/app-isolation-check.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-isolation
+          path: |
+            out/isolation/
+            results/
+            ${{ runner.temp }}/wine-build/configure.log
+            ${{ runner.temp }}/wine-build/make.log
+            ${{ runner.temp }}/dllmgr-ci-install/
