@@ -8,11 +8,11 @@ profiles:
     wine: wine-11.0
     host_arch: x86_64
     prefix_arch: win64
-    release: faststone-v2
+    release: faststone-v3
 title: "FastStone Image Viewer: composed application fixes"
 programs: [FSViewer.exe]
 wine: [wine-11.0]
-fixes: [winehq-48872, winehq-48874, winehq-59251, winehq-59609, dllmgr-14]
+fixes: [winehq-48872, winehq-48874, winehq-59251, winehq-59609, dllmgr-14, dllmgr-21]
 ---
 
 # FastStone Image Viewer
@@ -33,12 +33,15 @@ dllmgr uninstall faststone
 dllmgr share faststone
 ```
 
-See [installation and sharing](../../docs/recipes.md). The profile restores
-missing names under the browser thumbnails in the 192 DPI app comparison.
-The four-patch build passed the native controls and GDI+ tests. The profile
-still has open app-specific issues including tile overflow, path-field
-repainting, fonts and performance. See [the audit](../../docs/faststone.md)
-and [the remaining reports](https://github.com/unxed/dllmgr/issues/8).
+See [installation and sharing](../../docs/recipes.md). `faststone-v3` composes
+six fixes: file/folder label geometry, colored pencil, fullscreen-strip wheel,
+item coordinates, tile bounds, and the path dropdown button's held/open
+appearance. The path correction passed actual FastStone checks on Windows
+and Wine at 96/192 DPI; the standalone fix is `dllmgr-21`.
+
+Remaining work includes the separate intermittent path-row corruption, the
+first-open white flash, font polish and startup/Draw performance. See
+[the audit](../../docs/faststone.md) and [the remaining issues](https://github.com/unxed/dllmgr/issues/8).
 
 Installation uses [a private runtime and explicit launcher](../../docs/app-isolation.md),
 not a replacement in shared system/SxS directories. Start with `dllmgr run

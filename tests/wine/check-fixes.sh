@@ -60,7 +60,7 @@ for exe in controls.exe controls6.exe; do
 done
 bundle_fixes=$(python3 scripts/catalog_fixes.py faststone)
 for selection in $bundle_fixes faststone; do
-    git -C "$src" restore -- dlls/comctl32/listview.c dlls/gdiplus/graphics.c
+    git -C "$src" restore -- dlls/comctl32/listview.c dlls/comctl32_v6/combo.c dlls/gdiplus/graphics.c
     fixes=$selection
     [ "$selection" != faststone ] || fixes=$bundle_fixes
     for fix in $fixes; do git -C "$src" apply "$GITHUB_WORKSPACE/patches/$fix.patch"; done

@@ -1,0 +1,135 @@
+name: Path dropdown research
+on:
+  push:
+    branches: ['research/faststone-path']
+    paths: ['tests/wine/path-*', 'tests/wine/check-path-dropdown.py', 'tests/wine/app-observer.c', 'tests/wine/listview-probe.*', 'patches/dllmgr-21.patch', '.github/workflows/path-dropdown.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: path-dropdown-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tests/wine/ci-install.sh gcc-mingw-w64-x86-64
+        timeout-minutes: 6
+      - run: x86_64-w64-mingw32-gcc -O2 -Wall -o path-observer.exe tests/wine/path-observer.c tests/wine/listview-probe.c -lgdi32 -luxtheme
+      - uses: actions/upload-artifact@v4
+        with:
+          name: path-observer
+          path: path-observer.exe
+  windows:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: path-observer
+      - shell: bash
+        run: |
+          set -euo pipefail
+          curl --max-time 90 -fsSL https://www.faststonesoft.net/DN/FSViewer85.zip -o fs85.zip
+          echo '685282a063b91daf4388b84be9e0daf3c5feed4073651137eb9fe9421cf39439  fs85.zip' | sha256sum -c
+          mkdir -p /c/dllmgr-path-test
+          unzip -q fs85.zip -d /c/dllmgr-path-test
+          (cd /c/dllmgr-path-test && python "$GITHUB_WORKSPACE/tests/wine/make-images.py")
+          mkdir captures
+          for mode in themed classic; do
+            rm -rf /c/dllmgr-path-test/FSViewer85
+            unzip -q fs85.zip -d /c/dllmgr-path-test
+            mkdir "captures/$mode"
+            args=(); if [ "$mode" = classic ]; then args+=(classic); fi
+            (cd "captures/$mode" && ../../path-observer.exe 'C:\dllmgr-path-test\FSViewer85\FSViewer.exe' 'C:\dllmgr-path-test\images\browser\00-landscape.bmp' "${args[@]}" >observations.txt)
+          done
+      - shell: bash
+        run: python tests/wine/check-path-dropdown.py captures/themed
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: path-windows
+          path: captures/
+  wine:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        dpi: [96, 192]
+    env:
+      WINEDEBUG: -all
+      WINEDLLOVERRIDES: mscoree,mshtml=
+      WINEPREFIX: /home/runner/dllmgr-path-prefix
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: path-observer
+      - run: bash tests/wine/ci-install.sh --winehq --install-recommends winehq-stable xvfb openbox
+        timeout-minutes: 6
+      - shell: bash
+        run: |
+          set -euo pipefail
+          curl --max-time 90 -fsSL https://www.faststonesoft.net/DN/FSViewer85.zip -o fs85.zip
+          echo '685282a063b91daf4388b84be9e0daf3c5feed4073651137eb9fe9421cf39439  fs85.zip' | sha256sum -c
+          mkdir -p "$WINEPREFIX/drive_c/dllmgr-path-test" captures
+          unzip -q fs85.zip -d "$WINEPREFIX/drive_c/dllmgr-path-test"
+          (cd "$WINEPREFIX/drive_c/dllmgr-path-test" && python3 "$GITHUB_WORKSPACE/tests/wine/make-images.py")
+          export TEST_DPI=${{ matrix.dpi }}
+          xvfb-run -a -s '-screen 0 2048x1536x24' bash -e -o pipefail -c '
+            openbox >captures/openbox.txt 2>&1 &
+            timeout 90 wineboot -u >captures/wineboot.txt 2>&1
+            wine reg add "HKCU\Control Panel\Desktop" /v LogPixels /t REG_DWORD /d "$TEST_DPI" /f
+            timeout 60 wineserver -w
+            for mode in themed classic; do
+              rm -rf "$WINEPREFIX/drive_c/dllmgr-path-test/FSViewer85"
+              unzip -q fs85.zip -d "$WINEPREFIX/drive_c/dllmgr-path-test"
+              mkdir "captures/$mode"
+              args=()
+              if [ "$mode" = classic ]; then
+                args+=(classic)
+                wine reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ThemeManager" /v ThemeActive /t REG_SZ /d 0 /f
+                timeout 60 wineserver -w
+              fi
+              (cd "captures/$mode" && timeout 75 wine ../../path-observer.exe "C:\dllmgr-path-test\FSViewer85\FSViewer.exe" "C:\dllmgr-path-test\images\browser\00-landscape.bmp" "${args[@]}" >observations.txt 2>errors.txt)
+            done
+          '
+      - run: python3 tests/wine/check-path-dropdown.py captures/themed --expect-release-change
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: path-wine-${{ matrix.dpi }}
+          path: captures/
+
+  patched:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      WINEDEBUG: -all
+      WINEDLLOVERRIDES: mscoree,mshtml=
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: unxed/fix-it-in-wine
+          ref: 5d2b8fa80071fc9ce6ce5b655bf143d6a00c6d7d
+          path: fiw
+      - uses: actions/download-artifact@v4
+        with:
+          name: path-observer
+      - run: bash tests/wine/ci-install.sh --winehq --install-recommends winehq-stable xvfb openbox gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
+        timeout-minutes: 6
+      - run: xvfb-run -a -s '-screen 0 2048x1536x24' bash -c 'openbox >/dev/null 2>&1 & exec bash tests/wine/path-patched.sh'
+        timeout-minutes: 12
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: path-patched
+          path: ${{ runner.temp }}/path-patched/

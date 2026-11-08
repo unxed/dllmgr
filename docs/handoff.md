@@ -10,8 +10,9 @@ This entry point supersedes older checkpoint instructions below. Follow
 [the immediate-delivery policy](development.md); do not accumulate finished
 work while broadening tests. The current app-private installation is documented
 in [app-isolation.md](app-isolation.md), delivered on main in `6d21cb1`.
-Shared system/SxS DLL apply must stay disabled for product use. Photoshop scope
-is only the self-extractor's initial window, not installation.
+Shared system/SxS DLL apply must stay disabled for product use. The resolved
+Photoshop incident (#25) covered only the self-extractor initial window; the
+new CS2 trial compatibility audit is tracked separately in #31.
 
 - [#21](https://github.com/unxed/dllmgr/issues/21): deliver the proven dropdown
   paint correction through private install; owner acceptance and the separate
@@ -36,6 +37,13 @@ is only the self-extractor's initial window, not installation.
 - [#18](https://github.com/unxed/dllmgr/issues/18): Far3/hiew and terminal
   protocols. Far3's standing Lunobot assignment remains `unxed/lunobot#322`;
   the added hiew/protocol scope is recorded only for now.
+
+Broader recorded project tasks: [#31](https://github.com/unxed/dllmgr/issues/31)
+(Photoshop CS2 compatibility audit and composed recipe),
+[#32](https://github.com/unxed/dllmgr/issues/32) (quick winetricks-style recipes),
+and [#33](https://github.com/unxed/dllmgr/issues/33) (future HTTP Range/package
+indexes, implement only when a practical task needs it). These have their own
+requirements and handoffs; they do not replace the current FastStone work.
 
 Parent [#8](https://github.com/unxed/dllmgr/issues/8) is the authoritative
 remaining-work index. Completed #25 must not be mistaken for an unresolved
