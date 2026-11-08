@@ -113,3 +113,16 @@ unpainted centre, then explicitly paint it. The manual Windows workflow runs
 this alongside the application observer. It records observations rather than
 asserting a contract for uninitialized window pixels; a matching blank popup
 alone would not establish that this is FastStone's exact path.
+
+## Minimal popup comparison (2026-11-08)
+
+At ea44732, [Windows CI42498050053](https://github.com/unxed/dllmgr/actions/runs/42498050053)
+passed. The minimal popup retained the yellow underlay before painting on
+Windows96DPI; local headless stock Wine192DPI showed black until painting.
+See [Windows samples](popup-windows.txt) and [Wine samples](popup-wine.txt).
+This establishes a difference in this synthetic unpainted-window observation,
+not yet FastStone's specific white flash or a guaranteed API contract.
+Next: correlate surface invalidation/flushing and the first partial paint in
+FastStone with a refined synthetic case; avoid simply replacing one flash colour
+with another. The actual-app Windows run again had44 valid samples, so its
+unsampled intervals remain a limitation.

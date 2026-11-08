@@ -50,6 +50,10 @@ new CS2 trial compatibility audit is tracked separately in #31.
   #34133/#10091 and the other Photoshop session's saved evidence. Keep separate
   from FastStone's white flash and coordinate with #31/#35.
 
+The merged Photoshop/TopPlan chat handoff is in [photoshop-handoff.md](photoshop-handoff.md),
+including published Wine comment URLs, the preserved invisible test stand,
+remaining #34/#35/#36 work and the owner-applied fix-it-in-wine#13 patch.
+
 Broader recorded project tasks: [#31](https://github.com/unxed/dllmgr/issues/31)
 (Photoshop CS2 compatibility audit and composed recipe),
 [#32](https://github.com/unxed/dllmgr/issues/32) (quick winetricks-style recipes),
