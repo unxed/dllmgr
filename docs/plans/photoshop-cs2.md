@@ -2,6 +2,31 @@
 
 Context: docs/photoshop-handoff.md (sandbox checkpoint), issue #31.
 
+## PS-0 (#31) Bugzilla audit: one verdict per row of docs/photoshop-wine-audit.md
+
+Executing agent, in this order: group A, then B, then C; D and E last (they
+are reading-only and can be batched 10 rows per commit).
+Per bug:
+1. Read the whole bug (all comments; attachment descriptions; linked bugs).
+   Determine the Photoshop version. If later than CS2 -> verdict
+   `skipped: later version X`; if not about Photoshop -> `skipped: not
+   Photoshop`. Never assume an unknown version is later: find it or mark
+   `insufficient data`.
+2. A/B/C rows: write the CS2 reproduction steps into the row's notes, run
+   them on the stand (STAND_WM=metacity unless the bug is WM-specific; then
+   also Muffin), CS2 installed by scripts/sandbox-install-cs2.sh. Separate
+   unpacker / installer / application. Judge by X pixels or exact text.
+3. Fill the Verdict cell; one commit per bug (A/B/C) or per 10 rows (D/E).
+4. Reproduces -> open a dllmgr issue "Photoshop CS2 / Wine N: ..." and stop
+   there: mechanism and fix design go to Opus (send reproducer + logs).
+5. Wine comments: draft words-only text in docs/bugzilla/ and the feedback
+   ledger (docs/bugzilla/submissions.json, status `prepared`); never post
+   yourself; never repeat already published comments (#31 lists them).
+Known shortcuts: 53571 is probably sandbox finding F14 (same installer
+step); 57715 (Illustrator) shares the #36 mechanism - record only.
+Stop and ask if: a bug needs hardware (tablet, scanner), a network service or
+a Windows license beyond the CS2 trial.
+
 ## PS-1 (#35) Windows CI: Open dialog sizes on real Windows
 
 Goal: three window rects on Windows for File > Open, Use Adobe Dialog, Use OS

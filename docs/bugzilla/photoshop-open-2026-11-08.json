@@ -1,0 +1,952 @@
+[
+ {
+  "summary": "No windows redraw or repaint in Adobe PhotoDeluxe Home Edition",
+  "last_change_time": "2020-04-14T07:16:09Z",
+  "creation_time": "2005-11-02T06:29:02Z",
+  "status": "NEW",
+  "version": "0.9.",
+  "resolution": "",
+  "id": 3739,
+  "component": "winex11.drv"
+ },
+ {
+  "last_change_time": "2024-07-09T19:21:34Z",
+  "creation_time": "2005-11-26T15:27:19Z",
+  "summary": "GameGuard does not work in several applications",
+  "status": "NEW",
+  "version": "0.9.2.",
+  "id": 3952,
+  "component": "-unknown",
+  "resolution": ""
+ },
+ {
+  "creation_time": "2006-10-06T19:34:51Z",
+  "last_change_time": "2019-10-27T05:47:24Z",
+  "summary": "the tooltip is not going away in rapget",
+  "status": "NEW",
+  "version": "0.9.22.",
+  "component": "comctl32",
+  "id": 6394,
+  "resolution": ""
+ },
+ {
+  "creation_time": "2006-10-23T16:47:53Z",
+  "last_change_time": "2016-08-28T18:42:12Z",
+  "summary": "wine cannot compile with icc",
+  "status": "NEW",
+  "version": "0.9.23.",
+  "component": "build-env",
+  "id": 6508,
+  "resolution": ""
+ },
+ {
+  "status": "STAGED",
+  "creation_time": "2007-04-14T19:58:13Z",
+  "last_change_time": "2023-12-13T01:10:07Z",
+  "summary": "The Sims 2 demo needs support for software vertex processing",
+  "id": 8051,
+  "component": "d3d",
+  "resolution": "",
+  "version": "0.9.35."
+ },
+ {
+  "version": "0.9.44.",
+  "id": 9623,
+  "component": "fonts",
+  "resolution": "",
+  "last_change_time": "2016-07-08T09:53:40Z",
+  "creation_time": "2007-09-10T02:09:39Z",
+  "summary": "Adobe Photoshop CS2 crashes without Times.TTF from corefonts (PS 7 affected somewhat, too)",
+  "status": "NEW"
+ },
+ {
+  "status": "REOPENED",
+  "summary": "ImageReady CS and CS2 crash on startup",
+  "last_change_time": "2019-07-23T10:36:24Z",
+  "creation_time": "2007-09-27T15:50:55Z",
+  "resolution": "",
+  "component": "user32",
+  "id": 9802,
+  "version": "0.9.44."
+ },
+ {
+  "summary": "Adobe Photoshop 7 main tool window disappears",
+  "last_change_time": "2023-04-20T00:40:10Z",
+  "creation_time": "2007-12-18T03:37:11Z",
+  "status": "NEW",
+  "version": "0.9.51.",
+  "resolution": "",
+  "id": 10814,
+  "component": "-unknown"
+ },
+ {
+  "last_change_time": "2026-11-08T15:54:54Z",
+  "creation_time": "2008-01-31T02:24:10Z",
+  "summary": "Adobe Photoshop CS2: splash screen z-order problem",
+  "status": "NEEDINFO",
+  "version": "0.9.54.",
+  "id": 11412,
+  "component": "-unknown",
+  "resolution": ""
+ },
+ {
+  "version": "0.9.56.",
+  "resolution": "",
+  "component": "wintab32",
+  "id": 11846,
+  "summary": "tablet pressure sensitivity not working in Sai and many other key graphic applications",
+  "last_change_time": "2026-01-11T10:06:59Z",
+  "creation_time": "2008-03-05T08:06:41Z",
+  "status": "STAGED"
+ },
+ {
+  "summary": "Adobe Photoshop 7.0 Dragging Layers between Images dont work",
+  "last_change_time": "2023-04-20T00:42:54Z",
+  "creation_time": "2008-03-12T09:55:07Z",
+  "status": "STAGED",
+  "version": "0.9.57.",
+  "resolution": "",
+  "id": 12007,
+  "component": "user32"
+ },
+ {
+  "version": "unspecified",
+  "resolution": "",
+  "id": 12464,
+  "component": "shell32",
+  "summary": "ShellExecute does not integrate well with external handlers",
+  "last_change_time": "2016-09-09T15:55:17Z",
+  "creation_time": "2008-04-09T09:16:30Z",
+  "status": "NEW"
+ },
+ {
+  "resolution": "",
+  "status": "NEEDINFO",
+  "id": 15572,
+  "component": "-unknown",
+  "version": "1.1.6",
+  "summary": "Adobe Photoshop CS3 and InDesign CS3 have z-order problems and general painting glitches",
+  "creation_time": "2008-10-10T13:06:16Z",
+  "last_change_time": "2023-04-20T00:26:52Z"
+ },
+ {
+  "status": "NEW",
+  "id": 15583,
+  "component": "-unknown",
+  "resolution": "",
+  "creation_time": "2008-10-11T14:13:33Z",
+  "last_change_time": "2026-01-22T10:56:38Z",
+  "version": "1.1.6",
+  "summary": "Adobe Photoshop, Dreamweaver CS3 Installer look really bad"
+ },
+ {
+  "summary": "Photoshop CS3 installation fails due to Bonjour Service startup error",
+  "last_change_time": "2025-06-04T15:22:28Z",
+  "creation_time": "2008-10-12T04:46:15Z",
+  "status": "NEW",
+  "version": "1.1.6",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 15590
+ },
+ {
+  "id": 15932,
+  "component": "comdlg32",
+  "resolution": "",
+  "version": "1.1.7",
+  "status": "NEW",
+  "last_change_time": "2023-04-20T00:43:25Z",
+  "creation_time": "2008-11-06T09:39:46Z",
+  "summary": "Adobe Photoshop 7, CS3 can't load images from URLs"
+ },
+ {
+  "version": "1.1.5",
+  "resolution": "",
+  "id": 16417,
+  "component": "-unknown",
+  "summary": "Scanning with Photoshop CS does give an error",
+  "creation_time": "2008-12-08T09:11:43Z",
+  "last_change_time": "2017-10-09T15:36:46Z",
+  "status": "NEW"
+ },
+ {
+  "resolution": "",
+  "status": "STAGED",
+  "id": 18517,
+  "component": "wintab32",
+  "summary": "Tablet pen pressure or eraser (wacom tablet) are not working in Photoshop CS 4/5",
+  "version": "1.1.21",
+  "creation_time": "2009-05-18T08:47:56Z",
+  "last_change_time": "2023-04-20T00:23:04Z"
+ },
+ {
+  "status": "NEW",
+  "last_change_time": "2014-04-15T02:52:06Z",
+  "creation_time": "2009-07-15T00:38:29Z",
+  "summary": "Shortcuts designed to go to All Users\\Start Menu\\Programs are instead going to User\\Start Menu\\Programs (appinstall)",
+  "component": "-unknown",
+  "id": 19328,
+  "resolution": "",
+  "version": "1.1.25"
+ },
+ {
+  "version": "1.1.25",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 19343,
+  "summary": "Adobe Photoshop CS2: Edit controls have wrong names (appinstall)",
+  "creation_time": "2009-07-16T02:56:07Z",
+  "last_change_time": "2026-02-20T19:37:12Z",
+  "status": "NEW"
+ },
+ {
+  "status": "NEW",
+  "creation_time": "2009-07-16T04:01:55Z",
+  "last_change_time": "2016-04-03T20:58:32Z",
+  "summary": "Adobe Photoshop CS2: Some files missing on installation (appinstall)",
+  "id": 19344,
+  "component": "-unknown",
+  "resolution": "",
+  "version": "1.1.25"
+ },
+ {
+  "resolution": "",
+  "component": "-unknown",
+  "id": 20877,
+  "version": "1.1.33",
+  "status": "NEW",
+  "summary": "Adobe Bridge cs4 hardware rendering not working",
+  "last_change_time": "2017-12-21T10:09:42Z",
+  "creation_time": "2009-11-30T07:09:50Z"
+ },
+ {
+  "resolution": "",
+  "id": 21017,
+  "component": "-unknown",
+  "version": "1.1.34",
+  "status": "NEW",
+  "summary": "Adobe Premiere Pro CS4 won't start",
+  "creation_time": "2009-12-14T16:50:22Z",
+  "last_change_time": "2026-02-05T01:52:24Z"
+ },
+ {
+  "component": "appdb-unknown",
+  "id": 23158,
+  "resolution": "",
+  "version": "unspecified",
+  "status": "NEW",
+  "last_change_time": "2022-01-23T19:06:39Z",
+  "creation_time": "2010-06-13T12:05:49Z",
+  "summary": "Enhance appdb search filters to allow searching for regressions"
+ },
+ {
+  "last_change_time": "2016-10-26T05:15:29Z",
+  "creation_time": "2010-08-04T10:35:21Z",
+  "summary": "Adobe Photoshop CS5 tool windows stay visible after switching to another program",
+  "status": "NEW",
+  "version": "1.2",
+  "id": 23898,
+  "component": "-unknown",
+  "resolution": ""
+ },
+ {
+  "status": "NEW",
+  "creation_time": "2011-01-07T07:59:37Z",
+  "last_change_time": "2023-04-20T00:43:59Z",
+  "summary": "Some apps doesn't recieve focus in Virtual Desktop Mode",
+  "id": 25709,
+  "component": "-unknown",
+  "resolution": "",
+  "version": "1.3.10"
+ },
+ {
+  "status": "NEW",
+  "id": 25912,
+  "component": "winex11.drv",
+  "resolution": "",
+  "creation_time": "2011-01-28T15:12:06Z",
+  "last_change_time": "2021-02-08T06:01:27Z",
+  "summary": "Multiple applications (Google SketchUp 7/8, Photoshop CS6, Mol) don't display the last drawn frame promptly when using binary drivers from Nvidia",
+  "version": "1.3.11"
+ },
+ {
+  "resolution": "",
+  "id": 30615,
+  "component": "gdi32",
+  "version": "1.5.3",
+  "status": "NEW",
+  "summary": "Adobe Audition CS6 (5.0) shows distorted mixer user interface",
+  "last_change_time": "2024-11-17T10:49:35Z",
+  "creation_time": "2012-05-07T06:34:52Z"
+ },
+ {
+  "version": "1.1.22",
+  "id": 32900,
+  "component": "-unknown",
+  "resolution": "",
+  "last_change_time": "2023-08-05T17:12:19Z",
+  "creation_time": "2013-02-05T12:44:42Z",
+  "summary": "The Bat 5.2.2 - keyboard keys stick",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "status": "NEW",
+  "creation_time": "2013-06-28T09:33:51Z",
+  "last_change_time": "2026-11-08T15:54:19Z",
+  "summary": "Minimising Photoshop CS2 and restore it doesn't restore the draws",
+  "component": "-unknown",
+  "id": 33906,
+  "resolution": "",
+  "version": "1.6-rc3"
+ },
+ {
+  "creation_time": "2014-03-17T15:05:35Z",
+  "last_change_time": "2020-04-14T09:56:24Z",
+  "summary": "\"Open file...\" box doesn't display image preview in Photoshop CS6",
+  "status": "NEW",
+  "version": "1.7.14",
+  "id": 35805,
+  "component": "-unknown",
+  "resolution": ""
+ },
+ {
+  "version": "1.7.34",
+  "resolution": "",
+  "id": 37928,
+  "component": "-unknown",
+  "summary": "Photoshop CS6: Mini-bridge panel does not show directory entries in alphabetical order",
+  "creation_time": "2015-01-19T02:49:36Z",
+  "last_change_time": "2020-08-19T04:06:23Z",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "status": "UNCONFIRMED",
+  "summary": "Photoshop CS6: save for web dialog ( and others ) blur when tooltips are expected to appear",
+  "creation_time": "2015-01-19T02:58:35Z",
+  "last_change_time": "2020-04-03T03:57:56Z",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 37929,
+  "version": "1.7.34"
+ },
+ {
+  "id": 38065,
+  "component": "-unknown",
+  "resolution": "",
+  "version": "1.7.36",
+  "status": "UNCONFIRMED",
+  "last_change_time": "2023-04-20T00:21:16Z",
+  "creation_time": "2015-02-11T04:59:25Z",
+  "summary": "Adobe Photoshop CS3 broken appearance"
+ },
+ {
+  "status": "UNCONFIRMED",
+  "id": 38105,
+  "component": "-unknown",
+  "resolution": "",
+  "creation_time": "2015-02-17T15:42:16Z",
+  "last_change_time": "2022-01-25T01:17:44Z",
+  "version": "1.7.36",
+  "summary": "Missing window control mechanisms (min/max/expand) and dragging ability while application is in unmaximized state"
+ },
+ {
+  "summary": "Photoshop CS2: Crash at Open file window with choosing multiple files to load",
+  "last_change_time": "2023-04-20T00:38:35Z",
+  "creation_time": "2015-03-18T10:46:51Z",
+  "status": "UNCONFIRMED",
+  "version": "1.7.38",
+  "resolution": "",
+  "id": 38244,
+  "component": "comdlg32"
+ },
+ {
+  "creation_time": "2015-05-01T04:35:07Z",
+  "last_change_time": "2020-04-14T09:48:42Z",
+  "summary": "winetricks fontsmooth-rgb partially smooth fonts in Photoshop CS6",
+  "status": "UNCONFIRMED",
+  "version": "1.7.40",
+  "id": 38512,
+  "component": "-unknown",
+  "resolution": ""
+ },
+ {
+  "summary": "Fireworks CS6 window stays on top of other windows",
+  "version": "1.7.49",
+  "last_change_time": "2020-04-14T09:47:56Z",
+  "creation_time": "2015-08-13T21:21:15Z",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 39085,
+  "status": "UNCONFIRMED"
+ },
+ {
+  "version": "1.7.49",
+  "component": "-unknown",
+  "id": 39087,
+  "resolution": "",
+  "last_change_time": "2020-04-14T09:47:19Z",
+  "creation_time": "2015-08-13T21:53:28Z",
+  "summary": "Photoshop CS6 won't save on a gvfs mounted share",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "status": "UNCONFIRMED",
+  "last_change_time": "2020-04-14T09:43:26Z",
+  "creation_time": "2015-09-24T16:44:43Z",
+  "summary": "PhotoShop CC 2014: Names in font dropdown list go blank after scroll down from top.",
+  "component": "-unknown",
+  "id": 39325,
+  "resolution": "",
+  "version": "1.7.50"
+ },
+ {
+  "summary": "PhotoShop CC 2014: Keyboard Shortcut list blank after scrolling down",
+  "creation_time": "2015-09-24T16:48:42Z",
+  "last_change_time": "2020-04-14T09:43:06Z",
+  "status": "UNCONFIRMED",
+  "version": "1.7.50",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 39326
+ },
+ {
+  "status": "UNCONFIRMED",
+  "creation_time": "2015-09-24T16:51:00Z",
+  "last_change_time": "2020-04-14T09:42:44Z",
+  "summary": "PhotoShop CC 2014: Names in layers window go blank after scroll down",
+  "component": "-unknown",
+  "id": 39327,
+  "resolution": "",
+  "version": "1.7.50"
+ },
+ {
+  "version": "1.7.50",
+  "component": "-unknown",
+  "id": 39328,
+  "resolution": "",
+  "creation_time": "2015-09-24T16:54:13Z",
+  "last_change_time": "2020-04-14T09:42:31Z",
+  "summary": "PhotoShop CC 2014: Top tool bar has blank spaces occasionally",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "last_change_time": "2020-04-14T09:42:06Z",
+  "creation_time": "2015-09-24T16:57:16Z",
+  "summary": "PhotoShop CC 2014: Pen tool ALT function not working when drawing shap",
+  "status": "UNCONFIRMED",
+  "version": "1.7.50",
+  "id": 39329,
+  "component": "-unknown",
+  "resolution": ""
+ },
+ {
+  "resolution": "",
+  "id": 39330,
+  "component": "-unknown",
+  "status": "UNCONFIRMED",
+  "summary": "PhotoShop CC 2014: Preferences window sub-section titles not displaying",
+  "version": "1.7.50",
+  "last_change_time": "2020-04-14T09:41:19Z",
+  "creation_time": "2015-09-24T16:59:13Z"
+ },
+ {
+  "last_change_time": "2020-04-14T09:40:00Z",
+  "creation_time": "2015-10-19T09:31:26Z",
+  "version": "1.7.52",
+  "summary": "Photoshop CS6: dragging a layer does not make it transparent",
+  "id": 39476,
+  "component": "-unknown",
+  "status": "UNCONFIRMED",
+  "resolution": ""
+ },
+ {
+  "version": "1.7.52",
+  "id": 39547,
+  "component": "-unknown",
+  "resolution": "",
+  "creation_time": "2015-11-02T23:51:54Z",
+  "last_change_time": "2021-03-14T16:40:23Z",
+  "summary": "OllyDbg 2.x tooltips steal focus from their parent window",
+  "status": "NEW"
+ },
+ {
+  "component": "-unknown",
+  "id": 39929,
+  "status": "UNCONFIRMED",
+  "resolution": "",
+  "last_change_time": "2023-04-20T00:37:36Z",
+  "creation_time": "2016-01-05T10:08:28Z",
+  "version": "1.9.0",
+  "summary": "Photoshop CC 2015 doesn't run if it is not cleaned up \"SLCache\""
+ },
+ {
+  "summary": "Evernote 6.1.x: search box loses focus due to tooltips",
+  "version": "1.9.15",
+  "last_change_time": "2021-08-27T15:14:07Z",
+  "creation_time": "2016-08-04T05:49:41Z",
+  "resolution": "",
+  "id": 41062,
+  "component": "-unknown",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "component": "user32",
+  "id": 41595,
+  "resolution": "",
+  "version": "1.8.5",
+  "status": "UNCONFIRMED",
+  "last_change_time": "2020-04-14T09:28:41Z",
+  "creation_time": "2016-10-22T09:54:01Z",
+  "summary": "Photoshop Palettes Remain Above All X11 Windows"
+ },
+ {
+  "summary": "Photoshop CS5 loading problem",
+  "version": "2.0-rc1",
+  "creation_time": "2016-12-13T00:36:13Z",
+  "last_change_time": "2023-04-20T00:16:45Z",
+  "resolution": "",
+  "status": "UNCONFIRMED",
+  "id": 41980,
+  "component": "-unknown"
+ },
+ {
+  "version": "1.9.23",
+  "resolution": "",
+  "component": "gdiplus",
+  "id": 42034,
+  "summary": "Photoshop CC 2015: Incorrect/Missing texts with builtin gdiplus when using custom theme",
+  "creation_time": "2016-12-20T05:22:28Z",
+  "last_change_time": "2024-07-02T20:22:36Z",
+  "status": "NEW"
+ },
+ {
+  "component": "-unknown",
+  "id": 42981,
+  "resolution": "",
+  "version": "2.7",
+  "status": "NEW",
+  "last_change_time": "2023-04-20T00:31:32Z",
+  "creation_time": "2017-05-09T04:06:32Z",
+  "summary": "Photoshop CS6, Illustrator CS6 - pressing down when a menu is open switches to the next menu"
+ },
+ {
+  "status": "UNCONFIRMED",
+  "last_change_time": "2024-03-05T07:26:18Z",
+  "creation_time": "2017-09-11T05:58:12Z",
+  "summary": "Photoshop CS6, clicking on mini-bridge thumbnail crashes bridge with backtrace (JPG files only)",
+  "id": 43693,
+  "component": "-unknown",
+  "resolution": "",
+  "version": "2.16"
+ },
+ {
+  "version": "2.19",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 43908,
+  "summary": "Photoshop Elements 11: Crashes when opening a previously created Photoshop document (PSD) file.",
+  "last_change_time": "2020-04-14T09:01:49Z",
+  "creation_time": "2017-10-20T12:53:16Z",
+  "status": "NEEDINFO"
+ },
+ {
+  "status": "UNCONFIRMED",
+  "creation_time": "2018-03-24T09:43:19Z",
+  "last_change_time": "2023-04-20T00:36:21Z",
+  "summary": "Photoshop CS6: active preference category background color is too dark",
+  "component": "-unknown",
+  "id": 44806,
+  "resolution": "",
+  "version": "3.4"
+ },
+ {
+  "creation_time": "2018-03-24T10:05:30Z",
+  "last_change_time": "2023-04-20T00:38:50Z",
+  "version": "3.4",
+  "summary": "Photoshop CS6 - dragging a guide generates a position indicator with transparent foreground color",
+  "status": "UNCONFIRMED",
+  "component": "-unknown",
+  "id": 44807,
+  "resolution": ""
+ },
+ {
+  "status": "STAGED",
+  "creation_time": "2018-04-07T07:51:32Z",
+  "last_change_time": "2025-06-02T08:53:17Z",
+  "summary": "Macromedia Director Player 5.0/6.0 based games fail to run: \"This program requires at least 3MB of free virtual memory to run\" (Nine: The last Resort)",
+  "id": 44931,
+  "component": "kernel32",
+  "resolution": "",
+  "version": "3.6"
+ },
+ {
+  "resolution": "",
+  "id": 45277,
+  "component": "winevulkan",
+  "version": "3.9",
+  "status": "NEW",
+  "summary": "Multiple applications need Vulkan child window rendering (DxO PhotoLab, Affinity Photo, Google Earth Pro, Autodesk Fusion 360)",
+  "last_change_time": "2026-02-13T08:23:46Z",
+  "creation_time": "2018-06-02T04:18:50Z"
+ },
+ {
+  "last_change_time": "2023-04-20T00:39:31Z",
+  "creation_time": "2018-06-18T19:42:19Z",
+  "summary": "Photoshop CS6 doesn't recognize images copied to clipboard by Chromium",
+  "status": "NEEDINFO",
+  "version": "3.10",
+  "component": "winex11.drv",
+  "id": 45348,
+  "resolution": ""
+ },
+ {
+  "version": "3.19",
+  "id": 46096,
+  "component": "-unknown",
+  "resolution": "",
+  "last_change_time": "2023-04-20T00:39:48Z",
+  "creation_time": "2018-11-05T07:36:39Z",
+  "summary": "Adobe Photoshop CS4 Installer hangs",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "resolution": "",
+  "component": "-unknown",
+  "id": 47012,
+  "version": "4.5",
+  "status": "UNCONFIRMED",
+  "summary": "Photoshop Installer crashes after showing blank window",
+  "last_change_time": "2019-09-02T01:48:17Z",
+  "creation_time": "2019-04-14T12:35:18Z"
+ },
+ {
+  "version": "4.0",
+  "resolution": "",
+  "id": 47329,
+  "component": "-unknown",
+  "summary": "Adobe CC setup program looks broken",
+  "last_change_time": "2019-06-14T10:36:33Z",
+  "creation_time": "2019-06-08T03:00:53Z",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "status": "UNCONFIRMED",
+  "component": "-unknown",
+  "id": 48435,
+  "resolution": "",
+  "creation_time": "2020-01-09T01:40:15Z",
+  "last_change_time": "2020-04-14T08:21:42Z",
+  "version": "4.0",
+  "summary": "Photoshop Cs3 Page fault while loading"
+ },
+ {
+  "version": "5.0-rc3",
+  "id": 48439,
+  "component": "-unknown",
+  "resolution": "",
+  "creation_time": "2020-01-10T07:01:59Z",
+  "last_change_time": "2025-06-14T14:43:20Z",
+  "summary": "Tool selection bug in adobe Photoshop on Linux mint",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "resolution": "",
+  "component": "-unknown",
+  "id": 49031,
+  "version": "5.6",
+  "status": "UNCONFIRMED",
+  "summary": "Photoshop Elements 2020 - Installer hangs with blank screen",
+  "creation_time": "2020-04-27T05:38:30Z",
+  "last_change_time": "2024-08-12T02:13:59Z"
+ },
+ {
+  "summary": "Installer failed to initialize for Photoshop CS6 installer",
+  "creation_time": "2020-10-15T22:29:29Z",
+  "last_change_time": "2023-04-20T23:22:04Z",
+  "status": "UNCONFIRMED",
+  "version": "5.19",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 50012
+ },
+ {
+  "version": "6.0",
+  "component": "-unknown",
+  "id": 50817,
+  "resolution": "",
+  "last_change_time": "2021-03-17T05:43:15Z",
+  "creation_time": "2021-03-17T05:42:40Z",
+  "summary": "Photoshop CC (all versions) reset windows position when click on them",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "summary": "Map editor of Heroes of Might and Magic 5 completely not working",
+  "creation_time": "2021-03-26T12:10:53Z",
+  "last_change_time": "2025-12-27T19:00:37Z",
+  "status": "UNCONFIRMED",
+  "version": "6.4",
+  "resolution": "",
+  "id": 50865,
+  "component": "-unknown"
+ },
+ {
+  "status": "NEW",
+  "creation_time": "2021-04-13T13:35:46Z",
+  "last_change_time": "2023-04-20T00:23:41Z",
+  "summary": "Photoshop CC 2021 fails to start",
+  "component": "-unknown",
+  "id": 50990,
+  "resolution": "",
+  "version": "6.4"
+ },
+ {
+  "version": "9.5",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 50999,
+  "summary": "Adobe Creative Cloud can't be installed",
+  "last_change_time": "2026-01-21T21:55:02Z",
+  "creation_time": "2021-04-14T13:45:21Z",
+  "status": "NEW"
+ },
+ {
+  "version": "6.0",
+  "resolution": "",
+  "id": 51132,
+  "component": "-unknown",
+  "summary": "Adobe Photoshop CS6 crashes on start",
+  "creation_time": "2021-05-12T01:15:32Z",
+  "last_change_time": "2023-04-20T00:24:22Z",
+  "status": "NEEDINFO"
+ },
+ {
+  "version": "6.14",
+  "component": "-unknown",
+  "id": 51581,
+  "resolution": "",
+  "creation_time": "2021-08-08T18:56:36Z",
+  "last_change_time": "2021-08-11T12:57:08Z",
+  "summary": "OleView crashes with unimplemented function acledit.dll.SedDiscretionaryAclEditor",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "version": "6.6",
+  "component": "-unknown",
+  "id": 51606,
+  "resolution": "",
+  "last_change_time": "2026-01-21T21:46:55Z",
+  "creation_time": "2021-08-15T01:20:17Z",
+  "summary": "Adobe Creative Cloud and apps like Photoshop CC need a browser to login",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "status": "NEW",
+  "creation_time": "2021-10-29T18:30:46Z",
+  "last_change_time": "2023-07-18T19:04:42Z",
+  "summary": "cardfile: black boxes for windows",
+  "id": 51949,
+  "component": "-unknown",
+  "resolution": "",
+  "version": "6.20"
+ },
+ {
+  "creation_time": "2021-11-07T11:05:35Z",
+  "last_change_time": "2021-11-07T11:05:35Z",
+  "summary": "photoshop 6.0 will not launch",
+  "status": "UNCONFIRMED",
+  "version": "6.21",
+  "id": 51997,
+  "component": "-unknown",
+  "resolution": ""
+ },
+ {
+  "status": "UNCONFIRMED",
+  "summary": "PhotoshopCS2 Installer custom action page fault",
+  "last_change_time": "2026-02-20T19:35:15Z",
+  "creation_time": "2022-08-18T12:15:56Z",
+  "resolution": "",
+  "id": 53571,
+  "component": "-unknown",
+  "version": "unspecified"
+ },
+ {
+  "version": "7.18",
+  "id": 53805,
+  "component": "-unknown",
+  "resolution": "",
+  "last_change_time": "2024-05-29T21:51:30Z",
+  "creation_time": "2022-10-17T18:38:26Z",
+  "summary": "Photoshop CS6 crashes",
+  "status": "NEEDINFO"
+ },
+ {
+  "status": "NEEDINFO",
+  "last_change_time": "2024-12-20T19:09:59Z",
+  "creation_time": "2023-02-01T18:54:01Z",
+  "summary": "Adobe Photoshop 6.0 and 7.0 main window hangs and always stayed on top",
+  "component": "-unknown",
+  "id": 54426,
+  "resolution": "",
+  "version": "8.0"
+ },
+ {
+  "version": "8.8",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 54963,
+  "summary": "Adobe Lightroom needs Windows.Storage.Streams.InMemoryRandomAccessStream",
+  "creation_time": "2023-05-19T14:10:06Z",
+  "last_change_time": "2026-08-23T21:18:50Z",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "resolution": "",
+  "status": "UNCONFIRMED",
+  "component": "-unknown",
+  "id": 55934,
+  "version": "8.0.2",
+  "summary": "Photoshop CS2 crashes after opening the program - the first time it was working, now it is not anymore",
+  "creation_time": "2023-11-24T15:50:29Z",
+  "last_change_time": "2024-12-20T18:52:38Z"
+ },
+ {
+  "summary": "Adobe Photoshop CC 2017: \"About\" window dismisses right after appearing",
+  "creation_time": "2024-01-04T13:59:01Z",
+  "last_change_time": "2026-06-09T22:59:55Z",
+  "status": "UNCONFIRMED",
+  "version": "8.0",
+  "resolution": "",
+  "id": 56146,
+  "component": "-unknown"
+ },
+ {
+  "creation_time": "2024-01-04T14:32:40Z",
+  "last_change_time": "2026-02-21T07:33:21Z",
+  "summary": "Adobe Photoshop CC 2017: Camera Raw losing focus after tooltip appearing, all buttons gray out",
+  "status": "UNCONFIRMED",
+  "version": "8.0",
+  "component": "-unknown",
+  "id": 56148,
+  "resolution": ""
+ },
+ {
+  "version": "8.0.1",
+  "id": 56170,
+  "component": "-unknown",
+  "resolution": "",
+  "creation_time": "2024-01-13T07:37:25Z",
+  "last_change_time": "2026-05-06T15:26:29Z",
+  "summary": "Photoshop CC 2021 - Bug \"enregistrer sous\"",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "version": "9.19",
+  "resolution": "",
+  "id": 56608,
+  "component": "-unknown",
+  "summary": "Tablet pen pressure no longer working",
+  "creation_time": "2024-04-26T21:07:59Z",
+  "last_change_time": "2024-10-10T12:09:57Z",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "resolution": "",
+  "component": "-unknown",
+  "id": 57053,
+  "version": "9.12",
+  "status": "UNCONFIRMED",
+  "summary": "Photoshop CS6: Toggling Fullscreen breaks the UI",
+  "last_change_time": "2024-08-10T20:17:00Z",
+  "creation_time": "2024-08-10T18:45:14Z"
+ },
+ {
+  "component": "-unknown",
+  "id": 57184,
+  "resolution": "",
+  "version": "9.16",
+  "status": "NEEDINFO",
+  "last_change_time": "2026-06-08T21:23:50Z",
+  "creation_time": "2024-09-13T21:27:00Z",
+  "summary": "DirectX9 not working properly with OpenGL."
+ },
+ {
+  "version": "unspecified",
+  "summary": "Strange Behavior with >64 Processing Cores",
+  "last_change_time": "2024-11-09T11:56:53Z",
+  "creation_time": "2024-09-24T14:40:33Z",
+  "resolution": "",
+  "component": "ntdll",
+  "id": 57224,
+  "status": "UNCONFIRMED"
+ },
+ {
+  "resolution": "",
+  "component": "-unknown",
+  "id": 57546,
+  "version": "10.0-rc1",
+  "status": "UNCONFIRMED",
+  "summary": "photoshop 2023 sign in  success, but not respone from browser",
+  "creation_time": "2024-12-15T08:11:41Z",
+  "last_change_time": "2024-12-15T08:19:29Z"
+ },
+ {
+  "resolution": "",
+  "id": 57715,
+  "component": "-unknown",
+  "version": "10.0",
+  "status": "UNCONFIRMED",
+  "summary": "Adobe Illustrator CS6 (16): Splash and About windows render white instead of transparent with Wine 10 hidpi DPIUNAWARE scaling",
+  "creation_time": "2025-01-23T00:28:28Z",
+  "last_change_time": "2025-01-23T00:28:28Z"
+ },
+ {
+  "summary": "Photoshop CC interface is broken on recent wine dev",
+  "creation_time": "2025-11-03T13:39:04Z",
+  "last_change_time": "2026-09-19T14:37:39Z",
+  "status": "UNCONFIRMED",
+  "version": "11.0",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 58913
+ },
+ {
+  "creation_time": "2025-12-28T19:51:10Z",
+  "last_change_time": "2026-11-02T11:16:16Z",
+  "summary": "wayland: Photoshop menu is overlapped by canvas (wrong z-order)",
+  "status": "UNCONFIRMED",
+  "version": "11.0-rc4",
+  "component": "winewayland",
+  "id": 59188,
+  "resolution": ""
+ },
+ {
+  "version": "11.1",
+  "resolution": "",
+  "id": 59296,
+  "component": "-unknown",
+  "summary": "Adobe InDesign CS5.5 crashes on start",
+  "creation_time": "2026-01-24T12:30:57Z",
+  "last_change_time": "2026-07-02T21:58:58Z",
+  "status": "UNCONFIRMED"
+ },
+ {
+  "summary": "Adobe Photoshop Camera Raw AI-Denoiser issue",
+  "last_change_time": "2026-10-24T19:44:32Z",
+  "creation_time": "2026-07-16T23:06:31Z",
+  "status": "UNCONFIRMED",
+  "version": "11.13",
+  "resolution": "",
+  "component": "-unknown",
+  "id": 60026
+ },
+ {
+  "creation_time": "2026-07-28T01:47:47Z",
+  "last_change_time": "2026-07-28T01:47:47Z",
+  "summary": "Adobe Elements 2023 aborts or hangs during startup and sign in",
+  "status": "UNCONFIRMED",
+  "version": "11.14",
+  "id": 60082,
+  "component": "mshtml",
+  "resolution": ""
+ }
+]
