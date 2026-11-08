@@ -181,6 +181,17 @@
       "posted_at_utc": "2026-11-07T20:52:54Z",
       "posted_by": "owner",
       "text_file": "docs/bugzilla/winehq-26037-c16-published.txt"
+    },
+    {
+      "id": "winehq-60721-exposure-2026-11-08",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=60721",
+      "local_issue_url": "https://github.com/unxed/dllmgr/issues/27",
+      "kind": "follow-up",
+      "status": "prepared",
+      "text_file": "docs/bugzilla/winehq-60721-exposure.txt",
+      "verification_file": "experiments/first-open/README.md",
+      "prepared_on": "2026-11-08",
+      "verified_ci": "https://github.com/unxed/dllmgr/actions/runs/42502597593"
     }
   ]
 }

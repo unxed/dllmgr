@@ -218,3 +218,20 @@ Compare the same pumped sequence on native Windows next.
 The expanded actual-app observer separately confirms the stock white and
 direct-drawing black interruptions, with9/9 blank-point validation and
 observed_image_interruption_image=1 for both. Direct drawing remains rejected.
+
+[Native Windows CI42502597593](https://github.com/unxed/dllmgr/actions/runs/42502597593)
+atbad8c38df75751e92040c22efde6e7ff8b1899ab passes. With the same pumped popup
+sequence, Windows retains the yellow underlay throughout; Wine goes black→white
+on pumping and yellow only on full paint. See popup-pump-windows.txt. This
+is a presentation difference in unpainted/validated content, not a documented
+pixel-preservation contract or an established generic correction.
+
+The expanded real-app probe also passed as an observer on Windows (CI42502504590
+at3993626 and this run), collecting236/239 valid samples without a white OR
+black interruption. Wine's direct-drawing black phase is confirmed9/9 black
+points in direct-drawing-expanded-probe.txt.
+
+Next: trace the expose callback/dirty-surface path with the minimal test and
+real FastStone. Any fix must preserve already-visible content until the real
+paint, not merely suppress white while showing black. The relevant core/Unix
+rendering path cannot be shipped as an ordinary native comctl32 override.

@@ -1,0 +1,7 @@
+stage=painted-underlay rgb=f0cc5a valid=1
+stage=shown-before-paint rgb=f0cc5a valid=1
+stage=still-unpainted rgb=f0cc5a valid=1
+stage=pumped-before-paint rgb=f0cc5a valid=1
+stage=positioned-before-paint rgb=f0cc5a valid=1
+stage=partially-painted-popup rgb=f0cc5a valid=1
+stage=painted-popup rgb=f0cc5a valid=1
