@@ -92,6 +92,36 @@ class PrefillProxyTest(unittest.TestCase):
         with self.assertRaisesRegex(pp.Error, "override changed"):
             pp.check(self.prefix, self.exe, reg)
 
+    def test_companion_installed_checked_and_removed(self):
+        reg = FakeRegistry()
+        line = '"Z:\\opt\\dllmgr\\dllmgr" run faststone --'
+        self.assertEqual(pp.apply(self.prefix, self.exe, "version", self.dll, reg, line), "installed")
+        extra = self.app / "version.dllmgr"
+        self.assertEqual(extra.read_text(), line + "\n")
+        pp.check(self.prefix, self.exe, reg)
+        self.assertEqual(pp.apply(self.prefix, self.exe, "version", self.dll, reg, line), "already installed")
+        with self.assertRaisesRegex(pp.Error, "Another"):
+            pp.apply(self.prefix, self.exe, "version", self.dll, reg, line + " x")
+        extra.write_text("changed\n")
+        with self.assertRaisesRegex(pp.Error, "companion changed"):
+            pp.check(self.prefix, self.exe, reg)
+        with self.assertRaisesRegex(pp.Error, "companion was changed"):
+            pp.undo(self.prefix, self.exe, reg)
+        extra.write_text(line + "\n")
+        pp.undo(self.prefix, self.exe, reg)
+        self.assertFalse(extra.exists())
+        self.assertFalse((self.app / "version.dll").exists())
+
+    def test_companion_refuses_bad_line_and_foreign_file(self):
+        reg = FakeRegistry()
+        with self.assertRaisesRegex(pp.Error, "one line"):
+            pp.apply(self.prefix, self.exe, "version", self.dll, reg, "dllmgr run")
+        (self.app / "version.dllmgr").write_text("someone else's\n")
+        with self.assertRaisesRegex(pp.Error, "not managed"):
+            pp.apply(self.prefix, self.exe, "version", self.dll, reg, '"Z:\\x" run')
+        self.assertFalse((self.app / "version.dll").exists())
+        self.assertEqual(reg.values, {})
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -93,29 +93,49 @@ def load(prefix, exe):
     return state
 
 
-def apply(prefix, exe, proxy, dll, reg):
+def companion_for(target):
+    """<proxy>.dllmgr next to the proxy: the trampoline's launcher line (#27)."""
+    return target.with_suffix('.dllmgr')
+
+
+def apply(prefix, exe, proxy, dll, reg, companion=None):
+    """companion: optional launcher line (str) for the proxy's trampoline."""
     data = dll.read_bytes()
     if data[:2] != b'MZ':
         raise Error('Expected a PE DLL')
+    if companion is not None and (not companion.startswith('"') or '\n' in companion or '\r' in companion):
+        raise Error('Companion line must be one line starting with a quoted launcher')
     target = exe.parent / (proxy + '.dll')
+    extra = companion_for(target)
+    blob = None if companion is None else (companion + '\n').encode()
     path = state_path(prefix, exe)
     if path.exists():
         state = load(prefix, exe)
-        if state['sha256'] == sha(data) and target.is_file() and sha(target.read_bytes()) == state['sha256']:
+        if (state['sha256'] == sha(data) and target.is_file() and sha(target.read_bytes()) == state['sha256'] and
+                state.get('companion_sha256') == (blob and sha(blob)) and
+                (blob is None or (extra.is_file() and extra.read_bytes() == blob))):
             return 'already installed'
         raise Error('Another prefill proxy build is installed for this exe; undo it first')
     if target.exists():
         raise Error(str(target) + ' already exists and is not managed by dllmgr')
+    if blob is not None and extra.exists():
+        raise Error(str(extra) + ' already exists and is not managed by dllmgr')
     key = key_for(exe)
     previous = reg.get(key, proxy)
     state = dict(format=1, exe=str(exe), proxy=proxy, target=str(target), sha256=sha(data),
                  override_key=key, previous_override=previous)
+    if blob is not None:
+        state['companion_sha256'] = sha(blob)
     atomic(path, json.dumps(state, indent=2).encode(), 0o600)
     try:
+        if blob is not None:
+            atomic(extra, blob)
         atomic(target, data)
         reg.set(key, proxy, 'native,builtin')
     except BaseException:
         target.unlink(missing_ok=True)
+        if blob is not None:
+            extra.unlink(missing_ok=True)
         path.unlink(missing_ok=True)
         raise
     return 'installed'
@@ -126,6 +146,9 @@ def check(prefix, exe, reg):
     target = Path(state['target'])
     if not target.is_file() or sha(target.read_bytes()) != state['sha256']:
         raise Error('Proxy DLL changed or missing: ' + str(target))
+    extra = companion_for(target)
+    if state.get('companion_sha256') and (not extra.is_file() or sha(extra.read_bytes()) != state['companion_sha256']):
+        raise Error('Trampoline companion changed or missing: ' + str(extra))
     if reg.get(state['override_key'], state['proxy']) != 'native,builtin':
         raise Error('Load-order override changed outside dllmgr')
     return state
@@ -136,6 +159,11 @@ def undo(prefix, exe, reg):
     target = Path(state['target'])
     if target.exists() and sha(target.read_bytes()) != state['sha256']:
         raise Error('Proxy DLL was changed outside dllmgr; not removing it: ' + str(target))
+    extra = companion_for(target)
+    if state.get('companion_sha256'):
+        if extra.exists() and sha(extra.read_bytes()) != state['companion_sha256']:
+            raise Error('Trampoline companion was changed outside dllmgr; not removing it: ' + str(extra))
+        extra.unlink(missing_ok=True)
     target.unlink(missing_ok=True)
     if state['previous_override'] is None:
         reg.delete(state['override_key'], state['proxy'])
@@ -152,6 +180,7 @@ def main():
     parser.add_argument('--proxy', choices=PROXIES)
     parser.add_argument('--dll', type=Path)
     parser.add_argument('--wine', default='wine')
+    parser.add_argument('--companion', help='trampoline launcher line, e.g. \'"Z:\\path\\dllmgr" run faststone --\' (#27)')
     args = parser.parse_args()
     prefix, exe = args.prefix.resolve(), args.exe.resolve()
     if not (prefix / 'system.reg').is_file():
@@ -165,14 +194,15 @@ def main():
         if args.command == 'apply':
             if not args.proxy or not args.dll:
                 parser.error('apply requires --proxy and --dll')
-            print('Prefill proxy ' + apply(prefix, exe, args.proxy, args.dll, reg) + ' for ' + exe.name)
+            print('Prefill proxy ' + apply(prefix, exe, args.proxy, args.dll, reg, args.companion) + ' for ' + exe.name)
             print('Scope: this exe only; shared prefix DLLs and system Wine unchanged.')
         elif args.command == 'undo':
             undo(prefix, exe, reg)
             print('Prefill proxy removed; previous load order restored.')
         else:
             state = check(prefix, exe, reg)
-            print('Prefill proxy (' + state['proxy'] + '.dll): ok for ' + exe.name)
+            print('Prefill proxy (' + state['proxy'] + '.dll' + (', trampoline' if state.get('companion_sha256') else '') +
+                  '): ok for ' + exe.name)
     except Error as error:
         raise SystemExit('dllmgr: ' + str(error))
     finally:
