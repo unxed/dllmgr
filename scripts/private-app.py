@@ -21,7 +21,7 @@ import zipfile
 
 import catalog_fixes
 from ui import Progress
-from private_runtime import Error, assemble, digest, valid_sha, verify
+from private_runtime import Error, assemble, digest, overlay_for, package_manifest, valid_sha, verify
 
 EXE_SHA = '05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621'
 STATE = Path('.dllmgr/apps')
@@ -167,6 +167,13 @@ def download(url, dest, checksum=None, label=None):
         raise Error('Download checksum mismatch: ' + dest.name)
 
 
+def patched_modules(package):
+    try:
+        return ', '.join(sorted('/'.join(Path(dest).parts[-2:]) for dest in overlay_for(package_manifest(package)).values()))
+    except (Error, KeyError, ValueError, zipfile.BadZipFile):
+        return 'unknown (package without a readable manifest)'
+
+
 def runtime_release(requested):
     """Human-readable runtime origin: release tag of the pin, or a local package."""
     if requested:
@@ -196,7 +203,8 @@ def runtime_package(requested, temp):
     if not valid_sha(config.get('sha256')):
         raise Error('Private runtime release is not pinned yet; refusing legacy shared installation')
     path = temp / 'runtime.zip'
-    download(config['url'], path, config['sha256'], 'Downloading private Wine runtime')
+    download(config['url'], path, config['sha256'],
+             'Downloading Wine runtime ' + runtime_release(None) + ' from github.com/unxed/dllmgr')
     return path
 
 
@@ -226,7 +234,7 @@ def modules(fix, temp):
         if name not in checksums:
             raise Error('No verified prebuilt DLL: ' + name)
         path = temp / name
-        download(url + name, path, checksums[name])
+        download(url + name, path, checksums[name], 'Downloading ' + name + ' (release ' + release + ')')
         raw = bytearray(path.read_bytes())
         if raw[:2] != b'MZ' or len(raw) < 96:
             raise Error('Invalid PE payload')
@@ -298,8 +306,12 @@ def install(args, prefix):
     cache = Path(os.environ.get('XDG_DATA_HOME', str(Path.home() / '.local/share'))) / 'dllmgr/runtimes'
     with tempfile.TemporaryDirectory(prefix='dllmgr-private-') as directory:
         temp = Path(directory)
+        print('› Target: ' + target + ' · prefix ' + str(prefix) + ' · base wine-11.0 at ' + str(base))
+        print('› Runtime: ' + runtime_release(args.runtime_package))
         package = runtime_package(args.runtime_package, temp)
         runtime = assemble(package, base, cache, Progress)
+        print('  Runtime ready: ' + str(runtime))
+        print('  Patched Wine modules in it: ' + patched_modules(package))
         release, payloads = modules(args.fix, temp)
         hashes = {name: hashlib.sha256(data).hexdigest() for name, data in payloads.items()}
         generation = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
@@ -354,6 +366,10 @@ def install(args, prefix):
         except BaseException:
             recover(prefix, state_path)
             raise
+        for name, checksum in sorted(hashes.items()):
+            print('  Private DLL: ' + name + ' (sha256 ' + checksum[:12] + ') in ' + winpath(prefix, dest / name))
+        for path in desktops:
+            print('  Launcher routed through dllmgr: ' + str(path.absolute()))
         print('✓ FastStone fixes installed privately for ' + target)
         print_versions(state)
         install_trampoline(prefix, exe, package, base)
@@ -397,6 +413,8 @@ def install_trampoline(prefix, exe, package, base):
                 prefill_proxy.undo(prefix, exe, reg)  # older build or moved dllmgr
                 result = prefill_proxy.apply(prefix, exe, 'msimg32', dll, reg, line)
         print('  Launch trampoline ' + result + ': any start of this FSViewer.exe gets the fixes.')
+        print('    files: ' + str(exe.parent / 'msimg32.dll') + ' (sha256 ' + hashlib.sha256(data).hexdigest()[:12] +
+              '), msimg32.dllmgr; load order: ' + prefill_proxy.key_for(exe) + ' msimg32=native,builtin')
     except Exception as error:  # optional part: never fail the installed fix
         print('  Warning: launch trampoline not installed (' + str(error) + '); use dllmgr run faststone.')
 

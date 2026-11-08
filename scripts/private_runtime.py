@@ -144,7 +144,7 @@ def assemble(package, base, cache, progress=None):
                 else:
                     dest.symlink_to(src.resolve())
         total = sum(src.stat().st_size for src, _ in copies)
-        bar = progress('Copying Wine Unix modules', total) if progress else None
+        bar = progress(f'Building private runtime: copying {len(copies)} Wine Unix files from {base}', total) if progress else None
         for src, dest in copies:
             if bar:
                 _copy(src, dest, bar)
@@ -160,7 +160,7 @@ def assemble(package, base, cache, progress=None):
                 path.write_bytes(archive.read(source))
                 path.chmod(0o755 if source in UNIX_MODES else 0o644)
         files = [p for p in stage.rglob('*') if p.is_file() and not p.is_symlink()]
-        bar = progress('Checking private runtime', 2 * sum(p.stat().st_size for p in files)) if progress else None
+        bar = progress(f'Verifying private runtime: sha256 of {len(files)} files', 2 * sum(p.stat().st_size for p in files)) if progress else None
         copied = {str(p.relative_to(stage)): digest(p, bar) for p in files}
         (stage / '.dllmgr-runtime.json').write_text(json.dumps(dict(
             package_sha256=package_sha, base=str(base), manifest=manifest,

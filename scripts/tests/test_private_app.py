@@ -486,7 +486,7 @@ class PrivateAppTest(unittest.TestCase):
         raw = make_pe()
         name = "comctl32_v6-wine-11.0-i386.dll"
 
-        def fake_download(url, dest, checksum=None):
+        def fake_download(url, dest, checksum=None, label=None):
             if dest.name == "SHA256SUMS":
                 dest.write_text(sha(raw) + "  " + name + "\n")
             else:
