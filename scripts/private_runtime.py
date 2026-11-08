@@ -30,12 +30,23 @@ class Error(RuntimeError):
     pass
 
 
-def digest(path):
+def digest(path, progress=None):
     h = hashlib.sha256()
     with Path(path).open('rb') as stream:
         for block in iter(lambda: stream.read(1024 * 1024), b''):
             h.update(block)
+            if progress:
+                progress.update(len(block))
     return h.hexdigest()
+
+
+def _copy(src, dest, progress):
+    """shutil.copy2 with progress (same bytes, mode and times)."""
+    with open(src, 'rb') as fin, open(dest, 'wb') as fout:
+        for block in iter(lambda: fin.read(1024 * 1024), b''):
+            fout.write(block)
+            progress.update(len(block))
+    shutil.copystat(src, dest)
 
 
 def valid_sha(value):
@@ -85,7 +96,7 @@ def package_manifest(package):
     return manifest
 
 
-def verify(runtime, package_sha, base):
+def verify(runtime, package_sha, base, progress=None):
     state = json.loads((runtime / '.dllmgr-runtime.json').read_text())
     if state.get('package_sha256') != package_sha or state.get('base') != str(base):
         raise Error('Private runtime ownership record changed')
@@ -93,7 +104,7 @@ def verify(runtime, package_sha, base):
     verify_base(base, manifest)
     for name, checksum in state.get('copied_files', {}).items():
         path = runtime / name
-        if path.is_symlink() or digest(path) != checksum:
+        if path.is_symlink() or digest(path, progress) != checksum:
             raise Error('Private runtime changed: ' + name)
     for source, dest in overlay_for(manifest).items():
         path = runtime / dest
@@ -102,7 +113,9 @@ def verify(runtime, package_sha, base):
     return runtime
 
 
-def assemble(package, base, cache):
+def assemble(package, base, cache, progress=None):
+    """progress: optional factory progress(label, total_bytes) -> object with
+    update(n) and close() (scripts/ui.py Progress); None = silent."""
     base = base.resolve(strict=True)
     package_sha = digest(package)
     manifest = package_manifest(package)
@@ -117,6 +130,7 @@ def assemble(package, base, cache):
     try:
         # Unix modules must be real files: realpath(ntdll.so) determines Wine's
         # module directory. Large unchanged PE modules can be read-only links.
+        copies = []
         for root, dirs, files in os.walk(base, followlinks=True):
             relative = Path(root).relative_to(base)
             target = stage / relative
@@ -126,9 +140,18 @@ def assemble(package, base, cache):
                 if not src.is_file():
                     continue
                 if relative.parts and (relative.parts[0] == 'bin' or relative.name.endswith('-unix')):
-                    shutil.copy2(src, dest)
+                    copies.append((src, dest))
                 else:
                     dest.symlink_to(src.resolve())
+        total = sum(src.stat().st_size for src, _ in copies)
+        bar = progress('Copying Wine Unix modules', total) if progress else None
+        for src, dest in copies:
+            if bar:
+                _copy(src, dest, bar)
+            else:
+                shutil.copy2(src, dest)
+        if bar:
+            bar.close()
         with zipfile.ZipFile(package) as archive:
             for source, dest in overlay_for(manifest).items():
                 path = stage / dest
@@ -136,12 +159,15 @@ def assemble(package, base, cache):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(archive.read(source))
                 path.chmod(0o755 if source in UNIX_MODES else 0o644)
-        copied = {str(p.relative_to(stage)): digest(p) for p in stage.rglob('*')
-                  if p.is_file() and not p.is_symlink()}
+        files = [p for p in stage.rglob('*') if p.is_file() and not p.is_symlink()]
+        bar = progress('Checking private runtime', 2 * sum(p.stat().st_size for p in files)) if progress else None
+        copied = {str(p.relative_to(stage)): digest(p, bar) for p in files}
         (stage / '.dllmgr-runtime.json').write_text(json.dumps(dict(
             package_sha256=package_sha, base=str(base), manifest=manifest,
             copied_files=copied), sort_keys=True) + '\n')
-        verify(stage, package_sha, base)
+        verify(stage, package_sha, base, bar)
+        if bar:
+            bar.close()
         stage.rename(runtime)
     finally:
         if stage.exists():

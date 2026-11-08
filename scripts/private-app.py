@@ -18,6 +18,7 @@ import tempfile
 import urllib.request
 
 import catalog_fixes
+from ui import Progress
 from private_runtime import Error, assemble, digest, valid_sha, verify
 
 HERE = Path(__file__).resolve().parent
@@ -144,9 +145,15 @@ def checked_files(prefix, state):
     return directory
 
 
-def download(url, dest, checksum=None):
+def download(url, dest, checksum=None, label=None):
     with urllib.request.urlopen(url, timeout=60) as response, dest.open('wb') as stream:
-        shutil.copyfileobj(response, stream)
+        bar = Progress(label, int(response.headers.get('Content-Length') or 0)) if label else None
+        for block in iter(lambda: response.read(256 * 1024), b''):
+            stream.write(block)
+            if bar:
+                bar.update(len(block))
+        if bar:
+            bar.close()
     if checksum and digest(dest) != checksum:
         raise Error('Download checksum mismatch: ' + dest.name)
 
@@ -158,7 +165,7 @@ def runtime_package(requested, temp):
     if not valid_sha(config.get('sha256')):
         raise Error('Private runtime release is not pinned yet; refusing legacy shared installation')
     path = temp / 'runtime.zip'
-    download(config['url'], path, config['sha256'])
+    download(config['url'], path, config['sha256'], 'Downloading private Wine runtime')
     return path
 
 
@@ -261,7 +268,7 @@ def install(args, prefix):
     with tempfile.TemporaryDirectory(prefix='dllmgr-private-') as directory:
         temp = Path(directory)
         package = runtime_package(args.runtime_package, temp)
-        runtime = assemble(package, base, cache)
+        runtime = assemble(package, base, cache, Progress)
         release, payloads = modules(args.fix, temp)
         hashes = {name: hashlib.sha256(data).hexdigest() for name, data in payloads.items()}
         generation = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
