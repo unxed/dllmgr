@@ -70,10 +70,12 @@ session() {
 	mkdir -p "$STAND_DIR"
 	rm -f "/tmp/.X${STAND_DISPLAY#:}-lock" "/tmp/.X11-unix/X${STAND_DISPLAY#:}"
 	# shellcheck disable=SC2086
-	Xvfb "$STAND_DISPLAY" -screen 0 3072x1728x24 -nolisten tcp -dpi 192 ${STAND_XVFB_ARGS:-} \
+	Xvfb "$STAND_DISPLAY" -screen 0 3072x1728x24 -nolisten tcp -dpi 192 -noreset ${STAND_XVFB_ARGS:-} \
 		>"$STAND_DIR/xvfb.log" 2>&1 &
 	xpid=$!
 	# The socket file appears before Xvfb accepts clients: poll a real client.
+	# -noreset: without it Xvfb resets when that probe disconnects (the last
+	# client), and the WM started next fails with "Unable to open X display".
 	for _ in $(seq 300); do xdpyinfo >/dev/null 2>&1 && break; sleep .1; done
 	xdpyinfo >/dev/null 2>&1 || { echo "session: Xvfb $STAND_DISPLAY not up after 30 s, see $STAND_DIR/xvfb.log" >&2; exit 1; }
 	# STAND_WM: muffin (default; mutter-based, ALWAYS composites) or metacity
