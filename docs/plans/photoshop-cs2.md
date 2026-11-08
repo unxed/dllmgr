@@ -4,8 +4,9 @@ Context: docs/photoshop-handoff.md (sandbox checkpoint), issue #31.
 
 ## PS-0 (#31) Bugzilla audit: one verdict per row of docs/photoshop-wine-audit.md
 
-Executing agent, in this order: group A, then B, then C; D and E last (they
-are reading-only and can be batched 10 rows per commit).
+Executing agent: follow "Work order for real work" at the end of
+docs/photoshop-wine-audit.md first; then the remaining A/B/C rows; D and E
+last (reading-only, batched 10 rows per commit).
 Per bug:
 1. Read the whole bug (all comments; attachment descriptions; linked bugs).
    Determine the Photoshop version. If later than CS2 -> verdict

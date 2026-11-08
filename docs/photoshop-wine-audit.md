@@ -114,3 +114,39 @@ Verdict values: `reproduces` / `not reproduced (setup)` / `skipped: later versio
 
 Rough volume: A 9 (2 partly done), B 8, C 7, D ~51, E 20. Real work
 (reproduce + fix) is expected only in A and some of B; D/E are reading-only.
+
+## Work order for real work (Opus, 2026-11-08, from descriptions + last comments)
+
+Ranked by harm: data loss > blocks work > affects many users > cosmetic.
+Each item still starts with the full-bug read of card PS-0.
+
+1. **38244** CS2 crashes in the Open dialog when several JPEG files are
+   selected (page fault; last asked to retest on Wine 5.6). A crash while
+   opening files can lose unsaved work in other documents. Retest on 11.0
+   with synthetic JPEGs (multi-select in the OS dialog).
+2. **9623** "Could not complete ... because a system font was not found"
+   without Times New Roman (corefonts); blocks operations for every user
+   without corefonts. Check the fresh stand prefix (no corefonts); the fix is
+   likely a font substitute/alias recipe (cf. FastStone font work), not a
+   Wine core change.
+3. **9802** ImageReady CS2 (bundled) crashes on startup (C++ exception after
+   WM_MOUSEACTIVATE, still valid on Wine 4.12). Blocks a whole bundled app.
+4. **55934** CS2 crash on later starts after it once worked (vague; asked to
+   upgrade). Retest: start/quit CS2 several times, lock/unlock is not
+   reproducible headless; likely `insufficient data`.
+5. **25912** (SketchUp/Photoshop CS6) window content one input event behind
+   (expose not triggered). Generic winex11 paint lag; check whether CS2's
+   canvas/palettes lag on the stand before investing.
+6. Installer: **53571** custom-action page fault on the file-association page
+   (bisected to a 2022 user32 commit; maybe already resolved) together with
+   sandbox findings F14 (msiexec 0x6a6 after Finish) and F13 ("&Finish"
+   labels). The installation still completes, so below the runtime crashes.
+7. **47012** a Photoshop installer crashes after a blank window (version to
+   determine; AppDB says copy an installed tree; 47015 has a workaround).
+8. Cosmetic / low impact: **19344** a few files missing after install
+   (install.adb, Notepad.LNK), **19328** shortcuts land in the user's Start
+   Menu instead of All Users, **25709** focus in virtual-desktop mode,
+   **19343** installer edit-control class names (automation only).
+Already handled this round: 11412, 33906 (retested OK on Metacity/Muffin),
+34133/#36 splash (fixed on stock Wine via prefill proxy), 34134/#35 (Adobe's
+own resize; Windows CI pending). 48439 is CS6 (move to D).
