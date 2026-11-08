@@ -60,3 +60,20 @@ together). Still research: env-gated, bounding-rect approximation, B changes
 every X window's background (GL/Vulkan client areas, resize gaps, other WMs
 untested). Next: i386 build and the real FastStone first-open probe judged by
 X pixels (F18), then other WMs (Muffin) and a resize check.
+
+## Real FastStone result (2026-11-08 19:00)
+
+With the patch also built for i386 (FastStone 8.5 is PE32; WineHQ packages
+use old WoW64 and load `i386-unix/*.so`), the real first open judged by X
+pixels: stock shows image -> black ~20 ms -> white ~90-170 ms -> image;
+mode 2 removes the white but leaves ~93 ms black; mode 2 + B shows no
+interruption at all (2/2 runs). The black phase is the X window background
+and was invisible to the GetPixel-based probe (F18).
+
+Tools: `tests/wine/xsample.c` (X-side 3x3 sampler, transitions only) and
+`tests/wine/first-open-x.sh` (fresh FastStone copy, verdict). Remaining before
+any delivery: un-gate into a clean Wine patch, other WMs (Muffin/compositing),
+resize/maximize, GL/Vulkan client windows with background None, several runs
+for timing noise. Delivery path: dllmgr cannot replace win32u/winex11
+(concept.md §15b/§16), so this is a Wine source patch (patches/) plus an
+upstream report; an in-process app patch cannot reach the unix side.

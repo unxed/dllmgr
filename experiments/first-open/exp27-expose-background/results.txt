@@ -19,3 +19,12 @@ mode 2:       popup f0cc5a 000000 000000 000000 000000 000000 f0cc5a   occlusion
 mode 2 + B:   popup f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a f0cc5a   occlusion pass (2/2; one earlier run printed no verdict, gate flake)
 windows:      popup all f0cc5a
 
+
+# Real app: portable FastStone 8.5 (PE32 -> i386-unix .so rebuilt with the same
+# patch), fresh copy per run, tests/fixtures/first-open.jpg, judged by X pixels
+# with tests/wine/xsample.c via tests/wine/first-open-x.sh (Metacity, 192 DPI).
+/opt stock:          image 1224 -> black 3102 -> white 3135 -> image 3303   FAIL
+exp build, no env:   image 608 -> black 1234 -> white 1254 -> image 1341    FAIL (white 87 ms)
+mode 2:              image 628 -> black 1264 -> image 1357                  FAIL (black 93 ms, no white)
+mode 2 + B (run 1):  image 684, no interruption                             pass
+mode 2 + B (run 2):  image 592, no interruption                             pass
