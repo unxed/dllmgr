@@ -39,3 +39,21 @@ applied inside Photoshop. Photoshop.exe imports only kernel32/msvcr71/msvcp71,
 so an exe IAT hook is not enough: use WH_CALLWNDPROC(RET) hooks
 (WM_SHOWWINDOW -> capture, WM_WINDOWPOSCHANGED+SWP_SHOWWINDOW -> draw) from a
 DLL loaded into the process.
+
+## Confirmed: prefill fixes the splash (2026-11-08 19:35)
+
+The msimg32 proxy loads too late in Photoshop (after its windows are shown;
+DLLMGR27_DEBUG showed the hook thread but no captures). A `version.dll` proxy
+built from the same `patches/dllmgr-27/prefill.c` (`sh build.sh version`;
+exports forward to kernelbase/kernel32, VerInstallFileA/W stubbed) loads before
+Photoshop.dll. On **stock** Wine 11.0 with `version=n,b` for Photoshop.exe:
+
+    dllmgr27: capture ... class=Photoshop flags=0043 / present
+    dllmgr27: capture ... class=PSFloatC  flags=0057 / present   (x2)
+
+and the splash shows **no white rectangle**: its margin and shadow are drawn
+over the grey main window. So Photoshop composes the splash over the existing
+contents of its own window, which on Wine was the 0xff initial surface.
+Screenshots kept local (they show the registered user name).
+Next: package this as an app-scoped dllmgr fix for Photoshop.exe; then check
+the splash over other backgrounds and that later dialogs/palettes look normal.
