@@ -1,0 +1,4 @@
+opened pid=1072 handle=0000003c error=0
+opened pid=1100 handle=00000040 error=0
+exited pid=1072 wait=0 code=0 hex=00000000
+exited pid=1100 wait=0 code=1 hex=00000001

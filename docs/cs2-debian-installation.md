@@ -6,6 +6,10 @@ messages; new problems are deferred **after existing bugs**, including #31,
 The separate Ubuntu/Claude stand has its own [findings](sandbox-findings.md);
 do not merge results from different environments or duplicate those issues.
 
+**Latest verified installer result:** product state5, version9.0; exact EXE
+hash matches. Installer had F13/F14. First application startup is in progress;
+full workspace not yet verified. See checkpoint.json for the last timestamp.
+
 ## Exact environment and source
 
 - The reproducible [Debian Wine stand](cloud-wine-sandbox.md): WineHQ
@@ -158,3 +162,31 @@ metadata traffic. Completed request files were moved to completed-requests/,
 while response guard files and the full action journal were retained. Keeping
 the response guards ensures an in-flight directory iteration still skips old
 requests. This is harness bookkeeping, not a Wine/Photoshop fix.
+
+## Completed installer verification (2026-11-08)
+
+The installer progressed through Bridge, Adobe Common Files, Help Center, help
+indexing and Stock Photos to the final dialog. F13 reproduced independently:
+all final texts, including the caption, read `&Finish` (screenshot28). The
+checked optional completion checkbox (id4015, label corrupted) was inspected
+with public BM_GETCHECK, unchecked normally, and verified 0. The actual enabled
+Finish button (id2003) was then clicked. Its label corruption was not patched.
+
+F14 also reproduced: `Unhandled exception 0x000006a6 in thread 740 ...` and
+Program Error: `The program msiexec.exe has encountered a serious problem and
+needs to close.` Screenshot30 preserves the error. It was dismissed normally.
+A public OpenProcess/WaitForSingleObject/GetExitCodeProcess observer opened
+handles before dismissal and captured client1072 exit0 and server1100 exit1;
+see msi-exit-status.txt and wait-exit.c. Those IDs are historical.
+
+After dismissal product-state.exe returned 0 and reported:
+`state=5 version_status=0 version=9.0 name_status=0 name=Adobe Photoshop CS2`.
+State5 is INSTALLSTATE_DEFAULT: the product is registered installed. EXE hash
+already matched, but **the installer run was not clean**. No F13/F14 fix has
+been made, and no Photoshop launch was yet claimed at this checkpoint.
+
+The later idle controller job reached its 7200-second harness deadline and
+powered off its VM. This is not a Photoshop crash. The same installed prefix
+and EXE were retained and hash-verified; all old request files were archived
+before restarting the controller so stale HWND/button actions could not replay.
+No trial state, activation data or clock was reset, and no reinstall occurred.

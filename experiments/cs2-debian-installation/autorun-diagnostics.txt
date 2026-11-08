@@ -19,3 +19,7 @@ ALSA lib pcm.c:2722:(snd_pcm_open_noupdate) Unknown PCM default
 0434:err:msi:dialog_bitmap_control Failed to load bitmap (null)
 0434:err:msi:dialog_bitmap_control Failed to load bitmap (null)
 06f0:err:kerberos:kerberos_LsaApInitializePackage no Kerberos support, expect problems
+wine: Unhandled exception 0x000006a6 in thread 740 at address 7B5F9828 (thread 0740), starting debugger...
+032c:fixme:dbghelp:elf_search_auxv can't find symbol in module
+032c:fixme:dbghelp:elf_search_auxv can't find symbol in module
+0740:err:rpc:RpcRaiseException handler continued execution

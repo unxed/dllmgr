@@ -19,7 +19,7 @@ for name in ['controller.py','client.py','sequence.py','launch-in-dir.py']:
  shutil.copy2(here/name,control/name)
 env=os.environ.copy();env['PATH']=str(tools/'usr/bin')+':'+env['PATH']
 compiler=tools/'usr/bin/i686-w64-mingw32-gcc-posix'
-for name,libs in [('windows-install',['-luser32']),('dpi-probe',['-lgdi32','-luser32']),('product-state',['-lmsi'])]:
+for name,libs in [('windows-install',['-luser32']),('dpi-probe',['-lgdi32','-luser32']),('product-state',['-lmsi']),('wait-exit',['-luser32'])]:
  shutil.copy2(here/(name+'.c'),control/(name+'.c'))
  temp=control/(name+'.new.exe');dest=control/(name+'.exe')
  sp.run([str(compiler),'-O2','-s',str(control/(name+'.c')),'-o',str(temp),*libs],env=env,check=True)

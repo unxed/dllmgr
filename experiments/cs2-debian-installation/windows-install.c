@@ -16,6 +16,10 @@ static BOOL CALLBACK dump(HWND w, LPARAM depth)
 }
 int main(int argc,char **argv)
 {
+    if (argc>2 && !strcmp(argv[1],"check")) {
+        LRESULT state=SendMessageA((HWND)(ULONG_PTR)strtoul(argv[2],NULL,16),BM_GETCHECK,0,0);
+        printf("BM_GETCHECK=%ld\n",(long)state); return 0;
+    }
     if (argc>3 && !strcmp(argv[1],"text")) {
         LRESULT ok=SendMessageA((HWND)(ULONG_PTR)strtoul(argv[2],NULL,16),WM_SETTEXT,0,(LPARAM)argv[3]);
         printf("WM_SETTEXT=%ld error=%lu\n",(long)ok,GetLastError()); return !ok;

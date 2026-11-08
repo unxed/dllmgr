@@ -1,0 +1,160 @@
+{
+  "utc": "2026-11-08T18:34:07.932180+00:00",
+  "package": "Photoshop_9.0_en-us.zip",
+  "entries": 755,
+  "uncompressed_bytes": 29327386,
+  "compressed_bytes": 24971130,
+  "error_log_bytes": 0,
+  "database_files": [
+    {
+      "file": "adobeassistance/productpages.MYI",
+      "bytes": 2048,
+      "mtime": 1794162826.882658
+    },
+    {
+      "file": "adobeassistance/keywords.MYD",
+      "bytes": 0,
+      "mtime": 1794162301.737115
+    },
+    {
+      "file": "adobeassistance/productindexentry.MYI",
+      "bytes": 1024,
+      "mtime": 1794162847.922689
+    },
+    {
+      "file": "adobeassistance/producttocentries.MYI",
+      "bytes": 1024,
+      "mtime": 1794162826.9466581
+    },
+    {
+      "file": "adobeassistance/properties.MYI",
+      "bytes": 3072,
+      "mtime": 1794162826.878658
+    },
+    {
+      "file": "adobeassistance/products.MYI",
+      "bytes": 3072,
+      "mtime": 1794162353.5818403
+    },
+    {
+      "file": "adobeassistance/page.MYD",
+      "bytes": 4261488,
+      "mtime": 1794162826.866658
+    },
+    {
+      "file": "adobeassistance/keywords.MYI",
+      "bytes": 1024,
+      "mtime": 1794162301.7530177
+    },
+    {
+      "file": "adobeassistance/tocentries.MYI",
+      "bytes": 3072,
+      "mtime": 1794162826.9426582
+    },
+    {
+      "file": "adobeassistance/tocs.MYD",
+      "bytes": 9232,
+      "mtime": 1794162826.1066568
+    },
+    {
+      "file": "adobeassistance/package_list.MYI",
+      "bytes": 1024,
+      "mtime": 1794162353.2858398
+    },
+    {
+      "file": "adobeassistance/tocs.MYI",
+      "bytes": 2048,
+      "mtime": 1794162826.1106567
+    },
+    {
+      "file": "adobeassistance/keyassoc.MYD",
+      "bytes": 0,
+      "mtime": 1794162301.928893
+    },
+    {
+      "file": "adobeassistance/indexentries.MYD",
+      "bytes": 215364,
+      "mtime": 1794162847.9106889
+    },
+    {
+      "file": "adobeassistance/package_list.MYD",
+      "bytes": 120,
+      "mtime": 1794162353.2858398
+    },
+    {
+      "file": "adobeassistance/productindexentry.MYD",
+      "bytes": 14922,
+      "mtime": 1794162847.918689
+    },
+    {
+      "file": "adobeassistance/indexindex.MYI",
+      "bytes": 2048,
+      "mtime": 1794162318.8617887
+    },
+    {
+      "file": "adobeassistance/products.MYD",
+      "bytes": 120,
+      "mtime": 1794162353.57784
+    },
+    {
+      "file": "adobeassistance/page.MYI",
+      "bytes": 3072,
+      "mtime": 1794162826.866658
+    },
+    {
+      "file": "adobeassistance/fullpagesearch.MYD",
+      "bytes": 1829072,
+      "mtime": 1794162826.878658
+    },
+    {
+      "file": "adobeassistance/tocentries.MYD",
+      "bytes": 194404,
+      "mtime": 1794162826.9386582
+    },
+    {
+      "file": "adobeassistance/properties.MYD",
+      "bytes": 56536,
+      "mtime": 1794162826.878658
+    },
+    {
+      "file": "adobeassistance/configuration.MYI",
+      "bytes": 1024,
+      "mtime": 1794162318.905789
+    },
+    {
+      "file": "adobeassistance/fullpagesearch.MYI",
+      "bytes": 22528,
+      "mtime": 1794162826.878658
+    },
+    {
+      "file": "adobeassistance/indexindex.MYD",
+      "bytes": 20,
+      "mtime": 1794162302.8737686
+    },
+    {
+      "file": "adobeassistance/configuration.MYD",
+      "bytes": 20,
+      "mtime": 1794162301.2177663
+    },
+    {
+      "file": "adobeassistance/producttocentries.MYD",
+      "bytes": 17406,
+      "mtime": 1794162826.9466581
+    },
+    {
+      "file": "adobeassistance/keyassoc.MYI",
+      "bytes": 1024,
+      "mtime": 1794162301.9330192
+    },
+    {
+      "file": "adobeassistance/indexentries.MYI",
+      "bytes": 1024,
+      "mtime": 1794162847.9106889
+    },
+    {
+      "file": "adobeassistance/productpages.MYD",
+      "bytes": 15318,
+      "mtime": 1794162826.882658
+    }
+  ]
+}

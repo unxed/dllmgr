@@ -118,5 +118,77 @@
     "sha256": "f8942013596d902bb431b662bad9f6bd5c0d1daf7420b99258748630e1d25835",
     "bytes": 34034,
     "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "21-component-progress.png",
+    "sha256": "5fe53951ee70818e37551762b6599158576a304bc5e3a9bdbb1bc176dd63cb6a",
+    "bytes": 34033,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "22-component-progress.png",
+    "sha256": "1239ab15e79aaa92dc00aba76316a0cb8bb1ff617bf497d0f86eb382882be987",
+    "bytes": 33761,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "23-component-progress.png",
+    "sha256": "283bed72e9e96f1573d4644cb52178dd32ed5e592d68efe4623d3d93982f82ef",
+    "bytes": 33765,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "24-installation-state.png",
+    "sha256": "105ebd36713ede0605e9f563ee9a517cbcf461bc27d7fff8fa4ef39defe5a20c",
+    "bytes": 33759,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "25-installation-state.png",
+    "sha256": "229a3afd051914d06300729b3dc7d702b20f2456e33427ed9ed11ef53f9e0eff",
+    "bytes": 33766,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "26-installation-state.png",
+    "sha256": "a615befef4f944ac77fec778f2a6163c633e88e1ca042dfff529ff0f7426befe",
+    "bytes": 33763,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "27-after-help-index.png",
+    "sha256": "ca9a3619052e8bdb1b7e69b5ccc597d1cb967f6da570c72891cf9eb82056edc7",
+    "bytes": 34109,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "28-installer-final-check.png",
+    "sha256": "2d7a972f32a87131fdf423613e56237b99d7b7a305823f59064c5ab66fe29ff3",
+    "bytes": 22240,
+    "storage": "experiments/cs2-debian-installation/screenshots/28-installer-final-check.png"
+  },
+  {
+    "file": "29-after-finish.png",
+    "sha256": "cd9f0f74c67fc09b6cb93a1cced69d1b4c83e688f46a5c84c41a987b353f9dfa",
+    "bytes": 783,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "30-msiexec-error.png",
+    "sha256": "995075d84dcf4d10dd72214d3b34947599b14b59f913ec3b694b0f78f0caf1f7",
+    "bytes": 36027,
+    "storage": "experiments/cs2-debian-installation/screenshots/30-msiexec-error.png"
+  },
+  {
+    "file": "31-photoshop-first-start.png",
+    "sha256": "72ea1993bd59dca0cc82a4b2c46e15df56a7fbf7287811fd340823f5f4cfa4c8",
+    "bytes": 25344,
+    "storage": "local only, duplicate/transitional capture"
+  },
+  {
+    "file": "32-photoshop-start-progress.png",
+    "sha256": "164aac54812766dfa5fd5a297058bdf5559667d8b3bbe8865a3b6d0ffef19427",
+    "bytes": 183307,
+    "storage": "local only, duplicate/transitional capture"
   }
 ]
