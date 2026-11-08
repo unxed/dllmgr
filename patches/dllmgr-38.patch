@@ -1,21 +1,32 @@
 Fix for dllmgr issue 38 / PhialsBasement/wine-adobe-installers#6: Photoshop
 2024 aborts with "Unimplemented function USER32.dll.SetWindowFeedbackSetting"
 when opening or creating an image. Against wine-11.0 (db11d0fe); current
-master (78e52205) still lacks the export.
+master (78e52205) still lacks both exports.
 
-user32 did not export SetWindowFeedbackSetting (spec line commented out), so
-the loader bound an aborting stub to the application's import. The function
-configures touch/pen visual feedback per window; Wine draws no such feedback,
-so the implementation accepts the setting for a valid window and fails with
-ERROR_INVALID_WINDOW_HANDLE otherwise. GetWindowFeedbackSetting is left
-unexported until its default values are compared with Windows.
+user32 did not export SetWindowFeedbackSetting/GetWindowFeedbackSetting (spec
+lines commented out), so the loader bound an aborting stub to the
+application's import. Both are implemented now with Windows semantics
+measured on windows-latest (tests/wine/feedback-get.c, 19 cases: argument
+errors, per-window storage, reset with NULL, unset reads FALSE with a zeroed
+buffer and the last error untouched, GWFS_INCLUDE_ANCESTORS lookup, size
+query); Wine's output is identical. Values are kept as window properties;
+Wine draws no touch/pen feedback, so they only round-trip.
 
 PE-only change (user32.dll). Reproducer: tests/wine/feedback-setting.c.
 
 diff --git a/dlls/user32/user32.spec b/dlls/user32/user32.spec
-index 0645792a..be6e1e6e 100644
+index 0645792a..2667d0d9 100644
 --- a/dlls/user32/user32.spec
 +++ b/dlls/user32/user32.spec
+@@ -704,7 +704,7 @@
+ @ stdcall GetWindowDisplayAffinity(long ptr) NtUserGetWindowDisplayAffinity
+ @ stdcall GetWindowDpiAwarenessContext(long)
+ @ stdcall GetWindowDpiHostingBehavior(long)
+-# @ stub GetWindowFeedbackSetting
++@ stdcall GetWindowFeedbackSetting(long long long ptr ptr)
+ @ stdcall GetWindowInfo(long ptr)
+ @ stdcall GetWindowLongA(long long)
+ @ stdcall -arch=win64 GetWindowLongPtrA(long long)
 @@ -1108,7 +1108,7 @@
  # @ stub SetWindowCompositionTransition
  @ stdcall SetWindowContextHelpId(long long) NtUserSetWindowContextHelpId
@@ -26,30 +37,95 @@ index 0645792a..be6e1e6e 100644
  @ stdcall -arch=win64 SetWindowLongPtrA(long long long)
  @ stdcall -arch=win64 SetWindowLongPtrW(long long long)
 diff --git a/dlls/user32/win.c b/dlls/user32/win.c
-index cef0beea..56baa686 100644
+index cef0beea..2cff359c 100644
 --- a/dlls/user32/win.c
 +++ b/dlls/user32/win.c
-@@ -1621,6 +1621,25 @@ BOOL WINAPI SetWindowDisplayAffinity(HWND hwnd, DWORD affinity)
+@@ -1621,6 +1621,90 @@ BOOL WINAPI SetWindowDisplayAffinity(HWND hwnd, DWORD affinity)
      return FALSE;
  }
  
++/* Per-window feedback settings, kept as window properties. Behaviour matches
++ * Windows as measured by tests/wine/feedback-get.c in dllmgr: settings are
++ * per window and type, unset values read as FALSE with a zeroed buffer, and
++ * GWFS_INCLUDE_ANCESTORS falls back to the parents. Wine draws no touch or
++ * pen feedback, so the stored values only round-trip. */
++static void feedback_prop_name( FEEDBACK_TYPE feedback, WCHAR *name )
++{
++    swprintf( name, 32, L"__wine_feedback_%u", (UINT)feedback );
++}
++
++static BOOL feedback_type_valid( FEEDBACK_TYPE feedback )
++{
++    return feedback >= FEEDBACK_TOUCH_CONTACTVISUALIZATION && feedback <= FEEDBACK_GESTURE_PRESSANDTAP;
++}
++
 +/*****************************************************************************
 + *              SetWindowFeedbackSetting (USER32.@)
-+ *
-+ * Configures touch and pen visual feedback for a window. Wine draws no such
-+ * feedback, so accept the setting for a valid window.
 + */
 +BOOL WINAPI SetWindowFeedbackSetting( HWND hwnd, FEEDBACK_TYPE feedback, DWORD flags, UINT32 size,
 +                                      const void *config )
 +{
-+    FIXME( "(%p, %d, %#lx, %u, %p): semi-stub\n", hwnd, feedback, flags, size, config );
++    WCHAR name[32];
++
++    TRACE( "(%p, %d, %#lx, %u, %p)\n", hwnd, feedback, flags, size, config );
 +
 +    if (!IsWindow( hwnd ))
 +    {
 +        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
 +        return FALSE;
 +    }
++    if (!feedback_type_valid( feedback ) || flags || (config ? size != sizeof(BOOL) : size))
++    {
++        SetLastError( ERROR_INVALID_PARAMETER );
++        return FALSE;
++    }
++    feedback_prop_name( feedback, name );
++    if (!config) RemovePropW( hwnd, name );
++    else SetPropW( hwnd, name, ULongToHandle( *(const BOOL *)config ? 2 : 1 ) );
 +    return TRUE;
++}
++
++/*****************************************************************************
++ *              GetWindowFeedbackSetting (USER32.@)
++ */
++BOOL WINAPI GetWindowFeedbackSetting( HWND hwnd, FEEDBACK_TYPE feedback, DWORD flags, UINT32 *size,
++                                      void *config )
++{
++    WCHAR name[32];
++    UINT_PTR value = 0;
++    HWND win = hwnd;
++    DWORD error;
++
++    TRACE( "(%p, %d, %#lx, %p, %p)\n", hwnd, feedback, flags, size, config );
++
++    if (!IsWindow( hwnd ))
++    {
++        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
++        return FALSE;
++    }
++    if (!size || !feedback_type_valid( feedback ) || (flags & ~GWFS_INCLUDE_ANCESTORS))
++    {
++        SetLastError( ERROR_INVALID_PARAMETER );
++        return FALSE;
++    }
++    if (!config)
++    {
++        *size = sizeof(BOOL);
++        return TRUE;
++    }
++    if (*size < sizeof(BOOL))
++    {
++        SetLastError( ERROR_INVALID_PARAMETER );
++        return FALSE;
++    }
++    feedback_prop_name( feedback, name );
++    error = GetLastError();  /* Windows leaves the last error alone when unset */
++    while (win && !(value = HandleToULong( GetPropW( win, name ) )) && (flags & GWFS_INCLUDE_ANCESTORS))
++        win = NtUserGetAncestor( win, GA_PARENT );
++    SetLastError( error );
++    *size = sizeof(BOOL);
++    *(BOOL *)config = value == 2;
++    return value != 0;
 +}
 +
  /**********************************************************************
