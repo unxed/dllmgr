@@ -24,7 +24,9 @@ Before designing any conhost/Unix-console change (win32-input-mode, OSC52,
 kitty keys), compare both: features already there, per-app installation
 (private runtime overlay vs PE side), licence, per-call overhead (far3.md
 benchmark). Record the comparison in docs/console-apps.md; choose with the
-owner.
+owner. Done 2026-11-09: docs/console-apps.md "Route comparison" (proposal:
+patch Wine's PE conhost, deliver through the private runtime; awaiting the
+owner's choice).
 
 ## FAR-2 console bugs (far3.md Goal 2)
 
