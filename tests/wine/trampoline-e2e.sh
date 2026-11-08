@@ -23,6 +23,7 @@ echo "A: window=$(seen "${A##*/}" && echo yes || echo no) private_winex11=$([ $r
 "$W" "$FS/FSViewer.exe" "$(winepath -w "$B" 2>/dev/null || echo "$B")" >"$log/b" 2>&1 &
 t=0; until seen "${B##*/}" || [ $t -ge 120 ]; do sleep .5; t=$((t + 1)); done
 sleep 2
+for _ in 1 2 3 4 5 6; do [ "$(pgrep -fc FSViewer.exe)" = 1 ] && break; sleep 1; done
 n=$(pgrep -fc 'FSViewer.exe')
 echo "B: window=$(seen "${B##*/}" && echo yes || echo no) fsviewer_processes=$n"
 { seen "${B##*/}" && [ "$n" = 1 ]; } || rc=1
