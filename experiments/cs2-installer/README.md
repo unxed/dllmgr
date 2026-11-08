@@ -58,3 +58,22 @@ user32.SetWindowText[AW]/SetDlgItemText[AW] (log 45 MB, kept locally in
 Next (run 2): relay all msi exports plus LoadStringA, GetDlgItemTextA,
 GetPrivateProfileStringA, lstrcpyA, FindResourceA to see where the strings
 come from.
+
+## F13 run 2 (2026-11-09)
+
+Relay of kernel32/user32 string functions (msi relay did not engage: a
+RelayInclude entry without a dot is a function name; use `msi.*`). The
+custom action DLL is extracted as `msicd3d.tmp` (base 0x10000000). Its first
+dialog (resource 0x7d0, progress) gets correct, distinct texts ("InstallShield
+Wizard Completed" probe, "&Finish", "<&Back", "&Cancel", "Installing Adobe
+Photoshop CS2...", "Status:"); for the final dialog (resource 0x7d1) only the
+first SetDlgItemTextA ("&Finish" for 0x7d3) has a fresh string, every later
+control and the caption reuse the same buffer unchanged. FindResourceA(…,
+type 0xf0 RT_DLGINIT) fails for both dialogs (also for the working one, so
+not the cause). No GetPrivateProfileString/LoadString/msi trace in that
+thread except MsiGetMode; note MsiGetPropertyA has no TRACE in Wine 11.0, so
+remote property reads (served by `SELECT Value FROM _Property` in the main
+process) are invisible without msi.* relay.
+Current hypothesis (not proven): the texts are read with MsiGetPropertyA and
+a later remote call fails, leaving the caller's buffer untouched. Run 3:
+RelayInclude `msi.*`.
