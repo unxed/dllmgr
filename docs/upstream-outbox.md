@@ -21,7 +21,7 @@ second one with the link, then add the back link to the first as a comment.
 | 4 | WineHQ 57513 (comment) | PuTTY IME: needs IBus + us,ru + UTF-8; result notify not forwarded to the IME UI window | to write after the bisect | due |
 | 5 | WineHQ (new bug, duplicate search first) | inverting (XOR) pixels of colour cursors become transparent in the Xcursor path | to write after a Windows probe | candidate |
 | 6 | WineHQ (new bug, duplicate search first) | #43 part 1: caption-less owned popups shown without activation are override-redirect, so a splash stays on top of everything when the busy app's main window is minimized (not a Mint bug: Muffin hides managed transients correctly) | to write after a Windows parity check (ghosted app, owned popup) | candidate |
-| 7 | WineHQ (new bug, duplicate search first) | #65 shell32 reads desktop.ini of every folder on each bind; each miss lists the directory on a case-sensitive FS: Photoshop CS2 start 29.6 -> 14.9 s with a 2 s miss cache | docs/bugzilla/dllmgr-65.txt (prepared 2026-11-10; owner posts) | due |
+| 8 | WineHQ (new bug, duplicate search first) | #65 shell32 reads desktop.ini of every folder on each bind; each miss lists the directory on a case-sensitive FS: Photoshop CS2 start 29.6 -> 14.9 s with a 2 s miss cache | docs/bugzilla/dllmgr-65.txt (prepared 2026-11-10; owner posts) | due |
 
 ## Posted (for cross links)
 
