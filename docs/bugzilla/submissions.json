@@ -187,11 +187,32 @@
       "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=60721",
       "local_issue_url": "https://github.com/unxed/dllmgr/issues/27",
       "kind": "follow-up",
-      "status": "prepared",
+      "status": "superseded",
       "text_file": "docs/bugzilla/winehq-60721-exposure.txt",
       "verification_file": "experiments/first-open/README.md",
       "prepared_on": "2026-11-08",
-      "verified_ci": "https://github.com/unxed/dllmgr/actions/runs/42502597593"
+      "verified_ci": "https://github.com/unxed/dllmgr/actions/runs/42502597593",
+      "superseded_by": "winehq-60721-fix-2026-11-09"
+    },
+    {
+      "id": "winehq-58413-focus-2026-11-09",
+      "local_issue_url": "https://github.com/unxed/dllmgr/issues/43",
+      "kind": "comment",
+      "status": "posted",
+      "text_file": "docs/bugzilla/dllmgr-43.txt",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=58413",
+      "posted_at_utc": "2026-11-09",
+      "posted_by": "owner"
+    },
+    {
+      "id": "winehq-60721-fix-2026-11-09",
+      "local_issue_url": "https://github.com/unxed/dllmgr/issues/27",
+      "kind": "comment",
+      "status": "posted",
+      "text_file": "docs/bugzilla/winehq-60721-fix.txt",
+      "bug_url": "https://bugs.winehq.org/show_bug.cgi?id=60721",
+      "posted_at_utc": "2026-11-09",
+      "posted_by": "owner"
     }
   ]
 }
