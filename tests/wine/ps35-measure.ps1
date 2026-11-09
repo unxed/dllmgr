@@ -80,8 +80,10 @@ try {
         $Candidates=@([PS35.Native]::Windows() | Where-Object {$_.ClassName -eq 'Photoshop'})
         if($Candidates.Count -gt 0){
             $Main=$Candidates[0];$Root=[System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Main.Handle)
-            $File=Find-Named $Root 'File'
-            if($null -ne $File -and $File.Current.IsEnabled){break}
+            # Photoshop's menu bar is not in its UIA tree (run 42722023921): the main
+            # window is ready when it is enabled (no modal first-start window).
+            $File=$Main
+            if([PS35.Native]::IsWindowEnabled([IntPtr]$Main.Handle) -and @([PS35.Native]::Windows() | Where-Object {$_.ProcessId -eq $Application.Id -and $_.Handle -ne $Main.Handle -and $_.Text}).Count -eq 0){break}
         }
         foreach($Window in @([PS35.Native]::Windows() | Where-Object {$_.ProcessId -eq $Application.Id})){
             $Dialog=[System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Window.Handle)
@@ -101,7 +103,7 @@ try {
         }
         Start-Sleep -Seconds 1
     }while([DateTime]::UtcNow -lt $Deadline)
-    if($null -eq $Main -or $null -eq $File -or -not $File.Current.IsEnabled){
+    if($null -eq $Main -or -not [PS35.Native]::IsWindowEnabled([IntPtr]$Main.Handle)){
         # run 42720202134: workspace fully up, but no enabled "File" found; keep what UIA sees
         Save-Desktop 'startup-timeout'
         [PS35.Native]::Windows() | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $Out 'startup-windows.json')
@@ -111,9 +113,10 @@ try {
     $WindowPattern=$null
     if($Root.TryGetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern,[ref]$WindowPattern)){$WindowPattern.SetWindowVisualState([System.Windows.Automation.WindowVisualState]::Maximized)}
     Save-Desktop 'workspace'
-    Invoke-NamedTwice $Root 'File' 'file-menu'
-    Start-Sleep -Milliseconds 500
-    Invoke-NamedTwice ([System.Windows.Automation.AutomationElement]::RootElement) 'Open' 'file-open'
+    # File > Open by its shortcut: the menu bar is not reachable through UIA
+    [void][PS35.Native]::SetForegroundWindow([IntPtr]$Main.Handle);Start-Sleep -Milliseconds 500
+    [System.Windows.Forms.SendKeys]::SendWait('^o')
+    Start-Sleep -Seconds 2
     $Before=Save-OpenState 'os-before' $Main.ProcessId
     $OpenRoot=[System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Before.Handle)
     Save-UiTree $OpenRoot 'os-before'
