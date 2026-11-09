@@ -11,3 +11,5 @@
    Photoshop blended over the white surface).
 3. 3-r6025-on-close.png: "Wine C++ Runtime Library: R6025" when closing
    Photoshop (issue #41).
+4. Owner, 14:19: the activation (registration) dialog is fixed. R6025 also
+   on Alt+F4. Cursors: zoom, eyedropper, hand still small (docs/tasks/44-cursors.md).

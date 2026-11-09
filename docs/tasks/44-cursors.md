@@ -45,3 +45,23 @@ Photoshop CS2 on the patched runtime: its cursors are created at
   Xcursor path (pre-existing, not touched here).
 - Delivery: next runtime release (with dllmgr-43), then the pin in
   scripts/private-runtime.json.
+
+## Owner retest, runtime v5 (2026-11-09 14:19)
+
+Owner: magnifier (zoom), eyedropper and hand cursors are still small; the
+others are fine (asked to check the rest on the stand).
+Stand, v5 runtime via the trampoline, cursor over the canvas (XFixes):
+
+| tool | X cursor | visible art | hotspot |
+|---|---|---|---|
+| zoom | 64x64 | 32x32 | 12,12 |
+| hand | 64x64 | 32x32 | 14,14 |
+| eyedropper | 64x64 | 32x32 | 0,30 |
+| brush | 64x64 | 32x32 | 16,14 |
+| move | 64x64 | 32x32 | 2,2 |
+| lasso, type, marquee | 64x64, empty (Photoshop hides the cursor and draws its own) | - | - |
+
+So on the stand the tool cursors are scaled 2x (16 px art -> 32 px), as
+Windows does at 200 %. Open: why the owner still sees them small. Next step:
+measure on the owner's machine (tests/wine/xcursor-size.py while the zoom
+tool is over the canvas) and compare with his system cursor size.
