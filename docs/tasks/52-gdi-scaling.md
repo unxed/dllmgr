@@ -96,3 +96,17 @@ problems as Photoshop's option bar, now reproducible in 30 lines:
 Photoshop trace (relay, 30 s of start): SelectClipRgn 9442,
 SetWindowOrgEx 4060, SetViewportOrgEx/OffsetViewportOrgEx 331 each,
 IntersectClipRect 189, DrawTextW 129, StretchDIBits 50, GetClipBox 46.
+
+### Stage 2, second step (2026-11-09)
+
+- LPtoDP / DPtoLP hide the scale (the application keeps seeing 96-DPI
+  device units, as with Windows GDI scaling). Cause of the unpainted
+  areas: user32/comctl32 set_control_clipping treats the client rectangle
+  as device coordinates and converts it with DPtoLP.
+- Raster fonts are not used on GDI-scaled DCs (a scalable face is chosen):
+  System / MS Sans Serif no longer come out as 1x glyphs with 2x advances.
+Probe: gdi-scaling-combo-fixed.png (same as the unscaled layout, crisp).
+Photoshop: gdi-scaling-photoshop-stage2b.png, combo texts complete.
+#46 check (blur tool trail, experiments/photoshop-cs2-46/blurtest-rt.sh
+with the trial dialog dismissed): first run 28 px (one leftover outline
+circle), later runs 0; being repeated to see whether it is real.
