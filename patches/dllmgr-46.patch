@@ -1,6 +1,6 @@
 --- a/dlls/win32u/dce.c
 +++ b/dlls/win32u/dce.c
-@@ -169,6 +169,22 @@
+@@ -169,6 +169,25 @@
      struct scaled_surface *surface = get_scaled_surface( window_surface );
      RECT src = *dirty, dst;
      HDC hdc_dst, hdc_src;
@@ -10,7 +10,10 @@
 +     * re-stretched, XOR-drawn and erased lines (a brush outline) leave those
 +     * spread pixels behind. Other scales keep halftone, with the dirty
 +     * rectangle grown by one pixel so the spread is re-stretched too. */
-+    BOOL exact = surface->dpi_to > surface->dpi_from && !(surface->dpi_to % surface->dpi_from);
++    static int smooth = -1;
++    BOOL exact;
++    if (smooth == -1) smooth = getenv( "DLLMGR46_SMOOTH" ) != NULL; /* user choice (#52): halftone always */
++    exact = !smooth && surface->dpi_to > surface->dpi_from && !(surface->dpi_to % surface->dpi_from);
 +    if (!exact)
 +    {
 +        LONG width = window_surface->rect.right - window_surface->rect.left;
@@ -23,7 +26,7 @@
  
      src.left &= ~7;
      src.top &= ~7;
-@@ -184,7 +200,7 @@
+@@ -184,7 +203,7 @@
      NtGdiSelectBitmap( hdc_dst, surface->target_surface->color_bitmap );
  
      /* FIXME: implement HALFTONE with alpha for layered surfaces */

@@ -27,3 +27,24 @@ switch ClearType text to bitmaps, and turn ClearType on in the recipe
 at the physical DPI inside the scaled surface, like Windows "GDI scaling"
 for non-DPI-aware GDI apps (true 22-px glyph shapes); (c) exact/halftone as
 a setting.
+
+## dllmgr-52 (2026-11-09): selectable text smoothing
+
+Owner: start with (a) and let the user choose. patches/dllmgr-52.patch
+(win32u font.c/freetype.c): DLLMGR52_TEXT=system|bitmap|gray|light|cleartype
+overrides the per-face fontconfig flags (Windows-like: one system setting),
+smooths at every size (gasp "no gray" ignored, as ClearType does on
+Windows), `light` uses light hinting; DLLMGR52_GAMMA darkens partial
+coverage (smoothed text at 11 px came out washed out). dllmgr-46 got
+DLLMGR46_SMOOTH (halftone instead of exact blocks).
+
+modes.png rows: bitmap (v8 today), light 1.6, light 2.2, gray 1.6, gray 2.2,
+cleartype. modes-zoom.png (3x, nearest): bitmap, light 2.2, gray 2.2,
+cleartype. ClearType at 96 DPI doubled 2x shows colour fringes; gray 2.2 is
+the most contrasty and keeps letters apart ("pt", "Sharp"); light 2.2 is
+softer with the most faithful shapes.
+
+User choice: `dllmgr set photoshop-cs2 text=gray|light|cleartype|bitmap|system
+contrast=1.0..4.0 scaling=exact|smooth`, shown by `dllmgr status`, applied by
+`dllmgr run` (and so by the trampoline). Photoshop default: text=gray
+contrast=2.2 scaling=exact. FastStone keeps stock text by default.

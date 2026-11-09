@@ -1,0 +1,114 @@
+--- a/dlls/win32u/font.c
++++ b/dlls/win32u/font.c
+@@ -194,6 +194,31 @@
+ 
+ static UINT font_smoothing = GGO_BITMAP;
+ static UINT subpixel_orientation = GGO_GRAY4_BITMAP;
++
++/* dllmgr #52: text smoothing chosen by the user (DLLMGR52_TEXT), like the
++ * Windows font smoothing setting and unlike the per-face fontconfig flags:
++ *   system (default) - stock Wine behaviour (fontconfig flags, gasp honoured)
++ *   bitmap           - no smoothing
++ *   gray             - grayscale smoothing at every size (gasp ignored)
++ *   light            - gray with light hinting: closer to the outline shapes
++ *   cleartype        - subpixel smoothing at every size, as Windows ClearType
++ *                      (gasp "no gray" does not apply to ClearType)
++ * Explicit NONANTIALIASED_QUALITY / ANTIALIASED_QUALITY fonts keep their
++ * request. */
++int dllmgr52_text_mode(void)
++{
++    static int mode = -1;
++    if (mode == -1)
++    {
++        const char *env = getenv( "DLLMGR52_TEXT" );
++        mode = DLLMGR52_SYSTEM;
++        if (env && !strcmp( env, "bitmap" )) mode = DLLMGR52_BITMAP;
++        else if (env && !strcmp( env, "gray" )) mode = DLLMGR52_GRAY;
++        else if (env && !strcmp( env, "light" )) mode = DLLMGR52_LIGHT;
++        else if (env && !strcmp( env, "cleartype" )) mode = DLLMGR52_CLEARTYPE;
++    }
++    return mode;
++}
+ static BOOL antialias_fakes = TRUE;
+ static struct font_gamma_ramp font_gamma_ramp;
+ 
+@@ -4587,6 +4612,15 @@
+ 
+         if (font)
+         {
++            switch (*aa_flags ? DLLMGR52_SYSTEM : dllmgr52_text_mode())
++            {
++            case DLLMGR52_BITMAP: *aa_flags = GGO_BITMAP; break;
++            case DLLMGR52_GRAY:
++            case DLLMGR52_LIGHT: *aa_flags = GGO_GRAY4_BITMAP; break;
++            case DLLMGR52_CLEARTYPE:
++                *aa_flags = subpixel_orientation == GGO_GRAY4_BITMAP ? WINE_GGO_HRGB_BITMAP : subpixel_orientation;
++                break;
++            }
+             if (!*aa_flags) *aa_flags = font->aa_flags;
+             if (!*aa_flags)
+             {
+--- a/dlls/win32u/freetype.c
++++ b/dlls/win32u/freetype.c
+@@ -2140,7 +2140,8 @@
+     case GGO_GRAY4_BITMAP:
+     case GGO_GRAY8_BITMAP:
+     case WINE_GGO_GRAY16_BITMAP:
+-        if ((!antialias_fakes || (!font->fake_bold && !font->fake_italic)) && is_hinting_enabled())
++        if ((!antialias_fakes || (!font->fake_bold && !font->fake_italic)) && is_hinting_enabled() &&
++            dllmgr52_text_mode() < DLLMGR52_GRAY /* dllmgr #52: smooth at every size */)
+         {
+             WORD gasp_flags;
+             if (get_gasp_flags( font, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
+@@ -2697,6 +2698,30 @@
+         memset( buf, 0, buflen );
+         pFT_Outline_Get_Bitmap( library, &glyph->outline, &ft_bitmap );
+ 
++        if (dllmgr52_text_mode() >= DLLMGR52_GRAY)
++        {
++            /* dllmgr #52: small smoothed text comes out too light; darken
++             * partial coverage (DLLMGR52_GAMMA, default 1.6, 1 = off) */
++            static BYTE lut[256];
++            static int lut_ready;
++            INT row, col;
++            BYTE *ptr, *start;
++
++            if (!lut_ready)
++            {
++                const char *env = getenv( "DLLMGR52_GAMMA" );
++                double g = env ? atof( env ) : 1.6;
++                if (g < 0.5 || g > 4) g = 1.6;
++                for (col = 0; col < 256; col++) lut[col] = (BYTE)(255.0 * pow( col / 255.0, 1.0 / g ) + 0.5);
++                lut_ready = 1;
++            }
++            for (row = 0, start = buf; row < height; row++)
++            {
++                for (col = 0, ptr = start; col < width; col++, ptr++) *ptr = lut[*ptr];
++                start += pitch;
++            }
++        }
++
+         if (max_level != 255)
+         {
+             INT row, col;
+@@ -3077,7 +3102,8 @@
+     case GGO_GRAY4_BITMAP:
+     case GGO_GRAY8_BITMAP:
+     case WINE_GGO_GRAY16_BITMAP:
+-        load_flags |= FT_LOAD_TARGET_NORMAL;
++        /* dllmgr #52: light hinting keeps the outline shapes */
++        load_flags |= dllmgr52_text_mode() == DLLMGR52_LIGHT ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_NORMAL;
+         break;
+     case WINE_GGO_HRGB_BITMAP:
+     case WINE_GGO_HBGR_BITMAP:
+--- a/dlls/win32u/ntgdi_private.h
++++ b/dlls/win32u/ntgdi_private.h
+@@ -645,4 +645,8 @@
+ 
+ void set_gdi_client_ptr( HGDIOBJ handle, void *ptr );
+ 
++/* dllmgr #52 */
++enum { DLLMGR52_SYSTEM, DLLMGR52_BITMAP, DLLMGR52_GRAY, DLLMGR52_LIGHT, DLLMGR52_CLEARTYPE };
++extern int dllmgr52_text_mode(void);
++
+ #endif /* __WINE_NTGDI_PRIVATE_H */

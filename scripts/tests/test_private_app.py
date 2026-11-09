@@ -649,5 +649,29 @@ class LaunchLogTest(unittest.TestCase):
             self.assertEqual(out, "== attempt 1: inherited environment\nstray\n== attempt 2: clean environment\nok\n")
 
 
+class SettingsTest(unittest.TestCase):
+    def test_defaults_set_and_environment(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp)
+            values = private_app.read_settings(prefix, "photoshop-cs2")
+            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact"})
+            self.assertEqual(private_app.settings_env(values), {"DLLMGR52_TEXT": "gray", "DLLMGR52_GAMMA": "2.2"})
+            private_app.write_settings(prefix, "photoshop-cs2", ["text=light", "scaling=smooth"])
+            values = private_app.read_settings(prefix, "photoshop-cs2")
+            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth")
+            self.assertEqual(private_app.settings_env(values),
+                             {"DLLMGR52_TEXT": "light", "DLLMGR52_GAMMA": "2.2", "DLLMGR46_SMOOTH": "1"})
+            # FastStone keeps stock text unless asked
+            self.assertEqual(private_app.settings_env(private_app.read_settings(prefix, "faststone")), {})
+
+    def test_rejects_bad_values_and_keeps_the_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp)
+            for bad in (["text=fancy"], ["contrast=9"], ["contrast=x"], ["colour=red"], ["text"]):
+                with self.assertRaises(private_app.Error):
+                    private_app.write_settings(prefix, "photoshop-cs2", bad)
+            self.assertFalse((prefix / private_app.SETTINGS_FILE).exists())
+
+
 if __name__ == "__main__":
     unittest.main()

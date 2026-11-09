@@ -46,6 +46,76 @@ PROFILES = {
 STATE = Path('.dllmgr/apps')
 HERE = Path(__file__).resolve().parent
 RULES = ('DLLMGR_TARGET_EXE', 'DLLMGR_COMCTL32', 'DLLMGR_GDIPLUS')
+
+# User settings per application (#52), kept in the prefix and applied by
+# `dllmgr run` as environment variables the private runtime reads.
+SETTINGS = {
+    'text': ('system', 'bitmap', 'gray', 'light', 'cleartype'),  # DLLMGR52_TEXT
+    'contrast': None,  # DLLMGR52_GAMMA, 1.0 .. 4.0, smoothed text only
+    'scaling': ('exact', 'smooth'),  # DLLMGR46_SMOOTH
+}
+SETTING_DEFAULTS = {
+    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact'},
+    'faststone': {'text': 'system', 'contrast': '1.6', 'scaling': 'exact'},
+}
+SETTINGS_FILE = '.dllmgr/settings.json'
+
+
+def read_settings(prefix, app):
+    values = dict(SETTING_DEFAULTS.get(app, {'text': 'system', 'contrast': '1.6', 'scaling': 'exact'}))
+    try:
+        stored = json.loads((prefix / SETTINGS_FILE).read_text()).get(app, {})
+    except (OSError, ValueError, AttributeError):
+        stored = {}
+    values.update({k: str(v) for k, v in stored.items() if k in SETTINGS})
+    return values
+
+
+def check_setting(key, value):
+    if key not in SETTINGS:
+        raise Error('Unknown setting ' + key + ' (known: ' + ', '.join(SETTINGS) + ')')
+    if SETTINGS[key] is None:
+        try:
+            ok = 1.0 <= float(value) <= 4.0
+        except ValueError:
+            ok = False
+        if not ok:
+            raise Error(key + ' must be a number from 1.0 to 4.0')
+    elif value not in SETTINGS[key]:
+        raise Error(key + ' must be one of: ' + ', '.join(SETTINGS[key]))
+
+
+def write_settings(prefix, app, pairs):
+    path = prefix / SETTINGS_FILE
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    current = data.setdefault(app, {})
+    for pair in pairs:
+        key, sep, value = pair.partition('=')
+        if not sep:
+            raise Error('Expected key=value, got ' + pair)
+        check_setting(key, value)
+        current[key] = value
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + '\n')
+
+
+def settings_env(values):
+    env = {}
+    if values['text'] != 'system':
+        env['DLLMGR52_TEXT'] = values['text']
+        env['DLLMGR52_GAMMA'] = values['contrast']
+    if values['scaling'] == 'smooth':
+        env['DLLMGR46_SMOOTH'] = '1'
+    return env
+
+
+def settings_line(values):
+    return ' '.join(k + '=' + values[k] for k in SETTINGS)
 # #27 trampoline: proxy shipped in the runtime package (checksummed by its
 # manifest); next to FSViewer.exe it relaunches stock-Wine starts through
 # `dllmgr run faststone` (patches/dllmgr-27/README.md).
@@ -680,8 +750,9 @@ def launch(args, prefix):
     verify(runtime, state['package_sha256'], Path(state['base']))
     verify_prefix(prefix, Path(state['base']))
     env = dict(os.environ)
-    for name in RULES:
+    for name in RULES + ('DLLMGR52_TEXT', 'DLLMGR52_GAMMA', 'DLLMGR46_SMOOTH'):
         env.pop(name, None)
+    env.update(settings_env(read_settings(prefix, app_of(args))))
     if 'utf' not in locale.getencoding().lower().replace('-', ''):
         env['LC_ALL'] = 'C.UTF-8'
     env.update(WINEPREFIX=str(prefix), WINEARCH='wow64', DLLMGR_TARGET_EXE=state['target'],
@@ -701,7 +772,8 @@ def launch(args, prefix):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status'])
+    parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status', 'set'])
+    parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling)')
     parser.add_argument('--prefix', type=Path, default=Path(os.environ.get('WINEPREFIX', str(Path.home() / '.wine'))))
     parser.add_argument('--exe', type=Path)
     parser.add_argument('--json', action='store_true', help='machine-readable status')
@@ -722,6 +794,8 @@ def main():
         parser.error('--fix applies to faststone only')
     else:
         args.fix = args.app
+    if args.values and args.command != 'set':
+        parser.error('key=value pairs require set')
     if app_args and args.command != 'run':
         parser.error('application arguments require run')
     prefix = args.prefix.resolve(strict=True)
@@ -739,6 +813,13 @@ def main():
             install(args, prefix)
         elif args.command == 'uninstall':
             uninstall(args, prefix)
+        elif args.command == 'set':
+            if not args.values:
+                print(settings_line(read_settings(prefix, args.app)))
+            else:
+                write_settings(prefix, args.app, args.values)
+                print('Settings for ' + args.app + ': ' + settings_line(read_settings(prefix, args.app)) +
+                      ' (applied at the next start)')
         elif args.command == 'status':
             _, state = read_state(prefix, args.exe, args.app)
             checked_files(prefix, state)
@@ -752,6 +833,9 @@ def main():
                 print('  ' + state['target'])
                 print_versions(state)
                 print('  Launch trampoline: ' + trampoline)
+                print('  Settings: ' + settings_line(read_settings(prefix, args.app)) +
+                      ' (change: dllmgr set ' + args.app + ' text=' + '|'.join(SETTINGS['text']) +
+                      ' contrast=1.0..4.0 scaling=exact|smooth)')
                 print('  Launch: dllmgr run ' + args.app)
                 for pid, kind in running_on(Path(state['exe']).name):
                     print('  Running: pid ' + str(pid) + ' on the ' + kind)
