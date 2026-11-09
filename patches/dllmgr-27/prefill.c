@@ -653,11 +653,85 @@ static void hook_delay_release_dc(HMODULE module)
 #undef DELAY_PTR
 }
 
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+/* #62: CoolType (Photoshop's text engine) falls back to the PostScript fonts
+ * MyriadPro-Regular, Myriad-Roman and TimesNewRomanPSMT (then ArialMT). A
+ * Windows system always has the last two; a Wine prefix has none of them, so
+ * the default text style gets a NULL font, Photoshop throws an internal
+ * assertion (SLOCoolTypeFont.cpp:1633) and, once its preferences exist, a
+ * start with a document dies with "hardware or system error". The names are
+ * pointed at fonts every Wine prefix can resolve instead (Liberation, which
+ * matches Arial / Times New Roman metrics, else Wine's own Tahoma).
+ * DLLMGR62_NO_FONT_FIX=1 turns it off. */
+static int CALLBACK font_family_found(const LOGFONTA *lf, const TEXTMETRICA *tm, DWORD type, LPARAM found)
+{
+    *(int *)found = 1;
+    return 0;
+}
+
+static int font_family_exists(const char *family)
+{
+    LOGFONTA lf;
+    int found = 0;
+    HDC dc = GetDC(NULL);
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lstrcpynA(lf.lfFaceName, family, LF_FACESIZE);
+    EnumFontFamiliesExA(dc, &lf, (FONTENUMPROCA)font_family_found, (LPARAM)&found, 0);
+    ReleaseDC(NULL, dc);
+    return found;
+}
+
+static void replace_font_name(BYTE *start, SIZE_T size, const char *from, const char *to)
+{
+    SIZE_T from_len = strlen(from) + 1, to_len = strlen(to) + 1, i;
+    if (to_len > from_len) return;
+    for (i = 0; i + from_len <= size; i++) {
+        DWORD protect;
+        if (memcmp(start + i, from, from_len) || (i && start[i - 1])) continue;
+        if (!VirtualProtect(start + i, from_len, PAGE_READWRITE, &protect)) continue;
+        memset(start + i, 0, from_len);
+        memcpy(start + i, to, to_len);
+        VirtualProtect(start + i, from_len, protect, &protect);
+        TRACE("CoolType default font %s -> %s\n", from, to);
+    }
+}
+
+static void cooltype_default_fonts(HMODULE module)
+{
+    char name[MAX_PATH] = "";
+    BYTE *base = (BYTE *)module;
+    IMAGE_NT_HEADERS *nt;
+    IMAGE_SECTION_HEADER *sec;
+    const char *sans, *serif;
+    int len, i;
+
+    len = GetModuleFileNameA(module, name, sizeof(name));
+    if (len < 12 || lstrcmpiA(name + len - 12, "CoolType.dll") || GetEnvironmentVariableA("DLLMGR62_NO_FONT_FIX", NULL, 0))
+        return;
+    sans = font_family_exists("Liberation Sans") ? "LiberationSans" : "WineTahoma";
+    serif = font_family_exists("Liberation Serif") ? "LiberationSerif" : sans;
+    nt = (IMAGE_NT_HEADERS *)(base + ((IMAGE_DOS_HEADER *)base)->e_lfanew);
+    sec = IMAGE_FIRST_SECTION(nt);
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++) {
+        BYTE *start = base + sec->VirtualAddress;
+        SIZE_T size = min(sec->Misc.VirtualSize, sec->SizeOfRawData);
+        if (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE || !(sec->Characteristics & IMAGE_SCN_MEM_READ)) continue;
+        replace_font_name(start, size, "MyriadPro-Regular", sans);
+        replace_font_name(start, size, "Myriad-Roman", strlen(sans) < 12 ? sans : "WineTahoma");
+        replace_font_name(start, size, "TimesNewRomanPSMT", serif);
+    }
+}
+#endif
+
 typedef struct { ULONG flags; const UNICODE_STRING *full, *base; void *dll; ULONG size; } dll_loaded;
 static void CALLBACK on_dll(ULONG reason, const dll_loaded *data, void *context)
 {
     if (reason == 1 /* LDR_DLL_NOTIFICATION_REASON_LOADED */) {
         hook_module_release_dc((HMODULE)data->dll);
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+        cooltype_default_fonts((HMODULE)data->dll);
+#endif
     }
 }
 

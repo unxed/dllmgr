@@ -33,3 +33,19 @@ CoolType.dll RVA 0x114b89, not an export) and stores NULL when the lookup
 fails. Not the cause: CoolType font caches (AdobeFnt10.lst removed: still
 fails). Live patch (keep the reference instead of storing NULL): still
 fails, so the reference itself is already NULL.
+
+## #62 root cause and fix (2026-11-09)
+
+CoolType's fallback fonts are MyriadPro-Regular, Myriad-Roman,
+TimesNewRomanPSMT and ArialMT (strings in CoolType.dll). Windows always has
+the last two; a Wine prefix has none, so the default text style ("Normal",
+"defaultStyle" on the stack) gets a NULL font and Photoshop throws
+SLO::ProgrammerException. With fresh preferences the exception is
+swallowed; once preferences exist it reaches the top-level handler.
+Proof: the same failing start opens the document when the names in the
+loaded CoolType.dll are live-patched (gdb) to "WineTahoma".
+Fix (dllmgr-27 version.dll, Photoshop build): when CoolType.dll loads, its
+fallback names point to LiberationSans / LiberationSerif (Arial / Times
+metrics) when present, else Wine's own WineTahoma. DLLMGR62_NO_FONT_FIX=1
+turns it off. Stand: start with the old prefs and C:\t46.png opens the
+document (fixed-start-with-prefs.png shows the normal trial dialog on top).
