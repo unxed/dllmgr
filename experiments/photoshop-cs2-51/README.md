@@ -16,3 +16,28 @@ owner-far2l-trace.log (owner, 2026-11-09 15:58, far2l, `wine Photoshop.exe`, fix
   and the owner's environment, not more owner runs (owner, 16:03).
 - Fixed on the way: the watched run held the prefix lock while Photoshop
   ran (`dllmgr status` blocked); `failed: 0` was a logged SystemExit.
+
+## Plain launch stayed on system Wine (owner log, 2026-11-10)
+
+Owner's .dllmgr/trampoline-run.log: all three attempts of the private
+runtime ended at once; the traced one loads Photoshop.dll, PSViews.dll,
+PSArt.dll and unloads them, and VERSION.dll (the proxy that signals the
+waiting stock process) never loads.
+
+Cause (stand, second.sh, relay trace): Photoshop CS2 is single-instance:
+WinMain creates the mutex "PS3.0.5WIN" (and "goingDownForeverPS4.0"); a
+second instance that finds it loads Photoshop.dll, unloads it, FindWindow
+("Photoshop") and ExitProcess(1). The proxy VERSION.dll is delay-loaded by
+Photoshop.exe; on the stand that happens before the mutex check (so the
+private instance signals and the stock one exits in time), on the owner's
+system it did not, so the private instance met the stock instance's mutex
+and quit, three times.
+
+Fix (prefill.c trampoline): before starting the launcher the stock process
+closes its handles to these mutexes (found by NtQueryObject names); it
+leaves when the private runtime signals or when the mutex exists again
+(the private instance created it). Stand, e2e51.sh, signal suppressed
+(DLLMGR51_NO_SIGNAL=1, as on the owner's system): without the fix
+(DLLMGR51_NO_MUTEX=1) "no signal ... staying on stock Wine", pid on the
+system Wine; with it "private runtime holds the single-instance mutex,
+exiting", pid on the private runtime. Normal case: "took over" as before.

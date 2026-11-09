@@ -942,6 +942,53 @@ static const WCHAR *own_arguments(void)
     return p;
 }
 
+/* #51: Photoshop CS2 keeps one instance with the named mutex "PS3.0.5WIN"
+ * (created in WinMain before Photoshop.dll); a second instance that finds it
+ * exits at once. The private instance only tells us it is up once its own
+ * copy of this proxy is loaded, which happens late on some systems (it is
+ * delay-loaded), so it could find our mutex first and quit, and we stayed on
+ * stock Wine. Close our handles to the single-instance mutexes before
+ * starting the launcher; the private instance then creates them, and seeing
+ * the mutex again also tells us it took over. Returns how many were closed. */
+static const WCHAR *const instance_mutexes[] = {L"PS3.0.5WIN", L"goingDownForeverPS4.0"};
+
+static int close_instance_mutexes(void)
+{
+    typedef NTSTATUS (WINAPI *query_object_fn)(HANDLE, int, void *, ULONG, ULONG *);
+    query_object_fn query = (query_object_fn)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtQueryObject");
+    union { UNICODE_STRING name; BYTE buf[1024]; } info;
+    ULONG i, j, len, closed = 0;
+    HANDLE probe;
+
+    if (!query || GetEnvironmentVariableA("DLLMGR51_NO_MUTEX", NULL, 0)) return 0;
+    for (j = 0; j < ARRAYSIZE(instance_mutexes); j++) {  /* only when it exists at all */
+        if (!(probe = OpenMutexW(SYNCHRONIZE, FALSE, instance_mutexes[j]))) continue;
+        CloseHandle(probe);
+        for (i = 4; i < 0x10000; i += 4) {
+            /* 1 = ObjectNameInformation */
+            if (query((HANDLE)(ULONG_PTR)i, 1, &info, sizeof(info) - sizeof(WCHAR), &len) < 0 || !info.name.Buffer) continue;
+            len = info.name.Length / sizeof(WCHAR);
+            if (len >= (ULONG)lstrlenW(instance_mutexes[j]) &&
+                !lstrcmpW(info.name.Buffer + len - lstrlenW(instance_mutexes[j]), instance_mutexes[j]) &&
+                (len == (ULONG)lstrlenW(instance_mutexes[j]) || info.name.Buffer[len - lstrlenW(instance_mutexes[j]) - 1] == '\\')) {
+                CloseHandle((HANDLE)(ULONG_PTR)i);
+                closed++;
+                TRACE("trampoline: closed single-instance mutex %ls (handle %#lx)\n", instance_mutexes[j], i);
+            }
+        }
+    }
+    return closed;
+}
+
+/* The private instance owns the single-instance mutex again: it took over. */
+static BOOL instance_mutex_back(void)
+{
+    HANDLE probe = OpenMutexW(SYNCHRONIZE, FALSE, instance_mutexes[0]);
+    if (!probe) return FALSE;
+    CloseHandle(probe);
+    return TRUE;
+}
+
 static void trampoline(void)
 {
     STARTUPINFOW si = {sizeof(si)};
@@ -949,8 +996,9 @@ static void trampoline(void)
     WCHAR *prefix = read_companion(), *app = NULL, *cmd = NULL, *end;
     const WCHAR *args = own_arguments();
     char wait_text[16] = "";
-    DWORD wait = 15000, n;
+    DWORD wait = 15000, n, waited;
     HANDLE event = NULL;
+    int mutexes;
 
     if (!prefix || !(end = wcschr(prefix + 1, '"'))) goto done;
     n = end - prefix - 1;
@@ -967,6 +1015,7 @@ static void trampoline(void)
     if (GetEnvironmentVariableA("DLLMGR27_TRAMP_WAIT", wait_text, sizeof(wait_text))) wait = atoi(wait_text);
     if (!(event = CreateEventW(NULL, TRUE, FALSE, TRAMP_EVENT))) goto done;
     ResetEvent(event);
+    mutexes = close_instance_mutexes();
     if (!CreateProcessW(app, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
         TRACE("trampoline: cannot start launcher (error %lu), staying on stock Wine\n", GetLastError());
         goto done;
@@ -974,9 +1023,15 @@ static void trampoline(void)
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
     TRACE("trampoline: started %ls, waiting %lu ms\n", cmd, wait);
-    if (WaitForSingleObject(event, wait) == WAIT_OBJECT_0) {
-        TRACE("trampoline: private runtime took over, exiting\n");
-        ExitProcess(0);
+    for (waited = 0; waited < wait; waited += 100) {
+        if (WaitForSingleObject(event, 100) == WAIT_OBJECT_0) {
+            TRACE("trampoline: private runtime took over, exiting\n");
+            ExitProcess(0);
+        }
+        if (mutexes && instance_mutex_back()) {
+            TRACE("trampoline: private runtime holds the single-instance mutex, exiting\n");
+            ExitProcess(0);
+        }
     }
     TRACE("trampoline: no signal from the private runtime, staying on stock Wine\n");
 done:
@@ -1009,7 +1064,8 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
         /* Started by `dllmgr run` (private runtime with the real fix): tell a
          * waiting stock-Wine trampoline that we are up, and add nothing else. */
         if (GetEnvironmentVariableA("DLLMGR_TARGET_EXE", NULL, 0)) {
-            HANDLE event = OpenEventW(EVENT_MODIFY_STATE, FALSE, TRAMP_EVENT);
+            /* DLLMGR51_NO_SIGNAL: test switch, as if this proxy loaded too late */
+            HANDLE event = GetEnvironmentVariableA("DLLMGR51_NO_SIGNAL", NULL, 0) ? NULL : OpenEventW(EVENT_MODIFY_STATE, FALSE, TRAMP_EVENT);
             TRACE("private runtime: trampoline event %s\n", event ? "set" : "absent");
             if (event) {
                 SetEvent(event);

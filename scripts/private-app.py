@@ -751,6 +751,29 @@ def clean_env(env):
     return keep
 
 
+def trampoline_summary(prefix, limit=12):
+    """#51: what the last run started by the launch trampoline said: its
+    attempts and Wine's err: lines (the cause of a failed start), so a report
+    needs only `dllmgr status`."""
+    log = prefix / '.dllmgr/trampoline-run.log'
+    try:
+        lines = log.read_text(errors='replace').splitlines()
+        when = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(log.stat().st_mtime))
+    except OSError:
+        return []
+    picked = [l for l in lines if l.startswith('== attempt') or ':err:' in l]
+    errors = [l for l in picked if ':err:' in l]
+    if len(errors) > limit:  # keep attempt headers, the first errors of each kind
+        seen, keep = set(), []
+        for l in picked:
+            kind = l.split(':err:', 1)[-1].split(' ', 1)[0] if ':err:' in l else l
+            if ':err:' not in l or kind not in seen:
+                keep.append(l)
+                seen.add(kind)
+        picked = keep
+    return ['Last trampoline run (' + when + ', .dllmgr/trampoline-run.log):'] + ['  ' + l[:200] for l in picked[:limit * 2]]
+
+
 def watch(prefix, app, argv, env, quick=3.0):
     """Started by the launch trampoline (Wine's double fork leaves us orphaned):
     nobody sees our output, so keep the private Wine's stderr in the prefix and
@@ -901,6 +924,8 @@ def main():
                 last = [l for l in log.read_text(errors='replace').splitlines() if ' run ' + args.app + ':' in l][-2:] if log.is_file() else []
                 for line in last:
                     print('  Last launches: ' + line if line is last[0] else '                 ' + line)
+                for line in trampoline_summary(prefix):
+                    print('  ' + line)
         else:
             try:
                 watched = launch(args, prefix)

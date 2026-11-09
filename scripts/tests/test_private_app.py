@@ -673,6 +673,21 @@ class SettingsTest(unittest.TestCase):
             self.assertFalse((prefix / private_app.SETTINGS_FILE).exists())
 
 
+class TrampolineSummaryTest(unittest.TestCase):
+    def test_attempts_and_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp)
+            self.assertEqual(private_app.trampoline_summary(prefix), [])
+            (prefix / ".dllmgr").mkdir()
+            (prefix / ".dllmgr/trampoline-run.log").write_text(
+                "== attempt 1: inherited environment\n0024:fixme:x:y stub\n"
+                "0024:err:module:import_dll Library X.dll (which is needed by L\"Photoshop.dll\") not found\n"
+                "== attempt 2: clean environment\n0138:trace:loaddll:build_module Loaded\n")
+            lines = private_app.trampoline_summary(prefix)
+            self.assertTrue(lines[0].startswith("Last trampoline run ("))
+            self.assertEqual([l.strip()[:16] for l in lines[1:]], ["== attempt 1: in", "0024:err:module:", "== attempt 2: cl"])
+
+
 class AltClickTest(unittest.TestCase):
     """#48: Cinnamon's Alt window modifier is lent to the application and given back."""
 
