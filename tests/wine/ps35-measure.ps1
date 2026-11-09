@@ -31,9 +31,12 @@ function Install-WithWizard {
             $Fields=@($Edits | Where-Object {$_.Current.IsEnabled -and $_.Current.ClassName -match '^(Edit|RichEdit20W)$' -and $_.Current.Name -notmatch '(?i)serial'} | Sort-Object {$_.Current.BoundingRectangle.Y})
             if($Fields.Count -ne 2){Save-UiTree $Root 'trial-fields';Save-Desktop 'trial-fields';throw 'Trial UI does not expose exactly two enabled non-serial identity fields'}
             for($i=0;$i -lt 2;$i++){
-                $Value=@('Compatibility Test','CI task35')[$i];$ValuePattern=$null
-                if($Fields[$i].TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern,[ref]$ValuePattern)){$ValuePattern.SetValue($Value)}
-                elseif(-not [PS35.Native]::SetText([IntPtr]$Fields[$i].Current.NativeWindowHandle,$Value)){throw 'Public WM_SETTEXT failed for identified enabled identity field'}
+                # Typed, not WM_SETTEXT: MSI takes the property (USERNAME) from keyboard edits
+                # only; run 42711587380 showed the text but "Required fields are empty".
+                $Value=@('Compatibility Test','CI task35')[$i]
+                $Fields[$i].SetFocus();Start-Sleep -Milliseconds 300
+                [System.Windows.Forms.SendKeys]::SendWait('^a');[System.Windows.Forms.SendKeys]::SendWait($Value)
+                [System.Windows.Forms.SendKeys]::SendWait('{TAB}');Start-Sleep -Milliseconds 300
             }
             Save-Desktop 'trial-selected'
         }
