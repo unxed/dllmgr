@@ -70,3 +70,24 @@ WINDOWPOS moves/sizes converted with the real screen DPI). Re-run (stock Wine,
 bar, palettes) normal. Remaining observation: a faint light 1 px line along the
 right/bottom edge of the splash window rectangle (probably its own frame,
 previously hidden by the white fill); not compared with Windows yet.
+
+## Owner retest with the version.dll prefill proxy (2026-11-09, owner's laptop)
+
+Better than stock (no white frame), but not finished. Screenshots (cropped to
+the splash) in owner-2026-11-09/:
+1. Over the main window: the frame around the splash shows the grey captured
+   background, but a thin 1 px outline of the splash rectangle stays visible
+   (also listed as the #36 leftover). A second, lower window (about 620x37
+   under the splash, x 689-1311) is shown white with a line in it: another
+   window whose first paint is white, not covered by the proxy (or shown
+   before the proxy's capture).
+2. Main window minimized while the splash is up: the frame is grey (screen
+   captured when the main window was still behind it) over the desktop: the
+   capture is a static snapshot and goes stale when what is behind changes.
+3. Same as 1, "Looking for preferences..." stage.
+Owner: "шероховато, дошлифовать бы". Ideas to check (not tried): how Windows
+renders this splash (layered window with alpha or colour key? then a fix is
+to emulate the layering, not to snapshot); refresh the capture when the
+windows behind change; find the 1 px line (window border style vs our
+capture offset); identify the lower white window (class, style) with the
+proxy's DLLMGR27_DEBUG capture log.
