@@ -615,25 +615,59 @@ def watched_run():
     return os.getppid() == 1 or bool(os.environ.get('DLLMGR_RUN_WATCH'))
 
 
-def watch(prefix, app, argv, env):
+KEEP_ENV = ('HOME', 'USER', 'LOGNAME', 'PATH', 'SHELL', 'DISPLAY', 'XAUTHORITY', 'WAYLAND_DISPLAY',
+            'XDG_RUNTIME_DIR', 'XDG_DATA_HOME', 'XDG_CONFIG_HOME', 'XDG_CACHE_HOME', 'XDG_SESSION_TYPE',
+            'DBUS_SESSION_BUS_ADDRESS', 'LANG', 'LANGUAGE', 'TZ')
+
+
+def clean_env(env):
+    """The environment a login session would give, plus our own variables:
+    drops whatever the stock Wine process passed down to its Unix child."""
+    keep = {k: v for k, v in env.items()
+            if k in KEEP_ENV or k.startswith(('LC_', 'DLLMGR', 'WINEPREFIX', 'WINEARCH', 'WINELOADER', 'WINESERVER'))}
+    return keep
+
+
+def watch(prefix, app, argv, env, quick=3.0):
     """Started by the launch trampoline (Wine's double fork leaves us orphaned):
     nobody sees our output, so keep the private Wine's stderr in the prefix and
     record how it ended (#51). Runs outside the prefix lock, so `status` works
-    meanwhile."""
-    runtime_wine = argv[0]
-    started = time.monotonic()
-    pid = os.fork()
-    if pid == 0:
+    meanwhile. When the private Wine dies within `quick` seconds, retry with
+    half of the suspects removed (first the inherited environment, then with
+    loader traces) and log which attempt worked: the stock process waits up
+    to 15 s, so the user still gets the private runtime."""
+    clean = clean_env(env)
+    attempts = [('inherited environment', env), ('clean environment', clean),
+                ('clean environment, traced', dict(clean, WINEDEBUG='+process,+loaddll'))]
+    log = prefix / '.dllmgr/trampoline-run.log'
+    extra = sorted(set(env) - set(clean))
+    for number, (what, attempt_env) in enumerate(attempts):
+        started = time.monotonic()
         try:
-            fd = os.open(prefix / '.dllmgr/trampoline-run.log', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
-            os.dup2(fd, 2)
-            os.close(fd)
+            with open(log, 'w' if number == 0 else 'a') as out:
+                out.write('== attempt %d: %s\n' % (number + 1, what))
         except OSError:
             pass
-        os.execve(runtime_wine, argv, env)
-    _, status = os.waitpid(pid, 0)
-    how = ('exit code ' + str(os.waitstatus_to_exitcode(status))) if os.WIFEXITED(status) else 'signal ' + str(os.WTERMSIG(status))
-    launch_log(prefix, 'run ' + app + ': private runtime ended (%s) after %.1f s; its stderr: .dllmgr/trampoline-run.log' % (how, time.monotonic() - started))
+        pid = os.fork()
+        if pid == 0:
+            try:
+                fd = os.open(log, os.O_WRONLY | os.O_APPEND)
+                os.dup2(fd, 2)
+                os.close(fd)
+            except OSError:
+                pass
+            try:
+                os.execve(argv[0], argv, attempt_env)
+            finally:
+                os._exit(127)
+        _, status = os.waitpid(pid, 0)
+        took = time.monotonic() - started
+        how = ('exit code ' + str(os.waitstatus_to_exitcode(status))) if os.WIFEXITED(status) else 'signal ' + str(os.WTERMSIG(status))
+        launch_log(prefix, 'run %s: private runtime (%s) ended (%s) after %.1f s; stderr: .dllmgr/trampoline-run.log' % (app, what, how, took))
+        if number == 0 and extra:
+            launch_log(prefix, 'run %s: inherited variables not in the clean environment: %s' % (app, ' '.join(extra)[:600]))
+        if took >= quick or status == 0:
+            return
 
 
 def launch(args, prefix):

@@ -624,8 +624,29 @@ class LaunchLogTest(unittest.TestCase):
                 watched = private_app.launch(SimpleNamespace(exe=None, app="photoshop-cs2", fix="photoshop-cs2", app_args=[]), prefix)
                 private_app.os.fork.assert_not_called()  # nothing started under the prefix lock
             private_app.watch(prefix, "photoshop-cs2", *watched)
-            self.assertEqual((prefix / ".dllmgr/trampoline-run.log").read_text(), "private-wine-stderr\n")
-            self.assertIn("private runtime ended (exit code 3)", (prefix / private_app.LAUNCH_LOG).read_text())
+            out = (prefix / ".dllmgr/trampoline-run.log").read_text()
+            self.assertEqual(out.count("private-wine-stderr\n"), 3)  # quick failure: three attempts
+            log = (prefix / private_app.LAUNCH_LOG).read_text()
+            self.assertIn("(inherited environment) ended (exit code 3)", log)
+            self.assertIn("(clean environment, traced) ended (exit code 3)", log)
+
+    def test_quick_failure_is_retried_with_a_clean_environment(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp)
+            (prefix / ".dllmgr").mkdir()
+            wine = prefix / "wine"
+            # fails at once while the stray variable is set, runs fine without it
+            wine.write_text("#!/bin/sh\nif [ -n \"$STRAY\" ]; then echo stray >&2; exit 1; fi\necho ok >&2\n")
+            wine.chmod(0o755)
+            env = {"PATH": "/usr/bin:/bin", "HOME": tmp, "STRAY": "1", "DLLMGR_TARGET_EXE": "C:\\a.exe"}
+            private_app.watch(prefix, "photoshop-cs2", [str(wine), "C:\\a.exe"], env)
+            log = (prefix / private_app.LAUNCH_LOG).read_text()
+            self.assertIn("(inherited environment) ended (exit code 1)", log)
+            self.assertIn("inherited variables not in the clean environment: STRAY", log)
+            self.assertIn("(clean environment) ended (exit code 0)", log)
+            self.assertNotIn("traced", log)
+            out = (prefix / ".dllmgr/trampoline-run.log").read_text()
+            self.assertEqual(out, "== attempt 1: inherited environment\nstray\n== attempt 2: clean environment\nok\n")
 
 
 if __name__ == "__main__":
