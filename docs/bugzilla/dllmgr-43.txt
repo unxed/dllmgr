@@ -1,0 +1,35 @@
+Where: https://bugs.winehq.org/show_bug.cgi?id=58413  (comment; likely the same mechanism)
+Status: PREPARED 2026-11-09, not posted (owner posts). Duplicate search:
+"_NET_ACTIVE_WINDOW", "focus stealing", "steals focus": 58413 is the closest.
+
+Text:
+
+A probable cause, found with Adobe Photoshop CS2 on Wine 11.0 under
+Cinnamon (Muffin): after the user switches to another application while
+Photoshop is still loading, Photoshop keeps pulling the focus back. The same
+happens whenever a Wine program changes its active window while the user is
+in another X client.
+
+What the +x11drv,+event log shows: when the other client takes the focus,
+Wine keeps the Photoshop window as its foreground window (focus_out only
+resets the foreground to the desktop when the WM does not support
+_NET_ACTIVE_WINDOW). Later Photoshop activates one of its own windows
+(palettes appear during startup); every such change goes through
+ActivateWindow and set_net_active_window, which sends a _NET_ACTIVE_WINDOW
+client message with source indication 2 (pager) and timestamp 0. EWMH says
+window managers should obey pager requests without question, so the WM
+gives the focus back to Wine, bypassing its focus-stealing prevention.
+Metacity happens to ignore these requests in my tests, Muffin obeys them.
+
+What fixed it on our side: send the request as an application request
+(source indication 1) with a timestamp, using the latest time the user
+interacted with the process (the latest key or button event in any of its
+windows, or the time the WM made one of its windows active), and keep the
+pager request only while no such time is known yet. With that change, under
+Muffin: Photoshop no longer takes the focus back (30 and 70 seconds observed,
+twice), it still gets the focus normally at startup when the user does not
+switch away, and clicking its window after loading activates it again.
+
+Prepared with the help of an AI agent; the behaviour above was observed by
+running Photoshop CS2 on a headless X server with Muffin, before and after
+the change.
