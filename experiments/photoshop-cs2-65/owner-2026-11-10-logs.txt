@@ -1,0 +1,379 @@
+
+
+
+~/dev/dllmgr$ git pull
+remote: Enumerating objects: 86, done.
+remote: Counting objects: 100% (86/86), done.
+remote: Compressing objects: 100% (45/45), done.
+remote: Total 86 (delta 59), reused 63 (delta 36), pack-reused 0 (from 0)
+Распаковка объектов: 100% (86/86), 37.75 КиБ | 633.00 КиБ/с, готово.
+Из https://github.com/unxed/dllmgr
+   7d94bad..6127318  main       -> origin/main
+Обновление 7d94bad..6127318
+Fast-forward
+ dllmgr                                                         |   2 +-
+ docs/bugzilla/dllmgr-46.txt                                    |   2 +-
+ docs/multi-agent-protocol.md                                   |  11 ++++++++--
+ docs/tasks/52-gdi-scaling.md                                   |  38 +++++++++++++++++++++++++++++++-
+ docs/upstream-outbox.md                                        |   2 +-
+ experiments/photoshop-cs2-48/README.md                         |  27 +++++++++++++++++++++++
+ experiments/photoshop-cs2-48/flow.sh                           |  17 +++++++++++++++
+ experiments/photoshop-cs2-48/live.sh                           |  17 +++++++++++++++
+ experiments/photoshop-cs2-52/gdi-scaling-combo-thin-pens.png   | Bin 0 -> 3875 bytes
+ experiments/photoshop-cs2-52/gdi-scaling-prims-1.png           | Bin 0 -> 2312 bytes
+ experiments/photoshop-cs2-52/gdi-scaling-prims-2.png           | Bin 0 -> 2145 bytes
+ experiments/photoshop-cs2-52/gdi-scaling-prims-3.png           | Bin 0 -> 2111 bytes
+ experiments/photoshop-cs2-63/owner-2026-11-09-combo-button.jpg | Bin 0 -> 4360 bytes
+ patches/dllmgr-52-gdi.patch                                    |  98 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ scripts/private-app.py                                         |  72 ++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ scripts/tests/test_private_app.py                              |  58 ++++++++++++++++++++++++++++++++++++++++++++++--
+ tests/wine/gdi-scale-prims.c                                   |  60 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ tests/wine/gdi-scale-prims.sh                                  |   7 ++++++
+ tests/wine/ps35-measure.ps1                                    |  17 ++++++++++-----
+ tests/wine/ps35-uia.ps1                                        |   5 +++++
+ 20 files changed, 413 insertions(+), 20 deletions(-)
+ create mode 100644 experiments/photoshop-cs2-48/README.md
+ create mode 100755 experiments/photoshop-cs2-48/flow.sh
+ create mode 100755 experiments/photoshop-cs2-48/live.sh
+ create mode 100644 experiments/photoshop-cs2-52/gdi-scaling-combo-thin-pens.png
+ create mode 100644 experiments/photoshop-cs2-52/gdi-scaling-prims-1.png
+ create mode 100644 experiments/photoshop-cs2-52/gdi-scaling-prims-2.png
+ create mode 100644 experiments/photoshop-cs2-52/gdi-scaling-prims-3.png
+ create mode 100644 experiments/photoshop-cs2-63/owner-2026-11-09-combo-button.jpg
+ create mode 100644 tests/wine/gdi-scale-prims.c
+ create mode 100755 tests/wine/gdi-scale-prims.sh
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+~/dev/dllmgr$ ./install.sh
+Installed /home/unxed/.local/bin/dllmgr
+Added the menu entry "Fix Windows programs"
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+~$ dllmgr unfix photoshop-cs2 && dllmgr fix photoshop-cs2
+✓ Private Photoshop CS2 recipe removed; previous desktop entries restored.
+› Target: C:\Program Files (x86)\Adobe\Adobe Photoshop CS2\Photoshop.exe · prefix /home/unxed/.wine · base wine-11.0 at /opt/wine-stable
+› Runtime: app-isolation-wine-11.0-v10
+›  Downloading Wine runtime app-isolation-wine-11.0-v10 from github.com/unxed/dllmgr  [####################] 100%  10/10 MB
+›  Building private runtime: copying 599 Wine Unix files from /opt/wine-stable  [####################] 100%  68/68 MB
+›  Verifying private runtime: sha256 of 601 files  [####################] 100%  181/181 MB
+  Runtime ready: /home/unxed/.local/share/dllmgr/runtimes/d15e6c7755cc6a156f32b03d09950c984453327262895db07f64ee31dd54dc2d
+  Patched Wine modules in it: bin/wine, i386-windows/ntdll.dll, x86_64-unix/ntdll.so, x86_64-unix/win32u.so, x86_64-unix/winex11.so, x86_64-windows/ntdll.dll
+  Launcher routed through dllmgr: /home/unxed/.local/share/applications/dllmgr-photoshop-cs2-34b57c9bb5992b62fcf7.desktop
+✓ Photoshop CS2 fixes installed privately for C:\Program Files (x86)\Adobe\Adobe Photoshop CS2\Photoshop.exe
+  Versions: dllmgr 6127318 (installed) · runtime app-isolation-wine-11.0-v10 (sha256 841a7a0e161e) · modules none (runtime and proxy only)
+  Launch trampoline installed: any start of this Photoshop.exe gets the fixes.
+    files: /home/unxed/.wine/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2/version.dll (sha256 248a9395030f), version.dllmgr; load order: HKCU\Software\Wine\AppDefaults\Photoshop.exe\DllOverrides version=native,builtin
+  Launch: dllmgr run photoshop-cs2
+  Shared prefix DLLs and system Wine were not changed.
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+~/.wine/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2$ wine Photoshop.exe
+0074:err:system:NtUserChangeDisplaySettings Changing L"\\\\.\\DISPLAY1" display settings returned -2.
+0074:err:explorer:initialize_display_settings Failed to initialize registry display settings for L"\\\\.\\DISPLAY1".
+0164:fixme:ole:CoInitializeSecurity 0000000000000000, -1, 0000000000000000, 0000000000000000, 1, 3, 0000000000000000, 0, 0000000000000000 stub
+0178:fixme:wia:wiadevmgr_QueryInterface interface {00000003-0000-0000-c000-000000000046} not implemented
+0178:fixme:wia:wiadevmgr_QueryInterface interface {00000003-0000-0000-c000-000000000046} not implemented
+0178:fixme:wia:wiadevmgr_QueryInterface interface {00000019-0000-0000-c000-000000000046} not implemented
+0024:err:module:import_dll Library comctl32.dll (which is needed by L"C:\\windows\\twain_32\\gphoto2.ds") not found
+0024:err:twain:twain_add_onedriver Failed to load TWAIN Source L"C:\\windows\\twain_32\\gphoto2.ds"
+0024:err:module:import_dll Library comctl32.dll (which is needed by L"C:\\windows\\twain_32\\sane.ds") not found
+0024:err:twain:twain_add_onedriver Failed to load TWAIN Source L"C:\\windows\\twain_32\\sane.ds"
+0024:fixme:ntdll:NtQuerySystemInformation info_class SYSTEM_PERFORMANCE_INFORMATION
+0024:fixme:atmlib:ATMProperlyLoaded stub
+0024:fixme:atmlib:ATMFinish stub
+0024:fixme:font:get_nearest_charset TCI failing on 20000000
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 20000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\aakar-medium.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-beng-extra\\Ani.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\malayalam\\Dyuthi-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Navilu\\Navilu.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\Pothana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\Rekha.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\samanata.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\vemana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Thin.ttf"
+0024:fixme:ole:CoResumeClassObjects stub
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+01a4:err:sync:RtlpWaitForCriticalSection section 01502750 "?" wait timed out in thread 01a4, blocked by 0024, retrying (60 sec)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 74080 (device=7 access=1 func=20 method=0)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 4100c (device=4 access=0 func=403 method=0)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 74080 (device=7 access=1 func=20 method=0)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 4100c (device=4 access=0 func=403 method=0)
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+0024:fixme:psdrv:ext_escape GETSETPRINTORIENT not implemented (data (nil))!
+0024:fixme:psdrv:ext_escape GETSETPRINTORIENT not implemented (data (nil))!
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\vemana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\samanata.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\Rekha.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\Pothana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Thin.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-SemiBold.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Medium.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Light.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-ExtraLight.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-ExtraBold.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Black.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Bold.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Navilu\\Navilu.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\malayalam\\Dyuthi-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-beng-extra\\Ani.ttf"
+0024:fixme:font:get_nearest_charset TCI failing on 20000000
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 20000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\aakar-medium.ttf"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~/.wine/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2$ dllmgr run photoshop-cs2
+0074:err:vulkan:vulkan_init_once Wine was built without Vulkan support.
+0074:err:xrandr:vulkan_init_once Wine was built without Vulkan support.
+0074:err:system:NtUserChangeDisplaySettings Changing L"\\\\.\\DISPLAY1" display settings returned -2.
+0074:err:explorer:initialize_display_settings Failed to initialize registry display settings for L"\\\\.\\DISPLAY1".
+0150:fixme:ole:CoInitializeSecurity 0000000000000000, -1, 0000000000000000, 0000000000000000, 1, 3, 0000000000000000, 0, 0000000000000000 stub
+0164:fixme:wia:wiadevmgr_QueryInterface interface {00000003-0000-0000-c000-000000000046} not implemented
+0164:fixme:wia:wiadevmgr_QueryInterface interface {00000003-0000-0000-c000-000000000046} not implemented
+0164:fixme:wia:wiadevmgr_QueryInterface interface {00000019-0000-0000-c000-000000000046} not implemented
+0024:err:module:import_dll Library comctl32.dll (which is needed by L"C:\\windows\\twain_32\\gphoto2.ds") not found
+0024:err:twain:twain_add_onedriver Failed to load TWAIN Source L"C:\\windows\\twain_32\\gphoto2.ds"
+0024:err:module:import_dll Library comctl32.dll (which is needed by L"C:\\windows\\twain_32\\sane.ds") not found
+0024:err:twain:twain_add_onedriver Failed to load TWAIN Source L"C:\\windows\\twain_32\\sane.ds"
+0024:fixme:ntdll:NtQuerySystemInformation info_class SYSTEM_PERFORMANCE_INFORMATION
+0024:fixme:atmlib:ATMProperlyLoaded stub
+0024:fixme:atmlib:ATMFinish stub
+0024:fixme:font:get_nearest_charset TCI failing on 20000000
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 20000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\aakar-medium.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-beng-extra\\Ani.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\malayalam\\Dyuthi-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Navilu\\Navilu.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\Pothana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\Rekha.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\samanata.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\vemana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Thin.ttf"
+0024:fixme:ole:CoResumeClassObjects stub
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0190:err:sync:RtlpWaitForCriticalSection section 01502750 "?" wait timed out in thread 0190, blocked by 0024, retrying (60 sec)
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+0024:fixme:psdrv:ext_escape GETSETPRINTORIENT not implemented (data (nil))!
+0024:fixme:psdrv:ext_escape GETSETPRINTORIENT not implemented (data (nil))!
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 74080 (device=7 access=1 func=20 method=0)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 4100c (device=4 access=0 func=403 method=0)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 74080 (device=7 access=1 func=20 method=0)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 4100c (device=4 access=0 func=403 method=0)
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\vemana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\samanata.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\Rekha.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\Pothana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Thin.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-SemiBold.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Medium.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Light.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-ExtraLight.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-ExtraBold.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Black.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Bold.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Navilu\\Navilu.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\malayalam\\Dyuthi-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-beng-extra\\Ani.ttf"
+0024:fixme:font:get_nearest_charset TCI failing on 20000000
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 20000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\aakar-medium.ttf"
+0024:fixme:font:get_nearest_charset TCI failing on 20000000
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 20000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\aakar-medium.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-beng-extra\\Ani.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\malayalam\\Dyuthi-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~/.wine/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2$ dllmgr run photoshop-cs2
+02f0:fixme:rpc:handle_bind_error unexpected status value 1765
+0074:err:vulkan:vulkan_init_once Wine was built without Vulkan support.
+0074:err:xrandr:vulkan_init_once Wine was built without Vulkan support.
+0074:err:system:NtUserChangeDisplaySettings Changing L"\\\\.\\DISPLAY1" display settings returned -2.
+0074:err:explorer:initialize_display_settings Failed to initialize registry display settings for L"\\\\.\\DISPLAY1".
+014c:fixme:ole:CoInitializeSecurity 0000000000000000, -1, 0000000000000000, 0000000000000000, 1, 3, 0000000000000000, 0, 0000000000000000 stub
+0160:fixme:wia:wiadevmgr_QueryInterface interface {00000003-0000-0000-c000-000000000046} not implemented
+0160:fixme:wia:wiadevmgr_QueryInterface interface {00000003-0000-0000-c000-000000000046} not implemented
+0160:fixme:wia:wiadevmgr_QueryInterface interface {00000019-0000-0000-c000-000000000046} not implemented
+и0024:err:module:import_dll Library comctl32.dll (which is needed by L"C:\\windows\\twain_32\\gphoto2.ds") not found
+0024:err:twain:twain_add_onedriver Failed to load TWAIN Source L"C:\\windows\\twain_32\\gphoto2.ds"
+0024:err:module:import_dll Library comctl32.dll (which is needed by L"C:\\windows\\twain_32\\sane.ds") not found
+0024:err:twain:twain_add_onedriver Failed to load TWAIN Source L"C:\\windows\\twain_32\\sane.ds"
+0024:fixme:ntdll:NtQuerySystemInformation info_class SYSTEM_PERFORMANCE_INFORMATION
+0024:fixme:atmlib:ATMProperlyLoaded stub
+0024:fixme:atmlib:ATMFinish stub
+0024:fixme:font:get_nearest_charset TCI failing on 20000000
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 20000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\aakar-medium.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-beng-extra\\Ani.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\malayalam\\Dyuthi-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Navilu\\Navilu.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\Pothana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\Rekha.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\samanata.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\vemana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Thin.ttf"
+0024:fixme:ole:CoResumeClassObjects stub
+018c:err:sync:RtlpWaitForCriticalSection section 01502750 "?" wait timed out in thread 018c, blocked by 0024, retrying (60 sec)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 74080 (device=7 access=1 func=20 method=0)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 4100c (device=4 access=0 func=403 method=0)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 74080 (device=7 access=1 func=20 method=0)
+0058:fixme:mountmgr:harddisk_ioctl Unsupported ioctl 4100c (device=4 access=0 func=403 method=0)
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+0024:fixme:psdrv:ext_escape GETSETPRINTORIENT not implemented (data (nil))!
+0024:fixme:psdrv:ext_escape GETSETPRINTORIENT not implemented (data (nil))!
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\vemana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\samanata.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\Rekha.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-telu-extra\\Pothana2000.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Thin.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-SemiBold.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Medium.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Light.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-ExtraLight.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-ExtraBold.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Black.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Bold.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\noto\\NotoKufiArabic-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Navilu\\Navilu.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\malayalam\\Dyuthi-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-beng-extra\\Ani.ttf"
+0024:fixme:font:get_nearest_charset TCI failing on 20000000
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 20000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\aakar-medium.ttf"
+00c0:err:clipboard:convert_selection Timed out waiting for SelectionNotify event
+0024:fixme:font:get_nearest_charset TCI failing on 20000000
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 20000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-gujr-extra\\aakar-medium.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-beng-extra\\Ani.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\malayalam\\Dyuthi-Regular.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gargi\\Gargi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\Gubbi\\Gubbi.ttf"
+0024:fixme:font:find_matching_face Untranslated charset 255
+0024:fixme:font:get_nearest_charset returning DEFAULT_CHARSET face->fs.fsCsb[0] = 00000000 file = L"\\??\\Z:\\usr\\share\\fonts\\truetype\\fonts-deva-extra\\kalimati.ttf"
+00c0:err:clipboard:convert_selection Timed out waiting for SelectionNotify event
+00c0:err:clipboard:convert_selection Timed out waiting for SelectionNotify event
+0024:fixme:psdrv:ext_escape GETSETPRINTORIENT not implemented (data (nil))!
+0024:fixme:psdrv:ext_escape GETSETPRINTORIENT not implemented (data (nil))!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

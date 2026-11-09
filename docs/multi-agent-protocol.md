@@ -134,7 +134,13 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    enters no text; #65 long hang at "Scanning for plug-ins" (TWAIN/WIA
    sources in his log); #41 the exit error only after a file was opened;
    #66 bold / bold italic palette text cramped; #67 Cyrillic file name shown
-   as "!!!!" / bars.
+   as "!!!!" / bars; #68 close confirmation opens under the document
+   window, rough text; #51 plain launch stayed on system Wine in his log
+   (icons right only via dllmgr).
+   Priorities (2026-11-10): 1. #64 Type tool (owner: most worrying);
+   2. #51 handover (several reports depend on which Wine runs);
+   3. #65 start hang (60 s critical section); 4. #41 exit error after a
+   file; 5. #68 dialog under the canvas; 6. #66, #67; 7. #63, #52b text.
 7. (now urgent: delivers #43, #44, #45) PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI
    (add `build.sh version` to app-isolation.yml packaging like msimg32).
