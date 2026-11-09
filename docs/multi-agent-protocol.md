@@ -84,6 +84,10 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 6c. #45 menu artifacts (black rectangles while moving through menus):
    not reproduced on the stand under Metacity; waits for the owner's A/B
    with DLLMGR27_OFF=1.
+6d. WineHQ bugs of later Photoshop versions (owner, 2026-11-09): list the
+   open Bugzilla bugs for Photoshop CS3..2024, check each on CS2 (stand,
+   Muffin); the ones that reproduce are fixed like our own bugs and get a
+   comment there (docs/upstream-outbox.md).
 7. PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI
    (add `build.sh version` to app-isolation.yml packaging like msimg32).

@@ -37,6 +37,15 @@ Rules (owner's, non-negotiable):
   gets words-only descriptions.
 - General Wine-fixing method and measurement rules live in the
   fix-it-in-wine skill (SKILL.md); this repo keeps project-specific plans.
+- Reproduce every owner complaint on the owner's stack first: Linux Mint
+  Cinnamon, X11, Muffin (`STAND_WM=muffin`, the stand default). Other WMs
+  only as an extra comparison (owner, 2026-11-09).
+- Upstream ledger: everything we owe a report or comment to (WineHQ, Linux
+  Mint, others) goes into docs/upstream-outbox.md the moment it is found,
+  so the owner can post in batches; nothing may be lost.
+- A bug that shows only with a Linux Mint component (Muffin, Cinnamon,
+  ...) also gets a Linux Mint report, with cross links both ways between the
+  Mint and WineHQ reports (owner, 2026-11-09).
 - Do not post to WineHQ Bugzilla or other public trackers without the
   owner's explicit approval. Comments on this repo's own issues are fine.
 - Accept EULAs only with explicit owner approval (CS2 trial: approved).
