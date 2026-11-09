@@ -86,7 +86,8 @@ try {
         foreach($Window in @([PS35.Native]::Windows() | Where-Object {$_.ProcessId -eq $Application.Id})){
             $Dialog=[System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Window.Handle)
             $Continue=Find-Named $Dialog 'Continue Trial'
-            if($null -ne $Continue){Invoke-UiElement $Continue}
+            # The trial's "Adobe Activation" dialog offers Continue Trial: not a block (run 42713899986).
+            if($null -ne $Continue){Invoke-UiElement $Continue;Start-Sleep -Seconds 2;continue}
             if($Window.Text -match '(?i)expired|activation|serial'){Save-UiTree $Dialog 'startup-blocked';Save-Desktop 'startup-blocked';throw 'STOP_LICENSE: normal trial startup blocked'}
         }
         Start-Sleep -Seconds 1
