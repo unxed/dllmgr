@@ -451,6 +451,23 @@ static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC
                 if (SetWindowRgn(root, rgn, TRUE)) {
                     RECT cr;
                     POINT o = {0, 0};
+                    int edge = 0;
+                    /* #36: the card is premultiplied and blended over the window's
+                     * white background, so its soft edge (alpha min..254) came out
+                     * whitish next to the shape's border. Inside the shape such a
+                     * pixel stands for the card alone: paint its own colour. */
+                    if (!GetEnvironmentVariableA("DLLMGR36_NO_EDGE_FIX", NULL, 0))
+                        for (y = 0; y < sh && sy + y < bm.bmHeight; y++)
+                            for (x = 0; x < sw && sx + x < bm.bmWidth; x++) {
+                                DWORD c = all[(sy + y) * bm.bmWidth + sx + x];
+                                int a = c >> 24;
+                                if (a >= min && a < 255) {
+                                    int r = ((c >> 16) & 0xff) * 255 / a, g = ((c >> 8) & 0xff) * 255 / a, b = (c & 0xff) * 255 / a;
+                                    SetPixel(dst, dx + x, dy + y, RGB(r > 255 ? 255 : r, g > 255 ? 255 : g, b > 255 ? 255 : b));
+                                    edge++;
+                                }
+                            }
+                    TRACE("alpha shape: %d soft edge pixels painted opaque\n", edge);
                     GetClientRect(root, &cr);
                     ClientToScreen(root, &o);
                     TRACE("alpha shape: %p from the card %dx%d at %ld,%ld, alpha >= %d; window %ld,%ld %ldx%ld client at %ld,%ld style %08lx\n",

@@ -230,3 +230,16 @@ up-left, so white window background showed above the top edge and around
 the feather. Now LPtoDP + GetDCOrgEx: splash-halo-before-after.png (left
 before, right after; stand, 192 DPI). DLLMGR36_DUMP=1 writes the card as
 raw BGRA to C:\dllmgr36-card-WxH.bgra for inspection.
+
+## Feather edge (owner, 2026-11-09 23:51, runtime v10)
+
+Owner: "almost perfect", but white pixels in places around the part of the
+feather outside the card (owner-2026-11-09-splash-v10.png). Reproduced on
+the stand: fringe.py (whitish pixels outside the card) 16 here, 28 on the
+owner's screenshot. Cause: the card is premultiplied ARGB; AlphaBlend puts
+its soft edge over the window's white background, and the alpha shape keeps
+pixels with alpha >= 128, so the edge pixels inside the shape came out
+whitish. Fix (prefill.c, after SetWindowRgn): pixels inside the shape with
+alpha < 255 are painted with their own (un-premultiplied) colour. Stand:
+fringe 16 -> 0 (splash-feather-edge-before-after.png, left v10, right the
+fix). Switch: DLLMGR36_NO_EDGE_FIX.
