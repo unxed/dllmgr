@@ -130,6 +130,11 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    button has no left side (owner, 2026-11-09, screenshot in
    experiments/photoshop-cs2-63/). Reproduce on the stand, compare with
    Windows CI, bisect Wine combo/theme drawing vs our scaling.
+6n. Owner reports 2026-11-09 23:55-23:57 (runtime v10): #64 Type tool
+   enters no text; #65 long hang at "Scanning for plug-ins" (TWAIN/WIA
+   sources in his log); #41 the exit error only after a file was opened;
+   #66 bold / bold italic palette text cramped; #67 Cyrillic file name shown
+   as "!!!!" / bars.
 7. (now urgent: delivers #43, #44, #45) PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI
    (add `build.sh version` to app-isolation.yml packaging like msimg32).
