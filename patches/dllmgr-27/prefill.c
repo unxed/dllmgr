@@ -242,16 +242,22 @@ static HWND early;
 static HWND adopted;
 static DWORD WINAPI represent_thread(void *arg);
 
+/* the startup splash: owned, caption-less, non-tool popup (palettes are
+ * WS_EX_TOOLWINDOW); WS_SYSMENU is ours once adopted */
+static BOOL splash_like(HWND hwnd)
+{
+    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
+    return GetWindow(hwnd, GW_OWNER) && !(style & WS_CHILD) && (style & WS_CAPTION) != WS_CAPTION &&
+           (style & WS_POPUP) && !(GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW);
+}
+
 static void adopt_early(HWND hwnd, const WINDOWPOS *pos)
 {
     LONG style = GetWindowLongW(hwnd, GWL_STYLE);
     HWND owner = GetWindow(hwnd, GW_OWNER);
     RECT r;
     int w, h;
-    if (early || !owner || (style & (WS_CHILD | WS_SYSMENU)) ||
-        (style & WS_CAPTION) == WS_CAPTION ||
-        !(style & WS_POPUP) || (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) ||
-        GetEnvironmentVariableA("DLLMGR43_NO_ADOPT", NULL, 0))
+    if (early || !splash_like(hwnd) || (style & WS_SYSMENU) || GetEnvironmentVariableA("DLLMGR43_NO_ADOPT", NULL, 0))
         return;
     GetWindowRect(hwnd, &r);
     w = (pos->flags & SWP_NOSIZE) ? r.right - r.left : pos->cx;
@@ -364,6 +370,74 @@ static HRGN changed_region(const DWORD *a, const DWORD *b, int w, int h)
     }
     return rgn;
 }
+
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+/* #36: Photoshop draws the splash card with AlphaBlend from a premultiplied
+ * 32-bit bitmap that carries the real alpha (rounded corners, shadow, the
+ * feather reaching out of the card, transparent margin). The adopted splash
+ * is shaped from that alpha directly (alpha >= DLLMGR36_ALPHA_MIN, default
+ * 128): exact, independent of what is on the screen, so nothing stale can
+ * ever show. Runs in Photoshop's own thread (winex11 applies window regions
+ * only there). DLLMGR36_NO_ALPHA_SHAPE=1 keeps the white margin. */
+static BOOL (WINAPI *real_alpha_blend)(HDC, int, int, int, int, HDC, int, int, int, int, BLENDFUNCTION);
+
+static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC src, int sx, int sy, int sw, int sh,
+                                    BLENDFUNCTION bf)
+{
+    static BOOL done;
+    BOOL ret = real_alpha_blend(dst, dx, dy, dw, dh, src, sx, sy, sw, sh, bf);
+    HWND hwnd, root;
+    BITMAP bm;
+    RECT wr;
+    POINT p = {dx, dy};
+    int w, h, x, y, min = 128;
+    char value[16];
+    DWORD *mask, *none, *all;
+    HBITMAP bmp;
+
+    if (!done && (LONGLONG)sw * sh > 100000)
+        TRACE("AlphaBlend %dx%d ret=%d adopted=%p fmt=%d sca=%d dst hwnd=%p root=%p\n", sw, sh, ret, (void *)adopted,
+              bf.AlphaFormat, bf.SourceConstantAlpha, (void *)WindowFromDC(dst),
+              (void *)(WindowFromDC(dst) ? GetAncestor(WindowFromDC(dst), GA_ROOT) : 0));
+    /* the card may be drawn before the splash is shown (and adopted) */
+    if (done || !ret || bf.AlphaFormat != AC_SRC_ALPHA || bf.SourceConstantAlpha != 255 ||
+        sw != dw || sh != dh || !(hwnd = WindowFromDC(dst)) || !(root = GetAncestor(hwnd, GA_ROOT)) ||
+        !splash_like(root) || GetEnvironmentVariableA("DLLMGR43_NO_ADOPT", NULL, 0) ||
+        !(bmp = GetCurrentObject(src, OBJ_BITMAP)) || !GetObjectW(bmp, sizeof(bm), &bm) || bm.bmBitsPixel != 32 ||
+        !GetWindowRect(root, &wr) || GetEnvironmentVariableA("DLLMGR36_NO_ALPHA_SHAPE", NULL, 0))
+        return ret;
+    w = wr.right - wr.left; h = wr.bottom - wr.top;
+    if ((LONGLONG)sw * sh * 2 < (LONGLONG)w * h) return ret;  /* the card, not an icon */
+    done = TRUE;
+    if (GetEnvironmentVariableA("DLLMGR36_ALPHA_MIN", value, sizeof(value)) && atoi(value) > 0) min = atoi(value);
+    ClientToScreen(hwnd, &p);
+    p.x -= wr.left; p.y -= wr.top;
+    mask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)w * h * 4);
+    none = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)w * h * 4);
+    all = HeapAlloc(GetProcessHeap(), 0, (SIZE_T)bm.bmWidth * bm.bmHeight * 4);
+    if (mask && none && all) {
+        /* top-down request: orientation-safe */
+        BITMAPINFO bi = {{sizeof(bi.bmiHeader), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB}};
+        if (GetDIBits(src, bmp, 0, bm.bmHeight, all, &bi, DIB_RGB_COLORS)) {
+            HRGN rgn;
+            for (y = 0; y < sh && sy + y < bm.bmHeight; y++)
+                for (x = 0; x < sw && sx + x < bm.bmWidth; x++)
+                    if (p.y + y >= 0 && p.y + y < h && p.x + x >= 0 && p.x + x < w &&
+                        (int)(all[(sy + y) * bm.bmWidth + sx + x] >> 24) >= min)
+                        mask[(p.y + y) * w + p.x + x] = 1;
+            if ((rgn = changed_region(mask, none, w, h))) {
+                if (SetWindowRgn(root, rgn, TRUE))
+                    TRACE("alpha shape: %p from the card %dx%d at %ld,%ld, alpha >= %d\n", (void *)root, sw, sh, p.x, p.y, min);
+                else DeleteObject(rgn);
+            }
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, mask);
+    HeapFree(GetProcessHeap(), 0, none);
+    HeapFree(GetProcessHeap(), 0, all);
+    return ret;
+}
+#endif
 
 /* Runs in the window's own thread, from the ReleaseDC and message hooks:
  * winex11 applies a window region only there, and Photoshop's main thread
@@ -512,9 +586,18 @@ static void hook_module_release_dc(HMODULE module)
     if (module == self || !dir->VirtualAddress || !real_release_dc) return;
     for (desc = (IMAGE_IMPORT_DESCRIPTOR *)(base + dir->VirtualAddress); desc->Name; desc++) {
         IMAGE_THUNK_DATA *slot = (IMAGE_THUNK_DATA *)(base + desc->FirstThunk);
-        if (lstrcmpiA((char *)base + desc->Name, "user32.dll")) continue;
+        if (lstrcmpiA((char *)base + desc->Name, "user32.dll") && lstrcmpiA((char *)base + desc->Name, "msimg32.dll"))
+            continue;
         for (; slot->u1.Function; slot++) {
             DWORD protect;
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+            if (real_alpha_blend && slot->u1.Function == (ULONG_PTR)real_alpha_blend) {
+                if (!VirtualProtect(&slot->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) continue;
+                slot->u1.Function = (ULONG_PTR)alpha_blend_hook;
+                VirtualProtect(&slot->u1.Function, sizeof(void *), protect, &protect);
+                continue;
+            }
+#endif
             if (slot->u1.Function != (ULONG_PTR)real_release_dc) continue;
             if (!VirtualProtect(&slot->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) continue;
             slot->u1.Function = (ULONG_PTR)release_dc_hook;
@@ -541,16 +624,26 @@ static void hook_delay_release_dc(HMODULE module)
     if (!dir->VirtualAddress || !real_release_dc) return;
     for (d = (delay_desc *)(base + dir->VirtualAddress); d->name; d++) {
         IMAGE_THUNK_DATA *names = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->nt), *slots = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->iat);
-        if (lstrcmpiA((char *)DELAY_PTR(d, d->name), "user32.dll")) continue;
+        const char *dll = (char *)DELAY_PTR(d, d->name), *want = "ReleaseDC";
+        void *hook = release_dc_hook;
+        if (lstrcmpiA(dll, "user32.dll")) {
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+            if (lstrcmpiA(dll, "msimg32.dll") || !real_alpha_blend) continue;
+            want = "AlphaBlend";
+            hook = alpha_blend_hook;
+#else
+            continue;
+#endif
+        }
         for (; names->u1.AddressOfData; names++, slots++) {
             DWORD protect;
             if (IMAGE_SNAP_BY_ORDINAL(names->u1.Ordinal) ||
-                strcmp((char *)((IMAGE_IMPORT_BY_NAME *)DELAY_PTR(d, names->u1.AddressOfData))->Name, "ReleaseDC"))
+                strcmp((char *)((IMAGE_IMPORT_BY_NAME *)DELAY_PTR(d, names->u1.AddressOfData))->Name, want))
                 continue;
             if (!VirtualProtect(&slots->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) continue;
-            slots->u1.Function = (ULONG_PTR)release_dc_hook;
+            slots->u1.Function = (ULONG_PTR)hook;
             VirtualProtect(&slots->u1.Function, sizeof(void *), protect, &protect);
-            TRACE("ReleaseDC hooked in the delay imports of %p\n", (void *)module);
+            TRACE("%s hooked in the delay imports of %p\n", want, (void *)module);
         }
     }
 #undef DELAY_PTR
@@ -572,6 +665,9 @@ static void hook_release_dc(void)
     NTSTATUS (NTAPI *reg)(ULONG, void *, void *, void **) =
         (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "LdrRegisterDllNotification");
     real_release_dc = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "ReleaseDC");
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+    real_alpha_blend = (void *)GetProcAddress(LoadLibraryA("msimg32.dll"), "AlphaBlend");
+#endif
     if (!real_release_dc || GetEnvironmentVariableA("DLLMGR27_NO_SHAPE", NULL, 0)) return;
     if (K32EnumProcessModules(GetCurrentProcess(), modules, sizeof(modules), &bytes))
         for (DWORD i = 0; i < bytes / sizeof(HMODULE) && i < 512; i++) hook_module_release_dc(modules[i]);

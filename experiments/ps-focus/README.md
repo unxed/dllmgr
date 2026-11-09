@@ -196,3 +196,14 @@ and on stock Wine; reading the window back after the first ULW gives black.
 Next: find why Wine's ULW on this DPI-virtualized (unaware, 192 DPI) managed
 window loses the colours (minimal ULW test program first), or use the alpha
 as an exact shape mask (alpha > 0) without snapshot diffing.
+
+## Done: shape from the card's own alpha (2026-11-09)
+
+The AlphaBlend hook (Photoshop.exe delay import of msimg32) shapes the
+splash from the card bitmap's alpha (>= 128, DLLMGR36_ALPHA_MIN), in
+Photoshop's thread, also when the card is drawn before the splash is shown.
+No snapshot, no pixel diffing, nothing on screen is ever read: 3/3 runtime
+runs + stock Wine: card with crisp rounded edges and the feather, no margin,
+no stale pixels, minimize/restore and stacking right (alpha-shape-3runs.png,
+alpha-shape-edges.png). Not reached yet: the soft shadow (cut below alpha
+128; true per-pixel alpha needs a working layered window, see above).

@@ -76,9 +76,10 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 5. (#34 TopPlan dropped by the owner: no installer, not a showcase.)
 6. #43 startup UX: focus stealing fixed in the runtime (dllmgr-43); splash
    not minimizing fixed in the version.dll proxy under stock Wine (adopt as
-   managed transient, early adoption + re-present thread). Under the private
-   runtime the margin around the card is white (accepted by the owner as the
-   interim state); open, being bisected: experiments/ps-focus/README.md.
+   managed transient, early adoption + re-present thread) and shaped from the
+   card's own AlphaBlend alpha (no snapshot): runtime and stock Wine.
+   Open (#36): soft shadow needs true per-pixel alpha (layered window shows
+   black/garbage in Wine; experiments/ps-focus/README.md).
 6a. #41 R6025 pure virtual call when closing an image (owner report,
    not reproduced yet; may lose unsaved work: rank high).
 6b. #44 tiny custom cursors at 192 DPI: fixed in winex11

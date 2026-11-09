@@ -61,8 +61,8 @@ is installed per-application by the fix command.
 
 ## Remaining work
 
-- Under the private runtime the splash minimizes with the main window but
-  shows a white margin around the card (#43 part 1, in progress).
+- The splash's soft shadow is cut (the card is shaped from its own alpha);
+  true per-pixel alpha is in progress (#36).
 - Shadow halo around the shaped splash (the soft shadow keeps the background
   of the moment it was painted).
 - R6025 pure virtual call when closing an image ([#41](https://github.com/unxed/dllmgr/issues/41)).
