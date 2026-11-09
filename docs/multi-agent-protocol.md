@@ -81,14 +81,14 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 6b. #44 tiny custom cursors at 192 DPI: fixed in winex11
    (patches/dllmgr-44.patch, in the next runtime build; probe
    tests/wine/cursor-scale.sh). Waits for a runtime release + owner retest.
-6c. #45 menu artifacts (black rectangles while moving through menus):
-   not reproduced on the stand under Metacity; waits for the owner's A/B
-   with DLLMGR27_OFF=1.
+6c. #45 menu artifacts: reproduced under Muffin with stock Wine (with and
+   without the proxy), gone on the private runtime (60721 mechanism):
+   docs/tasks/45-menu-black.md. Delivered by PS-3.
 6d. WineHQ bugs of later Photoshop versions (owner, 2026-11-09): list the
    open Bugzilla bugs for Photoshop CS3..2024, check each on CS2 (stand,
    Muffin); the ones that reproduce are fixed like our own bugs and get a
    comment there (docs/upstream-outbox.md).
-7. PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
+7. (now urgent: delivers #43, #44, #45) PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI
    (add `build.sh version` to app-isolation.yml packaging like msimg32).
 

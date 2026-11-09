@@ -1,0 +1,60 @@
+diff --git a/patches/dllmgr-27/prefill.c b/patches/dllmgr-27/prefill.c
+index 727b036..a42defc 100644
+--- a/patches/dllmgr-27/prefill.c
++++ b/patches/dllmgr-27/prefill.c
+@@ -216,6 +216,9 @@ static void capture_under(HWND hwnd, const WINDOWPOS *pos)
+ struct shape { HWND hwnd; HDC mem; HBITMAP bitmap, old; RECT rect; int tries; LONG last; DWORD when; };
+ static struct shape shapes[4];
+ static LONG shape_pending;  /* cheap check in the hooks */
++/* #43 heartbeat: the shaped splash, and when its thread last saw X events */
++static HWND splash;
++static DWORD splash_beat;
+ static int (WINAPI *real_release_dc)(HWND, HDC);
+ 
+ static void shape_release(struct shape *s)
+@@ -333,6 +336,7 @@ static void shape_tick(void)
+                     HRGN rgn = changed_region(now, was, w, h);
+                     TRACE("shape hwnd=%p %dx%d painted=%ld%%\n", (void *)s->hwnd, w, h, changed * 100 / ((LONG)w * h));
+                     if (rgn && !SetWindowRgn(s->hwnd, rgn, TRUE)) DeleteObject(rgn);
++                    else if (rgn) splash = s->hwnd;
+                 }
+                 shape_release(s);
+             } else {
+@@ -405,10 +409,37 @@ static BOOL top_level_hidden(HWND hwnd)
+  * window's own thread. Import slots of user32!ReleaseDC are replaced in every
+  * module, also in ones loaded later (LdrRegisterDllNotification). */
+ 
++/* #43: while loading, Photoshop's main thread paints the splash but never
++ * looks at its message queue, so Wine never reads the X events of its windows:
++ * a minimize from the WM/taskbar is not seen, the owned splash stays on top of
++ * everything. GetQueueStatus makes Wine process pending X events in this
++ * thread (a WM iconify becomes WM_SYSCOMMAND/SC_MINIMIZE, which hides owned
++ * popups like on Windows) without removing any message from the app's queue.
++ * Borrowed from the splash's own paint calls, at most every 100 ms, only
++ * while the splash is visible. DLLMGR43_NO_HEARTBEAT=1 turns it off. */
++static void splash_heartbeat(void)
++{
++    static int disabled = -1;
++    if (disabled < 0) disabled = GetEnvironmentVariableA("DLLMGR43_NO_HEARTBEAT", NULL, 0) != 0;
++    if (disabled || GetTickCount() - splash_beat < 100) return;
++    if (!IsWindow(splash) || GetWindowThreadProcessId(splash, NULL) != GetCurrentThreadId()) {
++        if (!IsWindow(splash)) splash = NULL;
++        return;
++    }
++    splash_beat = GetTickCount();
++    TRACE("heartbeat splash=%p iconic(owner)=%d\n", (void *)splash, IsIconic(GetWindow(splash, GW_OWNER)));
++    GetQueueStatus(QS_ALLINPUT);
++}
++
+ static int WINAPI release_dc_hook(HWND hwnd, HDC dc)
+ {
+     int ret = real_release_dc(hwnd, dc);
+     if (shape_pending) shape_tick();
++    if (splash) {
++        static int n;
++        if (n++ < 5) TRACE("release_dc after splash hwnd=%p tid=%04lx\n", (void *)hwnd, GetCurrentThreadId());
++        splash_heartbeat();
++    }
+     return ret;
+ }
+ 

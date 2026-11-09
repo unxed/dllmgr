@@ -86,3 +86,15 @@ Possible fixes (not started): ask the WM to iconify the X transients of a
 window that the WM iconified, from winex11 on any thread that sees the
 WM_STATE change (needs a thread that processes events while the app is
 busy); or find why the WM keeps a STICKY transient. Parked; owner informed.
+
+## Part 1 under Muffin and the "heartbeat" idea (2026-11-09)
+
+mini-muffin.sh (Muffin stand): minimize 4 s into loading -> main WM_STATE
+Iconic, splash stays on screen (reproduced on the owner's WM).
+Idea tried: call GetQueueStatus(QS_ALLINPUT) from the splash's own ReleaseDC
+calls so Wine reads the X events (WM iconify -> SC_MINIMIZE -> owned popups
+hidden). Result: no effect, because after the splash is shaped Photoshop
+makes no more ReleaseDC calls through the hooked imports (trace: 0 calls), so
+the heartbeat never runs. Code parked in wip-heartbeat.diff. Other heartbeat
+sources while loading: the DLL load notification of each plug-in (runs under
+the loader lock: risky), text drawing calls on a cached DC.
