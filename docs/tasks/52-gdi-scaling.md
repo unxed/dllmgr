@@ -79,3 +79,20 @@ offset, GetRandomRgn reports 96-DPI device coordinates. Photoshop
 (gdi-scaling-photoshop-stage2.png): canvas, palettes, toolbox and menu bar
 are complete and crisp. Left: combo box texts ("Normal" in Style and
 Layers) show only their upper half, the "Style:" label is cut.
+
+### Stage 2 open items (2026-11-09, probe tests/wine/gdi-scale-combo.c)
+
+gdi-scaling-combo-probe.png (left today, right GDI scaling), the same
+problems as Photoshop's option bar, now reproducible in 30 lines:
+1. Parts of the parent window are never painted (black): its background
+   erase covers only the 96-DPI quarter (an erase path that does not go
+   through the DC transform; Photoshop's combo clip IntersectClipRect
+   2,2,42,8 from comctl32 points the same way).
+2. Raster (bitmap) fonts such as System are not scaled: glyphs stay 1x
+   while advances double ("N o r m a l"). Needs a vector substitute
+   (or integer scaling of raster glyphs) on GDI-scaled DCs.
+3. A combo box with Tahoma draws fine, with an extra frame line below it
+   (also an erase/region issue).
+Photoshop trace (relay, 30 s of start): SelectClipRgn 9442,
+SetWindowOrgEx 4060, SetViewportOrgEx/OffsetViewportOrgEx 331 each,
+IntersectClipRect 189, DrawTextW 129, StretchDIBits 50, GetClipBox 46.
