@@ -88,9 +88,8 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 6c. #45 menu artifacts: reproduced under Muffin with stock Wine (with and
    without the proxy), gone on the private runtime (60721 mechanism):
    docs/tasks/45-menu-black.md. Delivered by PS-3.
-6f. #46 blur tool cursor leaves 1-pixel artifacts on the canvas (owner,
-   2026-11-09, urgent): reproduce on the stand (Muffin), bisect stock/runtime,
-   proxy on/off; hypothesis in the issue.
+6f. #46 blur tool cursor leftovers: fixed in win32u (dllmgr-46.patch, exact
+   pixel blocks at integer scales), next runtime release.
 6g. #47 Alt+wheel zoom redraws in visible jumps (owner, 2026-11-09):
    reproduce with burst screenshots on the stand, then bisect as for #45.
 6h. #48 Alt+click with the Zoom tool does not zoom out (owner, 2026-11-09;

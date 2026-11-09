@@ -1,0 +1,34 @@
+--- a/dlls/win32u/dce.c
++++ b/dlls/win32u/dce.c
+@@ -169,6 +169,22 @@
+     struct scaled_surface *surface = get_scaled_surface( window_surface );
+     RECT src = *dirty, dst;
+     HDC hdc_dst, hdc_src;
++    /* dllmgr #46: at an integer scale (200 %, 300 %) every source pixel
++     * becomes an exact block: copy it as such. The halftone filter spreads a
++     * pixel into the neighbouring blocks, and since only the dirty part is
++     * re-stretched, XOR-drawn and erased lines (a brush outline) leave those
++     * spread pixels behind. Other scales keep halftone, with the dirty
++     * rectangle grown by one pixel so the spread is re-stretched too. */
++    BOOL exact = surface->dpi_to > surface->dpi_from && !(surface->dpi_to % surface->dpi_from);
++    if (!exact)
++    {
++        LONG width = window_surface->rect.right - window_surface->rect.left;
++        LONG height = window_surface->rect.bottom - window_surface->rect.top;
++        src.left = max( src.left - 1, 0 );
++        src.top = max( src.top - 1, 0 );
++        src.right = min( src.right + 1, width );
++        src.bottom = min( src.bottom + 1, height );
++    }
+ 
+     src.left &= ~7;
+     src.top &= ~7;
+@@ -184,7 +200,7 @@
+     NtGdiSelectBitmap( hdc_dst, surface->target_surface->color_bitmap );
+ 
+     /* FIXME: implement HALFTONE with alpha for layered surfaces */
+-    if (!window_surface->alpha_mask) set_stretch_blt_mode( hdc_dst, STRETCH_HALFTONE );
++    if (!window_surface->alpha_mask && !exact) set_stretch_blt_mode( hdc_dst, STRETCH_HALFTONE );
+ 
+     NtGdiStretchBlt( hdc_dst, dst.left, dst.top, dst.right - dst.left, dst.bottom - dst.top,
+                      hdc_src, src.left, src.top, src.right - src.left, src.bottom - src.top,
