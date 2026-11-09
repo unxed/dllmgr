@@ -452,6 +452,57 @@ class PrivateAppTest(unittest.TestCase):
         self.assertFalse((self.exe.parent / "msimg32.dllmgr").exists())
         self.assertEqual(registry.values, {})
 
+    def test_photoshop_profile_runtime_and_version_proxy_without_private_dlls(self):
+        import zipfile
+        ps = self.drive_c / "Program Files (x86)/Adobe/Adobe Photoshop CS2/Photoshop.exe"
+        ps.parent.mkdir(parents=True)
+        ps.write_bytes(b"synthetic verified Photoshop CS2")
+        with zipfile.ZipFile(self.package, "w") as archive:
+            archive.writestr("dllmgr-27/version.dll", b"MZ photoshop proxy")
+            archive.writestr("dllmgr-27/msimg32.dll", b"MZ faststone proxy")
+        (self.prefix / "dosdevices/z:").symlink_to("/")
+        registry = FakeRegistry()
+        args = SimpleNamespace(app="photoshop-cs2", exe=ps, base_wine=self.base, runtime_package=self.package,
+                               fix="photoshop-cs2", desktop_entry=[], app_args=["C:\\a.psd"])
+        with patch.dict(private_app.PROFILES["photoshop-cs2"], {"sha": (sha(ps.read_bytes()),)}), \
+             patch.object(private_app, "trampoline_registry", return_value=registry), \
+             patch.object(private_app.platform, "machine", return_value="x86_64"), \
+             patch.object(private_app.subprocess, "check_output", return_value="wine-11.0\n"), \
+             patch.object(private_app, "assemble", return_value=self.runtime), \
+             patch.object(private_app, "modules", side_effect=AssertionError("no private DLLs for Photoshop")), \
+             patch.dict(os.environ, {"XDG_DATA_HOME": str(self.data_home)}, clear=False):
+            private_app.install(args, self.prefix.resolve())
+            paths = list((self.prefix / private_app.STATE).glob("photoshop-cs2-*.json"))
+            self.assertEqual(len(paths), 1)
+            state = json.loads(paths[0].read_text())
+            self.assertEqual((state["app"], state["files"], state["release"]), ("photoshop-cs2", {}, None))
+            self.assertIsNone(private_app.checked_files(self.prefix, state))
+            self.assertFalse((self.prefix / "drive_c/dllmgr/apps" / state["id"]).exists())
+            self.assertEqual((ps.parent / "version.dll").read_bytes(), b"MZ photoshop proxy")
+            self.assertIn(' run photoshop-cs2 --prefix "', (ps.parent / "version.dllmgr").read_text())
+            self.assertFalse((ps.parent / "msimg32.dll").exists())
+            key = "HKCU\\Software\\Wine\\AppDefaults\\Photoshop.exe\\DllOverrides"
+            self.assertEqual(registry.values, {(key, "version"): "native,builtin"})
+            desktop = self.data_home / "applications" / ("dllmgr-" + state["id"] + ".desktop")
+            text = desktop.read_text()
+            self.assertIn("Name=Adobe Photoshop CS2 (dllmgr)", text)
+            self.assertIn('"run" "photoshop-cs2"', text)
+            with self.assertRaises(private_app.Error):
+                private_app.read_state(self.prefix.resolve())  # FastStone profile untouched
+            captures = {}
+            with patch.object(private_app, "verify"), patch.object(private_app.os, "chdir"), \
+                 patch.object(private_app.os, "execve", side_effect=lambda p, a, e: captures.update(argv=a, env=e)):
+                private_app.launch(args, self.prefix.resolve())
+            self.assertEqual(captures["argv"][1], "C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\Photoshop.exe")
+            self.assertEqual(captures["env"]["DLLMGR_TARGET_EXE"], captures["argv"][1])
+            self.assertNotIn("DLLMGR_COMCTL32", captures["env"])
+            private_app.uninstall(args, self.prefix.resolve())
+        self.assertFalse(paths[0].exists())
+        self.assertFalse((ps.parent / "version.dll").exists())
+        self.assertFalse((ps.parent / "version.dllmgr").exists())
+        self.assertFalse(desktop.exists())
+        self.assertEqual(registry.values, {})
+
     def test_routing_preserves_hidden_mime_entry_metadata(self):
         original = b'[Desktop Entry]\nName=Existing handler\nNoDisplay=true\nIcon=existing-icon\nExec=old-wine %f\n'
         desired = private_app.desktop_content(self.prefix, self.exe)

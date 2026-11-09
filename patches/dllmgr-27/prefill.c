@@ -648,13 +648,17 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
                 SetEvent(event);
                 CloseHandle(event);
             }
+#ifndef DLLMGR27_ACTIVE_IN_RUNTIME
             idle = TRUE; /* DisableThreadLibraryCalls is refused for DLLs
                           * with static TLS (mingw's TLS callbacks), as on
                           * Windows, so DLL_THREAD_ATTACH still arrives */
             DisableThreadLibraryCalls(instance);
             return TRUE;
+#endif
+            /* Photoshop build: the splash shaping is not in the runtime, so
+             * stay active there; only the trampoline is not armed. */
         }
-        if (!GetEnvironmentVariableA("DLLMGR27_NO_TRAMPOLINE", NULL, 0)) {
+        else if (!GetEnvironmentVariableA("DLLMGR27_NO_TRAMPOLINE", NULL, 0)) {
             WCHAR *companion = read_companion();
             if (companion) {
                 HeapFree(GetProcessHeap(), 0, companion);

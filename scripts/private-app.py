@@ -24,6 +24,24 @@ from ui import Progress
 from private_runtime import Error, assemble, digest, overlay_for, package_manifest, valid_sha, verify
 
 EXE_SHA = '05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621'
+# Application profiles (PS-3, docs/plans/photoshop-cs2.md). FastStone keeps its
+# original state format (no 'app' key); other profiles record theirs.
+PROFILES = {
+    'faststone': dict(
+        title='FastStone', exe='fsviewer.exe', sha=None,  # None: EXE_SHA (read at call time)
+        proxy='msimg32', modules=True,
+        unsupported='Only the verified FastStone 8.5 x86 executable is supported',
+        desktop_name='FastStone Image Viewer (dllmgr)', wmclass='fsviewer.exe',
+        mime='image/jpeg;image/png;image/webp;image/avif;'),
+    # #36 splash (version.dll prefill proxy), #43 focus, #44 cursors, #45 menus
+    # (private runtime). No private DLLs.
+    'photoshop-cs2': dict(
+        title='Photoshop CS2', exe='photoshop.exe',
+        sha=('98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30',), proxy='version', modules=False,
+        unsupported='Only the verified Photoshop CS2 9.0 (trial) executable is supported',
+        desktop_name='Adobe Photoshop CS2 (dllmgr)', wmclass='photoshop.exe',
+        mime='image/vnd.adobe.photoshop;image/jpeg;image/png;image/tiff;image/bmp;'),
+}
 STATE = Path('.dllmgr/apps')
 HERE = Path(__file__).resolve().parent
 RULES = ('DLLMGR_TARGET_EXE', 'DLLMGR_COMCTL32', 'DLLMGR_GDIPLUS')
@@ -31,6 +49,10 @@ RULES = ('DLLMGR_TARGET_EXE', 'DLLMGR_COMCTL32', 'DLLMGR_GDIPLUS')
 # manifest); next to FSViewer.exe it relaunches stock-Wine starts through
 # `dllmgr run faststone` (patches/dllmgr-27/README.md).
 TRAMPOLINE_MEMBER = 'dllmgr-27/msimg32.dll'
+
+
+def trampoline_member(app):
+    return 'dllmgr-27/' + PROFILES[app]['proxy'] + '.dll'
 _spec = importlib.util.spec_from_file_location('prefill_proxy', HERE / 'prefill-proxy.py')
 prefill_proxy = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(prefill_proxy)
@@ -77,19 +99,20 @@ def winpath(prefix, path):
     raise Error('Executable/DLL is not reachable through a prefix drive: ' + str(path))
 
 
-def select(prefix, requested):
+def select(prefix, requested, app='faststone'):
+    profile = PROFILES[app]
     if platform.machine() != 'x86_64' or '#arch=win64' not in (prefix / 'system.reg').read_text(errors='replace'):
         raise Error('This verified profile requires x86-64 Linux and a win64 prefix')
     if requested:
         exe = requested.resolve(strict=True)
     else:
         copies = sorted({p.resolve() for p in (prefix / 'drive_c').rglob('*')
-                         if p.name.casefold() == 'fsviewer.exe' and p.is_file()})
+                         if p.name.casefold() == profile['exe'] and p.is_file()})
         if len(copies) != 1:
-            raise Error('Pass --exe to select exactly one FastStone installation')
+            raise Error('Pass --exe to select exactly one ' + profile['title'] + ' installation')
         exe = copies[0]
-    if exe.name.casefold() != 'fsviewer.exe' or digest(exe) != EXE_SHA:
-        raise Error('Only the verified FastStone 8.5 x86 executable is supported')
+    if exe.name.casefold() != profile['exe'] or digest(exe) not in (profile['sha'] or (EXE_SHA,)):
+        raise Error(profile['unsupported'])
     return exe
 
 
@@ -115,22 +138,31 @@ def legacy_guard(prefix):
     # Do not silently delete app-local native DLLs installed by another tool.
 
 
-def app_id(target):
-    return 'faststone-' + hashlib.sha256(target.casefold().encode()).hexdigest()[:20]
+def app_id(target, app='faststone'):
+    return app + '-' + hashlib.sha256(target.casefold().encode()).hexdigest()[:20]
 
 
-def read_state(prefix, exe=None):
-    paths = sorted((prefix / STATE).glob('faststone-*.json'))
+def state_app(state):
+    return state.get('app', 'faststone')
+
+
+def state_paths(prefix, app):
+    return [p for p in sorted((prefix / STATE).glob(app + '-*.json')) if re.fullmatch(re.escape(app) + '-[0-9a-f]{20}', p.stem)]
+
+
+def read_state(prefix, exe=None, app='faststone'):
+    paths = state_paths(prefix, app)
     if exe:
-        paths = [prefix / STATE / (app_id(winpath(prefix, exe)) + '.json')]
+        paths = [prefix / STATE / (app_id(winpath(prefix, exe), app) + '.json')]
     if len(paths) != 1 or not paths[0].is_file():
-        raise Error('Select one installed private FastStone profile with --exe')
+        raise Error('Select one installed private ' + PROFILES[app]['title'] + ' profile with --exe')
     path = paths[0]
     if path.is_symlink():
         raise Error('Refusing a symlink ownership journal')
     state = json.loads(path.read_text())
     if (state.get('schema') != 1 or state.get('prefix') != str(prefix)
-            or state.get('id') != path.stem or app_id(state.get('target', '')) != path.stem
+            or state_app(state) != app or state.get('id') != path.stem
+            or app_id(state.get('target', ''), app) != path.stem
             or state.get('phase') != 'installed' or not valid_sha(state.get('exe_sha256'))):
         raise Error('Invalid private application journal; no files changed')
     return path, state
@@ -140,6 +172,10 @@ def checked_files(prefix, state):
     generation = state.get('generation', '')
     if not re.fullmatch('[0-9a-f]{64}', generation):
         raise Error('Invalid private generation')
+    if not PROFILES.get(state_app(state), PROFILES['faststone'])['modules']:
+        if state.get('files') != {}:
+            raise Error('Invalid private module journal')
+        return None  # runtime + proxy only, no private DLL directory
     directory = prefix / 'drive_c/dllmgr/apps' / state['id'] / generation
     if directory.resolve() != directory.absolute():
         raise Error('Private module directory must not contain symlinks')
@@ -255,12 +291,13 @@ def quote_desktop(value):
     return '"' + str(value).replace('\\', '\\\\').replace('"', '\\"').replace('`', '\\`').replace('$', '\\$').replace('%', '%%') + '"'
 
 
-def desktop_content(prefix, exe):
+def desktop_content(prefix, exe, app='faststone'):
+    profile = PROFILES[app]
     launcher = Path.home() / '.local/bin/dllmgr'
-    command = ' '.join(quote_desktop(x) for x in (launcher, 'run', 'faststone', '--prefix', prefix, '--exe', exe)) + ' -- %F'
-    return ('[Desktop Entry]\nType=Application\nName=FastStone Image Viewer (dllmgr)\n'
-            'Comment=FastStone with application-private Wine fixes\nExec=' + command + '\n'
-            'Terminal=false\nStartupWMClass=fsviewer.exe\nMimeType=image/jpeg;image/png;image/webp;image/avif;\n').encode()
+    command = ' '.join(quote_desktop(x) for x in (launcher, 'run', app, '--prefix', prefix, '--exe', exe)) + ' -- %F'
+    return ('[Desktop Entry]\nType=Application\nName=' + profile['desktop_name'] + '\n'
+            'Comment=' + profile['title'] + ' with application-private Wine fixes\nExec=' + command + '\n'
+            'Terminal=false\nStartupWMClass=' + profile['wmclass'] + '\nMimeType=' + profile['mime'] + '\n').encode()
 
 
 def routed_desktop(original, desired):
@@ -287,20 +324,27 @@ def routed_desktop(original, desired):
     return ''.join(output).encode('utf-8')
 
 
+def app_of(args):
+    return getattr(args, 'app', 'faststone')  # older callers and tests
+
+
 def install(args, prefix):
-    exe = select(prefix, args.exe)
+    app = app_of(args)
+    profile = PROFILES[app]
+    exe = select(prefix, args.exe, app)
     target = winpath(prefix, exe)
-    ident = app_id(target)
+    ident = app_id(target, app)
     state_path = prefix / STATE / (ident + '.json')
     if state_path.parent.resolve() != state_path.parent.absolute():
         raise Error('Ownership directory must not contain symlinks')
-    legacy_guard(prefix)
-    for name in ('gdiplus.dll', 'comctl32.dll'):
-        if (exe.parent / name).exists():
-            raise Error('App-local ' + name + ' exists; archive/restore it with its original tool first')
+    if profile['modules']:
+        legacy_guard(prefix)
+        for name in ('gdiplus.dll', 'comctl32.dll'):
+            if (exe.parent / name).exists():
+                raise Error('App-local ' + name + ' exists; archive/restore it with its original tool first')
     old = None
     if state_path.exists():
-        _, old = read_state(prefix, exe)
+        _, old = read_state(prefix, exe, app)
         checked_files(prefix, old)
     base = args.base_wine.resolve(strict=True)
     if subprocess.check_output([str(base / 'bin/wine'), '--version'], text=True).strip() != 'wine-11.0':
@@ -315,11 +359,13 @@ def install(args, prefix):
         runtime = assemble(package, base, cache, Progress)
         print('  Runtime ready: ' + str(runtime))
         print('  Patched Wine modules in it: ' + patched_modules(package))
-        release, payloads = modules(args.fix, temp)
+        release, payloads = modules(args.fix, temp) if profile['modules'] else (None, {})
         hashes = {name: hashlib.sha256(data).hexdigest() for name, data in payloads.items()}
         generation = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
         dest = prefix / 'drive_c/dllmgr/apps' / ident / generation
-        if dest.exists():
+        if not payloads:
+            pass  # runtime + proxy only
+        elif dest.exists():
             test_state = dict(id=ident, generation=generation, files=hashes)
             checked_files(prefix, test_state)
         else:
@@ -335,7 +381,7 @@ def install(args, prefix):
         owned = copy.deepcopy(old.get('desktops', [])) if old else []
         default_desktop = Path(os.environ.get('XDG_DATA_HOME', str(Path.home() / '.local/share'))) / 'applications' / ('dllmgr-' + ident + '.desktop')
         desktops = [default_desktop, *args.desktop_entry]
-        template = desktop_content(prefix, exe)
+        template = desktop_content(prefix, exe, app)
         outputs = {}
         for path in desktops:
             path = path.absolute()
@@ -353,10 +399,12 @@ def install(args, prefix):
             outputs[path] = desired
             existing['installed_sha256'] = hashlib.sha256(desired).hexdigest()
         state = dict(schema=1, phase='installed', id=ident, prefix=str(prefix), exe=str(exe),
-                     target=target, exe_sha256=EXE_SHA, fix=args.fix, release=release,
+                     target=target, exe_sha256=digest(exe), fix=args.fix, release=release,
                      generation=generation, files=hashes, runtime=str(runtime), base=str(base),
                      package_sha256=digest(package), desktops=owned,
                      runtime_release=runtime_release(args.runtime_package))
+        if app != 'faststone':
+            state['app'] = app
         changes = [dict(path=str(p.absolute()),
                         before_hex=p.read_bytes().hex() if p.exists() else None,
                         after_sha256=hashlib.sha256(outputs[p.absolute()]).hexdigest()) for p in desktops]
@@ -373,10 +421,10 @@ def install(args, prefix):
             print('  Private DLL: ' + name + ' (sha256 ' + checksum[:12] + ') in ' + winpath(prefix, dest / name))
         for path in desktops:
             print('  Launcher routed through dllmgr: ' + str(path.absolute()))
-        print('✓ FastStone fixes installed privately for ' + target)
+        print('✓ ' + profile['title'] + ' fixes installed privately for ' + target)
         print_versions(state)
-        install_trampoline(prefix, exe, package, base)
-    print('  Launch: dllmgr run faststone')
+        install_trampoline(prefix, exe, package, base, app)
+    print('  Launch: dllmgr run ' + app)
     print('  Shared prefix DLLs and system Wine were not changed.')
 
 
@@ -396,7 +444,7 @@ def trampoline_registry(prefix, base):
     return prefill_proxy.Registry(prefix, str(base / 'bin/wine'))
 
 
-def trampoline_line(prefix, exe):
+def trampoline_line(prefix, exe, app='faststone'):
     """Launcher line the proxy runs instead of a stock-Wine start."""
     launcher = stable_launcher()
     if '"' in str(prefix) + str(exe):
@@ -404,37 +452,39 @@ def trampoline_line(prefix, exe):
     # Keep the launcher's own name (it may be the install.sh symlink that
     # follows upgrades); only its directory is resolved for the drive mapping.
     launcher_win = winpath(prefix, launcher.parent) + '\\' + launcher.name
-    return f'"{launcher_win}" run faststone --prefix "{prefix}" --exe "{exe}" --'
+    return f'"{launcher_win}" run {app} --prefix "{prefix}" --exe "{exe}" --'
 
 
-def install_trampoline(prefix, exe, package, base):
+def install_trampoline(prefix, exe, package, base, app='faststone'):
     """Best effort: without it only `dllmgr run` and the routed launchers get the fix."""
+    proxy = PROFILES[app]['proxy']
+    member = trampoline_member(app)
     try:
         with zipfile.ZipFile(package) as archive:
-            if TRAMPOLINE_MEMBER not in archive.namelist():
-                print('  Note: this runtime package has no launch trampoline; other launchers stay unfixed.')
+            if member not in archive.namelist():
+                print('  Note: this runtime package has no ' + proxy + '.dll launch trampoline; other launchers stay unfixed.')
                 return
-            data = archive.read(TRAMPOLINE_MEMBER)
+            data = archive.read(member)
     except zipfile.BadZipFile:
         return
     try:
         with tempfile.TemporaryDirectory(prefix='dllmgr-trampoline-') as directory:
-            dll = Path(directory) / 'msimg32.dll'
+            dll = Path(directory) / (proxy + '.dll')
             dll.write_bytes(data)
             reg = trampoline_registry(prefix, base)
-            line = trampoline_line(prefix, exe)
+            line = trampoline_line(prefix, exe, app)
             try:
-                result = prefill_proxy.apply(prefix, exe, 'msimg32', dll, reg, line)
+                result = prefill_proxy.apply(prefix, exe, proxy, dll, reg, line)
             except prefill_proxy.Error:
                 if not prefill_proxy.state_path(prefix, exe).exists():
                     raise
-                prefill_proxy.undo(prefix, exe, reg)  # older build or moved dllmgr
-                result = prefill_proxy.apply(prefix, exe, 'msimg32', dll, reg, line)
-        print('  Launch trampoline ' + result + ': any start of this FSViewer.exe gets the fixes.')
-        print('    files: ' + str(exe.parent / 'msimg32.dll') + ' (sha256 ' + hashlib.sha256(data).hexdigest()[:12] +
-              '), msimg32.dllmgr; load order: ' + prefill_proxy.key_for(exe) + ' msimg32=native,builtin')
+                prefill_proxy.undo(prefix, exe, reg)  # older build, manual install or moved dllmgr
+                result = prefill_proxy.apply(prefix, exe, proxy, dll, reg, line)
+        print('  Launch trampoline ' + result + ': any start of this ' + exe.name + ' gets the fixes.')
+        print('    files: ' + str(exe.parent / (proxy + '.dll')) + ' (sha256 ' + hashlib.sha256(data).hexdigest()[:12] +
+              '), ' + proxy + '.dllmgr; load order: ' + prefill_proxy.key_for(exe) + ' ' + proxy + '=native,builtin')
     except Exception as error:  # optional part: never fail the installed fix
-        print('  Warning: launch trampoline not installed (' + str(error) + '); use dllmgr run faststone.')
+        print('  Warning: launch trampoline not installed (' + str(error) + '); use dllmgr run ' + app + '.')
 
 
 def uninstall_trampoline(prefix, exe, base):
@@ -461,7 +511,7 @@ def recover(prefix, path):
     if state.get('phase') != 'pending':
         return
     if (state.get('schema') != 1 or state.get('prefix') != str(prefix)
-            or state.get('id') != path.stem or app_id(state.get('target', '')) != path.stem):
+            or state.get('id') != path.stem or app_id(state.get('target', ''), state_app(state)) != path.stem):
         raise Error('Invalid pending transaction; no files changed')
     transaction = state['transaction']
     changes = transaction['desktops']
@@ -485,7 +535,7 @@ def recover(prefix, path):
 
 
 def uninstall(args, prefix):
-    path, state = read_state(prefix, args.exe)
+    path, state = read_state(prefix, args.exe, app_of(args))
     if args.fix != state['fix']:
         raise Error('A different recipe is installed: ' + state['fix'])
     directory = checked_files(prefix, state)
@@ -514,17 +564,18 @@ def uninstall(args, prefix):
     except BaseException:
         recover(prefix, path)
         raise
-    for name in state['files']:
-        (directory / name).unlink()
-    directory.rmdir()
-    print('✓ Private FastStone recipe removed; previous desktop entries restored.')
+    if directory is not None:
+        for name in state['files']:
+            (directory / name).unlink()
+        directory.rmdir()
+    print('✓ Private ' + PROFILES[app_of(args)]['title'] + ' recipe removed; previous desktop entries restored.')
 
 
 def launch(args, prefix):
-    _, state = read_state(prefix, args.exe)
+    _, state = read_state(prefix, args.exe, app_of(args))
     exe = Path(state['exe'])
     if digest(exe) != state['exe_sha256'] or winpath(prefix, exe) != state['target']:
-        raise Error('FastStone executable or drive mapping changed; reinstall its profile')
+        raise Error(PROFILES[app_of(args)]['title'] + ' executable or drive mapping changed; reinstall its profile')
     directory = checked_files(prefix, state)
     runtime = Path(state['runtime'])
     verify(runtime, state['package_sha256'], Path(state['base']))
@@ -536,7 +587,7 @@ def launch(args, prefix):
         env['LC_ALL'] = 'C.UTF-8'
     env.update(WINEPREFIX=str(prefix), WINEARCH='wow64', DLLMGR_TARGET_EXE=state['target'],
                WINELOADER=str(runtime / 'bin/wine'), WINESERVER=str(runtime / 'bin/wineserver'))
-    for name in state['files']:
+    for name in state['files'] if directory is not None else ():
         env['DLLMGR_' + ('COMCTL32' if name == 'comctl32.dll' else 'GDIPLUS')] = winpath(prefix, directory / name)
     # ExecArguments stays an argv list; image filenames never become shell code.
     app_args = [winpath(prefix, Path(arg)) if Path(arg).is_file() else arg for arg in args.app_args]
@@ -550,7 +601,8 @@ def main():
     parser.add_argument('--prefix', type=Path, default=Path(os.environ.get('WINEPREFIX', str(Path.home() / '.wine'))))
     parser.add_argument('--exe', type=Path)
     parser.add_argument('--json', action='store_true', help='machine-readable status')
-    parser.add_argument('--fix', default='faststone', choices=sorted(catalog_fixes.known()))
+    parser.add_argument('--app', default='faststone', choices=sorted(PROFILES))
+    parser.add_argument('--fix', choices=sorted(catalog_fixes.known()), help='FastStone recipe (default faststone)')
     parser.add_argument('--runtime-package', type=Path, help='explicit offline package (trusted local file)')
     parser.add_argument('--base-wine', type=Path, default=Path('/opt/wine-stable'))
     parser.add_argument('--desktop-entry', type=Path, action='append', default=[], help='also route this existing FastStone launcher; reversible')
@@ -560,13 +612,19 @@ def main():
         own_args, app_args = own_args[:cut], own_args[cut + 1:]
     args = parser.parse_args(own_args)
     args.app_args = app_args
+    if args.app == 'faststone':
+        args.fix = args.fix or 'faststone'
+    elif args.fix:
+        parser.error('--fix applies to faststone only')
+    else:
+        args.fix = args.app
     if app_args and args.command != 'run':
         parser.error('application arguments require run')
     prefix = args.prefix.resolve(strict=True)
     if not (prefix / 'system.reg').is_file():
         raise Error('Not an existing Wine prefix')
     with locked(prefix):
-        for path in (prefix / STATE).glob('faststone-*.json'):
+        for path in [p for app in PROFILES for p in state_paths(prefix, app)]:
             if path.is_symlink():
                 raise Error('Refusing a symlink ownership journal')
             recover(prefix, path)
@@ -575,18 +633,19 @@ def main():
         elif args.command == 'uninstall':
             uninstall(args, prefix)
         elif args.command == 'status':
-            _, state = read_state(prefix, args.exe)
+            _, state = read_state(prefix, args.exe, args.app)
             checked_files(prefix, state)
             verify(Path(state['runtime']), state['package_sha256'], Path(state['base']))
             trampoline = trampoline_status(prefix, Path(state['exe']), Path(state['base']))
             if args.json:
                 print(json.dumps(dict(state, trampoline=trampoline), indent=2, ensure_ascii=False))
             else:
-                print('✓ FastStone · ' + state['fix'] + ' · private DLLs verified')
+                print('✓ ' + PROFILES[args.app]['title'] + ' · ' + state['fix'] + ' · private ' +
+                      ('DLLs' if state['files'] else 'runtime') + ' verified')
                 print('  ' + state['target'])
                 print_versions(state)
                 print('  Launch trampoline: ' + trampoline)
-                print('  Launch: dllmgr run faststone')
+                print('  Launch: dllmgr run ' + args.app)
         else:
             launch(args, prefix)
 
