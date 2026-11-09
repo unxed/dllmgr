@@ -1,0 +1,51 @@
+~$ dllmgr status photoshop-cs2; tail -n 40 ~/.wine/.dllmgr/trampoline-run.log
+✓ Photoshop CS2 · photoshop-cs2 · private runtime verified
+  C:\Program Files (x86)\Adobe\Adobe Photoshop CS2\Photoshop.exe
+  Versions: dllmgr 6127318 (installed) · runtime app-isolation-wine-11.0-v10 (sha256 841a7a0e161e) · modules none (runtime and proxy only)
+  Launch trampoline: ok
+  Settings: text=gray contrast=2.2 scaling=exact alt-click=app (change: dllmgr set photoshop-cs2 text=system|bitmap|gray|light|cleartype contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop)
+  Launch: dllmgr run photoshop-cs2
+  Running: pid 953729 on the private runtime
+  Last launches: 2026-11-10 00:02:29 pid 953729 run photoshop-cs2: Alt+click goes to the application: window modifier Alt -> Super until it ends (dllmgrset photoshop-cs2 alt-click=desktop keeps Alt)
+                 2026-11-10 00:02:29 pid 953729 run photoshop-cs2: starting the private runtime
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\kernelbase.dll" at 7B5D0000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\kernel32.dll" at 7BB40000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\MSVCR71.dll" at 7B310000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\MSVCP71.dll" at 7B000000: builtin
+0138:trace:process:NtQueryInformationProcess (0xffffffffffffffff,0x0000001a,0x7ffffe1ff4c0,0x00000008,(nil))
+0138:trace:process:GetEnvironmentVariableW (L"WINEUNIXCP" 0022F80C 85)
+0138:trace:process:ExpandEnvironmentStringsW (L"@tzres.dll,-4896" 00000000 0)
+0138:trace:process:ExpandEnvironmentStringsW (L"@tzres.dll,-4896" 00113BF0 17)
+0138:trace:process:ExpandEnvironmentStringsW (L"@tzres.dll,-4897" 00000000 0)
+0138:trace:process:ExpandEnvironmentStringsW (L"@tzres.dll,-4897" 00113BF0 17)
+0138:trace:process:set_entry_point setting FT_Thunk at 7BB87668 to 00000000
+0138:trace:process:NtQueryInformationProcess (0xffffffffffffffff,0x00000007,0x7ffffe1ff4c0,0x00000008,(nil))
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\msvcrt.dll" at 7A9F0000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\ucrtbase.dll" at 7A610000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\sechost.dll" at 7A960000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\advapi32.dll" at 7ACC0000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\win32u.dll" at 7A090000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\user32.dll" at 7A0F0000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\GDI32.dll" at 7ADC0000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\imm32.dll" at 7A010000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\cryptbase.dll" at 79140000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\rpcrt4.dll" at 79170000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\combase.dll" at 793C0000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\coml2.dll" at 790E0000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\ole32.dll" at 79530000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\oleaut32.dll" at 79870000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\winsxs\\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.2600.2982_none_deadbeef\\Comctl32.dll" at 79B50000: builtin
+0138:trace:process:GetEnvironmentVariableW (L"oanocache" 00000000 0)
+0138:trace:loaddll:build_module Loaded L"c:\\windows\\system32\\winex11.drv" at 790C0000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\uxtheme.dll" at 79000000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\shcore.dll" at 781B0000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\shlwapi.dll" at 78210000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\SHELL32.dll" at 78310000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\STI.DLL" at 78140000: builtin
+0138:trace:loaddll:build_module Loaded L"C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\Photoshop.dll" at 10000000: native
+0138:trace:loaddll:build_module Loaded L"C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\PSViews.dll" at 02FA0000: native
+0138:trace:loaddll:build_module Loaded L"C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\PSArt.dll" at 03150000: native
+0138:trace:loaddll:free_modref Unloaded module L"C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\Photoshop.dll" : native
+0138:trace:loaddll:free_modref Unloaded module L"C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\PSViews.dll" : native
+0138:trace:loaddll:free_modref Unloaded module L"C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\PSArt.dll" : native
+---------------------------------------------------------------------------------------------------------------------------------------------------------
