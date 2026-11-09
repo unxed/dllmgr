@@ -1,0 +1,78 @@
+diff --git a/patches/dllmgr-27/prefill.c b/patches/dllmgr-27/prefill.c
+index 069360b..4869ebe 100644
+--- a/patches/dllmgr-27/prefill.c
++++ b/patches/dllmgr-27/prefill.c
+@@ -675,6 +675,57 @@ static void hook_release_dc(void)
+     if (reg) reg(0, on_dll, NULL, &cookie);
+ }
+ 
++#ifdef DLLMGR27_CAPTIONLESS_ONLY
++/* #45: a new menu window is on screen (black under a compositing WM) before
++ * Photoshop has painted it. It is shown fully transparent instead and made
++ * opaque as soon as its first WM_PAINT has returned (or after 250 ms at the
++ * latest, from a helper thread), so the black frame never reaches the screen.
++ * DLLMGR45_NO_FADE=1 turns it off. */
++static HWND fading[8];
++
++static DWORD WINAPI reveal_later(void *arg)
++{
++    HWND hwnd = arg;
++    int i;
++    Sleep(250);
++    for (i = 0; i < 8; i++)
++        if (InterlockedCompareExchangePointer((void **)&fading[i], NULL, hwnd) == hwnd && IsWindow(hwnd)) {
++            SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
++            TRACE("menu %p revealed by timeout\n", (void *)hwnd);
++        }
++    return 0;
++}
++
++static void fade_in_begin(HWND hwnd)
++{
++    char cls[16] = "";
++    int i;
++    HANDLE t;
++    if (!GetClassNameA(hwnd, cls, sizeof(cls)) || strcmp(cls, "#32768") ||
++        GetEnvironmentVariableA("DLLMGR45_NO_FADE", NULL, 0))
++        return;
++    for (i = 0; i < 8; i++)
++        if (!InterlockedCompareExchangePointer((void **)&fading[i], hwnd, NULL)) break;
++    if (i == 8) return;
++    SetWindowLongW(hwnd, GWL_EXSTYLE, GetWindowLongW(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
++    SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
++    if ((t = CreateThread(NULL, 0, reveal_later, hwnd, 0, NULL))) CloseHandle(t);
++}
++
++static void fade_in_painted(HWND hwnd)
++{
++    int i;
++    for (i = 0; i < 8; i++)
++        if (fading[i] == hwnd && InterlockedCompareExchangePointer((void **)&fading[i], NULL, hwnd) == hwnd) {
++            SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
++            TRACE("menu %p revealed after its first paint\n", (void *)hwnd);
++        }
++}
++#else
++static void fade_in_begin(HWND hwnd) {}
++static void fade_in_painted(HWND hwnd) {}
++#endif
++
+ static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
+ {
+     const CWPSTRUCT *m = (const CWPSTRUCT *)lparam;
+@@ -682,6 +733,7 @@ static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
+     if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGING &&
+         (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW) && top_level_hidden(m->hwnd)) {
+         adopt_early(m->hwnd, (WINDOWPOS *)m->lParam);
++        fade_in_begin(m->hwnd);
+         /* the adopted splash gets no snapshot and no shape: under the private
+          * runtime the shape is computed from a half-painted window (the WM
+          * maps it late) and cuts the card, and a snapshot is stale content;
+@@ -707,6 +759,7 @@ static LRESULT CALLBACK after(int code, WPARAM wparam, LPARAM lparam)
+         present_capture(m->hwnd);
+         adopt_owner_shown(m->hwnd);
+     }
++    if (code == HC_ACTION && (m->message == WM_PAINT || m->message == WM_PRINTCLIENT)) fade_in_painted(m->hwnd);
+     return CallNextHookEx(NULL, code, wparam, lparam);
+ }
+ 

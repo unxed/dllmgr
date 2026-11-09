@@ -207,3 +207,7 @@ runs + stock Wine: card with crisp rounded edges and the feather, no margin,
 no stale pixels, minimize/restore and stacking right (alpha-shape-3runs.png,
 alpha-shape-edges.png). Not reached yet: the soft shadow (cut below alpha
 128; true per-pixel alpha needs a working layered window, see above).
+
+## #45 any-Wine workaround in test (2026-11-09)
+
+wip-menu-fade.diff: new menu windows (#32768) shown fully transparent (WS_EX_LAYERED + alpha 0) and made opaque after their first WM_PAINT (fallback 250 ms). Stand burst on stock Wine with/without (DLLMGR45_NO_FADE) running.
