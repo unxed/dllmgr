@@ -16,7 +16,7 @@ second one with the link, then add the back link to the first as a comment.
 
 | # | Where | What | Text | State |
 |---|---|---|---|---|
-| 7 | WineHQ (new bug, duplicate search first) | #46 DPI-scaled windows: halftone stretch of only the dirty part leaves the spread of XOR-drawn outlines on screen (816 -> 0 px with exact blocks at 2x) | docs/bugzilla/dllmgr-46.txt (prepared 2026-11-09; owner searches duplicates, Bugzilla is behind a bot check for agents) | due |
+| 7 | WineHQ (new bug, duplicate search first) | #46 DPI-scaled windows: halftone stretch of only the dirty part leaves the spread of XOR-drawn outlines on screen (816 -> 0 px with exact blocks at 2x) | docs/bugzilla/dllmgr-46.txt (prepared 2026-11-09; owner searches duplicates, Bugzilla is behind a bot check for agents) | posted: https://bugs.winehq.org/show_bug.cgi?id=60737 (owner, 2026-11-09) |
 | 3 | WineHQ (new bug, duplicate search first) | #44 custom cursors of DPI-virtualized windows not scaled (32x32 at 200 %) | to write | due |
 | 4 | WineHQ 57513 (comment) | PuTTY IME: needs IBus + us,ru + UTF-8; result notify not forwarded to the IME UI window | to write after the bisect | due |
 | 5 | WineHQ (new bug, duplicate search first) | inverting (XOR) pixels of colour cursors become transparent in the Xcursor path | to write after a Windows probe | candidate |

@@ -1,5 +1,5 @@
 Where: https://bugs.winehq.org (new bug; component win32u; search for duplicates first: "DPI scaling", "scaled surface", "halftone", "artifacts")
-Status: PREPARED 2026-11-09, not posted (owner posts). The owner confirmed the fix on runtime v8.
+Status: POSTED 2026-11-09 by the owner as https://bugs.winehq.org/show_bug.cgi?id=60737 (do not repeat this text there). The owner confirmed the fix on runtime v8.
 
 Summary:
 Non DPI aware windows at 200%: XOR-drawn outlines leave pixel trails because only the dirty part is re-stretched with HALFTONE
