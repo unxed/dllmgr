@@ -2,7 +2,7 @@ name: app-isolation
 on:
   push:
     branches: ['experiment/app-isolation-loader']
-    paths: ['patches/wine-11.0-app-isolation.patch', 'patches/winehq-60721.patch', 'patches/dllmgr-4*.patch', 'tests/wine/app-isolation*', 'patches/dllmgr-27/**', '.github/workflows/app-isolation.yml']
+    paths: ['patches/wine-11.0-app-isolation.patch', 'patches/winehq-60721.patch', 'patches/dllmgr-4*.patch', 'patches/dllmgr-5*.patch', 'tests/wine/app-isolation*', 'patches/dllmgr-27/**', '.github/workflows/app-isolation.yml']
   workflow_dispatch:
 permissions:
   contents: read
