@@ -503,6 +503,18 @@ class PrivateAppTest(unittest.TestCase):
         self.assertFalse(desktop.exists())
         self.assertEqual(registry.values, {})
 
+    def test_running_on_tells_runtime_from_system_wine(self):
+        proc = self.root / "proc"
+        for pid, exe, lib in ((11, b"C:\\x\\Photoshop.exe\0", "/home/u/.local/share/dllmgr/runtimes/ab/lib/wine/x86_64-unix/winex11.so"),
+                              (12, b"Z:\\y\\Photoshop.exe\0", "/opt/wine-stable/lib/wine/x86_64-unix/winex11.so"),
+                              (13, b"python3 private-app.py run photoshop-cs2 Photoshop.exe\0", None)):
+            (proc / str(pid)).mkdir(parents=True)
+            (proc / str(pid) / "cmdline").write_bytes(exe)
+            (proc / str(pid) / "maps").write_text("" if lib is None else "7f00-7f01 r-xp 0 00:00 1  " + lib + "\n")
+        (proc / "self").mkdir()
+        self.assertEqual(sorted(private_app.running_on("photoshop.exe", proc)),
+                         [(11, "private runtime"), (12, "system Wine")])
+
     def test_routing_preserves_hidden_mime_entry_metadata(self):
         original = b'[Desktop Entry]\nName=Existing handler\nNoDisplay=true\nIcon=existing-icon\nExec=old-wine %f\n'
         desired = private_app.desktop_content(self.prefix, self.exe)

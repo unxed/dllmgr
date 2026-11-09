@@ -229,6 +229,27 @@ def dllmgr_version():
         return 'unknown (' + str(HERE.parent) + ' is not a readable git checkout)'
 
 
+def running_on(exe_name, proc=Path('/proc')):
+    """(pid, 'private runtime' | 'system Wine' | '?') for running copies of exe_name (diagnostics, #44/#45)."""
+    found = []
+    for entry in proc.iterdir() if proc.is_dir() else ():
+        if not entry.name.isdigit():
+            continue
+        try:
+            cmdline = (entry / 'cmdline').read_bytes().replace(b'\0', b' ').decode('utf-8', 'replace')
+            if exe_name.casefold() not in cmdline.casefold():
+                continue
+            maps = (entry / 'maps').read_text(errors='replace')
+        except OSError:
+            continue
+        lines = [line for line in maps.splitlines() if line.endswith('/winex11.so')]
+        if not lines:
+            continue  # not a Wine process with a display (e.g. the launcher)
+        kind = 'private runtime' if '/dllmgr/runtimes/' in lines[0] else 'system Wine'
+        found.append((int(entry.name), kind))
+    return found
+
+
 def print_versions(state):
     print('  Versions: dllmgr ' + dllmgr_version() + ' · runtime ' +
           state.get('runtime_release', 'unknown (installed by an older dllmgr)') +
@@ -646,6 +667,8 @@ def main():
                 print_versions(state)
                 print('  Launch trampoline: ' + trampoline)
                 print('  Launch: dllmgr run ' + args.app)
+                for pid, kind in running_on(Path(state['exe']).name):
+                    print('  Running: pid ' + str(pid) + ' on the ' + kind)
         else:
             launch(args, prefix)
 
