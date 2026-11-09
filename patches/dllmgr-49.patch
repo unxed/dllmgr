@@ -1,0 +1,115 @@
+diff --git a/dlls/win32u/input.c b/dlls/win32u/input.c
+index c86a357a..b91f874e 100644
+--- a/dlls/win32u/input.c
++++ b/dlls/win32u/input.c
+@@ -1325,7 +1325,10 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
+         return 0;
+     }
+ 
+-    if (LOWORD(layout) != MAKELANGID(LANG_INVARIANT, SUBLANG_DEFAULT) &&
++    /* dllmgr #49: the X11 driver reports the layout of the active XKB group
++     * (DLLMGR49_FROM_DRIVER); that is not a change of the user locale */
++    if (flags & 0x40000000) flags &= ~0x40000000;
++    else if (LOWORD(layout) != MAKELANGID(LANG_INVARIANT, SUBLANG_DEFAULT) &&
+         (NtQueryDefaultLocale( TRUE, &locale ) || LOWORD(layout) != locale))
+     {
+         RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
+diff --git a/dlls/winex11.drv/keyboard.c b/dlls/winex11.drv/keyboard.c
+index 25836fe8..1eb4157d 100644
+--- a/dlls/winex11.drv/keyboard.c
++++ b/dlls/winex11.drv/keyboard.c
+@@ -1334,6 +1334,46 @@ static void update_lock_state( HWND hwnd, WORD vkey, UINT state, UINT time )
+  *
+  * Handle a X key event
+  */
++/* dllmgr #49: Windows keeps one keyboard layout per input language and
++ * ToUnicodeEx answers for the layout it is given. Wine reports the locale's
++ * layout whatever the active XKB group is and answers ToUnicodeEx from the
++ * group of the last key event. Photoshop CS2 (and others) map their shortcut
++ * letters with ToUnicodeEx(..., US layout), so with a Cyrillic group active
++ * no shortcut letter is found. Here: the active group's script decides the
++ * reported layout (Cyrillic group -> Russian layout, else the locale's), and
++ * an explicit US layout for a Cyrillic group is answered from the US table.
++ * Text input (TranslateMessage uses the reported layout) keeps the group's
++ * characters. DLLMGR49_NO_LAYOUT_TRACKING=1 turns it off. */
++static int dllmgr49_disabled(void)
++{
++    static int disabled = -1;
++    if (disabled == -1) disabled = getenv( "DLLMGR49_NO_LAYOUT_TRACKING" ) != NULL;
++    return disabled;
++}
++
++static BOOL dllmgr49_group_is_cyrillic( Display *display, unsigned int state )
++{
++    KeyCode a_key = XKeysymToKeycode( display, XK_a );
++    KeySym sym;
++    if (!a_key) return FALSE;
++    sym = XkbKeycodeToKeysym( display, a_key, (state >> 13) & 3, 0 );
++    return (sym >> 8) == 0x06;
++}
++
++static void dllmgr49_track_layout( Display *display, unsigned int state )
++{
++    static HKL base;
++    HKL current, want;
++
++    if (dllmgr49_disabled()) return;
++    current = NtUserGetKeyboardLayout( 0 );
++    if (!base) base = current;
++    want = dllmgr49_group_is_cyrillic( display, state ) ? (HKL)(ULONG_PTR)0x04190419 : base;
++    if (want == current) return;
++    TRACE_(key)( "XKB group %u: keyboard layout %p -> %p\n", (state >> 13) & 3, current, want );
++    NtUserActivateKeyboardLayout( want, 0x40000000 );
++}
++
+ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
+ {
+     XKeyEvent *event = &xev->xkey;
+@@ -1423,6 +1463,9 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
+ 
+     pthread_mutex_unlock( &kbd_mutex );
+ 
++    /* outside kbd_mutex: activating a layout sends messages */
++    if (event->type == KeyPress) dllmgr49_track_layout( event->display, event->state );
++
+     if (!vkey) return FALSE;
+ 
+     dwFlags = 0;
+@@ -1800,6 +1843,22 @@ void X11DRV_InitKeyboard( Display *display )
+     } /* for */
+ #undef VKEY_IF_NOT_USED
+ 
++    /* dllmgr #49: with an evdev keyboard (space is keycode 65), keycodes 9..96
++     * are the physical set-1 scancodes + 8. Windows scancodes are physical and
++     * do not depend on the layout, but the layout detection above fails for
++     * e.g. Russian in a UTF-8 locale and leaves arbitrary 0x60+ scancodes on
++     * the letter keys, which breaks Ctrl shortcuts in programs that look at
++     * the scancode (Photoshop CS2). DLLMGR49_NO_EVDEV_SCAN=1 turns it off. */
++    if (min_keycode <= 65 && max_keycode >= 96 && keyc2scan[65] == 0x39 && !getenv( "DLLMGR49_NO_EVDEV_SCAN" ))
++    {
++        for (keyc = 9; keyc <= 96; keyc++)
++        {
++            if (!keyc2vkey[keyc] || keyc2scan[keyc] == keyc - 8) continue;
++            TRACE_(key)( "keycode %u: physical scancode %02x instead of %02x\n", keyc, keyc - 8, keyc2scan[keyc] );
++            keyc2scan[keyc] = keyc - 8;
++        }
++    }
++
+     /* If some keys still lack scancodes, assign some arbitrary ones to them now */
+     for (scan = 0x60, keyc = min_keycode; keyc <= max_keycode; keyc++)
+       if (keyc2vkey[keyc]&&!keyc2scan[keyc]) {
+@@ -2367,6 +2426,14 @@ INT X11DRV_ToUnicodeEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
+     TRACE_(key)("(%04X, %04X) : faked state = 0x%04x\n",
+ 		virtKey, scanCode, e.state);
+ 
++    if (!dllmgr49_disabled() && LOWORD(hkl) == MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US ) &&
++        dllmgr49_group_is_cyrillic( e.display, e.state ))
++    {
++        TRACE_(key)( "US layout asked while the XKB group is Cyrillic: US table\n" );
++        pthread_mutex_unlock( &kbd_mutex );
++        return -2;
++    }
++
+     /* We exit on the first keycode found, to speed up the thing. */
+     for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
+       { /* Find a keycode that could have generated this virtual key */
