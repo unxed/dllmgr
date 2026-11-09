@@ -52,3 +52,9 @@ document (fixed-start-with-prefs.png shows the normal trial dialog on top).
 
 #41, 2026-11-09: with a document open, window-manager close and "No" to
 saving: clean exit on stock Wine too. Not reproduced yet.
+
+Stand keyboard (2026-11-09): keys do reach Photoshop. The trial build shows
+the modal "Adobe Activation" dialog at start (click "Continue Trial" at
+1788,1372 on the 3072x1728 stand), then `xdotool windowactivate --sync`
+on the frame and `xdotool key ctrl+n` opens the New dialog. Earlier "keyboard
+does not reach Photoshop" was that modal dialog holding focus.
