@@ -609,6 +609,12 @@ def uninstall(args, prefix):
     print('✓ Private ' + PROFILES[app_of(args)]['title'] + ' recipe removed; previous desktop entries restored.')
 
 
+def watched_run():
+    """True when started by the launch trampoline: Wine starts Unix programs
+    with a double fork, so we are orphaned (parent pid 1)."""
+    return os.getppid() == 1 or bool(os.environ.get('DLLMGR_RUN_WATCH'))
+
+
 def launch(args, prefix):
     _, state = read_state(prefix, args.exe, app_of(args))
     exe = Path(state['exe'])
@@ -630,8 +636,28 @@ def launch(args, prefix):
     # ExecArguments stays an argv list; image filenames never become shell code.
     app_args = [winpath(prefix, Path(arg)) if Path(arg).is_file() else arg for arg in args.app_args]
     os.chdir(exe.parent)
+    argv = [str(runtime / 'bin/wine'), state['target'], *app_args]
     launch_log(prefix, 'run ' + app_of(args) + ': starting the private runtime')
-    os.execve(runtime / 'bin/wine', [str(runtime / 'bin/wine'), state['target'], *app_args], env)
+    if not watched_run():
+        os.execve(runtime / 'bin/wine', argv, env)
+        return  # only reached when execve is mocked in tests
+    # Started by the launch trampoline (Wine's double fork leaves us orphaned):
+    # nobody sees our output, so keep the private Wine's stderr in the prefix
+    # and record how it ended (#51).
+    started = time.monotonic()
+    pid = os.fork()
+    if pid == 0:
+        try:
+            fd = os.open(prefix / '.dllmgr/trampoline-run.log', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
+            os.dup2(fd, 2)
+            os.close(fd)
+        except OSError:
+            pass
+        os.execve(runtime / 'bin/wine', argv, env)
+    _, status = os.waitpid(pid, 0)
+    how = ('exit code ' + str(os.waitstatus_to_exitcode(status))) if os.WIFEXITED(status) else 'signal ' + str(os.WTERMSIG(status))
+    launch_log(prefix, 'run ' + app_of(args) + ': private runtime ended (%s) after %.1f s; its stderr: .dllmgr/trampoline-run.log' % (how, time.monotonic() - started))
+    sys.exit(0)
 
 
 def main():

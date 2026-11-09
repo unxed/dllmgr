@@ -218,6 +218,12 @@ class FakeRegistry:
 
 class PrivateAppTest(unittest.TestCase):
     def setUp(self):
+        patcher = patch.object(private_app, "watched_run", return_value=False)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self._setUp()
+
+    def _setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="dllmgr-private-app-")
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
@@ -598,6 +604,26 @@ class LaunchLogTest(unittest.TestCase):
 
     def test_unwritable_prefix_is_ignored(self):
         private_app.launch_log(Path("/nonexistent/prefix"), "run faststone: started")
+
+    def test_trampoline_run_keeps_stderr_and_records_the_end(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp)
+            (prefix / ".dllmgr").mkdir()
+            runtime = prefix / "rt"
+            (runtime / "bin").mkdir(parents=True)
+            (runtime / "bin/wine").write_text("#!/bin/sh\necho private-wine-stderr >&2\nexit 3\n")
+            (runtime / "bin/wine").chmod(0o755)
+            with patch.object(private_app, "watched_run", return_value=True), \
+                 patch.object(private_app, "read_state", return_value=(None, {"exe": str(prefix / "a.exe"), "exe_sha256": "x", "target": "C:\\a.exe", "runtime": str(runtime), "package_sha256": "p", "base": "/b", "files": []})), \
+                 patch.object(private_app, "digest", return_value="x"), \
+                 patch.object(private_app, "winpath", return_value="C:\\a.exe"), \
+                 patch.object(private_app, "checked_files", return_value=None), \
+                 patch.object(private_app, "verify"), patch.object(private_app, "verify_prefix"), \
+                 patch.object(private_app.os, "chdir"), \
+                 self.assertRaises(SystemExit):
+                private_app.launch(SimpleNamespace(exe=None, app="photoshop-cs2", fix="photoshop-cs2", app_args=[]), prefix)
+            self.assertEqual((prefix / ".dllmgr/trampoline-run.log").read_text(), "private-wine-stderr\n")
+            self.assertIn("private runtime ended (exit code 3)", (prefix / private_app.LAUNCH_LOG).read_text())
 
 
 if __name__ == "__main__":
