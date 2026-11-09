@@ -87,6 +87,37 @@ after 30 s looks normal (palettes, no 2x copies).
 Stop and ask if: Photoshop.exe is not found automatically in the prefix
 (ask the owner how to locate it; do not scan the whole disk).
 
+### PS-3 update 2026-11-09 (Opus decisions; supersedes the "stock Wine only" goal)
+
+The Photoshop fixes now come in two parts, and the recipe must ship both:
+1. version.dll proxy (patches/dllmgr-27, `build.sh version`, compiled with
+   DLLMGR27_CAPTIONLESS_ONLY): splash prefill + see-through margin.
+2. Private runtime (the same package as FastStone, it already contains
+   dllmgr-43 for the focus stealing, #43): Photoshop must run under it.
+Decisions:
+- Generalise scripts/private-app.py by a profile table instead of copying it:
+  profile = {name, exe file name, accepted exe SHA256 list, private DLL
+  modules (FastStone: comctl32/gdiplus; Photoshop: none), proxy (FastStone:
+  msimg32 from the package; Photoshop: version.dll from the package), launcher
+  word for `dllmgr run <name>`}. Photoshop.exe SHA256 (CS2 trial):
+  98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30.
+  Keep FastStone behaviour and its state files byte-compatible (tests).
+- Ship the version.dll proxy inside the runtime package like msimg32
+  (app-isolation.yml: `build.sh version` into out/isolation/dllmgr-27/,
+  member name `dllmgr-27/version.dll`); no separate release asset.
+- Trampoline: same companion mechanism; the companion line becomes
+  `"<launcher>" run photoshop-cs2 --prefix "<p>" --exe "<exe>" --`
+  (trampoline_line() takes the profile name).
+- Desktop entries: route Photoshop's .desktop files like FastStone's.
+- CLI: `dllmgr fix|uninstall|status|run photoshop-cs2` (dllmgr wrapper case).
+- Verified fixes the stand must show after `fix photoshop-cs2` + plain
+  `wine Photoshop.exe`: runs under the private runtime (dllmgr diag-style check
+  of loaded winex11.so path), splash shaped (experiments/photoshop-splash),
+  focus not stolen under Muffin (experiments/ps-focus/focus-rt.sh adapted),
+  full UI normal after 100 s.
+- Release: needs a new runtime package (CI) and an owner-published release
+  (F20), then the pin.
+
 ## PS-4 deferred installer bugs (after PS-1..3)
 
 F13/F14: final MSI dialog texts all "&Finish", then msiexec crashes 0x6a6.
