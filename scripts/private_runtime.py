@@ -22,6 +22,10 @@ OPTIONAL_GROUPS = (
         'x86_64-unix/win32u.so': 'lib/wine/x86_64-unix/win32u.so',
         'x86_64-unix/winex11.so': 'lib/wine/x86_64-unix/winex11.so',
     },
+    {   # #65: shell32 with the desktop.ini miss cache (patches/dllmgr-65.patch)
+        'i386-windows/shell32.dll': 'lib/wine/i386-windows/shell32.dll',
+        'x86_64-windows/shell32.dll': 'lib/wine/x86_64-windows/shell32.dll',
+    },
 )
 UNIX_MODES = {'bin/wine', 'x86_64-unix/ntdll.so', 'x86_64-unix/win32u.so', 'x86_64-unix/winex11.so'}
 
