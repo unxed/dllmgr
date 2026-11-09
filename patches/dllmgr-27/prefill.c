@@ -414,7 +414,14 @@ static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC
     if (have && GetWindowRgn(root, have) != ERROR) { DeleteObject(have); return ret; }  /* shaped already */
     if (have) DeleteObject(have);
     if (GetEnvironmentVariableA("DLLMGR36_ALPHA_MIN", value, sizeof(value)) && atoi(value) > 0) min = atoi(value);
-    ClientToScreen(hwnd, &p);
+    {   /* device position of the card: the DC may have its own origin */
+        POINT org = {0, 0}, c = {0, 0};
+        LPtoDP(dst, &p, 1);
+        if (GetDCOrgEx(dst, &org)) { p.x += org.x; p.y += org.y; }
+        else ClientToScreen(hwnd, &p);
+        ClientToScreen(hwnd, &c);
+        TRACE("card at dc %d,%d: device+org %ld,%ld (client origin %ld,%ld)\n", dx, dy, p.x, p.y, c.x, c.y);
+    }
     p.x -= wr.left; p.y -= wr.top;
     mask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)w * h * 4);
     none = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)w * h * 4);
@@ -424,14 +431,32 @@ static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC
         BITMAPINFO bi = {{sizeof(bi.bmiHeader), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB}};
         if (GetDIBits(src, bmp, 0, bm.bmHeight, all, &bi, DIB_RGB_COLORS)) {
             HRGN rgn;
+            if (GetEnvironmentVariableA("DLLMGR36_DUMP", value, sizeof(value))) {  /* debug: raw BGRA card */
+                char path[64];
+                HANDLE f;
+                DWORD done;
+                wsprintfA(path, "C:\\dllmgr36-card-%dx%d.bgra", bm.bmWidth, bm.bmHeight);
+                f = CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+                if (f != INVALID_HANDLE_VALUE) {
+                    WriteFile(f, all, bm.bmWidth * bm.bmHeight * 4, &done, NULL);
+                    CloseHandle(f);
+                }
+            }
             for (y = 0; y < sh && sy + y < bm.bmHeight; y++)
                 for (x = 0; x < sw && sx + x < bm.bmWidth; x++)
                     if (p.y + y >= 0 && p.y + y < h && p.x + x >= 0 && p.x + x < w &&
                         (int)(all[(sy + y) * bm.bmWidth + sx + x] >> 24) >= min)
                         mask[(p.y + y) * w + p.x + x] = 1;
             if ((rgn = changed_region(mask, none, w, h))) {
-                if (SetWindowRgn(root, rgn, TRUE))
-                    TRACE("alpha shape: %p from the card %dx%d at %ld,%ld, alpha >= %d\n", (void *)root, sw, sh, p.x, p.y, min);
+                if (SetWindowRgn(root, rgn, TRUE)) {
+                    RECT cr;
+                    POINT o = {0, 0};
+                    GetClientRect(root, &cr);
+                    ClientToScreen(root, &o);
+                    TRACE("alpha shape: %p from the card %dx%d at %ld,%ld, alpha >= %d; window %ld,%ld %ldx%ld client at %ld,%ld style %08lx\n",
+                          (void *)root, sw, sh, p.x, p.y, min, wr.left, wr.top, (long)w, (long)h, o.x, o.y,
+                          GetWindowLongW(root, GWL_STYLE));
+                }
                 else DeleteObject(rgn);
             }
         }

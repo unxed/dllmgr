@@ -220,3 +220,13 @@ revealed after their first paint, 0 by timeout) vs 7/40 without
 Same card in a new window (another PSFloatC popup); the alpha shape was
 applied only once per process. Now every splash-like window gets its card
 shape once (while it has no region): about-shaped.png (stock Wine).
+
+## #36 halo fixed (2026-11-09)
+
+The region was computed for the card at ClientToScreen(dc window)+(dx,dy),
+but Photoshop draws through a DC with its own origin: the card really sits
+5,5 logical px lower-right (GetDCOrgEx + LPtoDP). The region was shifted
+up-left, so white window background showed above the top edge and around
+the feather. Now LPtoDP + GetDCOrgEx: splash-halo-before-after.png (left
+before, right after; stand, 192 DPI). DLLMGR36_DUMP=1 writes the card as
+raw BGRA to C:\dllmgr36-card-WxH.bgra for inspection.
