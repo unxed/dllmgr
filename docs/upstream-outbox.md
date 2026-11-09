@@ -21,7 +21,7 @@ second one with the link, then add the back link to the first as a comment.
 | 3 | WineHQ (new bug, duplicate search first) | #44 custom cursors of DPI-virtualized windows not scaled (32x32 at 200 %) | to write | due |
 | 4 | WineHQ 57513 (comment) | PuTTY IME: needs IBus + us,ru + UTF-8; result notify not forwarded to the IME UI window | to write after the bisect | due |
 | 5 | WineHQ (new bug, duplicate search first) | inverting (XOR) pixels of colour cursors become transparent in the Xcursor path | to write after a Windows probe | candidate |
-| 6 | Linux Mint muffin? | #43 part 1: transient splash of a minimized window stays visible (Metacity too, so likely not Mint-only) | decide after the Muffin check | candidate |
+| 6 | WineHQ (new bug, duplicate search first) | #43 part 1: caption-less owned popups shown without activation are override-redirect, so a splash stays on top of everything when the busy app's main window is minimized (not a Mint bug: Muffin hides managed transients correctly) | to write after a Windows parity check (ghosted app, owned popup) | candidate |
 
 ## Posted (for cross links)
 

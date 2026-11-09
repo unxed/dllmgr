@@ -216,6 +216,34 @@ static void capture_under(HWND hwnd, const WINDOWPOS *pos)
 struct shape { HWND hwnd; HDC mem; HBITMAP bitmap, old; RECT rect; int tries; LONG last; DWORD when; };
 static struct shape shapes[4];
 static LONG shape_pending;  /* cheap check in the hooks */
+static HWND splash;         /* the shaped splash (#36), adopted for #43 */
+
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+/* #43 part 1: Wine maps a caption-less popup shown without activation as an
+ * override-redirect X window, so the WM cannot hide it with its minimized
+ * owner, and Photoshop's busy thread never runs ShowOwnedPopups. A popup with
+ * WS_SYSMENU is managed by winex11 (no visible change without a caption):
+ * once the owner is on screen (so the WM can resolve WM_TRANSIENT_FOR), the
+ * splash becomes a managed transient dialog that the WM hides and restores
+ * with the main window and keeps below other applications.
+ * DLLMGR43_NO_ADOPT=1 turns it off. */
+static void adopt_splash(void)
+{
+    static BOOL done;
+    HWND owner;
+    if (done || !splash || GetWindowThreadProcessId(splash, NULL) != GetCurrentThreadId() || !IsWindowVisible(splash))
+        return;
+    owner = GetWindow(splash, GW_OWNER);
+    if (!owner || !IsWindowVisible(owner) || IsIconic(owner)) return;
+    done = TRUE;
+    if (GetEnvironmentVariableA("DLLMGR43_NO_ADOPT", NULL, 0)) return;
+    SetWindowLongW(splash, GWL_STYLE, GetWindowLongW(splash, GWL_STYLE) | WS_SYSMENU);
+    SetWindowPos(splash, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    TRACE("adopted splash %p (owner %p) as a managed transient\n", (void *)splash, (void *)owner);
+}
+#else
+static void adopt_splash(void) {}
+#endif
 static int (WINAPI *real_release_dc)(HWND, HDC);
 
 static void shape_release(struct shape *s)
@@ -333,6 +361,7 @@ static void shape_tick(void)
                     HRGN rgn = changed_region(now, was, w, h);
                     TRACE("shape hwnd=%p %dx%d painted=%ld%%\n", (void *)s->hwnd, w, h, changed * 100 / ((LONG)w * h));
                     if (rgn && !SetWindowRgn(s->hwnd, rgn, TRUE)) DeleteObject(rgn);
+                    else if (rgn) splash = s->hwnd;
                 }
                 shape_release(s);
             } else {
@@ -345,6 +374,7 @@ static void shape_tick(void)
         physical_end(old_ctx);
     }
     shape_pending = left;
+    if (splash) adopt_splash();
 }
 
 /* Keep the capture for shaping instead of dropping it; TRUE if taken over. */
@@ -511,8 +541,10 @@ static LRESULT CALLBACK after(int code, WPARAM wparam, LPARAM lparam)
               mm->ptMinTrackSize.x, mm->ptMinTrackSize.y, mm->ptMaxTrackSize.x, mm->ptMaxTrackSize.y);
     }
     if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGED &&
-        (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW))
+        (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW)) {
         present_capture(m->hwnd);
+        if (splash) adopt_splash();
+    }
     return CallNextHookEx(NULL, code, wparam, lparam);
 }
 

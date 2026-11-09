@@ -98,3 +98,22 @@ makes no more ReleaseDC calls through the hooked imports (trace: 0 calls), so
 the heartbeat never runs. Code parked in wip-heartbeat.diff. Other heartbeat
 sources while loading: the DLL load notification of each plug-in (runs under
 the loader lock: risky), text drawing calls on a cached DC.
+
+## Part 1 solved: the splash is an override-redirect window (2026-11-09)
+
+Differential diagnosis under Muffin (mini3/mini-adopt, retransient.py):
+- symptom: main window Iconic, splash stays and covers other apps;
+- Muffin hides windows whose transient ancestor is minimized
+  (meta_window_showing_on_its_workspace, ancestor_is_minimized), so a managed
+  transient would be hidden; rewriting WM_TRANSIENT_FOR did not help;
+- the splash has no WM_STATE and `Override Redirect State: yes`: Wine maps a
+  caption-less popup shown with SWP_NOACTIVATE as unmanaged
+  (winex11 is_window_managed), so no WM can hide, restore or restack it, and
+  Photoshop's busy thread never runs ShowOwnedPopups. Not a Mint bug.
+Fix (prefill proxy, version build): when the shaped splash and its owner are
+both visible, add WS_SYSMENU (no visible effect without a caption; makes
+winex11 manage the popup) + SWP_FRAMECHANGED. The splash becomes a managed
+transient dialog: minimize main -> splash Iconic too, restore -> both back
+(minimize-restore-adopt.png); another app activated over it now covers the
+splash (over-ctl-vs-adopt.png: left stock, right adopted); full UI after
+loading normal; focus not taken. Opt-out: DLLMGR43_NO_ADOPT=1.
