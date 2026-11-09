@@ -105,6 +105,11 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    plug-ins..." are the noticeably long stages. Seen on the stand: a 60 s
    critical-section wait in the runtime instance
    (RtlpWaitForCriticalSection ... blocked by the main thread).
+   2026-11-09 winedbg `bt all` at 45 s on the stand (trial install): the
+   main thread sits in adobelm's modal activation dialog (DialogBoxParamW
+   from adobelm.dll) while holding section 01502750; thread 0170 waits for
+   it. So on the stand the "wait" is the trial activation dialog waiting
+   for the user, not Wine; the stand timing is not the owner's slow start.
 6d. WineHQ bugs of later Photoshop versions (owner, 2026-11-09): list the
    open Bugzilla bugs for Photoshop CS3..2024, check each on CS2 (stand,
    Muffin); the ones that reproduce are fixed like our own bugs and get a
