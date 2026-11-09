@@ -112,3 +112,17 @@ with the trial dialog dismissed): first run 28 px (one leftover outline
 circle), later runs 0. Repeated three more times (2026-11-09): 0, 0, 0.
 So 5 of 6 runs are clean; the single 28-px run is not reproduced and is
 kept as a watch item for stage 3 (window-level copies), not a blocker.
+
+### Stage 2, third step: primitives invariant (2026-11-09)
+
+tests/wine/gdi-scale-prims.c (+ .sh): every non-text primitive on a
+GDI-scaled window must equal the exact k x k block upscale of the 96-DPI
+drawing (otherwise an application that draws a line over blitted content
+leaves a residue, e.g. the line under the themed combo button).
+First result (experiments/photoshop-cs2-52/gdi-scaling-prims-1.png, left
+exact blocks, right GDI scaling; 2472 differing pixels): XOR shapes drawn
+twice vanish (good); pens of width 2 and 3 match; pens of width 0 and 1
+stay one device pixel (lines, inside-frame rectangles, ellipse, round
+rectangle) instead of k pixels on the block grid. Next: thin pens on
+GDI-scaled DCs get width k, aligned to the blocks (lines shifted by k/2,
+closed shapes as inside-frame).
