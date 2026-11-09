@@ -151,3 +151,23 @@ Remaining: the soft shadow keeps the background of the moment it was painted
 (a few px); before Photoshop paints the card the prefill rectangle is still
 shown for a moment (on the stand black, because the main window is not painted
 yet when the splash appears; grey on the owner's desktop).
+
+## Owner retest of the shaped splash (2026-11-09 08:29)
+
+Much better (owner). Screenshots 5 and 6: the rectangle is gone, but a grey
+ring with rounded corners (~20 px, the soft shadow) stays around the card,
+clearly visible over a light browser window (5). Cause: Photoshop composes
+the shadow (and the feather's antialiased edge) over its own capture of the
+screen behind, taken via GetDC(GetDesktopWindow()) + BitBlt; the result is
+opaque pixels with that old background mixed in. Shaping cuts only pixels it
+never touched. Proper fix needs per-pixel alpha (layered window): see "alpha
+recovery" below when it is designed.
+
+## New: "Adobe Activation" dialog draws with a grey background (screenshot 7)
+
+After startup the trial activation dialog shows the grey of the window behind
+it as its background; only the text boxes are filled (white / beige). Owner:
+seems to depend on how windows are switched during startup, i.e. on what was
+under the dialog when it appeared: the prefill snapshot. Suspected regression
+of the prefill proxy (stock Wine would show its white initial surface there).
+To check: same dialog with DLLMGR27_OFF=1 and on Windows.
