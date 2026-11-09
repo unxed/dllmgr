@@ -165,3 +165,10 @@ rtcheck.sh frames at +1 s, +2 s, after restore; then minimize; then xlogo:
    rtdirect.sh, runtime-bg-none-bisect.png left = runtime, right = reverted):
    less white, but white patches remain. Next half: 60721 part 1
    (exposed/painted bounds in win32u) on its own.
+
+## Shipped as the interim fix (owner, 2026-11-09: minimizing matters more than the transparent margin)
+
+wip-adopt-early-represent.diff is now in patches/dllmgr-27/prefill.c (no
+runtime gate): runtime-v5-candidate.png (frames +1/+2 s, restore,
+minimized, xlogo over the splash). Stock Wine: clean shaped card. Runtime:
+white margin; digging continues (next: 60721 part 1 alone).
