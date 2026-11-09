@@ -79,8 +79,8 @@ the splash) in owner-2026-11-09/:
    background, but a thin 1 px outline of the splash rectangle stays visible
    (also listed as the #36 leftover). A second, lower window (about 620x37
    under the splash, x 689-1311) is shown white with a line in it: another
-   window whose first paint is white, not covered by the proxy (or shown
-   before the proxy's capture).
+   window whose first paint is white (see the correction below: it is the
+   owner's screenshot tool).
 2. Main window minimized while the splash is up: the frame is grey (screen
    captured when the main window was still behind it) over the desktop: the
    capture is a static snapshot and goes stale when what is behind changes.
@@ -89,5 +89,10 @@ Owner: "шероховато, дошлифовать бы". Ideas to check (not 
 renders this splash (layered window with alpha or colour key? then a fix is
 to emulate the layering, not to snapshot); refresh the capture when the
 windows behind change; find the 1 px line (window border style vs our
-capture offset); identify the lower white window (class, style) with the
-proxy's DLLMGR27_DEBUG capture log.
+capture offset).
+
+Correction (owner, 2026-11-09 01:47): the lower white window in screenshot 1
+is not Photoshop's: it is the owner's screenshot tool, which ends up stacked
+between Photoshop's main window and its splash. Not a first-paint issue; open
+question only whether that stacking (a foreign window between the main window
+and the splash) matches Windows.

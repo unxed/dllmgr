@@ -65,8 +65,8 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 1. #35 Windows CI comparison of the Open dialog (plan in
    experiments/ps35-open-dialog/README.md; Wayback installer only).
 2. #36 polish (owner retest 2026-11-09, experiments/photoshop-splash/README.md):
-   1 px outline, stale grey frame when the main window is minimized, extra
-   white window under the splash; first capture how Windows renders the
+   1 px outline, stale grey frame when the main window is minimized (the
+   white strip under it was the owner's screenshot tool, not Photoshop); first capture how Windows renders the
    splash (Windows CI job of item 1), then decide the fix (Opus suggested).
 3. #36 delivery: ship the version.dll prefill proxy for Photoshop.exe as a
    dllmgr recipe (binary from CI, not local builds).
