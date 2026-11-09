@@ -91,6 +91,8 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 6f. #46 blur tool cursor leaves 1-pixel artifacts on the canvas (owner,
    2026-11-09, urgent): reproduce on the stand (Muffin), bisect stock/runtime,
    proxy on/off; hypothesis in the issue.
+6g. #47 Alt+wheel zoom redraws in visible jumps (owner, 2026-11-09):
+   reproduce with burst screenshots on the stand, then bisect as for #45.
 6e. Photoshop CS2 starts very slowly (owner, 2026-11-09; not now). Owner:
    the empty grey main window at the very start and "Scanning for
    plug-ins..." are the noticeably long stages. Seen on the stand: a 60 s
