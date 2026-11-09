@@ -153,6 +153,127 @@
       "path": "fixes/dllmgr-44.md"
     },
     {
+      "id": "dllmgr-55",
+      "kind": "fix",
+      "title": "threadpoolwinrt: Windows.System.Threading.ThreadPoolTimer is not implemented",
+      "license": "LGPL-2.1-or-later",
+      "authors": [
+        "Max-RM"
+      ],
+      "bug": "https://github.com/unxed/dllmgr/issues/55",
+      "dlls": [
+        "threadpoolwinrt"
+      ],
+      "wine": [
+        "wine-11.21"
+      ],
+      "patch": "https://raw.githubusercontent.com/Max-RM/wine/2bf1881262ef7ab7452deff0a2427a25e477e589/patches/threadpooltimer-winrt.patch",
+      "patch_sha256": "29716668274d5167922658310616a73890d605c58044e9bc80734d6d35b9e120",
+      "evidence": "https://github.com/unxed/fix-it-in-wine/issues/15",
+      "path": "fixes/dllmgr-55.md"
+    },
+    {
+      "id": "dllmgr-56",
+      "kind": "fix",
+      "title": "d3dcompiler: #include paths with forward slashes fail to open",
+      "license": "LGPL-2.1-or-later",
+      "authors": [
+        "Max-RM"
+      ],
+      "bug": "https://github.com/unxed/dllmgr/issues/56",
+      "dlls": [
+        "d3dcompiler_43",
+        "d3dcompiler_47"
+      ],
+      "wine": [
+        "wine-11.21"
+      ],
+      "patch": "https://raw.githubusercontent.com/Max-RM/wine/2bf1881262ef7ab7452deff0a2427a25e477e589/patches/d3dcompiler-include-forward-slash.patch",
+      "patch_sha256": "835e073f894b62ec75c10d2b262f6c0de986eddae579a673abf492a7f5d62df5",
+      "evidence": "https://github.com/unxed/fix-it-in-wine/issues/15",
+      "path": "fixes/dllmgr-56.md"
+    },
+    {
+      "id": "dllmgr-57",
+      "kind": "fix",
+      "title": "winebuild: 32-bit host build runs out of address space on resource-heavy DLLs",
+      "license": "LGPL-2.1-or-later",
+      "authors": [
+        "Max-RM"
+      ],
+      "bug": "https://github.com/unxed/dllmgr/issues/57",
+      "dlls": [
+        "winebuild"
+      ],
+      "wine": [
+        "wine-11.21"
+      ],
+      "patch": "https://raw.githubusercontent.com/Max-RM/wine/2bf1881262ef7ab7452deff0a2427a25e477e589/patches/winebuild-arm32-resources.patch",
+      "patch_sha256": "c35d042611ba1c39b09f106c7c327cab160ccc0da386f14dd7ae7118fe4b9bd2",
+      "evidence": "https://github.com/unxed/fix-it-in-wine/issues/15",
+      "path": "fixes/dllmgr-57.md"
+    },
+    {
+      "id": "dllmgr-58",
+      "kind": "fix",
+      "title": "winex11: stale clip window after desktop recreate; touch/WM_POINTER from mouse; pointer grab over VNC",
+      "license": "LGPL-2.1-or-later",
+      "authors": [
+        "Max-RM"
+      ],
+      "bug": "https://github.com/unxed/dllmgr/issues/58",
+      "dlls": [
+        "winex11"
+      ],
+      "wine": [
+        "wine-11.21"
+      ],
+      "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/max-rm/winex11-touch-grab-clipwindow.patch",
+      "patch_sha256": "9d21328110b7da51393a9192d3b2b36772208a01bfbf978dc2d8e94368416713",
+      "evidence": "https://github.com/unxed/fix-it-in-wine/issues/15",
+      "path": "fixes/dllmgr-58.md"
+    },
+    {
+      "id": "dllmgr-59",
+      "kind": "fix",
+      "title": "wined3d: command stream lost wakeup freezes rendering (ARM)",
+      "license": "LGPL-2.1-or-later",
+      "authors": [
+        "Max-RM"
+      ],
+      "bug": "https://github.com/unxed/dllmgr/issues/59",
+      "dlls": [
+        "wined3d"
+      ],
+      "wine": [
+        "wine-11.21"
+      ],
+      "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/max-rm/wined3d-cs-lost-wakeup.patch",
+      "patch_sha256": "0ec9f09228a633b257019f5e84fcfefef7fabddc9e3f8e04b659fd84d0c30a4b",
+      "evidence": "https://github.com/unxed/fix-it-in-wine/issues/15",
+      "path": "fixes/dllmgr-59.md"
+    },
+    {
+      "id": "dllmgr-60",
+      "kind": "fix",
+      "title": "vkd3d-shader: HLSL CalculateLevelOfDetail and CalculateLevelOfDetailUnclamped are not implemented",
+      "license": "LGPL-2.1-or-later",
+      "authors": [
+        "Max-RM"
+      ],
+      "bug": "https://github.com/unxed/dllmgr/issues/60",
+      "dlls": [
+        "vkd3d"
+      ],
+      "wine": [
+        "wine-11.21"
+      ],
+      "patch": "https://raw.githubusercontent.com/Max-RM/wine/2bf1881262ef7ab7452deff0a2427a25e477e589/patches/vkd3d-calculate-lod.patch",
+      "patch_sha256": "df7af5a7b7281b66bbca8de7e7d6a578963b62049e4a886e44817d960c93639a",
+      "evidence": "https://github.com/unxed/fix-it-in-wine/issues/15",
+      "path": "fixes/dllmgr-60.md"
+    },
+    {
       "id": "faststone-all",
       "kind": "bundle",
       "title": "FastStone Image Viewer: composed application fixes",

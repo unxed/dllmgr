@@ -1,0 +1,25 @@
+diff --git a/dlls/wined3d/cs.c b/dlls/wined3d/cs.c
+index b9ce2ec..5938c8b 100644
+--- a/dlls/wined3d/cs.c
++++ b/dlls/wined3d/cs.c
+@@ -3485,7 +3485,20 @@ static void wined3d_cs_mt_finish(struct wined3d_device_context *context, enum wi
+ 
+     TRACE_(d3d_perf)("Waiting for queue %u to be empty.\n", queue_id);
+     while (cs->queue[queue_id].head != *(volatile ULONG *)&cs->queue[queue_id].tail)
++    {
+         wined3d_pause(&spin_count);
++        if (spin_count >= WINED3D_PAUSE_SPIN_COUNT)
++        {
++            /* The command stream thread can miss its wakeup (lost alert, seen on
++             * weakly ordered ARM CPUs), after which it sleeps forever while the
++             * queue still has work and this loop spins at 100% CPU. Poke it once
++             * per millisecond; a spurious wakeup is harmless. */
++            if (pNtAlertThreadByThreadId)
++                pNtAlertThreadByThreadId((HANDLE)(ULONG_PTR)cs->thread_id);
++            else if (cs->event)
++                SetEvent(cs->event);
++        }
++    }
+     TRACE_(d3d_perf)("Queue is now empty.\n");
+ }
+ 

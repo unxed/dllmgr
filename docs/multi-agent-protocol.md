@@ -132,6 +132,15 @@ docs/handoff.md.
 After Photoshop CS2 (owner, 2026-11-09): #53 Illustrator CS2, then InDesign
 CS2, same Wayback source as Photoshop CS2, same stand and recipe approach.
 
+Far plans (owner, 2026-11-09): #54 Photoshop CS2 faster than the original
+(radical optimization, SIMD/asm in hot paths; measure first).
+
+External fixes (fix-it-in-wine#15, Max-RM, Wine 11.21 ARM32): catalogued as
+dllmgr-55..60 (patches pinned to the author's commit or carved into
+patches/max-rm/); not measured by dllmgr. Upstream candidates: 56
+(d3dcompiler '/'), 58 part 1 (stale clip window), 59 (wined3d wakeup, root
+cause), 55 (ThreadPoolTimer).
+
 Photoshop 2024 queue: #38 shim works (patches/dllmgr-38); next is the entry
 DLL of Photoshop.exe (needs `objdump -p` from a user), then a recipe.
 
