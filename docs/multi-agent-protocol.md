@@ -95,3 +95,28 @@ DLL of Photoshop.exe (needs `objdump -p` from a user), then a recipe.
 One agent should not flood the owner: report in your claimed issue; send a
 short chat summary only when a result is ready or you are blocked. Questions
 that block several agents go into one issue comment the others can see.
+
+## 7. Suggested model class per task (suggestion, not a rule)
+
+State 2026-11-09. Any agent may take any item; this only says where a
+stronger model is likely to pay off. If an agent finds a task harder than
+expected, it records what it learned and leaves the rest for a stronger model.
+
+Fits a mid-size model (Sonnet class), plans and traces are in the repo:
+- PS-3 `dllmgr fix photoshop-cs2` (CI-built version.dll proxy, install with
+  scripts/prefill-proxy.py, like the FastStone trampoline).
+- Detailed output for `dllmgr status/run/uninstall faststone` (like `fix`).
+- #39: sample FastStone's main thread in the ~1-2 s gap before
+  TFullScreenWindow, time the same span on the Windows runner
+  (experiments/faststone-esc/README.md).
+- #40: hidden Esc-exit confirmation (stacking/owner vs Windows).
+- PuTTY 57513: bisect PuTTY's startup IME calls in keylog.exe
+  (experiments/putty-57513/README.md).
+- #41: reproduce R6025 on close on the stand; #35 Windows CI comparison.
+
+Suggested for a strong model (Opus class):
+- Far: design and Wine conhost patch for win32-input-mode (docs/console-apps.md
+  "Route comparison", accepted by the owner) and its private-runtime delivery.
+- Any fix that must live inside Wine (win32u/winex11/imm32/msi) and its
+  delivery, e.g. if #39/#40/57513 end up there.
+- Mechanism analysis once a mid-size agent has a narrowed reproducer.
