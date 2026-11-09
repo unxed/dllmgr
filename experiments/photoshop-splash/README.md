@@ -99,7 +99,8 @@ and the splash) matches Windows.
 
 ## The real defect: the margin is opaque and frozen (owner, 2026-11-09 01:49)
 
-Screenshot 4: the screenshot tool's window opened later between Photoshop's
+Screenshot 4 (owner enlarged the screenshot tool window on purpose, to show
+which window the white strip of screenshot 1 was): the screenshot tool's window opened later between Photoshop's
 main window and the splash; the splash's rectangular margin (everything
 outside the rounded card, feather and shadow) hides it with the grey snapshot
 taken when the splash appeared. The margin should be see-through and live.
