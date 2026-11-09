@@ -40,6 +40,11 @@ Rules (owner's, non-negotiable):
 - Reproduce every owner complaint on the owner's stack first: Linux Mint
   Cinnamon, X11, Muffin (`STAND_WM=muffin`, the stand default). Other WMs
   only as an extra comparison (owner, 2026-11-09).
+- When a fix lives only in the private runtime (a Wine patch), also look,
+  without waiting to be asked, for an in-process workaround (proxy DLL,
+  hooks, Win32-only means) that gives the same result on any Wine, and ship
+  it if it works; the runtime fix stays the proper one (owner, 2026-11-09,
+  after the menu fade-in for #45).
 - Upstream ledger: everything we owe a report or comment to (WineHQ, Linux
   Mint, others) goes into docs/upstream-outbox.md the moment it is found,
   so the owner can post in batches; nothing may be lost.
