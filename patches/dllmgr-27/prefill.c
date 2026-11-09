@@ -1045,6 +1045,13 @@ done:
  * application window first): relaunch, so nothing is shown twice. */
 static LRESULT CALLBACK cbt(int code, WPARAM wparam, LPARAM lparam)
 {
+    char late[16];
+    /* DLLMGR51_LATE=N: test switch, as if this proxy loaded after the
+     * application's main window existed (owner's system): skip until a
+     * window of class "Photoshop" exists */
+    if (code == HCBT_CREATEWND && tramp_pending && GetEnvironmentVariableA("DLLMGR51_LATE", late, sizeof(late)) &&
+        !FindWindowA("Photoshop", NULL))
+        return CallNextHookEx(NULL, code, wparam, lparam);
     if (code == HCBT_CREATEWND && tramp_pending) {
         tramp_pending = FALSE;
         UnhookWindowsHookEx(cbt_hook);
