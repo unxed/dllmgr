@@ -132,6 +132,12 @@ Decisions:
 - A manual prefill install (prefill-proxy.py apply, no companion) is replaced
   automatically (undo + apply with the companion).
 - Unit test: test_photoshop_profile_runtime_and_version_proxy_without_private_dlls.
+- Stand e2e 2026-11-09 (Muffin, package of CI run 42601210881): fix over a
+  manual prefill install -> plain `wine Photoshop.exe` -> trampoline ->
+  `dllmgr run photoshop-cs2` -> Photoshop on the runtime's winex11.so
+  (/proc maps), splash shaped, full UI normal; status ok; uninstall removes
+  proxy, companion, override value, desktop entry (the earlier manual prefill
+  install is not restored: dllmgr replaced it).
 - Needs a runtime release with version.dll (v4 from CI run 42601210881 or
   later; run 42591860287 has no version.dll), then the pin.
 
