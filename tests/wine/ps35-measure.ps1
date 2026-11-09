@@ -34,7 +34,10 @@ function Install-WithWizard {
                 # Typed, not WM_SETTEXT: MSI takes the property (USERNAME) from keyboard edits
                 # only; run 42711587380 showed the text but "Required fields are empty".
                 $Value=@('Compatibility Test','CI task35')[$i]
-                $Fields[$i].SetFocus();Start-Sleep -Milliseconds 300
+                # UIA SetFocus is refused for these fields (run 42713665860): click the
+                # point UIA reports for the identified field instead.
+                [void][PS35.Native]::SetForegroundWindow([IntPtr]$Window.Handle);Start-Sleep -Milliseconds 300
+                $Point=$Fields[$i].GetClickablePoint();[PS35.Native]::Click([int]$Point.X,[int]$Point.Y);Start-Sleep -Milliseconds 300
                 [System.Windows.Forms.SendKeys]::SendWait('^a');[System.Windows.Forms.SendKeys]::SendWait($Value)
                 [System.Windows.Forms.SendKeys]::SendWait('{TAB}');Start-Sleep -Milliseconds 300
             }
