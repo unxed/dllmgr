@@ -114,8 +114,10 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    markers instead of a blind 15 s wait, fallback reason in `dllmgr status`.
 6l. #52 text on the private runtime: contrasty but badly shaped letters
    after exact 2x blocks; Preferences dialog without antialiasing (owner,
-   v8). Options: exact/smooth setting, grayscale smoothing, text at
-   physical DPI (Windows GDI scaling).
+   v8). Cause: gasp disables smoothing at 11 px on stock and runtime.
+   Step (a) done in code: dllmgr-52 + `dllmgr set` (text/contrast/scaling),
+   waits for runtime v9 + owner retest. Step (b) next: text at physical
+   DPI inside the scaled surface (Windows GDI scaling), Opus task.
 7. (now urgent: delivers #43, #44, #45) PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI
    (add `build.sh version` to app-isolation.yml packaging like msimg32).
