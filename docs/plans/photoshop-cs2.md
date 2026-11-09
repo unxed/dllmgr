@@ -118,6 +118,23 @@ Decisions:
 - Release: needs a new runtime package (CI) and an owner-published release
   (F20), then the pin.
 
+### PS-3 implemented 2026-11-09 (commit 5237bc8, agent claude-cloud-ada0)
+
+    dllmgr fix photoshop-cs2 [--exe .../Photoshop.exe] [--prefix P]
+    dllmgr status|run|uninstall photoshop-cs2
+
+- scripts/private-app.py: PROFILES table (faststone, photoshop-cs2); state
+  `.dllmgr/apps/photoshop-cs2-<hash>.json` with `"app"` and `"files": {}`
+  (no private DLLs); FastStone state unchanged (no `app` key).
+- The runtime package carries dllmgr-27/version.dll (app-isolation.yml); the
+  version build is compiled with DLLMGR27_ACTIVE_IN_RUNTIME, so under
+  `dllmgr run` it signals the trampoline and keeps the splash prefill/shaping.
+- A manual prefill install (prefill-proxy.py apply, no companion) is replaced
+  automatically (undo + apply with the companion).
+- Unit test: test_photoshop_profile_runtime_and_version_proxy_without_private_dlls.
+- Needs a runtime release with version.dll (v4 from CI run 42601210881 or
+  later; run 42591860287 has no version.dll), then the pin.
+
 ## PS-4 deferred installer bugs (after PS-1..3)
 
 F13/F14: final MSI dialog texts all "&Finish", then msiexec crashes 0x6a6.
