@@ -109,4 +109,6 @@ Probe: gdi-scaling-combo-fixed.png (same as the unscaled layout, crisp).
 Photoshop: gdi-scaling-photoshop-stage2b.png, combo texts complete.
 #46 check (blur tool trail, experiments/photoshop-cs2-46/blurtest-rt.sh
 with the trial dialog dismissed): first run 28 px (one leftover outline
-circle), later runs 0; being repeated to see whether it is real.
+circle), later runs 0. Repeated three more times (2026-11-09): 0, 0, 0.
+So 5 of 6 runs are clean; the single 28-px run is not reproduced and is
+kept as a watch item for stage 3 (window-level copies), not a blocker.
