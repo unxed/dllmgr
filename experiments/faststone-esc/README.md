@@ -42,3 +42,20 @@ _NET_WM_USER_TIME / WM_HINTS input / _NET_ACTIVE_WINDOW requests of the
 three windows with xprop -spy, then try the cheapest PE-side fix in the
 existing proxy (SetForegroundWindow/SetFocus on the viewer when shown) and
 measure again.
+
+## Correction (2026-11-09, later the same night): it is not focus, it is the late fullscreen window
+
+Relay of user32 activation calls (stock): FastStone shows the image first in
+an early `TForm` (0x100aa) and calls SetFocus/SetForegroundWindow on it, then
+SetForegroundWindow(Application.Handle) (zero-size TApplication; that is why
+the X focus stays with the WM). The window that handles Esc is a separate
+`TFullScreenWindow`, created ~1.9 s after the early form; Esc works exactly
+from then on.
+Tried and rejected (no measured change, reverted): an IAT hook of
+SetForegroundWindow in the proxy that keeps the focused form in front when
+the target is the zero-size TApplication window. The early TForm gets focus
+with it, but does not react to Esc.
+So #39 = the ~1.9 s between the early image form and TFullScreenWindow under
+Wine. Next: find what FastStone does in that gap (relay/+loaddll timestamps
+on the main thread between the two windows; compare with Windows timing on
+the windows-probes runner) — overlaps #22 (startup latency).
