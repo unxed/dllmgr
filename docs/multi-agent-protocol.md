@@ -93,6 +93,11 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    proxy on/off; hypothesis in the issue.
 6g. #47 Alt+wheel zoom redraws in visible jumps (owner, 2026-11-09):
    reproduce with burst screenshots on the stand, then bisect as for #45.
+6h. #48 Alt+click with the Zoom tool does not zoom out (owner, 2026-11-09;
+   suspect Muffin's Alt window-drag modifier).
+6i. #49 shortcuts do not work with the Russian layout (owner, 2026-11-09:
+   top-model task): VK by physical key, characters by the active layout,
+   Russian text input must keep working.
 6e. Photoshop CS2 starts very slowly (owner, 2026-11-09; not now). Owner:
    the empty grey main window at the very start and "Scanning for
    plug-ins..." are the noticeably long stages. Seen on the stand: a 60 s
