@@ -675,7 +675,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
          * waiting stock-Wine trampoline that we are up, and add nothing else. */
         if (GetEnvironmentVariableA("DLLMGR_TARGET_EXE", NULL, 0)) {
             HANDLE event = OpenEventW(EVENT_MODIFY_STATE, FALSE, TRAMP_EVENT);
-            TRACE("private runtime: proxy idle, trampoline event %s\n", event ? "set" : "absent");
+            TRACE("private runtime: trampoline event %s\n", event ? "set" : "absent");
             if (event) {
                 SetEvent(event);
                 CloseHandle(event);

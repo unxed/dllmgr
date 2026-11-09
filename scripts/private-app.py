@@ -232,7 +232,7 @@ def dllmgr_version():
 def print_versions(state):
     print('  Versions: dllmgr ' + dllmgr_version() + ' · runtime ' +
           state.get('runtime_release', 'unknown (installed by an older dllmgr)') +
-          ' (sha256 ' + state.get('package_sha256', '?')[:12] + ') · modules ' + str(state.get('release', '?')))
+          ' (sha256 ' + state.get('package_sha256', '?')[:12] + ') · modules ' + str(state.get('release', '?') or 'none (runtime and proxy only)'))
 
 
 def runtime_package(requested, temp):
