@@ -126,6 +126,10 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    Step (a) done in code: dllmgr-52 + `dllmgr set` (text/contrast/scaling),
    waits for runtime v9 + owner retest. Step (b) next: text at physical
    DPI inside the scaled surface (Windows GDI scaling), Opus task.
+6m. #63 options-bar combo next to the Go to Bridge button: its drop-down
+   button has no left side (owner, 2026-11-09, screenshot in
+   experiments/photoshop-cs2-63/). Reproduce on the stand, compare with
+   Windows CI, bisect Wine combo/theme drawing vs our scaling.
 7. (now urgent: delivers #43, #44, #45) PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI
    (add `build.sh version` to app-isolation.yml packaging like msimg32).
