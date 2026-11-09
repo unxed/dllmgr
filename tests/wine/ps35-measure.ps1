@@ -88,6 +88,9 @@ try {
             $Continue=Find-Named $Dialog 'Continue Trial'
             # The trial's "Adobe Activation" dialog offers Continue Trial: not a block (run 42713899986).
             if($null -ne $Continue){Invoke-UiElement $Continue;Start-Sleep -Seconds 2;continue}
+            # Modal first-start windows keep the main menu disabled (run 42714432679: Welcome Screen).
+            if($Window.Text -eq 'Welcome Screen'){$Close=Find-Named $Dialog 'Close';if($null -ne $Close){Invoke-UiElement $Close;Start-Sleep -Seconds 1;continue}}
+            if($Window.Text -eq 'Adobe Updater Preferences'){[void][PS35.Native]::PostMessage([IntPtr]$Window.Handle,0x10,[IntPtr]::Zero,[IntPtr]::Zero);Start-Sleep -Seconds 1;continue}
             if($Window.Text -match '(?i)expired|activation|serial'){Save-UiTree $Dialog 'startup-blocked';Save-Desktop 'startup-blocked';throw 'STOP_LICENSE: normal trial startup blocked'}
         }
         Start-Sleep -Seconds 1
