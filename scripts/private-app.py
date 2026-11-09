@@ -615,6 +615,27 @@ def watched_run():
     return os.getppid() == 1 or bool(os.environ.get('DLLMGR_RUN_WATCH'))
 
 
+def watch(prefix, app, argv, env):
+    """Started by the launch trampoline (Wine's double fork leaves us orphaned):
+    nobody sees our output, so keep the private Wine's stderr in the prefix and
+    record how it ended (#51). Runs outside the prefix lock, so `status` works
+    meanwhile."""
+    runtime_wine = argv[0]
+    started = time.monotonic()
+    pid = os.fork()
+    if pid == 0:
+        try:
+            fd = os.open(prefix / '.dllmgr/trampoline-run.log', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
+            os.dup2(fd, 2)
+            os.close(fd)
+        except OSError:
+            pass
+        os.execve(runtime_wine, argv, env)
+    _, status = os.waitpid(pid, 0)
+    how = ('exit code ' + str(os.waitstatus_to_exitcode(status))) if os.WIFEXITED(status) else 'signal ' + str(os.WTERMSIG(status))
+    launch_log(prefix, 'run ' + app + ': private runtime ended (%s) after %.1f s; its stderr: .dllmgr/trampoline-run.log' % (how, time.monotonic() - started))
+
+
 def launch(args, prefix):
     _, state = read_state(prefix, args.exe, app_of(args))
     exe = Path(state['exe'])
@@ -641,23 +662,7 @@ def launch(args, prefix):
     if not watched_run():
         os.execve(runtime / 'bin/wine', argv, env)
         return  # only reached when execve is mocked in tests
-    # Started by the launch trampoline (Wine's double fork leaves us orphaned):
-    # nobody sees our output, so keep the private Wine's stderr in the prefix
-    # and record how it ended (#51).
-    started = time.monotonic()
-    pid = os.fork()
-    if pid == 0:
-        try:
-            fd = os.open(prefix / '.dllmgr/trampoline-run.log', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
-            os.dup2(fd, 2)
-            os.close(fd)
-        except OSError:
-            pass
-        os.execve(runtime / 'bin/wine', argv, env)
-    _, status = os.waitpid(pid, 0)
-    how = ('exit code ' + str(os.waitstatus_to_exitcode(status))) if os.WIFEXITED(status) else 'signal ' + str(os.WTERMSIG(status))
-    launch_log(prefix, 'run ' + app_of(args) + ': private runtime ended (%s) after %.1f s; its stderr: .dllmgr/trampoline-run.log' % (how, time.monotonic() - started))
-    sys.exit(0)
+    return argv, env  # watched: started outside the prefix lock by watch()
 
 
 def main():
@@ -690,6 +695,7 @@ def main():
         raise Error('Not an existing Wine prefix')
     if args.command == 'run':
         launch_log(prefix, 'run ' + args.app + ': started (parent pid ' + str(os.getppid()) + ')')
+    watched = None
     with locked(prefix):
         for path in [p for app in PROFILES for p in state_paths(prefix, app)]:
             if path.is_symlink():
@@ -721,10 +727,12 @@ def main():
                     print('  Last launches: ' + line if line is last[0] else '                 ' + line)
         else:
             try:
-                launch(args, prefix)
+                watched = launch(args, prefix)
             except BaseException as error:
                 launch_log(prefix, 'run ' + args.app + ': failed: ' + (str(error) or type(error).__name__))
                 raise
+    if args.command == 'run' and watched:
+        watch(prefix, args.app, *watched)
 
 
 if __name__ == '__main__':

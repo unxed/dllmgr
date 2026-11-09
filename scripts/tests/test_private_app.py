@@ -620,8 +620,10 @@ class LaunchLogTest(unittest.TestCase):
                  patch.object(private_app, "checked_files", return_value=None), \
                  patch.object(private_app, "verify"), patch.object(private_app, "verify_prefix"), \
                  patch.object(private_app.os, "chdir"), \
-                 self.assertRaises(SystemExit):
-                private_app.launch(SimpleNamespace(exe=None, app="photoshop-cs2", fix="photoshop-cs2", app_args=[]), prefix)
+                 patch.object(private_app.os, "fork", wraps=os.fork):
+                watched = private_app.launch(SimpleNamespace(exe=None, app="photoshop-cs2", fix="photoshop-cs2", app_args=[]), prefix)
+                private_app.os.fork.assert_not_called()  # nothing started under the prefix lock
+            private_app.watch(prefix, "photoshop-cs2", *watched)
             self.assertEqual((prefix / ".dllmgr/trampoline-run.log").read_text(), "private-wine-stderr\n")
             self.assertIn("private runtime ended (exit code 3)", (prefix / private_app.LAUNCH_LOG).read_text())
 
