@@ -92,8 +92,11 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    pixel blocks at integer scales), next runtime release.
 6g. #47 Alt+wheel zoom redraws in visible jumps (owner, 2026-11-09):
    reproduce with burst screenshots on the stand, then bisect as for #45.
-6h. #48 Alt+click with the Zoom tool does not zoom out (owner, 2026-11-09;
-   suspect Muffin's Alt window-drag modifier).
+6h. #48 Alt+click with the Zoom tool does not zoom out (owner, 2026-11-09).
+   Cause: Cinnamon's window modifier is Alt. Done 2026-11-09 in
+   scripts/private-app.py (setting alt-click=app|desktop, Photoshop: app):
+   while it runs the modifier is Super, restored when the prefix's
+   wineserver ends; experiments/photoshop-cs2-48/. Owner retest pending.
 6i. #49 shortcuts do not work with the Russian layout (owner, 2026-11-09:
    top-model task): VK by physical key, characters by the active layout,
    Russian text input must keep working.

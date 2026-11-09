@@ -654,11 +654,11 @@ class SettingsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp)
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact"})
+            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact", "alt-click": "app"})
             self.assertEqual(private_app.settings_env(values), {"DLLMGR52_TEXT": "gray", "DLLMGR52_GAMMA": "2.2"})
             private_app.write_settings(prefix, "photoshop-cs2", ["text=light", "scaling=smooth"])
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth")
+            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth alt-click=app")
             self.assertEqual(private_app.settings_env(values),
                              {"DLLMGR52_TEXT": "light", "DLLMGR52_GAMMA": "2.2", "DLLMGR46_SMOOTH": "1"})
             # FastStone keeps stock text unless asked
@@ -671,6 +671,60 @@ class SettingsTest(unittest.TestCase):
                 with self.assertRaises(private_app.Error):
                     private_app.write_settings(prefix, "photoshop-cs2", bad)
             self.assertFalse((prefix / private_app.SETTINGS_FILE).exists())
+
+
+class AltClickTest(unittest.TestCase):
+    """#48: Cinnamon's Alt window modifier is lent to the application and given back."""
+
+    def fake_gsettings(self, value):
+        state = {"value": value, "calls": []}
+
+        def run(*args):
+            state["calls"].append(args)
+            if args[0] == "get":
+                return None if state["value"] is None else "'" + state["value"] + "'"
+            state["value"] = args[3]
+            return ""
+        return state, run
+
+    def test_switches_to_super_and_restores(self):
+        with tempfile.TemporaryDirectory() as tmp, unittest.mock.patch.object(private_app.subprocess, "Popen") as popen, \
+                unittest.mock.patch.object(private_app.subprocess, "run") as run:
+            prefix = Path(tmp)
+            (prefix / ".dllmgr").mkdir()
+            state, fake = self.fake_gsettings("<Alt>")
+            with unittest.mock.patch.object(private_app, "gsettings", fake):
+                private_app.free_alt_click(prefix, "photoshop-cs2", {})
+                self.assertEqual(state["value"], "<Super>")
+                self.assertEqual(popen.call_args[0][0][2:4], ["wm-restore", str(os.getpid())])
+                # a second start while it runs: no new switch, one more restorer, the original kept
+                private_app.free_alt_click(prefix, "photoshop-cs2", {})
+                self.assertEqual((prefix / private_app.WM_MARK).read_text(), "<Alt>\n")
+                self.assertEqual(popen.call_count, 2)
+                with unittest.mock.patch.dict(os.environ, {"WINESERVER": "/rt/bin/wineserver"}):
+                    private_app.restore_alt_click(prefix, "photoshop-cs2", 2 ** 22 + 7)  # no such pid
+                self.assertEqual(run.call_args[0][0], ["/rt/bin/wineserver", "-w"])
+                self.assertEqual(state["value"], "<Alt>")
+                self.assertFalse((prefix / private_app.WM_MARK).exists())
+                private_app.restore_alt_click(prefix, "photoshop-cs2", 2 ** 22 + 7)  # second restorer: nothing left
+                self.assertEqual(state["value"], "<Alt>")
+
+    def test_leaves_other_desktops_and_user_choices_alone(self):
+        with tempfile.TemporaryDirectory() as tmp, unittest.mock.patch.object(private_app.subprocess, "Popen") as popen:
+            prefix = Path(tmp)
+            (prefix / ".dllmgr").mkdir()
+            for value in (None, "<Super>", "<Ctrl>"):  # no Cinnamon schema; already free; user's own choice
+                state, fake = self.fake_gsettings(value)
+                with unittest.mock.patch.object(private_app, "gsettings", fake):
+                    private_app.free_alt_click(prefix, "photoshop-cs2", {})
+                self.assertEqual(state["value"], value)
+            popen.assert_not_called()
+            # the user changed the modifier while the application ran: not overwritten
+            (prefix / private_app.WM_MARK).write_text("<Alt>\n")
+            state, fake = self.fake_gsettings("<Ctrl>")
+            with unittest.mock.patch.object(private_app, "gsettings", fake), unittest.mock.patch.dict(os.environ, {"WINESERVER": ""}):
+                private_app.restore_alt_click(prefix, "photoshop-cs2", 2 ** 22 + 7)
+            self.assertEqual(state["value"], "<Ctrl>")
 
 
 if __name__ == "__main__":

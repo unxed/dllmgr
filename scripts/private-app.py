@@ -53,16 +53,17 @@ SETTINGS = {
     'text': ('system', 'bitmap', 'gray', 'light', 'cleartype'),  # DLLMGR52_TEXT
     'contrast': None,  # DLLMGR52_GAMMA, 1.0 .. 4.0, smoothed text only
     'scaling': ('exact', 'smooth'),  # DLLMGR46_SMOOTH
+    'alt-click': ('app', 'desktop'),  # #48: who gets Alt+click, see free_alt_click
 }
 SETTING_DEFAULTS = {
-    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact'},
-    'faststone': {'text': 'system', 'contrast': '1.6', 'scaling': 'exact'},
+    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact', 'alt-click': 'app'},
+    'faststone': {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop'},
 }
 SETTINGS_FILE = '.dllmgr/settings.json'
 
 
 def read_settings(prefix, app):
-    values = dict(SETTING_DEFAULTS.get(app, {'text': 'system', 'contrast': '1.6', 'scaling': 'exact'}))
+    values = dict(SETTING_DEFAULTS.get(app, {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop'}))
     try:
         stored = json.loads((prefix / SETTINGS_FILE).read_text()).get(app, {})
     except (OSError, ValueError, AttributeError):
@@ -112,6 +113,58 @@ def settings_env(values):
     if values['scaling'] == 'smooth':
         env['DLLMGR46_SMOOTH'] = '1'
     return env
+
+
+# #48: Cinnamon (Muffin) moves windows on Alt+drag (its default modifier), so
+# Alt+click never reaches the application (Photoshop: Zoom out, Eyedropper,
+# Clone source...). On Windows Alt+click belongs to the application. While the
+# application runs, the window modifier is switched to Super and restored when
+# the prefix's wineserver ends (a detached `wm-restore` waits for it). The mark
+# file keeps the original value, so a lost restorer is redone at the next start.
+WM_SCHEMA, WM_KEY, WM_MARK = 'org.cinnamon.desktop.wm.preferences', 'mouse-button-modifier', '.dllmgr/wm-modifier'
+
+
+def gsettings(*args):
+    try:
+        done = subprocess.run(['gsettings', *args], capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return done.stdout.strip() if done.returncode == 0 else None
+
+
+def free_alt_click(prefix, app, env):
+    current = gsettings('get', WM_SCHEMA, WM_KEY)
+    mark = prefix / WM_MARK
+    if current == "'<Alt>'":
+        if gsettings('set', WM_SCHEMA, WM_KEY, '<Super>') is None:
+            return
+        mark.write_text('<Alt>\n')
+        launch_log(prefix, 'run %s: Alt+click goes to the application: window modifier Alt -> Super until it ends (dllmgr set %s alt-click=desktop keeps Alt)' % (app, app))
+    elif not (current == "'<Super>'" and mark.is_file()):
+        return
+    subprocess.Popen([sys.executable, os.path.abspath(__file__), 'wm-restore', str(os.getpid()), '--prefix', str(prefix), '--app', app],
+                     env=env, start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def restore_alt_click(prefix, app, pid, poll=1.0):
+    """Waits for the launching process (watcher or the exec'd Wine), then for
+    the prefix's wineserver, then puts the window modifier back."""
+    while Path('/proc/%d' % pid).exists() and not Path('/proc/%d/stat' % pid).read_text(errors='replace').split(') ')[-1].startswith('Z'):
+        time.sleep(poll)
+    server = os.environ.get('WINESERVER')
+    if server:
+        subprocess.run([server, '-w'], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    mark = prefix / WM_MARK
+    if not mark.is_file():
+        return
+    original = mark.read_text().strip()
+    if gsettings('get', WM_SCHEMA, WM_KEY) == "'<Super>'" and original in ('<Alt>',):
+        gsettings('set', WM_SCHEMA, WM_KEY, original)
+        if gsettings('get', WM_SCHEMA, WM_KEY) != "'" + original + "'":  # e.g. the session bus is gone (logout)
+            launch_log(prefix, 'run %s: could not restore the window modifier %s; retried at the next start' % (app, original))
+            return
+        launch_log(prefix, 'run %s: window modifier restored to %s' % (app, original))
+    mark.unlink(missing_ok=True)
 
 
 def settings_line(values):
@@ -763,6 +816,8 @@ def launch(args, prefix):
     app_args = [winpath(prefix, Path(arg)) if Path(arg).is_file() else arg for arg in args.app_args]
     os.chdir(exe.parent)
     argv = [str(runtime / 'bin/wine'), state['target'], *app_args]
+    if read_settings(prefix, app_of(args))['alt-click'] == 'app':
+        free_alt_click(prefix, app_of(args), env)
     launch_log(prefix, 'run ' + app_of(args) + ': starting the private runtime')
     if not watched_run():
         os.execve(runtime / 'bin/wine', argv, env)
@@ -772,8 +827,8 @@ def launch(args, prefix):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status', 'set'])
-    parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling)')
+    parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status', 'set', 'wm-restore'])
+    parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling, alt-click)')
     parser.add_argument('--prefix', type=Path, default=Path(os.environ.get('WINEPREFIX', str(Path.home() / '.wine'))))
     parser.add_argument('--exe', type=Path)
     parser.add_argument('--json', action='store_true', help='machine-readable status')
@@ -794,13 +849,16 @@ def main():
         parser.error('--fix applies to faststone only')
     else:
         args.fix = args.app
-    if args.values and args.command != 'set':
+    if args.values and args.command not in ('set', 'wm-restore'):
         parser.error('key=value pairs require set')
     if app_args and args.command != 'run':
         parser.error('application arguments require run')
     prefix = args.prefix.resolve(strict=True)
     if not (prefix / 'system.reg').is_file():
         raise Error('Not an existing Wine prefix')
+    if args.command == 'wm-restore':  # internal, started by free_alt_click; never takes the lock
+        restore_alt_click(prefix, args.app, int(args.values[0]))
+        return
     if args.command == 'run':
         launch_log(prefix, 'run ' + args.app + ': started (parent pid ' + str(os.getppid()) + ')')
     watched = None
@@ -835,7 +893,7 @@ def main():
                 print('  Launch trampoline: ' + trampoline)
                 print('  Settings: ' + settings_line(read_settings(prefix, args.app)) +
                       ' (change: dllmgr set ' + args.app + ' text=' + '|'.join(SETTINGS['text']) +
-                      ' contrast=1.0..4.0 scaling=exact|smooth)')
+                      ' contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop)')
                 print('  Launch: dllmgr run ' + args.app)
                 for pid, kind in running_on(Path(state['exe']).name):
                     print('  Running: pid ' + str(pid) + ' on the ' + kind)
