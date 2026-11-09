@@ -93,6 +93,12 @@ try {
             if($Window.Text -eq 'Adobe Updater Preferences'){[void][PS35.Native]::PostMessage([IntPtr]$Window.Handle,0x10,[IntPtr]::Zero,[IntPtr]::Zero);Start-Sleep -Seconds 1;continue}
             if($Window.Text -match '(?i)expired|activation|serial'){Save-UiTree $Dialog 'startup-blocked';Save-Desktop 'startup-blocked';throw 'STOP_LICENSE: normal trial startup blocked'}
         }
+        # Adobe Updater runs as its own process (run 42716059510): cancel its preferences window.
+        foreach($Window in @([PS35.Native]::Windows() | Where-Object {$_.Text -eq 'Adobe Updater Preferences'})){
+            $Cancel=Find-Named ([System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Window.Handle)) 'Cancel'
+            if($null -ne $Cancel){Invoke-UiElement $Cancel}else{[void][PS35.Native]::PostMessage([IntPtr]$Window.Handle,0x10,[IntPtr]::Zero,[IntPtr]::Zero)}
+            Start-Sleep -Seconds 1
+        }
         Start-Sleep -Seconds 1
     }while([DateTime]::UtcNow -lt $Deadline)
     if($null -eq $Main -or $null -eq $File){Save-Desktop 'startup-timeout';throw 'Full main menu not ready; inspect startup artifact'}
