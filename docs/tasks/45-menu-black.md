@@ -35,3 +35,5 @@ the version.dll proxy active: 0/40 bad frames; same start with
 DLLMGR27_OFF=1 (no trampoline, so stock Wine): 4/40. So either the owner's
 Photoshop does not run on the runtime (see 44-cursors.md, same check), or
 the black comes from his real-GPU compositing that Xvfb does not reproduce.
+
+Owner, 2026-11-09 14:47: started through the runtime, no black flashing under menus. So the earlier report came from a start on system Wine (trampoline fallback or a different launcher).
