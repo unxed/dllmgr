@@ -1,0 +1,38 @@
+Where: https://bugs.winehq.org/show_bug.cgi?id=60721  (comment; supersedes winehq-60721-exposure.txt, which was never posted)
+Status: PREPARED 2026-11-09, not posted (owner posts).
+
+Text:
+
+Follow-up with a change that removes the flash in my tests.
+
+Two things combine. First, a window surface is created filled with white, and
+when the X server sends an Expose for a newly mapped window, Wine presents the
+exposed part of the surface even where the application has not drawn anything
+yet, so the white fill reaches the screen before the first paint. Second, X
+windows are created with a black background pixel, so before the first
+presentation the server (or a compositing window manager) shows black. On
+Windows the previous screen contents stay visible until the application
+paints.
+
+What I changed, as an experiment: the surface keeps track of the area that
+has actually been drawn (a bounding rectangle is enough for this case), and an
+Expose re-presents only exposed parts that have been drawn; and X windows get
+no background (background pixmap None) instead of the black pixel. With both
+changes on Wine 11.0:
+
+FastStone Image Viewer 8.5, opening an image fullscreen: no black or white
+phase any more (checked on a headless X server, and confirmed by a user on Linux
+Mint Cinnamon with Muffin).
+
+Adobe Photoshop CS2 menus under a compositing window manager (Muffin): while
+moving through the menu bar, each newly shown menu window was black for a
+few frames before its first paint (5 to 7 of 40 screenshots taken while
+switching menus showed it); with the change 0 of 40, and the same user no
+longer sees it.
+
+Limits: only tested with X11 at 192 DPI, with Metacity and Muffin; the drawn
+area is tracked as a rectangle, not a region; both libraries (win32u and
+winex11) change together because the surface structure changes.
+
+Prepared with the help of an AI agent; the results above come from screenshots
+taken before and after the change on the same setup.
