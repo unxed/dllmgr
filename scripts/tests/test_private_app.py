@@ -685,7 +685,13 @@ class TrampolineSummaryTest(unittest.TestCase):
                 "== attempt 2: clean environment\n0138:trace:loaddll:build_module Loaded\n")
             lines = private_app.trampoline_summary(prefix)
             self.assertTrue(lines[0].startswith("Last trampoline run ("))
-            self.assertEqual([l.strip()[:16] for l in lines[1:]], ["== attempt 1: in", "0024:err:module:", "== attempt 2: cl"])
+            self.assertEqual([l.strip()[:16] for l in lines[1:]],
+                             ["== attempt 1: in", "0024:err:module:", "== attempt 2: cl", "0138:trace:loadd"])
+            (prefix / ".dllmgr/trampoline-run.log").write_text(
+                "== attempt 1: inherited environment\nwine: could not load kernel32.dll, status c0000135\n"
+                + "0024:fixme:x:y stub\n" * 10)
+            lines = private_app.trampoline_summary(prefix)
+            self.assertIn("  wine: could not load kernel32.dll, status c0000135", lines)
 
 
 class AltClickTest(unittest.TestCase):

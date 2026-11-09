@@ -753,15 +753,19 @@ def clean_env(env):
 
 def trampoline_summary(prefix, limit=12):
     """#51: what the last run started by the launch trampoline said: its
-    attempts and Wine's err: lines (the cause of a failed start), so a report
-    needs only `dllmgr status`."""
+    attempts, Wine's err: and loader lines (the cause of a failed start) and
+    its last lines, so a report needs only `dllmgr status`."""
     log = prefix / '.dllmgr/trampoline-run.log'
     try:
         lines = log.read_text(errors='replace').splitlines()
         when = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(log.stat().st_mtime))
     except OSError:
         return []
-    picked = [l for l in lines if l.startswith('== attempt') or ':err:' in l]
+    # attempts, Wine's err: lines and anything that is not a fixme/warn/trace
+    # ("wine: ..." loader messages), plus the tail of the log
+    picked = [l for l in lines if l.startswith('== attempt') or ':err:' in l or
+              not re.search(r'^[0-9a-f]{4}:(fixme|warn|trace):', l)]
+    picked += [l for l in lines[-3:] if l not in picked]
     errors = [l for l in picked if ':err:' in l]
     if len(errors) > limit:  # keep attempt headers, the first errors of each kind
         seen, keep = set(), []
