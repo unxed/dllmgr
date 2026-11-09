@@ -11,7 +11,6 @@ patch_sha256: b3c0a94b19c5f49a39bd386a18d12ea1e4ffeb8f89b85e81bcaaa23920bae601
 recipe: "private runtime: wine-11.0 + wine-11.0-app-isolation.patch + winehq-60721.patch + dllmgr-43.patch + dllmgr-44.patch"
 evidence: https://github.com/unxed/dllmgr/issues/43
 results:
-  - {check: "splash does not stay on top when main window minimized", wine: wine-11.0, host_arch: x86_64, prefix_arch: win64, dpi: 192, without: fail, with: pass, run: "https://github.com/unxed/dllmgr/issues/43"}
   - {check: "startup does not steal focus back from other applications", wine: wine-11.0, host_arch: x86_64, prefix_arch: win64, dpi: 192, without: fail, with: pass, run: "https://github.com/unxed/dllmgr/issues/43"}
 license: LGPL-2.1-or-later
 ai_assisted: true
@@ -22,7 +21,7 @@ ai_assisted: true
 ## Problem
 
 Photoshop CS2 on Wine 11.0 (Cinnamon/Muffin, 192 DPI) has two related
-startup UX problems:
+startup UX problems (issue #43); this patch fixes the second one only:
 
 1. **Splash z-order**: Minimizing Photoshop's main window during startup does
    not minimize the splash; it stays above other windows and covers them.
@@ -34,10 +33,9 @@ Both annoy during the ~minute of startup.
 
 ## Windows behavior
 
-(measured) On Windows, the splash window is owned by the main window.
-Minimizing the owner minimizes the splash. A background process cannot
-steal focus from the foreground window due to foreground lock timeout; its
-activation request is ignored or deferred by the window manager.
+(documented Windows behaviour, not measured here) A background process
+cannot steal the focus from the foreground window (foreground lock); its
+activation request only flashes its taskbar button.
 
 ## The fix, in words
 
@@ -56,10 +54,10 @@ Changes to `dlls/winex11.drv/window.c` and `dlls/winex11.drv/x11drv.h`:
    to apply its focus-stealing prevention: a process the user has switched
    away from must not take the focus back.
 
-3. **Splash z-order**: The same mechanism ensures that the splash window
-   (which is owned by the main window via `WM_TRANSIENT_FOR` or similar)
-   respects the main window's minimized state, so minimizing the main window
-   also minimizes the splash.
+Not covered: the splash staying on screen when the main window is
+minimized. Wine maps the caption-less splash as an override-redirect window,
+so no WM can hide it; that part is handled outside this patch (version.dll
+proxy, work in progress: experiments/ps-focus/README.md).
 
 The patch is part of the private runtime built by CI, which includes:
 - `wine-11.0-app-isolation.patch` (application isolation infrastructure)
@@ -71,6 +69,7 @@ The patch is part of the private runtime built by CI, which includes:
 
 Owner's stack: Cinnamon, X11, Muffin (compositing WM). Stand: Wine 11.0,
 Xvfb 3072x1728 @192 DPI, Metacity and Muffin. Both issues resolved on the
-private runtime; these are Wine core changes requiring the patched runtime.
+private runtime (focus stealing: control lost the focus after ~18 s, patched
+kept it 30+ s in 2/2 runs); a Wine core change requiring the patched runtime.
 
 See [#43](https://github.com/unxed/dllmgr/issues/43) for the full investigation.

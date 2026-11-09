@@ -42,10 +42,12 @@ composes three Wine core fixes delivered through the private runtime:
 - **winehq-60721**: win32u/winex11 window surface fix. Removes the white
   flash on first window show; enables the version.dll prefill proxy to
   shape the Photoshop splash margin as transparent and live.
-- **dllmgr-43**: winex11/win32u focus fix. Fixes splash z-order (splash
-  minimizes with main window) and prevents focus stealing during startup.
+- **dllmgr-43**: winex11 focus fix. Prevents focus stealing during startup.
 - **dllmgr-44**: winex11 cursor scaling fix. Scales custom tool cursors at
   192 DPI (32x32 -> 64x64), matching Windows behavior for DPI-unaware apps.
+
+`dllmgr fix photoshop-cs2` installs the private runtime (release
+app-isolation-wine-11.0-v4 or later) and the proxy below in one step.
 
 Additionally, the **version.dll prefill proxy** (built from
 `patches/dllmgr-27/prefill.c` with `DLLMGR27_CAPTIONLESS_ONLY` and
@@ -59,6 +61,8 @@ is installed per-application by the fix command.
 
 ## Remaining work
 
+- The splash does not minimize with the main window and stays above other
+  applications under the private runtime (#43 part 1, in progress).
 - Shadow halo around the shaped splash (the soft shadow keeps the background
   of the moment it was painted).
 - R6025 pure virtual call when closing an image ([#41](https://github.com/unxed/dllmgr/issues/41)).

@@ -105,16 +105,6 @@
       "evidence": "https://github.com/unxed/dllmgr/issues/43",
       "results": [
         {
-          "check": "splash does not stay on top when main window minimized",
-          "wine": "wine-11.0",
-          "host_arch": "x86_64",
-          "prefix_arch": "win64",
-          "dpi": 192,
-          "without": "fail",
-          "with": "pass",
-          "run": "https://github.com/unxed/dllmgr/issues/43"
-        },
-        {
           "check": "startup does not steal focus back from other applications",
           "wine": "wine-11.0",
           "host_arch": "x86_64",
