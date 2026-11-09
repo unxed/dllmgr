@@ -53,3 +53,20 @@ scaling=gdi`, env DLLMGR52_GDI_SCALE=1):
 2. Device-coordinate APIs (step 3), then Photoshop: menus, palettes,
    dialogs, the brush outline (#46), marquee, zoom (#47).
 3. Window moves / scrolling (step 5), then the owner retest.
+
+## Stage 1 result (2026-11-09)
+
+patches/dllmgr-52-gdi.patch (applies after dllmgr-46 and dllmgr-52; not in
+the runtime build yet, opt-in DLLMGR52_GDI_SCALE=1): hidden DC scale in
+construct_window_to_viewport, window DCs of an integer-scaled window get the
+target surface and k-scaled visible region / rects, the scaled surface is
+marked direct (its flush only passes exposures on and flushes the target).
+
+- text-aa.exe: real 22-px glyphs, normal shapes, smoothed
+  (experiments/photoshop-cs2-52/gdi-scaling-text-zoom.png: top exact 2x,
+  bottom GDI scaling).
+- Photoshop: starts, but much is wrong
+  (gdi-scaling-photoshop-stage1.png): the canvas is drawn at 1x size into
+  the top-left quarter (device-size blits: SetDIBitsToDevice /
+  StretchDIBits with pixel sizes), the menu bar and option texts are
+  missing, the toolbox is cut. Stage 2 = the device-coordinate APIs.

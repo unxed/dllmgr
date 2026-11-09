@@ -1,0 +1,116 @@
+--- a/dlls/win32u/dce.c
++++ b/dlls/win32u/dce.c
+@@ -147,8 +147,25 @@
+     struct window_surface *target_surface;
+     UINT dpi_from;
+     UINT dpi_to;
++    BOOL direct;  /* dllmgr #52: DCs draw into the target at its resolution */
+ };
+ 
++/* dllmgr #52: "GDI scaling" (DLLMGR52_GDI_SCALE=1): window DCs of a window
++ * scaled by an integer factor draw straight into the target surface with a
++ * hidden scale under the application's mapping, so text is rasterised at the
++ * physical resolution. Layered windows keep the 96-DPI path. */
++static UINT gdi_scale_factor( struct window_surface *window_surface )
++{
++    static int enabled = -1;
++    struct scaled_surface *surface;
++    if (enabled == -1) enabled = getenv( "DLLMGR52_GDI_SCALE" ) != NULL;
++    if (!enabled || !window_surface || window_surface->alpha_mask || window_surface->color_key != CLR_INVALID)
++        return 1;
++    surface = CONTAINING_RECORD( window_surface, struct scaled_surface, header );
++    if (surface->dpi_to <= surface->dpi_from || surface->dpi_to % surface->dpi_from) return 1;
++    return surface->dpi_to / surface->dpi_from;
++}
++
+ static struct scaled_surface *get_scaled_surface( struct window_surface *window_surface )
+ {
+     return CONTAINING_RECORD( window_surface, struct scaled_surface, header );
+@@ -638,6 +655,26 @@
+     RECT dirty = surface->rect, bounds;
+     void *color_bits;
+ 
++    if (surface->funcs == &scaled_surface_funcs && get_scaled_surface( surface )->direct)
++    {   /* dllmgr #52: GDI scaling draws into the target; pass exposures on */
++        struct scaled_surface *scaled = get_scaled_surface( surface );
++        RECT exposed;
++        window_surface_lock( surface );
++        exposed = surface->exposed;
++        reset_bounds( &surface->exposed );
++        reset_bounds( &surface->bounds );
++        window_surface_unlock( surface );
++        if (!IsRectEmpty( &exposed ))
++        {
++            exposed = map_dpi_rect( exposed, scaled->dpi_from, scaled->dpi_to );
++            window_surface_lock( scaled->target_surface );
++            add_bounds_rect( &scaled->target_surface->exposed, &exposed );
++            window_surface_unlock( scaled->target_surface );
++        }
++        window_surface_flush( scaled->target_surface );
++        return;
++    }
++
+     window_surface_lock( surface );
+ 
+     /* Only present exposed areas that have actually been drawn. A new surface
+@@ -909,6 +946,34 @@
+     }
+ 
+     if (!surface) SetRectEmpty( &top_rect );
++    {   /* dllmgr #52: GDI scaling */
++        UINT scale = 1;
++        DC *dc;
++        if (surface && surface->funcs == &scaled_surface_funcs && (scale = gdi_scale_factor( surface )) > 1)
++        {
++            struct scaled_surface *scaled = get_scaled_surface( surface );
++            struct window_surface *target = scaled->target_surface;
++            HRGN big = map_dpi_region( vis_rgn, scaled->dpi_from, scaled->dpi_to );
++            if (big)
++            {
++                if (!scaled->direct) TRACE( "GDI scaling x%u for %p\n", scale, dce->hwnd );
++                scaled->direct = TRUE;
++                NtGdiDeleteObjectApp( vis_rgn );
++                vis_rgn = big;
++                win_rect = map_dpi_rect( win_rect, scaled->dpi_from, scaled->dpi_to );
++                top_rect = map_dpi_rect( top_rect, scaled->dpi_from, scaled->dpi_to );
++                window_surface_add_ref( target );
++                window_surface_release( surface );
++                surface = target;
++            }
++            else scale = 1;
++        }
++        if ((dc = get_dc_ptr( dce->hdc )))
++        {
++            dc->dllmgr_scale = scale;
++            release_dc_ptr( dc );
++        }
++    }
+     set_visible_region( dce->hdc, vis_rgn, &win_rect, &top_rect, surface );
+     if (surface) window_surface_release( surface );
+ }
+--- a/dlls/win32u/dc.c
++++ b/dlls/win32u/dc.c
+@@ -429,6 +429,13 @@
+     xform->eDy  = (double)dc->attr->vport_org.y - scaleY * (double)dc->attr->wnd_org.y;
+     if (dc->attr->layout & LAYOUT_RTL)
+         xform->eDx = dc->attr->vis_rect.right - dc->attr->vis_rect.left - 1 - xform->eDx;
++    if (dc->dllmgr_scale > 1)  /* dllmgr #52: GDI scaling, under the application's own mapping */
++    {
++        xform->eM11 *= dc->dllmgr_scale;
++        xform->eM22 *= dc->dllmgr_scale;
++        xform->eDx  *= dc->dllmgr_scale;
++        xform->eDy  *= dc->dllmgr_scale;
++    }
+ }
+ 
+ /***********************************************************************
+--- a/dlls/win32u/ntgdi_private.h
++++ b/dlls/win32u/ntgdi_private.h
+@@ -88,6 +88,7 @@
+     XFORM         xformWorld2Wnd;    /* World-to-window transformation */
+     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
+     XFORM         xformVport2World;  /* Inverse of the above transformation */
++    UINT          dllmgr_scale;      /* dllmgr #52: hidden device scale of a GDI-scaled window DC */
+     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
+     RECT          bounds;            /* Current bounding rect */
+ } DC;
