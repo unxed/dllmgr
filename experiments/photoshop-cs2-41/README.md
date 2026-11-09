@@ -49,3 +49,6 @@ fallback names point to LiberationSans / LiberationSerif (Arial / Times
 metrics) when present, else Wine's own WineTahoma. DLLMGR62_NO_FONT_FIX=1
 turns it off. Stand: start with the old prefs and C:\t46.png opens the
 document (fixed-start-with-prefs.png shows the normal trial dialog on top).
+
+#41, 2026-11-09: with a document open, window-manager close and "No" to
+saving: clean exit on stock Wine too. Not reproduced yet.
