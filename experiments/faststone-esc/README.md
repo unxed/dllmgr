@@ -59,3 +59,16 @@ So #39 = the ~1.9 s between the early image form and TFullScreenWindow under
 Wine. Next: find what FastStone does in that gap (relay/+loaddll timestamps
 on the main thread between the two windows; compare with Windows timing on
 the windows-probes runner) — overlaps #22 (startup latency).
+
+## Gap timeline (+loaddll, stock, Metacity) — last data of the session
+
+    5969.331  early TForm (0x100aa) mapped (image visible)
+    5969.657  fsplugin05.dll loaded
+    5969.850  libsharpyuv.dll, libwebp.dll loaded
+              ~1.1 s with no DLL loads (unknown work on the main thread)
+    5970.940  TFullScreenWindow mapped (Esc works from here)
+    5971.059  gdiplus.dll (builtin) loaded
+Next: sample the main thread in the 5969.85-5970.94 gap (relay with
+RelayFromInclude=FSViewer.exe limited to kernel32/user32/gdi32 file, registry
+and shell calls, or winedbg backtraces every 100 ms) and time the same span
+on the Windows runner.
