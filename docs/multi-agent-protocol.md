@@ -133,7 +133,8 @@ After Photoshop CS2 (owner, 2026-11-09): #53 Illustrator CS2, then InDesign
 CS2, same Wayback source as Photoshop CS2, same stand and recipe approach.
 
 Far plans (owner, 2026-11-09): #54 Photoshop CS2 faster than the original
-(radical optimization, SIMD/asm in hot paths; measure first).
+(radical optimization, SIMD/asm in hot paths; measure first). Showcase
+#61 VirtualDub (not now).
 
 External fixes (fix-it-in-wine#15, Max-RM, Wine 11.21 ARM32): catalogued as
 dllmgr-55..60 (patches pinned to the author's commit or carved into

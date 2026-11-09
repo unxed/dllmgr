@@ -61,6 +61,50 @@ developers could ship our fixed DLLs inside their own package, enabled by
 default, so the program works out of the box everywhere. The plan is in
 [vendor-kits.md](vendor-kits.md).
 
+### AI-written code in dllmgr and its fixes (owner statement, 2026-11-08)
+
+Source: the owner's comment (@unxed) under the Habr article
+https://habr.com/ru/articles/1105036/, 2026-11-08 10:02, screenshot
+[img/owner-ai-code-statement-2026-11-08.png](img/owner-ai-code-statement-2026-11-08.png).
+It answers a reader who said Wine does not take AI-written code because a
+model that has the public documentation and the bytecode of the native DLLs
+could reproduce their source closely, and Microsoft would take the Wine
+maintainers to court.
+
+Original (Russian, verbatim):
+
+> Угу. В результате MS вайбкодить могут, и то, что модель может там
+> воспроизвести GPL код, на котором училась, всем ок, потому что код никто не
+> увидит. А вот Wine вайбкодить нельзя, а значит, отставание будет расти. Не
+> очень-то антимонопольно! Вот я и решил: к черту, есть DMCA, найдут код под
+> копирайтером - попрошу другую модель переписать релевантные части по спеке,
+> в чем проблема? Но на споры об этом ресурса нет, а сразу форкать - акт
+> агрессии, да и с инженерной точки зрения неэлегантно. Поэтому придумал такую
+> вот экспериментальную надстройку, dllmgr, пока всё что мне было нужно
+> фиксить по этой схеме отлично фиксилось!
+>
+> И слушайте, это такой кайф! Когда оно всё просто работает. Как в Винде.
+
+English rendering:
+
+> Right. So Microsoft can vibe-code, and the fact that a model may reproduce
+> GPL code it was trained on is fine for everyone there, because nobody will
+> see that code. But Wine may not vibe-code, so the gap will keep growing. Not
+> very antitrust-friendly! So I decided: to hell with it, there is the DMCA;
+> if copyrighted code is found, I will ask another model to rewrite the
+> relevant parts from the spec, what is the problem? But there are no
+> resources for arguing about it, and forking right away is an act of
+> aggression, and inelegant from an engineering point of view. That is why I
+> came up with this experimental add-on, dllmgr; so far everything I needed
+> to fix this way got fixed perfectly!
+>
+> And listen, it is such a joy! When it all simply works. Like on Windows.
+
+What follows for the project: AI-written fixes live in dllmgr (labelled
+`ai_assisted`), not in Wine and not in a fork; a takedown is answered by a
+clean rewrite of the affected part from the specification by another model;
+Wine receives text descriptions only (see "Fixes as text, not code" above).
+
 ## Editorial notes
 
 **[Note 1]** Confirmed. Wine's
