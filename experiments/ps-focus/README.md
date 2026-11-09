@@ -158,3 +158,10 @@ rtcheck.sh frames at +1 s, +2 s, after restore; then minimize; then xlogo:
    decorations 0), DIALOG, transient, depth 24, parent = root.
    Open: why the shape is ignored on screen for this window only with the
    runtime (stock Wine + late adoption was clean).
+4. Same build on stock Wine 11.0 (DLLMGR27_NO_TRAMPOLINE=1): clean shaped
+   card, no white margin (stock-adopt-represent-clean.png). So the white margin
+   comes from the runtime.
+5. Runtime with 60721 part 2 reverted (background pixel 0 instead of None,
+   rtdirect.sh, runtime-bg-none-bisect.png left = runtime, right = reverted):
+   less white, but white patches remain. Next half: 60721 part 1
+   (exposed/painted bounds in win32u) on its own.
