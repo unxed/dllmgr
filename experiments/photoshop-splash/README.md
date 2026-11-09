@@ -96,3 +96,23 @@ is not Photoshop's: it is the owner's screenshot tool, which ends up stacked
 between Photoshop's main window and its splash. Not a first-paint issue; open
 question only whether that stacking (a foreign window between the main window
 and the splash) matches Windows.
+
+## The real defect: the margin is opaque and frozen (owner, 2026-11-09 01:49)
+
+Screenshot 4: the screenshot tool's window opened later between Photoshop's
+main window and the splash; the splash's rectangular margin (everything
+outside the rounded card, feather and shadow) hides it with the grey snapshot
+taken when the splash appeared. The margin should be see-through and live.
+The prefill snapshot only fixes the first frame; any change behind the splash
+afterwards (window opened, main window minimized) shows the stale copy.
+
+Proposed fix (not tried yet, Opus idea): after Photoshop has composed the
+splash over our prefilled snapshot, compare the window contents with the
+snapshot: pixels that are byte-identical were never touched by Photoshop,
+so they are pure background. Cut them out of the window with SetWindowRgn
+(X shape), leaving the card, the feather and the soft shadow. The margin then
+becomes truly transparent and live; only the shadow keeps the old background
+mixed in (a few pixels wide, hardly visible). Also likely removes the 1 px
+outline if it comes from the rectangle edge. Check first how Windows looks
+in the same scene (Windows CI): if Windows also freezes the margin, this is
+a dllmgr improvement beyond parity, which the owner asked for anyway.
