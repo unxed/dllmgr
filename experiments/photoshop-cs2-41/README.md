@@ -19,3 +19,7 @@ registers in HKLM Fonts) and the next start with a file hits the assert.
 The old Prefs.psp alone reproduces it. Not the cause: font smoothing
 registry values, the version.dll proxy, fontconfig restriction (Wine keeps
 its own registration, so that step was not clean).
+
+More: stored font file in C:\windows\Fonts: still fails; type font switched to
+Carlito-Regular in the prefs: still fails. The font name is probably not
+the trigger; something else in the prefs written at a normal exit is.
