@@ -23,3 +23,13 @@ its own registration, so that step was not clean).
 More: stored font file in C:\windows\Fonts: still fails; type font switched to
 Carlito-Regular in the prefs: still fails. The font name is probably not
 the trigger; something else in the prefs written at a normal exit is.
+
+assert-stack.sh (gdb attached to the 32-bit Wine process, breakpoint on the
+throw, stack scanned for return addresses after calls): chain
+0xd05c1b -> 0x10f2fe0 -> ... -> 0x10742d0 -> 0x1073f40 -> 0x1078be0 (assert),
+called at 0x1074175 with a font reference that is NULL: the caller looks it
+up through a CoolType function pointer (Photoshop .data 0x14c6c3c ->
+CoolType.dll RVA 0x114b89, not an export) and stores NULL when the lookup
+fails. Not the cause: CoolType font caches (AdobeFnt10.lst removed: still
+fails). Live patch (keep the reference instead of storing NULL): still
+fails, so the reference itself is already NULL.
