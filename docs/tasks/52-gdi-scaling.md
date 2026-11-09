@@ -70,3 +70,12 @@ marked direct (its flush only passes exposures on and flushes the target).
   the top-left quarter (device-size blits: SetDIBitsToDevice /
   StretchDIBits with pixel sizes), the menu bar and option texts are
   missing, the toolbox is cut. Stage 2 = the device-coordinate APIs.
+
+## Stage 2, first step (2026-11-09)
+
+SetDIBitsToDevice on a scaled DC stretches by k (nulldrv path,
+COLORONCOLOR); ExtSelectClipRgn scales the region by k, OffsetClipRgn the
+offset, GetRandomRgn reports 96-DPI device coordinates. Photoshop
+(gdi-scaling-photoshop-stage2.png): canvas, palettes, toolbox and menu bar
+are complete and crisp. Left: combo box texts ("Normal" in Style and
+Layers) show only their upper half, the "Style:" label is cut.

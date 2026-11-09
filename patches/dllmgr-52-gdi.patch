@@ -114,3 +114,81 @@
      BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
      RECT          bounds;            /* Current bounding rect */
  } DC;
+--- a/dlls/win32u/dib.c
++++ b/dlls/win32u/dib.c
+@@ -850,6 +850,28 @@
+     dst.y = pt.y;
+     dst.width = cx;
+     dst.height = cy;
++    if (dc->dllmgr_scale > 1 && !clip)
++    {   /* dllmgr #52: GDI scaling, the size is in pixels of the 96-DPI device */
++        dst.width = cx * dc->dllmgr_scale;
++        dst.height = cy * dc->dllmgr_scale;
++        if (dc->attr->layout & LAYOUT_RTL) dst.x -= dst.width - 1;
++        get_bounding_rect( &rect, dst.x, dst.y, dst.width, dst.height );
++        if (!clip_visrect( dc, &dst.visrect, &rect )) goto done;
++        if (!intersect_vis_rectangles( &dst, &src )) goto done;
++        dev = GET_DC_PHYSDEV( dc, pPutImage );
++        copy_bitmapinfo( dst_info, src_info );
++        err = dev->funcs->pPutImage( dev, NULL, dst_info, &src_bits, &src, &dst, SRCCOPY );
++        if (err == ERROR_BAD_FORMAT && !(err = convert_bits( src_info, &src, dst_info, &src_bits )))
++            err = dev->funcs->pPutImage( dev, NULL, dst_info, &src_bits, &src, &dst, SRCCOPY );
++        if (err == ERROR_TRANSFORM_NOT_SUPPORTED)
++        {
++            copy_bitmapinfo( src_info, dst_info );
++            err = stretch_bits( src_info, &src, dst_info, &dst, &src_bits, COLORONCOLOR );
++            if (!err) err = dev->funcs->pPutImage( dev, NULL, dst_info, &src_bits, &src, &dst, SRCCOPY );
++        }
++        if (err) lines = 0;
++        goto done;
++    }
+     if (dc->attr->layout & LAYOUT_RTL) dst.x -= cx - 1;
+ 
+     rect.left = dst.x;
+--- a/dlls/win32u/clipping.c
++++ b/dlls/win32u/clipping.c
+@@ -172,8 +172,10 @@
+     }
+     else
+     {
+-        HRGN mirrored = 0;
++        HRGN mirrored = 0, scaled = 0;
+ 
++        if (dc->dllmgr_scale > 1 && (scaled = map_dpi_region( rgn, 1, dc->dllmgr_scale )))
++            rgn = scaled;  /* dllmgr #52: device coordinates of the 96-DPI device */
+         if (dc->attr->layout & LAYOUT_RTL)
+         {
+             if (!(mirrored = NtGdiCreateRectRgn( 0, 0, 0, 0 )))
+@@ -194,6 +196,7 @@
+             ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, mode );
+ 
+         if (mirrored) NtGdiDeleteObjectApp( mirrored );
++        if (scaled) NtGdiDeleteObjectApp( scaled );
+     }
+     if (ret != ERROR) update_dc_clipping( dc );
+     release_dc_ptr( dc );
+@@ -243,6 +246,7 @@
+     {
+         x = muldiv( x, dc->attr->vport_ext.cx, dc->attr->wnd_ext.cx );
+         y = muldiv( y, dc->attr->vport_ext.cy, dc->attr->wnd_ext.cy );
++        if (dc->dllmgr_scale > 1) { x *= dc->dllmgr_scale; y *= dc->dllmgr_scale; }  /* dllmgr #52 */
+         if (dc->attr->layout & LAYOUT_RTL) x = -x;
+         ret = NtGdiOffsetRgn( dc->hClipRgn, x, y );
+         update_dc_clipping( dc );
+@@ -454,6 +458,16 @@
+         break;
+     }
+ 
++    if (ret > 0 && dc->dllmgr_scale > 1)
++    {   /* dllmgr #52: report 96-DPI device coordinates */
++        HRGN small = map_dpi_region( hRgn, dc->dllmgr_scale, 1 );
++        if (small)
++        {
++            NtGdiCombineRgn( hRgn, small, 0, RGN_COPY );
++            NtGdiDeleteObjectApp( small );
++        }
++    }
++
+     /* Wine extension */
+     if (ret > 0 && (iCode & NTGDI_RGN_MIRROR_RTL) && (dc->attr->layout & LAYOUT_RTL))
+         mirror_region( hRgn, hRgn, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
