@@ -15,6 +15,11 @@ dllmgr fixes Windows programs under Wine. Before any work read, in order:
 
 Rules (owner's, non-negotiable):
 
+- "Commit" / "save to GitHub" from the owner is executed at once, before
+  anything else, whatever state the work is in: as WIP, on a branch, or
+  behind a switch that keeps it off. Within seconds everything not yet on
+  GitHub must be there. Never "one more minute to finish". Owner's command
+  always comes first (owner, 2026-11-10).
 - Small atomic commits, pushed to `main` immediately, each with its tests and
   doc updates, so work can continue from the repo alone. Never batch.
 - Fail fast: missing data, broken build/environment, unclear task -> stop
