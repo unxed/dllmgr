@@ -264,3 +264,91 @@ index d7b67b4..5b8c59c 100644
      BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
      RECT          bounds;            /* Current bounding rect */
  } DC;
+diff --git a/dlls/win32u/dibdrv/dibdrv.h b/dlls/win32u/dibdrv/dibdrv.h
+index bf85d1dd..e5846b1e 100644
+--- a/dlls/win32u/dibdrv/dibdrv.h
++++ b/dlls/win32u/dibdrv/dibdrv.h
+@@ -105,6 +105,7 @@ typedef struct dibdrv_physdev
+     UINT pen_style, pen_endcap, pen_join;
+     BOOL pen_uses_region, pen_is_ext;
+     int pen_width;
++    BOOL dllmgr_thin_dashed;  /* dllmgr #52: scaled_thin_pen_lines draws dashes */
+     dib_brush pen_brush;
+     dash_pattern pen_pattern;
+     dash_pos dash_pos;
+diff --git a/dlls/win32u/dibdrv/objects.c b/dlls/win32u/dibdrv/objects.c
+index 9825d95f..e3ac9d34 100644
+--- a/dlls/win32u/dibdrv/objects.c
++++ b/dlls/win32u/dibdrv/objects.c
+@@ -1245,6 +1245,51 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
+     return TRUE;
+ }
+ 
++static inline int floor_div( int value, int k )
++{
++    return value >= 0 ? value / k : -((-value + k - 1) / k);
++}
++
++/* dllmgr #52: a 1-pixel pen on a GDI-scaled DC draws the 96-DPI line and
++ * paints each of its pixels as a k x k block: exactly the upscale of the
++ * unscaled drawing, so a line drawn over blitted content covers the whole
++ * block row (no residue) and XOR shapes still cancel out. Device points are
++ * k times the 96-DPI ones (the right/bottom corners of shapes are one less),
++ * so the 96-DPI pixel is the floor of the quotient. */
++static BOOL scaled_thin_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
++{
++    DC *dc = get_physdev_dc( &pdev->dev );
++    BOOL (*line)(dibdrv_physdev *, POINT *, POINT *, HRGN) = pdev->dllmgr_thin_dashed ? dashed_pen_line_region : solid_pen_line_region;
++    int k = dc->dllmgr_scale, i;
++    BOOL ret = TRUE;
++    POINT *small;
++    HRGN lines, big;
++
++    assert( num >= 2 && region );
++    if (!(small = malloc( num * sizeof(*small) ))) return FALSE;
++    for (i = 0; i < num; i++)
++    {
++        small[i].x = floor_div( pts[i].x, k );
++        small[i].y = floor_div( pts[i].y, k );
++    }
++    if (!(lines = NtGdiCreateRectRgn( 0, 0, 0, 0 )))
++    {
++        free( small );
++        return FALSE;
++    }
++    for (i = 0; ret && i < num - 1; i++) ret = line( pdev, small + i, small + i + 1, lines );
++    if (ret && close) ret = line( pdev, small + num - 1, small, lines );
++    if (ret && (big = map_dpi_region( lines, 1, k )))
++    {
++        NtGdiCombineRgn( region, region, big, RGN_OR );
++        NtGdiDeleteObjectApp( big );
++    }
++    else ret = FALSE;
++    NtGdiDeleteObjectApp( lines );
++    free( small );
++    return ret;
++}
++
+ static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
+ {
+     return TRUE;
+@@ -2251,7 +2296,18 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
+         break;
+     }
+ 
+-    pdev->pen_uses_region = (logpen.lopnStyle & PS_GEOMETRIC || pdev->pen_width > 1);
++    if (dc->dllmgr_scale > 1 && logpen.lopnWidth.x <= 1 &&  /* dllmgr #52: thin pens on the block grid */
++        (pdev->pen_style == PS_SOLID || pdev->pen_style == PS_INSIDEFRAME || pdev->pen_style == PS_ALTERNATE ||
++         (pdev->pen_style >= PS_DASH && pdev->pen_style <= PS_DASHDOTDOT && !(logpen.lopnStyle & PS_GEOMETRIC))))
++    {
++        pdev->dllmgr_thin_dashed = pdev->pen_style != PS_SOLID && pdev->pen_style != PS_INSIDEFRAME;
++        if (pdev->pen_style >= PS_DASH && pdev->pen_style <= PS_DASHDOTDOT)
++            pdev->pen_pattern = dash_patterns_cosmetic[pdev->pen_style - 1];
++        pdev->pen_width = 1;
++        pdev->pen_lines = scaled_thin_pen_lines;
++    }
++
++    pdev->pen_uses_region = (logpen.lopnStyle & PS_GEOMETRIC || pdev->pen_width > 1 || pdev->pen_lines == scaled_thin_pen_lines);
+     pdev->pen_is_ext = (elp != NULL);
+     free( elp );
+     return hpen;

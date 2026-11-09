@@ -126,3 +126,16 @@ stay one device pixel (lines, inside-frame rectangles, ellipse, round
 rectangle) instead of k pixels on the block grid. Next: thin pens on
 GDI-scaled DCs get width k, aligned to the blocks (lines shifted by k/2,
 closed shapes as inside-frame).
+
+Thin pens fixed (2026-11-09, dibdrv/objects.c in dllmgr-52-gdi.patch): a
+pen of logical width 0 or 1 (solid, inside-frame, cosmetic dashes,
+alternate) on a GDI-scaled DC draws the 96-DPI line (device points
+floor-divided by k) into a region and paints it scaled by k, once, so
+XOR still cancels. Probe: 2472 -> 920 differing pixels; all thin lines
+and thin-pen rectangles now equal the block upscale
+(gdi-scaling-prims-2.png). The combo button residue line is gone
+(gdi-scaling-combo-thin-pens.png, left exact, right GDI scaling).
+Still different, not seen in UI so far (open items): wide pens of odd
+logical width (3) are one device pixel off and their caps differ; thin
+curves (Ellipse, RoundRect corners) are computed at device resolution, so
+they are smoother than the block upscale.
