@@ -171,6 +171,13 @@ static void capture_under(HWND hwnd, const WINDOWPOS *pos)
     UINT app_dpi = dpi_for_window ? dpi_for_window(hwnd) : 96;  /* in the app's own context */
     DPI_AWARENESS_CONTEXT old_ctx;
     if (!c || find_capture(hwnd)) return;
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+    /* Photoshop build (version.dll): only the splash needs the prefill. Its
+     * "Adobe Activation" dialog never paints its own body: with the prefill
+     * it showed the window behind as background, stock Wine shows white
+     * (owner A/B, 2026-11-09). Windows with a caption are left alone. */
+    if ((GetWindowLongW(hwnd, GWL_STYLE) & WS_CAPTION) == WS_CAPTION) return;
+#endif
     old_ctx = physical_begin();
     if (!GetWindowRect(hwnd, &rect)) { physical_end(old_ctx); return; }
     {

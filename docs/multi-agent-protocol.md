@@ -74,7 +74,9 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    dialog texts all "&Finish", msiexec 0x6a6 crash), F11/F12 (MSI dialogs
    not DPI-scaled), F9 (EULA letter spacing).
 5. (#34 TopPlan dropped by the owner: no installer, not a showcase.)
-6. #41 R6025 pure virtual call when closing an image (owner report,
+6. #43 startup UX: splash stays on top when the main window is minimized;
+   loading Photoshop keeps stealing focus (owner, 2026-11-09).
+6a. #41 R6025 pure virtual call when closing an image (owner report,
    not reproduced yet; may lose unsaved work: rank high).
 7. PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI

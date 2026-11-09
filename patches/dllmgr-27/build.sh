@@ -9,7 +9,7 @@ kind=${1:-msimg32}
 out=${2:-$kind.dll}
 case "$kind" in
 	msimg32) extra= ;;
-	version) extra=version-stubs.c ;;
+	version) extra="version-stubs.c -DDLLMGR27_CAPTIONLESS_ONLY" ;;  # Photoshop: splash only
 	*) echo "unknown proxy $kind" >&2; exit 2 ;;
 esac
 # vSetDdrawflag is only exported by msimg32.def; harmless in version.dll.

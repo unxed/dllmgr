@@ -171,3 +171,32 @@ seems to depend on how windows are switched during startup, i.e. on what was
 under the dialog when it appeared: the prefill snapshot. Suspected regression
 of the prefill proxy (stock Wine would show its white initial surface there).
 To check: same dialog with DLLMGR27_OFF=1 and on Windows.
+
+## Activation dialog: fixed by limiting the Photoshop prefill to the splash
+
+Owner A/B (2026-11-09 08:54): with DLLMGR27_OFF=1 the background is a white
+rectangle (screenshot 8: stock splash). So the grey activation dialog body was
+the prefill snapshot: that dialog never paints its own body. The version.dll
+build (Photoshop) is now compiled with DLLMGR27_CAPTIONLESS_ONLY: only windows
+without a caption get the prefill (the splash). Stand: splash still shaped,
+full UI normal.
+
+## Shadow halo: work in progress (not in main)
+
+experiments/photoshop-splash/wip-shadow-cut-prefill.c keeps the attempt to cut
+the shadow too. Findings on the way:
+- Photoshop does NOT grab the screen itself: the 687x463 GetDC(NULL)+BitBlt in
+  the relay log came from our own capture_under. It composes margin and shadow
+  over what its window already holds (our prefill), so the capture is the
+  right reference; corner pixels matched exactly (808080/808080).
+- Shadow pixels are a pure darkening of that background (R = k * B per
+  channel): 263740 changed, 222968 kept after dropping them.
+- shape_tick re-entered itself (SetWindowRgn repaint -> ReleaseDC hook): fixed
+  with a busy flag in the WIP.
+- Open bug in the WIP: with the shadow cut, the card shows only a top band and
+  a left strip (black elsewhere) although the dumped window pixels are the full
+  card; restoring the pixels with SetDIBitsToDevice after SetWindowRgn did not
+  help. Also black text on the card is classified as shadow (k = 0). Needs a
+  smarter classification (only pixels outside the card's rounded rectangle,
+  e.g. a ring found from the outer edge inwards) and a look at how Wine
+  recreates the surface on SetWindowRgn.
