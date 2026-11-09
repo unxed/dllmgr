@@ -134,3 +134,27 @@ when DLLMGR_TARGET_EXE is set (runtime); under stock Wine it stays on
 renders wrong only with the runtime's winex11/win32u (60721 surface code vs
 the WM's reparenting/configure order); first bisect: runtime + adoption with
 DLLMGR27_NO_SHAPE=1, then without the prefill capture.
+
+## Runtime + managed splash: bisect (2026-11-09, Muffin)
+
+Build: wip-adopt-early-represent.diff (against 13956cd^: early adoption by
+style, DLLMGR27_NO_PREFILL knob, helper thread re-presenting the splash).
+rtcheck.sh frames at +1 s, +2 s, after restore; then minimize; then xlogo:
+
+1. Adoption on, no helper thread (runtime-bisect-full-noshape-noprefill.png,
+   rows: full / DLLMGR27_NO_SHAPE / + DLLMGR27_NO_PREFILL): with the prefill
+   off the managed splash shows NOTHING for the first seconds (grey = main
+   window), so the mixed pixels are not the prefill's fault: Photoshop paints
+   before the WM has mapped the managed window, X drops that drawing, and the
+   busy thread never processes the Expose that would re-present it.
+2. Helper thread (copies the splash onto itself every 100 ms for 4 s from
+   another thread; marks the surface drawn and flushes it): content shown from
+   the first frame, minimize/restore and stacking right.
+3. Left: the margin around the card is white
+   (runtime-adopt-represent-white-margin.png) although the X window has the
+   bounding shape (XShapeGetRectangles: 2662 rects, bbox inside the window).
+   Not a Muffin bug: shapetest.py (undecorated window, shape set before or
+   after map) is honoured by Muffin. Window is undecorated (_MOTIF_WM_HINTS
+   decorations 0), DIALOG, transient, depth 24, parent = root.
+   Open: why the shape is ignored on screen for this window only with the
+   runtime (stock Wine + late adoption was clean).
