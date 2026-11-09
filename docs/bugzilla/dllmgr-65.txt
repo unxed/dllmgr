@@ -1,5 +1,5 @@
 Where: https://bugs.winehq.org (new bug; component shell32; search for duplicates first: "desktop.ini", "slow startup", "SHGetFileInfo slow", "case insensitive lookup")
-Status: PREPARED 2026-11-10, not posted (owner posts).
+Status: POSTED 2026-11-10 by the owner as https://bugs.winehq.org/show_bug.cgi?id=60739 (do not repeat this text there).
 
 Summary:
 shell32 reads desktop.ini of every folder on each bind; with a case-sensitive file system every miss lists the directory, making Photoshop CS2 start take twice as long
