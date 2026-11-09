@@ -48,3 +48,7 @@ User choice: `dllmgr set photoshop-cs2 text=gray|light|cleartype|bitmap|system
 contrast=1.0..4.0 scaling=exact|smooth`, shown by `dllmgr status`, applied by
 `dllmgr run` (and so by the trampoline). Photoshop default: text=gray
 contrast=2.2 scaling=exact. FastStone keeps stock text by default.
+
+Photoshop CS2 on the stand (local runtime with dllmgr-52), Edit menu:
+photoshop-edit-menu-bitmap-vs-gray.png, left text=bitmap (v8 today), right
+text=gray contrast=2.2 (new default). Menu bar and menu items are smoothed.
