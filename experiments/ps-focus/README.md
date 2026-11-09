@@ -211,3 +211,12 @@ alpha-shape-edges.png). Not reached yet: the soft shadow (cut below alpha
 ## #45 any-Wine workaround in test (2026-11-09)
 
 wip-menu-fade.diff: new menu windows (#32768) shown fully transparent (WS_EX_LAYERED + alpha 0) and made opaque after their first WM_PAINT (fallback 250 ms). Stand burst on stock Wine with/without (DLLMGR45_NO_FADE) running.
+Result: stock Wine, Muffin, menu burst: fade 0/40 bad frames (12 menus
+revealed after their first paint, 0 by timeout) vs 7/40 without
+(DLLMGR45_NO_FADE=1); menus render normally (menu-fade-frames.png). Shipped.
+
+## About box (owner, 2026-11-09 14:49: Help > About Photoshop had a frame)
+
+Same card in a new window (another PSFloatC popup); the alpha shape was
+applied only once per process. Now every splash-like window gets its card
+shape once (while it has no region): about-shaped.png (stock Wine).

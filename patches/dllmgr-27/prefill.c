@@ -384,8 +384,8 @@ static BOOL (WINAPI *real_alpha_blend)(HDC, int, int, int, int, HDC, int, int, i
 static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC src, int sx, int sy, int sw, int sh,
                                     BLENDFUNCTION bf)
 {
-    static BOOL done;
     BOOL ret = real_alpha_blend(dst, dx, dy, dw, dh, src, sx, sy, sw, sh, bf);
+    HRGN have = NULL;
     HWND hwnd, root;
     BITMAP bm;
     RECT wr;
@@ -395,12 +395,14 @@ static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC
     DWORD *mask, *none, *all;
     HBITMAP bmp;
 
-    if (!done && (LONGLONG)sw * sh > 100000)
+    if ((LONGLONG)sw * sh > 100000)
         TRACE("AlphaBlend %dx%d ret=%d adopted=%p fmt=%d sca=%d dst hwnd=%p root=%p\n", sw, sh, ret, (void *)adopted,
               bf.AlphaFormat, bf.SourceConstantAlpha, (void *)WindowFromDC(dst),
               (void *)(WindowFromDC(dst) ? GetAncestor(WindowFromDC(dst), GA_ROOT) : 0));
-    /* the card may be drawn before the splash is shown (and adopted) */
-    if (done || !ret || bf.AlphaFormat != AC_SRC_ALPHA || bf.SourceConstantAlpha != 255 ||
+    /* the card may be drawn before the splash is shown (and adopted); the
+     * About box (Help > About Photoshop) is the same card in a new window:
+     * shape every such window once (while it has no region yet) */
+    if (!ret || bf.AlphaFormat != AC_SRC_ALPHA || bf.SourceConstantAlpha != 255 ||
         sw != dw || sh != dh || !(hwnd = WindowFromDC(dst)) || !(root = GetAncestor(hwnd, GA_ROOT)) ||
         !splash_like(root) || GetEnvironmentVariableA("DLLMGR43_NO_ADOPT", NULL, 0) ||
         !(bmp = GetCurrentObject(src, OBJ_BITMAP)) || !GetObjectW(bmp, sizeof(bm), &bm) || bm.bmBitsPixel != 32 ||
@@ -408,7 +410,9 @@ static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC
         return ret;
     w = wr.right - wr.left; h = wr.bottom - wr.top;
     if ((LONGLONG)sw * sh * 2 < (LONGLONG)w * h) return ret;  /* the card, not an icon */
-    done = TRUE;
+    have = CreateRectRgn(0, 0, 0, 0);
+    if (have && GetWindowRgn(root, have) != ERROR) { DeleteObject(have); return ret; }  /* shaped already */
+    if (have) DeleteObject(have);
     if (GetEnvironmentVariableA("DLLMGR36_ALPHA_MIN", value, sizeof(value)) && atoi(value) > 0) min = atoi(value);
     ClientToScreen(hwnd, &p);
     p.x -= wr.left; p.y -= wr.top;
@@ -675,6 +679,57 @@ static void hook_release_dc(void)
     if (reg) reg(0, on_dll, NULL, &cookie);
 }
 
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+/* #45: a new menu window is on screen (black under a compositing WM) before
+ * Photoshop has painted it. It is shown fully transparent instead and made
+ * opaque as soon as its first WM_PAINT has returned (or after 250 ms at the
+ * latest, from a helper thread), so the black frame never reaches the screen.
+ * DLLMGR45_NO_FADE=1 turns it off. */
+static HWND fading[8];
+
+static DWORD WINAPI reveal_later(void *arg)
+{
+    HWND hwnd = arg;
+    int i;
+    Sleep(250);
+    for (i = 0; i < 8; i++)
+        if (InterlockedCompareExchangePointer((void **)&fading[i], NULL, hwnd) == hwnd && IsWindow(hwnd)) {
+            SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
+            TRACE("menu %p revealed by timeout\n", (void *)hwnd);
+        }
+    return 0;
+}
+
+static void fade_in_begin(HWND hwnd)
+{
+    char cls[16] = "";
+    int i;
+    HANDLE t;
+    if (!GetClassNameA(hwnd, cls, sizeof(cls)) || strcmp(cls, "#32768") ||
+        GetEnvironmentVariableA("DLLMGR45_NO_FADE", NULL, 0))
+        return;
+    for (i = 0; i < 8; i++)
+        if (!InterlockedCompareExchangePointer((void **)&fading[i], hwnd, NULL)) break;
+    if (i == 8) return;
+    SetWindowLongW(hwnd, GWL_EXSTYLE, GetWindowLongW(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+    SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
+    if ((t = CreateThread(NULL, 0, reveal_later, hwnd, 0, NULL))) CloseHandle(t);
+}
+
+static void fade_in_painted(HWND hwnd)
+{
+    int i;
+    for (i = 0; i < 8; i++)
+        if (fading[i] == hwnd && InterlockedCompareExchangePointer((void **)&fading[i], NULL, hwnd) == hwnd) {
+            SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
+            TRACE("menu %p revealed after its first paint\n", (void *)hwnd);
+        }
+}
+#else
+static void fade_in_begin(HWND hwnd) {}
+static void fade_in_painted(HWND hwnd) {}
+#endif
+
 static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
 {
     const CWPSTRUCT *m = (const CWPSTRUCT *)lparam;
@@ -682,6 +737,7 @@ static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
     if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGING &&
         (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW) && top_level_hidden(m->hwnd)) {
         adopt_early(m->hwnd, (WINDOWPOS *)m->lParam);
+        fade_in_begin(m->hwnd);
         /* the adopted splash gets no snapshot and no shape: under the private
          * runtime the shape is computed from a half-painted window (the WM
          * maps it late) and cuts the card, and a snapshot is stale content;
@@ -707,6 +763,7 @@ static LRESULT CALLBACK after(int code, WPARAM wparam, LPARAM lparam)
         present_capture(m->hwnd);
         adopt_owner_shown(m->hwnd);
     }
+    if (code == HC_ACTION && (m->message == WM_PAINT || m->message == WM_PRINTCLIENT)) fade_in_painted(m->hwnd);
     return CallNextHookEx(NULL, code, wparam, lparam);
 }
 
