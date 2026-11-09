@@ -1,0 +1,276 @@
+diff --git a/patches/dllmgr-27/prefill.c b/patches/dllmgr-27/prefill.c
+index 35e6c7a..09b2ee6 100644
+--- a/patches/dllmgr-27/prefill.c
++++ b/patches/dllmgr-27/prefill.c
+@@ -239,7 +239,155 @@ static HWND splash;         /* the shaped splash (#36), adopted for #43 */
+  * shape is set but not honoured on screen; experiments/ps-focus/README.md).
+  * DLLMGR43_NO_ADOPT=1 turns it off. */
+ static HWND early;
++static HWND adopted;      /* the startup splash (adopt_early) */
+ static DWORD WINAPI represent_thread(void *arg);
++static DWORD *read_bits(HDC src, int x, int y, int w, int h);
++static int (WINAPI *real_release_dc)(HWND, HDC);
++
++/* #36 (Apple quality): Photoshop draws the splash card with AlphaBlend from a
++ * premultiplied 32-bit bitmap that carries the real alpha: rounded corners,
++ * soft shadow, the feather reaching out of the card, transparent margin. The
++ * AlphaBlend hook keeps a copy of it in window coordinates and turns the
++ * splash into a per-pixel-alpha layered window (UpdateLayeredWindow): no
++ * screen snapshot, no shape, the shadow falls on whatever is live behind.
++ * Pixels the card makes opaque are taken from what Photoshop has drawn in the
++ * window (the text on top of the card); all others straight from the card.
++ * DLLMGR36_NO_LAYERED=1 keeps the snapshot + shape path. */
++static struct {
++    HWND hwnd;
++    int w, h;          /* window size, logical */
++    DWORD *argb;       /* premultiplied, window coordinates */
++    BOOL layered;
++    CRITICAL_SECTION lock;
++} card;
++static LONG card_ready;
++
++static void push_layered(void)
++{
++    HWND hwnd;
++    RECT r;
++    HDC dc, mem;
++    DWORD *now, *bits = NULL;
++    BITMAPINFO bi = {{sizeof(bi.bmiHeader), 0, 0, 1, 32, BI_RGB}};
++    HBITMAP dib;
++    int w, h, i;
++
++    if (!card_ready || card.layered) return;  /* once layered: reads give black */
++    EnterCriticalSection(&card.lock);
++    hwnd = card.hwnd;
++    if (!IsWindow(hwnd) || !IsWindowVisible(hwnd) || !GetWindowRect(hwnd, &r) ||
++        r.right - r.left != card.w || r.bottom - r.top != card.h) {
++        LeaveCriticalSection(&card.lock);
++        return;
++    }
++    w = card.w; h = card.h;
++    now = NULL;
++    if ((dc = GetDCEx(hwnd, NULL, DCX_WINDOW | DCX_CACHE))) {
++        now = read_bits(dc, 0, 0, w, h);
++        ReleaseDC(hwnd, dc);
++    }
++    bi.bmiHeader.biWidth = w;
++    bi.bmiHeader.biHeight = -h;
++    mem = CreateCompatibleDC(NULL);
++    dib = mem ? CreateDIBSection(mem, &bi, DIB_RGB_COLORS, (void **)&bits, NULL, 0) : NULL;
++    if (dib && now && !card.layered) {
++        /* switch only once the window really shows the card: where the card
++         * is opaque the window must already hold the card's own pixels (the
++         * text adds a few percent); before that the window may still hold the
++         * snapshot or nothing, and that must never be frozen on screen */
++        LONG opaque = 0, same = 0;
++        for (i = 0; i < w * h; i++)
++            if ((card.argb[i] >> 24) == 255) {
++                opaque++;
++                if (((now[i] ^ card.argb[i]) & 0xffffff) == 0) same++;
++            }
++        if (getenv("DLLMGR43_DUMP")) { /* diagnostics */
++            static int dumped;
++            if (dumped++ == 10) {
++                HANDLE f; DWORD n;
++                f = CreateFileA("C:\\dllmgr-lay-now.raw", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
++                if (f != INVALID_HANDLE_VALUE) { WriteFile(f, now, w * h * 4, &n, NULL); CloseHandle(f); }
++                f = CreateFileA("C:\\dllmgr-lay-card.raw", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
++                if (f != INVALID_HANDLE_VALUE) { WriteFile(f, card.argb, w * h * 4, &n, NULL); CloseHandle(f); }
++            }
++        }
++        if (!opaque || same * 10 < opaque * 8) {
++            TRACE("layered: window not showing the card yet (%ld/%ld)\n", same, opaque);
++            HeapFree(GetProcessHeap(), 0, now);
++            now = NULL;
++        }
++    }
++    if (dib && now) {
++        HGDIOBJ old = SelectObject(mem, dib);
++        POINT zero = {0, 0};
++        SIZE size = {w, h};
++        BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
++        for (i = 0; i < w * h; i++)
++            bits[i] = (card.argb[i] >> 24) == 255 ? (now[i] | 0xff000000) : card.argb[i];
++        if (!card.layered) {
++            SetWindowLongW(hwnd, GWL_EXSTYLE, GetWindowLongW(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
++            card.layered = TRUE;
++            TRACE("layered: %p is now a per-pixel-alpha window\n", (void *)hwnd);
++        }
++        if (!UpdateLayeredWindow(hwnd, NULL, NULL, &size, mem, &zero, 0, &bf, ULW_ALPHA))
++            TRACE("layered: UpdateLayeredWindow failed %lu\n", GetLastError());
++        SelectObject(mem, old);
++    }
++    if (dib) DeleteObject(dib);
++    if (mem) DeleteDC(mem);
++    HeapFree(GetProcessHeap(), 0, now);
++    LeaveCriticalSection(&card.lock);
++}
++
++static BOOL (WINAPI *real_alpha_blend)(HDC, int, int, int, int, HDC, int, int, int, int, BLENDFUNCTION);
++
++static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC src, int sx, int sy, int sw, int sh,
++                                    BLENDFUNCTION bf)
++{
++    BOOL ret = real_alpha_blend(dst, dx, dy, dw, dh, src, sx, sy, sw, sh, bf);
++    HWND hwnd, root;
++    DIBSECTION ds;
++    RECT wr;
++    POINT p = {dx, dy};
++    int w, h, x, y;
++
++    if (!ret || !adopted || bf.AlphaFormat != AC_SRC_ALPHA || bf.SourceConstantAlpha != 255 || sw != dw || sh != dh ||
++        !(hwnd = WindowFromDC(dst)) || (root = GetAncestor(hwnd, GA_ROOT)) != adopted ||
++        GetObjectW(GetCurrentObject(src, OBJ_BITMAP), sizeof(ds), &ds) != sizeof(ds) ||
++        ds.dsBm.bmBitsPixel != 32 || !ds.dsBm.bmBits || !GetWindowRect(root, &wr) ||
++        GetEnvironmentVariableA("DLLMGR36_NO_LAYERED", NULL, 0))
++        return ret;
++    w = wr.right - wr.left; h = wr.bottom - wr.top;
++    if ((LONGLONG)sw * sh * 2 < (LONGLONG)w * h) return ret;  /* the card, not an icon */
++    ClientToScreen(hwnd, &p);
++    p.x -= wr.left; p.y -= wr.top;
++    EnterCriticalSection(&card.lock);
++    if (!card.argb || card.w != w || card.h != h) {
++        HeapFree(GetProcessHeap(), 0, card.argb);
++        card.argb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)w * h * 4);
++        card.w = w; card.h = h;
++    }
++    card.hwnd = root;
++    if (card.argb) {
++        /* GetDIBits with a top-down request: orientation-safe */
++        BITMAPINFO bi = {{sizeof(bi.bmiHeader), ds.dsBm.bmWidth, -ds.dsBm.bmHeight, 1, 32, BI_RGB}};
++        DWORD *all = HeapAlloc(GetProcessHeap(), 0, (SIZE_T)ds.dsBm.bmWidth * ds.dsBm.bmHeight * 4);
++        if (all && GetDIBits(src, GetCurrentObject(src, OBJ_BITMAP), 0, ds.dsBm.bmHeight, all, &bi, DIB_RGB_COLORS))
++            for (y = 0; y < sh; y++) {
++                if (p.y + y < 0 || p.y + y >= h || sy + y >= ds.dsBm.bmHeight) continue;
++                for (x = 0; x < sw && sx + x < ds.dsBm.bmWidth; x++)
++                    if (p.x + x >= 0 && p.x + x < w)
++                        card.argb[(p.y + y) * w + p.x + x] = all[(sy + y) * ds.dsBm.bmWidth + sx + x];
++            }
++        HeapFree(GetProcessHeap(), 0, all);
++    }
++    LeaveCriticalSection(&card.lock);
++    if (card.argb && !InterlockedExchange(&card_ready, 1)) {
++        TRACE("layered: card %dx%d at %ld,%ld of %p (%dx%d)\n", sw, sh, p.x, p.y, (void *)root, w, h);
++    }
++    push_layered();
++    return ret;
++}
+ 
+ static void adopt_early(HWND hwnd, const WINDOWPOS *pos)
+ {
+@@ -256,7 +404,7 @@ static void adopt_early(HWND hwnd, const WINDOWPOS *pos)
+     w = (pos->flags & SWP_NOSIZE) ? r.right - r.left : pos->cx;
+     h = (pos->flags & SWP_NOSIZE) ? r.bottom - r.top : pos->cy;
+     if (w < 200 || h < 100) return;
+-    early = hwnd;
++    early = adopted = hwnd;
+     SetWindowLongW(hwnd, GWL_STYLE, style | WS_SYSMENU);
+     TRACE("adopt: startup popup %p (owner %p) will be mapped managed\n", (void *)hwnd, (void *)owner);
+     if (!GetEnvironmentVariableA("DLLMGR43_NO_REPRESENT", NULL, 0)) {
+@@ -274,11 +422,18 @@ static DWORD WINAPI represent_thread(void *arg)
+ {
+     HWND hwnd = arg;
+     int i;
+-    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+-    for (i = 0; i < 40 && IsWindow(hwnd); i++) {
++    for (i = 0; IsWindow(hwnd) && (i < 40 || card_ready); i++) {
+         RECT r;
+         HDC dc;
+         Sleep(100);
++        if (card_ready) {
++            /* same (unaware) coordinates as the app's own drawing */
++            DPI_AWARENESS_CONTEXT old = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
++            push_layered();
++            SetThreadDpiAwarenessContext(old);
++            continue;
++        }
++        SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+         if (!IsWindowVisible(hwnd) || !GetWindowRect(hwnd, &r)) continue;
+         if ((dc = GetDCEx(hwnd, NULL, DCX_WINDOW | DCX_CACHE))) {
+             BitBlt(dc, 0, 0, r.right - r.left, r.bottom - r.top, dc, 0, 0, SRCCOPY);
+@@ -302,8 +457,18 @@ static void adopt_owner_shown(HWND shown)
+ #else
+ static void adopt_early(HWND hwnd, const WINDOWPOS *pos) {}
+ static void adopt_owner_shown(HWND shown) {}
++static LONG card_ready;
++static void push_layered(void) {}
++static BOOL (WINAPI *real_alpha_blend)(HDC, int, int, int, int, HDC, int, int, int, int, BLENDFUNCTION);
++static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC src, int sx, int sy, int sw, int sh,
++                                    BLENDFUNCTION bf)
++{
++    return real_alpha_blend(dst, dx, dy, dw, dh, src, sx, sy, sw, sh, bf);
++}
+ #endif
++#ifndef DLLMGR27_CAPTIONLESS_ONLY
+ static int (WINAPI *real_release_dc)(HWND, HDC);
++#endif
+ 
+ static void shape_release(struct shape *s)
+ {
+@@ -495,7 +660,12 @@ static BOOL top_level_hidden(HWND hwnd)
+ 
+ static int WINAPI release_dc_hook(HWND hwnd, HDC dc)
+ {
++    static DWORD last;
+     int ret = real_release_dc(hwnd, dc);
++    if (card_ready) {
++        if (GetTickCount() - last >= 50) { last = GetTickCount(); push_layered(); }
++        return ret;
++    }
+     if (shape_pending) shape_tick();
+     return ret;
+ }
+@@ -510,9 +680,16 @@ static void hook_module_release_dc(HMODULE module)
+     if (module == self || !dir->VirtualAddress || !real_release_dc) return;
+     for (desc = (IMAGE_IMPORT_DESCRIPTOR *)(base + dir->VirtualAddress); desc->Name; desc++) {
+         IMAGE_THUNK_DATA *slot = (IMAGE_THUNK_DATA *)(base + desc->FirstThunk);
+-        if (lstrcmpiA((char *)base + desc->Name, "user32.dll")) continue;
++        if (lstrcmpiA((char *)base + desc->Name, "user32.dll") && lstrcmpiA((char *)base + desc->Name, "msimg32.dll"))
++            continue;
+         for (; slot->u1.Function; slot++) {
+             DWORD protect;
++            if (real_alpha_blend && slot->u1.Function == (ULONG_PTR)real_alpha_blend) {
++                if (!VirtualProtect(&slot->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) continue;
++                slot->u1.Function = (ULONG_PTR)alpha_blend_hook;
++                VirtualProtect(&slot->u1.Function, sizeof(void *), protect, &protect);
++                continue;
++            }
+             if (slot->u1.Function != (ULONG_PTR)real_release_dc) continue;
+             if (!VirtualProtect(&slot->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) continue;
+             slot->u1.Function = (ULONG_PTR)release_dc_hook;
+@@ -539,16 +716,20 @@ static void hook_delay_release_dc(HMODULE module)
+     if (!dir->VirtualAddress || !real_release_dc) return;
+     for (d = (delay_desc *)(base + dir->VirtualAddress); d->name; d++) {
+         IMAGE_THUNK_DATA *names = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->nt), *slots = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->iat);
+-        if (lstrcmpiA((char *)DELAY_PTR(d, d->name), "user32.dll")) continue;
++        const char *dll = (char *)DELAY_PTR(d, d->name), *want;
++        void *hook;
++        if (!lstrcmpiA(dll, "user32.dll")) { want = "ReleaseDC"; hook = release_dc_hook; }
++        else if (!lstrcmpiA(dll, "msimg32.dll") && real_alpha_blend) { want = "AlphaBlend"; hook = alpha_blend_hook; }
++        else continue;
+         for (; names->u1.AddressOfData; names++, slots++) {
+             DWORD protect;
+             if (IMAGE_SNAP_BY_ORDINAL(names->u1.Ordinal) ||
+-                strcmp((char *)((IMAGE_IMPORT_BY_NAME *)DELAY_PTR(d, names->u1.AddressOfData))->Name, "ReleaseDC"))
++                strcmp((char *)((IMAGE_IMPORT_BY_NAME *)DELAY_PTR(d, names->u1.AddressOfData))->Name, want))
+                 continue;
+             if (!VirtualProtect(&slots->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) continue;
+-            slots->u1.Function = (ULONG_PTR)release_dc_hook;
++            slots->u1.Function = (ULONG_PTR)hook;
+             VirtualProtect(&slots->u1.Function, sizeof(void *), protect, &protect);
+-            TRACE("ReleaseDC hooked in the delay imports of %p\n", (void *)module);
++            TRACE("%s hooked in the delay imports of %p\n", want, (void *)module);
+         }
+     }
+ #undef DELAY_PTR
+@@ -570,6 +751,10 @@ static void hook_release_dc(void)
+     NTSTATUS (NTAPI *reg)(ULONG, void *, void *, void **) =
+         (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "LdrRegisterDllNotification");
+     real_release_dc = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "ReleaseDC");
++#ifdef DLLMGR27_CAPTIONLESS_ONLY
++    InitializeCriticalSection(&card.lock);
++    real_alpha_blend = (void *)GetProcAddress(LoadLibraryA("msimg32.dll"), "AlphaBlend");
++#endif
+     if (!real_release_dc || GetEnvironmentVariableA("DLLMGR27_NO_SHAPE", NULL, 0)) return;
+     if (K32EnumProcessModules(GetCurrentProcess(), modules, sizeof(modules), &bytes))
+         for (DWORD i = 0; i < bytes / sizeof(HMODULE) && i < 512; i++) hook_module_release_dc(modules[i]);

@@ -172,3 +172,27 @@ wip-adopt-early-represent.diff is now in patches/dllmgr-27/prefill.c (no
 runtime gate): runtime-v5-candidate.png (frames +1/+2 s, restore,
 minimized, xlogo over the splash). Stock Wine: clean shaped card. Runtime:
 white margin; digging continues (next: 60721 part 1 alone).
+
+## Owner rule (2026-11-09): a white margin is acceptable, stale/garbage pixels never
+
+Why 19cf8bf can show garbage: shaping compares the window with the
+snapshot taken at show time. Dumps (DLLMGR43_DUMP, 2026-11-09): the
+snapshot was mostly WHITE (main window not painted yet), so the white card
+equals the "background" and the region cut the card (painted=24..57 % instead
+of ~83 %). Pixel diffing against a snapshot is unsafe by design.
+
+Interim (commit after 19cf8bf): the adopted splash gets no snapshot and no
+shape; re-present thread kept. 3/3 runtime runs + stock: card, white margin,
+no stale pixels, minimize/restore and stacking right (interim-safe-3runs.png).
+
+Final direction found: Photoshop draws the card with AlphaBlend (msimg32,
+delay import of Photoshop.exe, AC_SRC_ALPHA) from a premultiplied 32-bit
+671x418 bitmap with the real alpha: rounded corners, soft shadow, feather,
+transparent margin (alphablend-card-and-alpha.png). Tried: per-pixel-alpha
+layered window (UpdateLayeredWindow) from that alpha + the window's opaque
+pixels (wip-layered-alphablend.diff): the alpha is right, but Wine shows the
+layered splash black and later garbage (layered-garbage.png), on the runtime
+and on stock Wine; reading the window back after the first ULW gives black.
+Next: find why Wine's ULW on this DPI-virtualized (unaware, 192 DPI) managed
+window loses the colours (minimal ULW test program first), or use the alpha
+as an exact shape mask (alpha > 0) without snapshot diffing.

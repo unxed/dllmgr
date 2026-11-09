@@ -239,6 +239,7 @@ static HWND splash;         /* the shaped splash (#36), adopted for #43 */
  * shape is set but not honoured on screen; experiments/ps-focus/README.md).
  * DLLMGR43_NO_ADOPT=1 turns it off. */
 static HWND early;
+static HWND adopted;
 static DWORD WINAPI represent_thread(void *arg);
 
 static void adopt_early(HWND hwnd, const WINDOWPOS *pos)
@@ -256,7 +257,7 @@ static void adopt_early(HWND hwnd, const WINDOWPOS *pos)
     w = (pos->flags & SWP_NOSIZE) ? r.right - r.left : pos->cx;
     h = (pos->flags & SWP_NOSIZE) ? r.bottom - r.top : pos->cy;
     if (w < 200 || h < 100) return;
-    early = hwnd;
+    early = adopted = hwnd;
     SetWindowLongW(hwnd, GWL_STYLE, style | WS_SYSMENU);
     TRACE("adopt: startup popup %p (owner %p) will be mapped managed\n", (void *)hwnd, (void *)owner);
     if (!GetEnvironmentVariableA("DLLMGR43_NO_REPRESENT", NULL, 0)) {
@@ -300,6 +301,7 @@ static void adopt_owner_shown(HWND shown)
     early = NULL;
 }
 #else
+static const HWND adopted;
 static void adopt_early(HWND hwnd, const WINDOWPOS *pos) {}
 static void adopt_owner_shown(HWND shown) {}
 #endif
@@ -583,8 +585,12 @@ static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
     if (code == HC_ACTION && shape_pending) shape_tick();
     if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGING &&
         (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW) && top_level_hidden(m->hwnd)) {
-        capture_under(m->hwnd, (WINDOWPOS *)m->lParam);
         adopt_early(m->hwnd, (WINDOWPOS *)m->lParam);
+        /* the adopted splash gets no snapshot and no shape: under the private
+         * runtime the shape is computed from a half-painted window (the WM
+         * maps it late) and cuts the card, and a snapshot is stale content;
+         * a plain white margin is the safe interim (owner, 2026-11-09) */
+        if (m->hwnd != adopted) capture_under(m->hwnd, (WINDOWPOS *)m->lParam);
     }
     return CallNextHookEx(NULL, code, wparam, lparam);
 }
