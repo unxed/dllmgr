@@ -1,0 +1,103 @@
+diff --git a/patches/dllmgr-27/prefill.c b/patches/dllmgr-27/prefill.c
+index 81f76df..17c9cc8 100644
+--- a/patches/dllmgr-27/prefill.c
++++ b/patches/dllmgr-27/prefill.c
+@@ -222,27 +222,53 @@ static HWND splash;         /* the shaped splash (#36), adopted for #43 */
+ /* #43 part 1: Wine maps a caption-less popup shown without activation as an
+  * override-redirect X window, so the WM cannot hide it with its minimized
+  * owner, and Photoshop's busy thread never runs ShowOwnedPopups. A popup with
+- * WS_SYSMENU is managed by winex11 (no visible change without a caption):
+- * once the owner is on screen (so the WM can resolve WM_TRANSIENT_FOR), the
+- * splash becomes a managed transient dialog that the WM hides and restores
+- * with the main window and keeps below other applications.
++ * WS_SYSMENU is managed by winex11 (no visible change without a caption).
++ * 1. adopt_early: a caption-less, owned popup shown while its owner is still
++ *    hidden (the startup splash; palettes appear after the main window) gets
++ *    WS_SYSMENU before it is mapped, so it is mapped managed from the start
++ *    (switching a mapped window to managed remaps it: visible glitches).
++ * 2. adopt_owner_shown: the WM could not resolve WM_TRANSIENT_FOR while the
++ *    owner was unmapped; once the owner is shown, a WS_DISABLED toggle makes
++ *    winex11 set the hint again, the WM re-reads it and from then on hides
++ *    and restores the splash with the main window.
+  * DLLMGR43_NO_ADOPT=1 turns it off. */
+-static void adopt_splash(void)
++static HWND early;
++
++static void adopt_early(HWND hwnd, const WINDOWPOS *pos)
+ {
+-    static BOOL done;
+-    HWND owner;
+-    if (done || !splash || GetWindowThreadProcessId(splash, NULL) != GetCurrentThreadId() || !IsWindowVisible(splash))
++    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
++    HWND owner = GetWindow(hwnd, GW_OWNER);
++    RECT r;
++    int w, h;
++    TRACE("adopt check %p style=%08lx ex=%08lx owner=%p pos=%d,%d %dx%d flags=%04x\n", (void *)hwnd, style,
++          GetWindowLongW(hwnd, GWL_EXSTYLE), (void *)owner, pos->x, pos->y, pos->cx, pos->cy, pos->flags);
++    if (early || !owner || (style & (WS_CHILD | WS_SYSMENU)) ||
++        (style & WS_CAPTION) == WS_CAPTION ||
++        !(style & WS_POPUP) || (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) ||
++        GetEnvironmentVariableA("DLLMGR43_NO_ADOPT", NULL, 0))
+         return;
+-    owner = GetWindow(splash, GW_OWNER);
+-    if (!owner || !IsWindowVisible(owner) || IsIconic(owner)) return;
+-    done = TRUE;
+-    if (GetEnvironmentVariableA("DLLMGR43_NO_ADOPT", NULL, 0)) return;
+-    SetWindowLongW(splash, GWL_STYLE, GetWindowLongW(splash, GWL_STYLE) | WS_SYSMENU);
+-    SetWindowPos(splash, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+-    TRACE("adopted splash %p (owner %p) as a managed transient\n", (void *)splash, (void *)owner);
++    GetWindowRect(hwnd, &r);
++    w = (pos->flags & SWP_NOSIZE) ? r.right - r.left : pos->cx;
++    h = (pos->flags & SWP_NOSIZE) ? r.bottom - r.top : pos->cy;
++    if (w < 200 || h < 100) return;
++    early = hwnd;
++    SetWindowLongW(hwnd, GWL_STYLE, style | WS_SYSMENU);
++    TRACE("adopt: startup popup %p (owner %p) will be mapped managed\n", (void *)hwnd, (void *)owner);
++}
++
++static void adopt_owner_shown(HWND shown)
++{
++    LONG style;
++    if (!early || !IsWindow(early) || GetWindow(early, GW_OWNER) != shown) return;
++    style = GetWindowLongW(early, GWL_STYLE);
++    SetWindowLongW(early, GWL_STYLE, style ^ WS_DISABLED);
++    SetWindowLongW(early, GWL_STYLE, style);
++    TRACE("adopt: owner %p shown, WM_TRANSIENT_FOR of %p set again\n", (void *)shown, (void *)early);
++    early = NULL;
+ }
+ #else
+-static void adopt_splash(void) {}
++static void adopt_early(HWND hwnd, const WINDOWPOS *pos) {}
++static void adopt_owner_shown(HWND shown) {}
+ #endif
+ static int (WINAPI *real_release_dc)(HWND, HDC);
+ 
+@@ -374,7 +400,6 @@ static void shape_tick(void)
+         physical_end(old_ctx);
+     }
+     shape_pending = left;
+-    if (splash) adopt_splash();
+ }
+ 
+ /* Keep the capture for shaping instead of dropping it; TRUE if taken over. */
+@@ -524,8 +549,10 @@ static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
+     const CWPSTRUCT *m = (const CWPSTRUCT *)lparam;
+     if (code == HC_ACTION && shape_pending) shape_tick();
+     if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGING &&
+-        (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW) && top_level_hidden(m->hwnd))
++        (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW) && top_level_hidden(m->hwnd)) {
+         capture_under(m->hwnd, (WINDOWPOS *)m->lParam);
++        adopt_early(m->hwnd, (WINDOWPOS *)m->lParam);
++    }
+     return CallNextHookEx(NULL, code, wparam, lparam);
+ }
+ 
+@@ -543,7 +570,7 @@ static LRESULT CALLBACK after(int code, WPARAM wparam, LPARAM lparam)
+     if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGED &&
+         (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW)) {
+         present_capture(m->hwnd);
+-        if (splash) adopt_splash();
++        adopt_owner_shown(m->hwnd);
+     }
+     return CallNextHookEx(NULL, code, wparam, lparam);
+ }

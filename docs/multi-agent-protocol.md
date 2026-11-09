@@ -75,8 +75,9 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    not DPI-scaled), F9 (EULA letter spacing).
 5. (#34 TopPlan dropped by the owner: no installer, not a showcase.)
 6. #43 startup UX: focus stealing fixed in the runtime (dllmgr-43); splash
-   not minimizing fixed in the version.dll proxy (adopt as managed transient,
-   experiments/ps-focus/README.md). Both ship with PS-3.
+   not minimizing fixed in the version.dll proxy under stock Wine (adopt as
+   managed transient); under the private runtime the adopted splash renders
+   wrong, so it is disabled there for now (open: experiments/ps-focus/README.md).
 6a. #41 R6025 pure virtual call when closing an image (owner report,
    not reproduced yet; may lose unsaved work: rank high).
 6b. #44 tiny custom cursors at 192 DPI: fixed in winex11

@@ -117,3 +117,20 @@ transient dialog: minimize main -> splash Iconic too, restore -> both back
 (minimize-restore-adopt.png); another app activated over it now covers the
 splash (over-ctl-vs-adopt.png: left stock, right adopted); full UI after
 loading normal; focus not taken. Opt-out: DLLMGR43_NO_ADOPT=1.
+
+## Adoption under the private runtime: rendering broken, disabled there (2026-11-09)
+
+rtcheck.sh (PS-3 installed, plain `wine Photoshop.exe` -> trampoline ->
+runtime, Muffin). With the splash managed, minimize/restore and stacking are
+right, but the splash is drawn wrong: grey prefill pixels mixed with
+Photoshop's paint (runtime-adopt-glitch.png). Same for both variants:
+- late adoption (remap when owner visible, in main);
+- early adoption (WS_SYSMENU before the first map, wip-adopt-early.diff;
+  found: the main window is already visible when the splash is shown, the
+  palette shown before it has WS_EX_TOOLWINDOW, the splash ex-style 0x101).
+Unmanaged splash under the runtime renders cleanly. So adoption is skipped
+when DLLMGR_TARGET_EXE is set (runtime); under stock Wine it stays on
+(verified clean there). Next: find why a managed splash + prefill/shaping
+renders wrong only with the runtime's winex11/win32u (60721 surface code vs
+the WM's reparenting/configure order); first bisect: runtime + adoption with
+DLLMGR27_NO_SHAPE=1, then without the prefill capture.

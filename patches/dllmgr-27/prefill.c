@@ -236,7 +236,11 @@ static void adopt_splash(void)
     owner = GetWindow(splash, GW_OWNER);
     if (!owner || !IsWindowVisible(owner) || IsIconic(owner)) return;
     done = TRUE;
-    if (GetEnvironmentVariableA("DLLMGR43_NO_ADOPT", NULL, 0)) return;
+    /* Not under the private runtime (`dllmgr run`): there the remapped,
+     * now managed splash is drawn with stale prefill pixels mixed in (stand,
+     * Muffin, 2026-11-09; experiments/ps-focus/README.md). */
+    if (GetEnvironmentVariableA("DLLMGR43_NO_ADOPT", NULL, 0) || GetEnvironmentVariableA("DLLMGR_TARGET_EXE", NULL, 0))
+        return;
     SetWindowLongW(splash, GWL_STYLE, GetWindowLongW(splash, GWL_STYLE) | WS_SYSMENU);
     SetWindowPos(splash, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     TRACE("adopted splash %p (owner %p) as a managed transient\n", (void *)splash, (void *)owner);
