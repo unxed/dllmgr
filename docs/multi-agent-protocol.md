@@ -109,9 +109,9 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    open Bugzilla bugs for Photoshop CS3..2024, check each on CS2 (stand,
    Muffin); the ones that reproduce are fixed like our own bugs and get a
    comment there (docs/upstream-outbox.md).
-6k. #51 a plain launch (menu entry, not ) runs on the system
+6k. #51 a plain launch (menu entry, not `dllmgr run`) runs on the system
    Wine: the trampoline fell back silently (owner, v8). Next item: launcher
-   markers instead of a blind 15 s wait, fallback reason in .
+   markers instead of a blind 15 s wait, fallback reason in `dllmgr status`.
 6l. #52 text on the private runtime: contrasty but badly shaped letters
    after exact 2x blocks; Preferences dialog without antialiasing (owner,
    v8). Options: exact/smooth setting, grayscale smoothing, text at
