@@ -98,6 +98,9 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 6i. #49 shortcuts do not work with the Russian layout (owner, 2026-11-09:
    top-model task): VK by physical key, characters by the active layout,
    Russian text input must keep working.
+6j. #50 Photoshop exits by itself right after loading (owner, 2026-11-09;
+   log in experiments/photoshop-splash/owner-2026-11-09-v5/); same 60 s
+   critical-section wait as in 6e.
 6e. Photoshop CS2 starts very slowly (owner, 2026-11-09; not now). Owner:
    the empty grey main window at the very start and "Scanning for
    plug-ins..." are the noticeably long stages. Seen on the stand: a 60 s
