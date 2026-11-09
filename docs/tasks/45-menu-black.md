@@ -27,3 +27,11 @@ Photoshop CS2 must run on the private runtime: PS-3 recipe
 (`dllmgr fix photoshop-cs2`), which also delivers #43 and #44. WineHQ:
 add "menus under a compositing WM" to the 60721 follow-up
 (docs/upstream-outbox.md). Not Mint-specific (any compositing WM).
+
+## Owner, 2026-11-09 14:31 (runtime v5): menus still flash black
+
+Stand, PS-3 installed, plain `wine Photoshop.exe` -> trampoline -> runtime with
+the version.dll proxy active: 0/40 bad frames; same start with
+DLLMGR27_OFF=1 (no trampoline, so stock Wine): 4/40. So either the owner's
+Photoshop does not run on the runtime (see 44-cursors.md, same check), or
+the black comes from his real-GPU compositing that Xvfb does not reproduce.

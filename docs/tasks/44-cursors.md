@@ -65,3 +65,18 @@ So on the stand the tool cursors are scaled 2x (16 px art -> 32 px), as
 Windows does at 200 %. Open: why the owner still sees them small. Next step:
 measure on the owner's machine (tests/wine/xcursor-size.py while the zoom
 tool is over the canvas) and compare with his system cursor size.
+
+## Theme match (2026-11-09, after the owner's retest)
+
+Stand with Cinnamon-like X settings (Xft.dpi 192, Xcursor.size 48, theme
+Adwaita): the desktop/theme arrow in Wine is 48x48 (art 32x48), Photoshop's
+zoom/hand/eyedropper 64x64 with 32x32 art: two thirds of the arrow, smaller
+than on Windows (where the arrow is ~19 px per 96 DPI). dllmgr-44 now also
+scales app cursors to keep the Windows size relation to the X cursor theme:
+scale = max(monitor DPI / window DPI, theme size * 96 / (19 * window DPI)).
+Probe (tests/wine/cursor-scale.sh): theme 48 -> 81x81 (2.53x); theme 24 ->
+64x64 (DPI ratio wins); DLLMGR44_NO_THEME_MATCH=1 -> 64x64.
+Also possible on the owner's machine: Photoshop not running on the private
+runtime at all (both runtime-only fixes, #44 and #45, not seen there, while the
+proxy-only ones work). Check when he can:
+`grep -o '/[^ ]*winex11.so' /proc/$(pgrep -f Photoshop.exe | head -1)/maps`.

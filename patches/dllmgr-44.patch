@@ -1,8 +1,16 @@
 diff --git a/dlls/winex11.drv/mouse.c b/dlls/winex11.drv/mouse.c
-index 1ddd3027..16e37e07 100644
+index 1ddd3027..1d6752bd 100644
 --- a/dlls/winex11.drv/mouse.c
 +++ b/dlls/winex11.drv/mouse.c
-@@ -123,7 +123,7 @@ static const UINT button_up_data[NB_BUTTONS] =
+@@ -45,6 +45,7 @@ MAKE_FUNCPTR(XcursorImagesCreate);
+ MAKE_FUNCPTR(XcursorImagesDestroy);
+ MAKE_FUNCPTR(XcursorImagesLoadCursor);
+ MAKE_FUNCPTR(XcursorLibraryLoadCursor);
++MAKE_FUNCPTR(XcursorGetDefaultSize);
+ # undef MAKE_FUNCPTR
+ #endif /* SONAME_LIBXCURSOR */
+ 
+@@ -123,7 +124,7 @@ static const UINT button_up_data[NB_BUTTONS] =
  XContext cursor_context = 0;
  
  static RECT clip_rect;
@@ -11,7 +19,15 @@ index 1ddd3027..16e37e07 100644
  
  #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
  static BOOL xinput2_available;
-@@ -191,21 +191,56 @@ static Cursor get_empty_cursor(void)
+@@ -160,6 +161,7 @@ void X11DRV_Xcursor_Init(void)
+     LOAD_FUNCPTR(XcursorImagesDestroy);
+     LOAD_FUNCPTR(XcursorImagesLoadCursor);
+     LOAD_FUNCPTR(XcursorLibraryLoadCursor);
++    LOAD_FUNCPTR(XcursorGetDefaultSize);
+ #undef LOAD_FUNCPTR
+ #endif /* SONAME_LIBXCURSOR */
+ }
+@@ -191,21 +193,81 @@ static Cursor get_empty_cursor(void)
      return cursor;
  }
  
@@ -36,9 +52,34 @@ index 1ddd3027..16e37e07 100644
 +    if (disabled || !hwnd) return;
 +    if (!(window_dpi = NtUserGetDpiForWindow( hwnd ))) return;
 +    if (!(monitor_dpi = NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ))) return;
-+    if (monitor_dpi <= window_dpi) return; /* never shrink */
-+    *num = monitor_dpi;
-+    *den = window_dpi;
++    if (monitor_dpi > window_dpi) /* never shrink */
++    {
++        *num = monitor_dpi;
++        *den = window_dpi;
++    }
++#ifdef SONAME_LIBXCURSOR
++    /* "As on Windows or better": next to the desktop's cursor theme the app's
++     * cursors keep the size relation they have on Windows, where the arrow is
++     * ~19 px tall per 96 DPI while X theme cursors fill their whole frame:
++     * scale = theme size / 19 per 96 DPI of the window, when that is larger
++     * (theme 48 at 192 DPI: 2.53 instead of 2). DLLMGR44_NO_THEME_MATCH=1
++     * keeps the plain DPI ratio. */
++    {
++        static int theme_match = -1;
++        int theme;
++        if (theme_match < 0)
++        {
++            const char *env = getenv( "DLLMGR44_NO_THEME_MATCH" );
++            theme_match = !(env && *env && *env != '0');
++        }
++        if (theme_match && pXcursorGetDefaultSize && (theme = pXcursorGetDefaultSize( gdi_display )) > 0 &&
++            (UINT64)theme * 96 * *den > (UINT64)19 * window_dpi * *num)
++        {
++            *num = theme * 96;
++            *den = 19 * window_dpi;
++        }
++    }
++#endif
 +}
 +
  /***********************************************************************
@@ -72,7 +113,7 @@ index 1ddd3027..16e37e07 100644
          {
              /* someone else was here first */
              XFreeCursor( gdi_display, cursor );
-@@ -213,8 +248,8 @@ static void set_window_cursor( Window window, HCURSOR handle )
+@@ -213,8 +275,8 @@ static void set_window_cursor( Window window, HCURSOR handle )
          }
          else
          {
@@ -83,7 +124,7 @@ index 1ddd3027..16e37e07 100644
          }
          XUnlockDisplay( gdi_display );
      }
-@@ -421,7 +456,11 @@ static BOOL grab_clipping_window( const RECT *clip )
+@@ -421,7 +483,11 @@ static BOOL grab_clipping_window( const RECT *clip )
      }
      SERVER_END_REQ;
  
@@ -96,7 +137,7 @@ index 1ddd3027..16e37e07 100644
  
      if (!clipping_cursor)
      {
-@@ -1296,7 +1335,40 @@ done:
+@@ -1296,7 +1362,40 @@ done:
   *
   * Create an X cursor from a Windows one.
   */
@@ -138,7 +179,7 @@ index 1ddd3027..16e37e07 100644
  {
      Cursor cursor = 0;
      ICONINFOEXW info;
-@@ -1324,15 +1396,46 @@ static Cursor create_cursor( HANDLE handle )
+@@ -1324,15 +1423,46 @@ static Cursor create_cursor( HANDLE handle )
          info.yHotspot = bm.bmHeight / 2;
      }
  
@@ -186,7 +227,7 @@ index 1ddd3027..16e37e07 100644
          if (!cursor) cursor = create_xlib_color_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
          NtGdiDeleteObjectApp( info.hbmColor );
      }
-@@ -1359,6 +1462,11 @@ void X11DRV_DestroyCursorIcon( HCURSOR handle )
+@@ -1359,6 +1489,11 @@ void X11DRV_DestroyCursorIcon( HCURSOR handle )
          XFreeCursor( gdi_display, cursor );
          XDeleteContext( gdi_display, (XID)handle, cursor_context );
      }
@@ -198,7 +239,7 @@ index 1ddd3027..16e37e07 100644
  }
  
  /***********************************************************************
-@@ -1367,14 +1475,16 @@ void X11DRV_DestroyCursorIcon( HCURSOR handle )
+@@ -1367,14 +1502,16 @@ void X11DRV_DestroyCursorIcon( HCURSOR handle )
  void X11DRV_SetCursor( HWND hwnd, HCURSOR handle )
  {
      struct x11drv_win_data *data;
