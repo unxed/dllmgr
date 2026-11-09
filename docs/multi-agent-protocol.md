@@ -78,6 +78,12 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    loading Photoshop keeps stealing focus (owner, 2026-11-09).
 6a. #41 R6025 pure virtual call when closing an image (owner report,
    not reproduced yet; may lose unsaved work: rank high).
+6b. #44 tiny custom cursors at 192 DPI: fixed in winex11
+   (patches/dllmgr-44.patch, in the next runtime build; probe
+   tests/wine/cursor-scale.sh). Waits for a runtime release + owner retest.
+6c. #45 menu artifacts (black rectangles while moving through menus):
+   not reproduced on the stand under Metacity; waits for the owner's A/B
+   with DLLMGR27_OFF=1.
 7. PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI
    (add `build.sh version` to app-isolation.yml packaging like msimg32).

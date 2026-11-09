@@ -1,0 +1,219 @@
+diff --git a/dlls/winex11.drv/mouse.c b/dlls/winex11.drv/mouse.c
+index 1ddd3027..16e37e07 100644
+--- a/dlls/winex11.drv/mouse.c
++++ b/dlls/winex11.drv/mouse.c
+@@ -123,7 +123,7 @@ static const UINT button_up_data[NB_BUTTONS] =
+ XContext cursor_context = 0;
+ 
+ static RECT clip_rect;
+-static Cursor create_cursor( HANDLE handle );
++static Cursor create_cursor( HANDLE handle, UINT num, UINT den );
+ 
+ #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+ static BOOL xinput2_available;
+@@ -191,21 +191,56 @@ static Cursor get_empty_cursor(void)
+     return cursor;
+ }
+ 
++/* dllmgr #44: cursors of DPI-scaled (virtualized) windows are scaled like the
++ * window contents, as Windows does for DPI-unaware apps. Scaled X cursors are
++ * cached separately; one scale per cursor handle is assumed (the monitor DPI to
++ * window DPI ratio of the windows that use it). DLLMGR44_NO_CURSOR_SCALE=1
++ * turns it off. */
++static XContext cursor_scaled_context;
++
++static void get_cursor_scale( HWND hwnd, UINT *num, UINT *den )
++{
++    static int disabled = -1;
++    UINT window_dpi, monitor_dpi;
++
++    *num = *den = 1;
++    if (disabled < 0)
++    {
++        const char *env = getenv( "DLLMGR44_NO_CURSOR_SCALE" );
++        disabled = env && *env && *env != '0';
++    }
++    if (disabled || !hwnd) return;
++    if (!(window_dpi = NtUserGetDpiForWindow( hwnd ))) return;
++    if (!(monitor_dpi = NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ))) return;
++    if (monitor_dpi <= window_dpi) return; /* never shrink */
++    *num = monitor_dpi;
++    *den = window_dpi;
++}
++
+ /***********************************************************************
+  *		set_window_cursor
+  */
+-static void set_window_cursor( Window window, HCURSOR handle )
++static void set_window_cursor( Window window, HCURSOR handle, UINT num, UINT den )
+ {
+     Cursor cursor, prev;
++    XContext context;
++
++    if (num != den && !cursor_scaled_context)
++    {
++        XLockDisplay( gdi_display );
++        if (!cursor_scaled_context) cursor_scaled_context = XUniqueContext();
++        XUnlockDisplay( gdi_display );
++    }
++    context = num != den ? cursor_scaled_context : cursor_context;
+ 
+     if (!handle) cursor = get_empty_cursor();
+-    else if (XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
++    else if (XFindContext( gdi_display, (XID)handle, context, (char **)&cursor ))
+     {
+         /* try to create it */
+-        if (!(cursor = create_cursor( handle ))) return;
++        if (!(cursor = create_cursor( handle, num, den ))) return;
+ 
+         XLockDisplay( gdi_display );
+-        if (!XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&prev ))
++        if (!XFindContext( gdi_display, (XID)handle, context, (char **)&prev ))
+         {
+             /* someone else was here first */
+             XFreeCursor( gdi_display, cursor );
+@@ -213,8 +248,8 @@ static void set_window_cursor( Window window, HCURSOR handle )
+         }
+         else
+         {
+-            XSaveContext( gdi_display, (XID)handle, cursor_context, (char *)cursor );
+-            TRACE( "cursor %p created %lx\n", handle, cursor );
++            XSaveContext( gdi_display, (XID)handle, context, (char *)cursor );
++            TRACE( "cursor %p created %lx scale %u/%u\n", handle, cursor, num, den );
+         }
+         XUnlockDisplay( gdi_display );
+     }
+@@ -421,7 +456,11 @@ static BOOL grab_clipping_window( const RECT *clip )
+     }
+     SERVER_END_REQ;
+ 
+-    set_window_cursor( clip_window, cursor );
++    {
++        UINT num, den;
++        get_cursor_scale( NtUserGetForegroundWindow(), &num, &den );
++        set_window_cursor( clip_window, cursor, num, den );
++    }
+ 
+     if (!clipping_cursor)
+     {
+@@ -1296,7 +1335,40 @@ done:
+  *
+  * Create an X cursor from a Windows one.
+  */
+-static Cursor create_cursor( HANDLE handle )
++static int scale_cursor_coord( int value, UINT num, UINT den )
++{
++    return (int)(((LONGLONG)value * num + den / 2) / den);
++}
++
++/* dllmgr #44: stretch a cursor bitmap (nearest neighbour when enlarging) */
++static HBITMAP scale_cursor_bitmap( HBITMAP src, int width, int height, int new_width, int new_height, BOOL mono )
++{
++    HDC hdc_src = NtGdiCreateCompatibleDC( 0 ), hdc_dst = NtGdiCreateCompatibleDC( 0 );
++    HBITMAP dst = 0;
++
++    if (mono) dst = NtGdiCreateBitmap( new_width, new_height, 1, 1, NULL );
++    else
++    {
++        HDC screen = NtUserGetDC( 0 );
++        dst = NtGdiCreateCompatibleBitmap( screen, new_width, new_height );
++        NtUserReleaseDC( 0, screen );
++    }
++    if (dst)
++    {
++        NtGdiSelectBitmap( hdc_src, src );
++        NtGdiSelectBitmap( hdc_dst, dst );
++        if (!NtGdiStretchBlt( hdc_dst, 0, 0, new_width, new_height, hdc_src, 0, 0, width, height, SRCCOPY, 0 ))
++        {
++            NtGdiDeleteObjectApp( dst );
++            dst = 0;
++        }
++    }
++    NtGdiDeleteObjectApp( hdc_src );
++    NtGdiDeleteObjectApp( hdc_dst );
++    return dst;
++}
++
++static Cursor create_cursor( HANDLE handle, UINT num, UINT den )
+ {
+     Cursor cursor = 0;
+     ICONINFOEXW info;
+@@ -1324,15 +1396,46 @@ static Cursor create_cursor( HANDLE handle )
+         info.yHotspot = bm.bmHeight / 2;
+     }
+ 
++    if (num != den)
++    {
++        int width = scale_cursor_coord( bm.bmWidth, num, den ), height = scale_cursor_coord( bm.bmHeight, num, den );
++        HBITMAP mask, color = 0;
++
++        mask = scale_cursor_bitmap( info.hbmMask, bm.bmWidth, info.hbmColor ? bm.bmHeight : bm.bmHeight * 2,
++                                    width, info.hbmColor ? height : height * 2, TRUE );
++        if (mask && info.hbmColor)
++            color = scale_cursor_bitmap( info.hbmColor, bm.bmWidth, bm.bmHeight, width, height, FALSE );
++        if (mask && (color || !info.hbmColor))
++        {
++            NtGdiDeleteObjectApp( info.hbmMask );
++            info.hbmMask = mask;
++            if (color)
++            {
++                NtGdiDeleteObjectApp( info.hbmColor );
++                info.hbmColor = color;
++            }
++            info.xHotspot = scale_cursor_coord( info.xHotspot, num, den );
++            info.yHotspot = scale_cursor_coord( info.yHotspot, num, den );
++            bm.bmWidth = width;
++            bm.bmHeight = height;
++        }
++        else
++        {
++            if (mask) NtGdiDeleteObjectApp( mask );
++            num = den = 1; /* fall back to the unscaled cursor */
++        }
++    }
++
+     hdc = NtGdiCreateCompatibleDC( 0 );
+ 
+     if (info.hbmColor)
+     {
+ #ifdef SONAME_LIBXCURSOR
++        /* scaled: the icon handle is drawn stretched to the new size */
+         if (pXcursorImagesLoadCursor)
+             cursor = create_xcursor_cursor( hdc, &info, handle, bm.bmWidth, bm.bmHeight );
+ #endif
+-        if (!cursor) cursor = create_xlib_load_mono_cursor( hdc, handle, bm.bmWidth, bm.bmHeight );
++        if (!cursor && num == den) cursor = create_xlib_load_mono_cursor( hdc, handle, bm.bmWidth, bm.bmHeight );
+         if (!cursor) cursor = create_xlib_color_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
+         NtGdiDeleteObjectApp( info.hbmColor );
+     }
+@@ -1359,6 +1462,11 @@ void X11DRV_DestroyCursorIcon( HCURSOR handle )
+         XFreeCursor( gdi_display, cursor );
+         XDeleteContext( gdi_display, (XID)handle, cursor_context );
+     }
++    if (cursor_scaled_context && !XFindContext( gdi_display, (XID)handle, cursor_scaled_context, (char **)&cursor ))
++    {
++        XFreeCursor( gdi_display, cursor );
++        XDeleteContext( gdi_display, (XID)handle, cursor_scaled_context );
++    }
+ }
+ 
+ /***********************************************************************
+@@ -1367,14 +1475,16 @@ void X11DRV_DestroyCursorIcon( HCURSOR handle )
+ void X11DRV_SetCursor( HWND hwnd, HCURSOR handle )
+ {
+     struct x11drv_win_data *data;
++    UINT num, den;
+ 
++    get_cursor_scale( hwnd, &num, &den ); /* before get_win_data: takes the user lock */
+     if ((data = get_win_data( hwnd )))
+     {
+-        set_window_cursor( data->whole_window, handle );
++        set_window_cursor( data->whole_window, handle, num, den );
+         release_win_data( data );
+     }
+ 
+-    if (clipping_cursor) set_window_cursor( x11drv_thread_data()->clip_window, handle );
++    if (clipping_cursor) set_window_cursor( x11drv_thread_data()->clip_window, handle, num, den );
+ }
+ 
+ /***********************************************************************
