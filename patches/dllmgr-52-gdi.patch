@@ -1,5 +1,5 @@
 diff --git a/dlls/win32u/clipping.c b/dlls/win32u/clipping.c
-index 610c2b4..cab3691 100644
+index 610c2b43..cab36915 100644
 --- a/dlls/win32u/clipping.c
 +++ b/dlls/win32u/clipping.c
 @@ -172,8 +172,10 @@ INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN rgn, INT mode )
@@ -48,7 +48,7 @@ index 610c2b4..cab3691 100644
      if (ret > 0 && (iCode & NTGDI_RGN_MIRROR_RTL) && (dc->attr->layout & LAYOUT_RTL))
          mirror_region( hRgn, hRgn, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
 diff --git a/dlls/win32u/dc.c b/dlls/win32u/dc.c
-index ccfb389..ae52bed 100644
+index ccfb3893..ae52bedb 100644
 --- a/dlls/win32u/dc.c
 +++ b/dlls/win32u/dc.c
 @@ -429,6 +429,13 @@ static void construct_window_to_viewport(DC *dc, XFORM *xform)
@@ -66,7 +66,7 @@ index ccfb389..ae52bed 100644
  
  /***********************************************************************
 diff --git a/dlls/win32u/dce.c b/dlls/win32u/dce.c
-index 879c52f..9e8c02d 100644
+index 879c52f4..9f0d1b3f 100644
 --- a/dlls/win32u/dce.c
 +++ b/dlls/win32u/dce.c
 @@ -147,8 +147,25 @@ struct scaled_surface
@@ -166,8 +166,68 @@ index 879c52f..9e8c02d 100644
      set_visible_region( dce->hdc, vis_rgn, &win_rect, &top_rect, surface );
      if (surface) window_surface_release( surface );
  }
+@@ -1700,6 +1765,45 @@ void move_window_bits( HWND hwnd, const struct window_rects *rects, const RECT *
+ }
+ 
+ 
++/* dllmgr #52: the 96-DPI bits of a GDI-scaled window are never written, so
++ * kept bits come from its target surface at k x the size. The rows are
++ * copied out first, so the target is not locked while hdc draws. */
++static BOOL move_gdi_scaled_bits( HDC hdc, struct scaled_surface *scaled, const RECT *src, const RECT *dst )
++{
++    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
++    BITMAPINFO *info = (BITMAPINFO *)buffer;
++    struct window_surface *target = scaled->target_surface;
++    UINT k = scaled->dpi_to / scaled->dpi_from;
++    int x = (src->left - scaled->header.rect.left) * k, y = (src->top - scaled->header.rect.top) * k;
++    int w = (src->right - src->left) * k, h = (src->bottom - src->top) * k, stride, rows, i, row;
++    char *copy, *bits;
++
++    if (k < 2 || w <= 0 || h <= 0) return FALSE;
++    window_surface_lock( target );
++    bits = window_surface_get_color( target, info );
++    rows = abs( info->bmiHeader.biHeight );
++    stride = ((info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) / 32) * 4;
++    if (!bits || y < 0 || y + h > rows || x < 0 || x + w > info->bmiHeader.biWidth ||
++        !(copy = malloc( (size_t)stride * h )))
++    {
++        window_surface_unlock( target );
++        return FALSE;
++    }
++    for (i = 0; i < h; i++)
++    {
++        row = info->bmiHeader.biHeight < 0 ? y + i : rows - 1 - (y + i);
++        memcpy( copy + (size_t)i * stride, bits + (size_t)row * stride, stride );
++    }
++    window_surface_unlock( target );
++    info->bmiHeader.biHeight = -h;
++    info->bmiHeader.biSizeImage = 0;
++    /* hdc carries the hidden scale k: the destination grows by k, so this is 1:1 */
++    NtGdiStretchDIBitsInternal( hdc, dst->left, dst->top, dst->right - dst->left, dst->bottom - dst->top,
++                                x, 0, w, h, copy, info, DIB_RGB_COLORS, SRCCOPY, 0, 0, NULL );
++    free( copy );
++    return TRUE;
++}
++
+ /***********************************************************************
+  *           move_window_bits_surface
+  *
+@@ -1722,6 +1826,13 @@ void move_window_bits_surface( HWND hwnd, const RECT *window_rect, struct window
+     OffsetRect( &src, -old_visible_rect->left, -old_visible_rect->top );
+     OffsetRect( &dst, -window_rect->left, -window_rect->top );
+ 
++    if (old_surface->funcs == &scaled_surface_funcs && get_scaled_surface( old_surface )->direct &&
++        move_gdi_scaled_bits( hdc, get_scaled_surface( old_surface ), &src, &dst ))
++    {
++        NtUserReleaseDC( hwnd, hdc );
++        return;
++    }
++
+     window_surface_lock( old_surface );
+     bits = window_surface_get_color( old_surface, info );
+     NtGdiSetDIBitsToDeviceInternal( hdc, dst.left, dst.top, dst.right - dst.left, dst.bottom - dst.top,
 diff --git a/dlls/win32u/dib.c b/dlls/win32u/dib.c
-index e803583..c1044d1 100644
+index e8035833..c1044d1c 100644
 --- a/dlls/win32u/dib.c
 +++ b/dlls/win32u/dib.c
 @@ -850,6 +850,28 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
@@ -199,71 +259,6 @@ index e803583..c1044d1 100644
      if (dc->attr->layout & LAYOUT_RTL) dst.x -= cx - 1;
  
      rect.left = dst.x;
-diff --git a/dlls/win32u/font.c b/dlls/win32u/font.c
-index cc276ca..be0c220 100644
---- a/dlls/win32u/font.c
-+++ b/dlls/win32u/font.c
-@@ -4571,6 +4571,8 @@ static HFONT font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
- 
-         if (lf.lfOutPrecision == OUT_TT_ONLY_PRECIS)
-             can_use_bitmap = FALSE;
-+        /* dllmgr #52: raster glyphs cannot follow the hidden GDI scale */
-+        if (dc->dllmgr_scale > 1) can_use_bitmap = FALSE;
- 
-         lf.lfWidth = abs(lf.lfWidth);
- 
-diff --git a/dlls/win32u/mapping.c b/dlls/win32u/mapping.c
-index ecdbf45..d3a618c 100644
---- a/dlls/win32u/mapping.c
-+++ b/dlls/win32u/mapping.c
-@@ -219,14 +219,17 @@ BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points
-     case NtGdiLPtoDP:
-         for (i = 0; i < count; i++)
-         {
-+            /* dllmgr #52: GDI scaling stays hidden, the application sees the
-+             * device units of its 96-DPI window (as on Windows) */
-+            double k = dc->dllmgr_scale > 1 ? dc->dllmgr_scale : 1;
-             double x = points_in[i].x;
-             double y = points_in[i].y;
--            points_out[i].x = GDI_ROUND( x * dc->xformWorld2Vport.eM11 +
--                                         y * dc->xformWorld2Vport.eM21 +
--                                         dc->xformWorld2Vport.eDx );
--            points_out[i].y = GDI_ROUND( x * dc->xformWorld2Vport.eM12 +
--                                         y * dc->xformWorld2Vport.eM22 +
--                                         dc->xformWorld2Vport.eDy );
-+            points_out[i].x = GDI_ROUND( (x * dc->xformWorld2Vport.eM11 +
-+                                          y * dc->xformWorld2Vport.eM21 +
-+                                          dc->xformWorld2Vport.eDx) / k );
-+            points_out[i].y = GDI_ROUND( (x * dc->xformWorld2Vport.eM12 +
-+                                          y * dc->xformWorld2Vport.eM22 +
-+                                          dc->xformWorld2Vport.eDy) / k );
-         }
-         ret = TRUE;
-         break;
-@@ -235,8 +238,9 @@ BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points
-         if (!dc->vport2WorldValid) break;
-         for (i = 0; i < count; i++)
-         {
--            double x = points_in[i].x;
--            double y = points_in[i].y;
-+            double k = dc->dllmgr_scale > 1 ? dc->dllmgr_scale : 1;  /* dllmgr #52 */
-+            double x = points_in[i].x * k;
-+            double y = points_in[i].y * k;
-             points_out[i].x = GDI_ROUND( x * dc->xformVport2World.eM11 +
-                                          y * dc->xformVport2World.eM21 +
-                                          dc->xformVport2World.eDx );
-diff --git a/dlls/win32u/ntgdi_private.h b/dlls/win32u/ntgdi_private.h
-index d7b67b4..5b8c59c 100644
---- a/dlls/win32u/ntgdi_private.h
-+++ b/dlls/win32u/ntgdi_private.h
-@@ -88,6 +88,7 @@ typedef struct tagDC
-     XFORM         xformWorld2Wnd;    /* World-to-window transformation */
-     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
-     XFORM         xformVport2World;  /* Inverse of the above transformation */
-+    UINT          dllmgr_scale;      /* dllmgr #52: hidden device scale of a GDI-scaled window DC */
-     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
-     RECT          bounds;            /* Current bounding rect */
- } DC;
 diff --git a/dlls/win32u/dibdrv/dibdrv.h b/dlls/win32u/dibdrv/dibdrv.h
 index bf85d1dd..e5846b1e 100644
 --- a/dlls/win32u/dibdrv/dibdrv.h
@@ -277,16 +272,38 @@ index bf85d1dd..e5846b1e 100644
      dash_pattern pen_pattern;
      dash_pos dash_pos;
 diff --git a/dlls/win32u/dibdrv/objects.c b/dlls/win32u/dibdrv/objects.c
-index 9825d95f..70478bd4 100644
+index 9825d95f..b78b9b20 100644
 --- a/dlls/win32u/dibdrv/objects.c
 +++ b/dlls/win32u/dibdrv/objects.c
-@@ -1245,6 +1245,61 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
+@@ -1245,6 +1245,83 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
      return TRUE;
  }
  
 +static inline int floor_div( int value, int k )
 +{
 +    return value >= 0 ? value / k : -((-value + k - 1) / k);
++}
++
++/* The region variant of a diagonal line ends one pixel late (solid_line_region
++ * adds a pixel after the last step), unlike the direct one: cut the end pixel,
++ * so the scaled line equals the unscaled drawing. */
++static BOOL scaled_thin_segment( dibdrv_physdev *pdev, BOOL (*line)(dibdrv_physdev *, POINT *, POINT *, HRGN),
++                                 POINT *start, POINT *end, HRGN lines )
++{
++    HRGN segment, last;
++    BOOL ret;
++
++    if (start->x == end->x || start->y == end->y) return line( pdev, start, end, lines );
++    if (!(segment = NtGdiCreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
++    if ((ret = line( pdev, start, end, segment )) &&
++        (last = NtGdiCreateRectRgn( end->x, end->y, end->x + 1, end->y + 1 )))
++    {
++        NtGdiCombineRgn( segment, segment, last, RGN_DIFF );
++        NtGdiDeleteObjectApp( last );
++    }
++    NtGdiCombineRgn( lines, lines, segment, RGN_OR );
++    NtGdiDeleteObjectApp( segment );
++    return ret;
 +}
 +
 +/* dllmgr #52: a 1-pixel pen on a GDI-scaled DC draws the 96-DPI line and
@@ -326,8 +343,8 @@ index 9825d95f..70478bd4 100644
 +        free( small );
 +        return FALSE;
 +    }
-+    for (i = 0; ret && i < num - 1; i++) ret = line( pdev, small + i, small + i + 1, lines );
-+    if (ret && close) ret = line( pdev, small + num - 1, small, lines );
++    for (i = 0; ret && i < num - 1; i++) ret = scaled_thin_segment( pdev, line, small + i, small + i + 1, lines );
++    if (ret && close) ret = scaled_thin_segment( pdev, line, small + num - 1, small, lines );
 +    if (ret && (big = map_dpi_region( lines, 1, k )))
 +    {
 +        NtGdiCombineRgn( region, region, big, RGN_OR );
@@ -342,7 +359,7 @@ index 9825d95f..70478bd4 100644
  static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
  {
      return TRUE;
-@@ -2251,7 +2306,18 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
+@@ -2251,7 +2328,18 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
          break;
      }
  
@@ -362,3 +379,68 @@ index 9825d95f..70478bd4 100644
      pdev->pen_is_ext = (elp != NULL);
      free( elp );
      return hpen;
+diff --git a/dlls/win32u/font.c b/dlls/win32u/font.c
+index cc276cac..be0c2206 100644
+--- a/dlls/win32u/font.c
++++ b/dlls/win32u/font.c
+@@ -4571,6 +4571,8 @@ static HFONT font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+ 
+         if (lf.lfOutPrecision == OUT_TT_ONLY_PRECIS)
+             can_use_bitmap = FALSE;
++        /* dllmgr #52: raster glyphs cannot follow the hidden GDI scale */
++        if (dc->dllmgr_scale > 1) can_use_bitmap = FALSE;
+ 
+         lf.lfWidth = abs(lf.lfWidth);
+ 
+diff --git a/dlls/win32u/mapping.c b/dlls/win32u/mapping.c
+index ecdbf457..d3a618c0 100644
+--- a/dlls/win32u/mapping.c
++++ b/dlls/win32u/mapping.c
+@@ -219,14 +219,17 @@ BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points
+     case NtGdiLPtoDP:
+         for (i = 0; i < count; i++)
+         {
++            /* dllmgr #52: GDI scaling stays hidden, the application sees the
++             * device units of its 96-DPI window (as on Windows) */
++            double k = dc->dllmgr_scale > 1 ? dc->dllmgr_scale : 1;
+             double x = points_in[i].x;
+             double y = points_in[i].y;
+-            points_out[i].x = GDI_ROUND( x * dc->xformWorld2Vport.eM11 +
+-                                         y * dc->xformWorld2Vport.eM21 +
+-                                         dc->xformWorld2Vport.eDx );
+-            points_out[i].y = GDI_ROUND( x * dc->xformWorld2Vport.eM12 +
+-                                         y * dc->xformWorld2Vport.eM22 +
+-                                         dc->xformWorld2Vport.eDy );
++            points_out[i].x = GDI_ROUND( (x * dc->xformWorld2Vport.eM11 +
++                                          y * dc->xformWorld2Vport.eM21 +
++                                          dc->xformWorld2Vport.eDx) / k );
++            points_out[i].y = GDI_ROUND( (x * dc->xformWorld2Vport.eM12 +
++                                          y * dc->xformWorld2Vport.eM22 +
++                                          dc->xformWorld2Vport.eDy) / k );
+         }
+         ret = TRUE;
+         break;
+@@ -235,8 +238,9 @@ BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points
+         if (!dc->vport2WorldValid) break;
+         for (i = 0; i < count; i++)
+         {
+-            double x = points_in[i].x;
+-            double y = points_in[i].y;
++            double k = dc->dllmgr_scale > 1 ? dc->dllmgr_scale : 1;  /* dllmgr #52 */
++            double x = points_in[i].x * k;
++            double y = points_in[i].y * k;
+             points_out[i].x = GDI_ROUND( x * dc->xformVport2World.eM11 +
+                                          y * dc->xformVport2World.eM21 +
+                                          dc->xformVport2World.eDx );
+diff --git a/dlls/win32u/ntgdi_private.h b/dlls/win32u/ntgdi_private.h
+index d7b67b42..5b8c59c0 100644
+--- a/dlls/win32u/ntgdi_private.h
++++ b/dlls/win32u/ntgdi_private.h
+@@ -88,6 +88,7 @@ typedef struct tagDC
+     XFORM         xformWorld2Wnd;    /* World-to-window transformation */
+     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
+     XFORM         xformVport2World;  /* Inverse of the above transformation */
++    UINT          dllmgr_scale;      /* dllmgr #52: hidden device scale of a GDI-scaled window DC */
+     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
+     RECT          bounds;            /* Current bounding rect */
+ } DC;

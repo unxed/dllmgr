@@ -146,3 +146,18 @@ Still different, not seen in UI so far (open items): wide pens of odd
 logical width (3) are one device pixel off and their caps differ; thin
 curves (Ellipse, RoundRect corners) are computed at device resolution, so
 they are smoother than the block upscale.
+
+### Stage 3: kept bits on resize and scroll (2026-11-09)
+
+tests/wine/gdi-scale-resize.c: first paint red, later paints green; the
+window grows (surface recreated, old area kept), then scrolls by (30, 20).
+Before: the kept area came out white (move_window_bits_surface copied the
+96-DPI bits, which a GDI-scaled window never writes = stale pixels).
+Fix (dce.c move_gdi_scaled_bits): kept bits of a GDI-scaled window are
+copied from its target surface at k x the size (rows copied out first, so
+the target is not locked while drawing). Scrolling (ScrollWindowEx) and
+moves (move_window_bits) go through the scaled window DC and were already
+right. Also: the region form of a diagonal thin line ended one pixel late
+(Wine's solid_line_region adds a pixel after the last step; the direct form
+does not), now cut. Result: resize + scroll probe 0 differing pixels
+against exact 2x blocks.
