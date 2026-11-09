@@ -1,0 +1,60 @@
+diff --git a/dlls/shell32/shlfolder.c b/dlls/shell32/shlfolder.c
+index ea44f862..9c7dc87d 100644
+--- a/dlls/shell32/shlfolder.c
++++ b/dlls/shell32/shlfolder.c
+@@ -66,12 +66,55 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
+  *    TRUE if returned non-NULL value.
+  *    FALSE otherwise.
+  */
++/* dllmgr #65: binding to a folder reads its desktop.ini, so an application
++ * that walks many paths (Photoshop CS2 scanning presets at start) asks for
++ * desktop.ini in every ancestor folder hundreds of times a second. Each miss
++ * costs a full listing of that directory on a case-sensitive file system
++ * (case-insensitive lookup), which made the scan take 15 s. Remember folders
++ * without desktop.ini for two seconds. */
++#define NO_INI_SLOTS 64
++static struct { WCHAR path[MAX_PATH]; DWORD tick; } no_ini[NO_INI_SLOTS];
++static unsigned int no_ini_next;
++static CRITICAL_SECTION no_ini_cs;
++static CRITICAL_SECTION_DEBUG no_ini_cs_debug =
++{
++    0, 0, &no_ini_cs, { &no_ini_cs_debug.ProcessLocksList, &no_ini_cs_debug.ProcessLocksList },
++      0, 0, { (DWORD_PTR)(__FILE__ ": no_ini_cs") }
++};
++static CRITICAL_SECTION no_ini_cs = { &no_ini_cs_debug, -1, 0, 0, 0, 0 };
++
++static BOOL desktop_ini_missing( LPCWSTR ini )
++{
++    DWORD now = GetTickCount();
++    unsigned int i;
++    BOOL known = FALSE;
++
++    if (lstrlenW( ini ) >= MAX_PATH) return FALSE;
++    EnterCriticalSection( &no_ini_cs );
++    for (i = 0; i < NO_INI_SLOTS && !known; i++)
++        known = no_ini[i].path[0] && now - no_ini[i].tick < 2000 && !wcsicmp( no_ini[i].path, ini );
++    LeaveCriticalSection( &no_ini_cs );
++    if (known) return TRUE;
++    if (GetFileAttributesW( ini ) != INVALID_FILE_ATTRIBUTES) return FALSE;
++    EnterCriticalSection( &no_ini_cs );
++    i = no_ini_next++ % NO_INI_SLOTS;
++    lstrcpyW( no_ini[i].path, ini );
++    no_ini[i].tick = now;
++    LeaveCriticalSection( &no_ini_cs );
++    return TRUE;
++}
++
+ static inline BOOL SHELL32_GetCustomFolderAttributeFromPath(
+     LPWSTR pwszFolderPath, LPCWSTR pwszHeading, LPCWSTR pwszAttribute,
+     LPWSTR pwszValue, DWORD cchValue)
+ {
+     PathAddBackslashW(pwszFolderPath);
+     PathAppendW(pwszFolderPath, L"desktop.ini");
++    if (desktop_ini_missing( pwszFolderPath ))
++    {
++        if (cchValue) *pwszValue = 0;
++        return FALSE;
++    }
+     return GetPrivateProfileStringW(pwszHeading, pwszAttribute, L"", pwszValue, cchValue, pwszFolderPath);
+ }
+ 
