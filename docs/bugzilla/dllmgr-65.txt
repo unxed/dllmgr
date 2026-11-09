@@ -1,0 +1,42 @@
+Where: https://bugs.winehq.org (new bug; component shell32; search for duplicates first: "desktop.ini", "slow startup", "SHGetFileInfo slow", "case insensitive lookup")
+Status: PREPARED 2026-11-10, not posted (owner posts).
+
+Summary:
+shell32 reads desktop.ini of every folder on each bind; with a case-sensitive file system every miss lists the directory, making Photoshop CS2 start take twice as long
+
+Text:
+
+Steps: Wine 11.0 (wow64), Adobe Photoshop CS2 (9.0) installed in the default
+location, start it. Watch the splash screen.
+
+Result: "Scanning for plug-ins..." stays for about 15 seconds; start until
+the first dialog takes about 30 seconds on the test machine.
+
+What happens during that time (strace of the Photoshop process for 8 s of
+the scan): about 18,800 openat, 18,800 getdents64 and 26,500 newfstatat
+calls; wineserver is mostly idle. Most of them are lookups of a file called
+desktop.ini in every ancestor folder of the preset files, hundreds of times
+a second each: C:\desktop.ini, C:\Program Files (x86)\desktop.ini,
+...\Adobe\desktop.ini, ...\Adobe Photoshop CS2\desktop.ini,
+...\Presets\desktop.ini and so on. None of these files exist. Because the
+lookup is case-insensitive on a case-sensitive Unix file system, every miss
+reads the whole directory listing, so the cost grows with the number of
+files in those folders.
+
+As far as I can see, the folder binding code in shell32 reads desktop.ini of
+each folder it binds to (to look for a CLSID override), for every path
+component, every time, and does not check the folder's attributes first.
+On Windows a desktop.ini is only honoured for folders that have the read-only
+or system attribute, so Windows does not need to look for it in ordinary
+folders.
+
+What I tried, as an experiment: remember for two seconds the folders where
+desktop.ini does not exist and skip the lookup for them. Photoshop CS2: the
+plug-in scan went from about 15 s to under 2 s, start until the first dialog
+from 29.6 s to 14.9 s, nothing else changed in its behaviour. Checking the
+folder attributes first, as Windows does, would probably be the cleaner fix,
+but Wine's own special folders may rely on desktop.ini without those
+attributes, so I did not try that.
+
+Prepared with the help of an AI agent; the numbers come from timed runs and
+strace on the same setup before and after the change.
