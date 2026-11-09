@@ -101,7 +101,13 @@ try {
         }
         Start-Sleep -Seconds 1
     }while([DateTime]::UtcNow -lt $Deadline)
-    if($null -eq $Main -or $null -eq $File){Save-Desktop 'startup-timeout';throw 'Full main menu not ready; inspect startup artifact'}
+    if($null -eq $Main -or $null -eq $File -or -not $File.Current.IsEnabled){
+        # run 42720202134: workspace fully up, but no enabled "File" found; keep what UIA sees
+        Save-Desktop 'startup-timeout'
+        [PS35.Native]::Windows() | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $Out 'startup-windows.json')
+        $k=0;foreach($C in @([PS35.Native]::Windows() | Where-Object {$_.ClassName -eq 'Photoshop'})){$k++;Save-UiTree ([System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$C.Handle)) "startup-candidate$k"}
+        throw 'Full main menu not ready; inspect startup artifact'
+    }
     $WindowPattern=$null
     if($Root.TryGetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern,[ref]$WindowPattern)){$WindowPattern.SetWindowVisualState([System.Windows.Automation.WindowVisualState]::Maximized)}
     Save-Desktop 'workspace'
