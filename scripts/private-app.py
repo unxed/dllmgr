@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.request
 import zipfile
 
@@ -71,6 +72,22 @@ def atomic(path, data):
 
 def save(path, data):
     atomic(path, (json.dumps(data, indent=2, sort_keys=True) + '\n').encode())
+
+
+LAUNCH_LOG = '.dllmgr/launch.log'
+
+
+def launch_log(prefix, text):
+    """One line per `dllmgr run` step, last 20 kept (#51: a run started by the
+    launch trampoline has no visible terminal, so `status` shows these)."""
+    path = prefix / LAUNCH_LOG
+    try:
+        lines = path.read_text(errors='replace').splitlines()[-19:] if path.is_file() else []
+        path.parent.mkdir(exist_ok=True)
+        stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        path.write_text('\n'.join(lines + [stamp + ' pid ' + str(os.getpid()) + ' ' + text]) + '\n')
+    except OSError:
+        pass  # diagnostics only
 
 
 @contextmanager
@@ -613,6 +630,7 @@ def launch(args, prefix):
     # ExecArguments stays an argv list; image filenames never become shell code.
     app_args = [winpath(prefix, Path(arg)) if Path(arg).is_file() else arg for arg in args.app_args]
     os.chdir(exe.parent)
+    launch_log(prefix, 'run ' + app_of(args) + ': starting the private runtime')
     os.execve(runtime / 'bin/wine', [str(runtime / 'bin/wine'), state['target'], *app_args], env)
 
 
@@ -644,6 +662,8 @@ def main():
     prefix = args.prefix.resolve(strict=True)
     if not (prefix / 'system.reg').is_file():
         raise Error('Not an existing Wine prefix')
+    if args.command == 'run':
+        launch_log(prefix, 'run ' + args.app + ': started (parent pid ' + str(os.getppid()) + ')')
     with locked(prefix):
         for path in [p for app in PROFILES for p in state_paths(prefix, app)]:
             if path.is_symlink():
@@ -669,8 +689,16 @@ def main():
                 print('  Launch: dllmgr run ' + args.app)
                 for pid, kind in running_on(Path(state['exe']).name):
                     print('  Running: pid ' + str(pid) + ' on the ' + kind)
+                log = prefix / LAUNCH_LOG
+                last = [l for l in log.read_text(errors='replace').splitlines() if ' run ' + args.app + ':' in l][-2:] if log.is_file() else []
+                for line in last:
+                    print('  Last launches: ' + line if line is last[0] else '                 ' + line)
         else:
-            launch(args, prefix)
+            try:
+                launch(args, prefix)
+            except BaseException as error:
+                launch_log(prefix, 'run ' + args.app + ': failed: ' + (str(error) or type(error).__name__))
+                raise
 
 
 if __name__ == '__main__':

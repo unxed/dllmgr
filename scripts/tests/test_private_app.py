@@ -585,5 +585,20 @@ class PrivateAppTest(unittest.TestCase):
         self.assertFalse((self.root / "gdiplus-wine-11.0-i386.dll").exists())
 
 
+class LaunchLogTest(unittest.TestCase):
+    def test_keeps_the_last_twenty_lines(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp)
+            for i in range(25):
+                private_app.launch_log(prefix, "run photoshop-cs2: step %d" % i)
+            lines = (prefix / private_app.LAUNCH_LOG).read_text().splitlines()
+            self.assertEqual(len(lines), 20)
+            self.assertTrue(lines[-1].endswith("run photoshop-cs2: step 24"))
+            self.assertIn(" pid %d " % os.getpid(), lines[0])
+
+    def test_unwritable_prefix_is_ignored(self):
+        private_app.launch_log(Path("/nonexistent/prefix"), "run faststone: started")
+
+
 if __name__ == "__main__":
     unittest.main()
