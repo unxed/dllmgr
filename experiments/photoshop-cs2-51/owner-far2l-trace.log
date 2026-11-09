@@ -1,0 +1,61 @@
+
+
+~$ cd ~/.wine/drive_c/"Program Files (x86)/Adobe/Adobe Photoshop CS2" && DLLMGR27_DEBUG=1 wine Photoshop.exe 2>&1 | grep -aiv 'fixme\|err:font\|AlphaBlend\|ReleaseDC'
+0074:err:system:NtUserChangeDisplaySettings Changing L"\\\\.\\DISPLAY1" display settings returned -2.
+0074:err:explorer:initialize_display_settings Failed to initialize registry display settings for L"\\\\.\\DISPLAY1".
+dllmgr27[0020]: trampoline armed
+dllmgr27[0020]: hook thread 0024
+dllmgr27[0020]: trampoline: started "Z:\home\unxed\.local\bin\dllmgr" run photoshop-cs2 --prefix "/home/unxed/.wine" --exe "/home/unxed/.wine/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2/Photoshop.exe" --, waiting 15000 ms
+dllmgr27[0020]: trampoline: no signal from the private runtime, staying on stock Wine
+dllmgr27[0020]: capture tid=0024 hwnd=00030054 class=PSFloatC flags=0057
+dllmgr27[0020]: present hwnd=00030054
+dllmgr27[0020]: shape check hwnd=00030054 style=94800000 now=30000,30000-30001,30001 cap=30000,30000-30001,30001
+dllmgr27[0020]: adopt: startup popup 00010614 (owner 00010068) will be mapped managed
+dllmgr27[0020]: hook thread 012c
+dllmgr27[0020]: alpha shape: 00010614 from the card 671x418 at 3,17, alpha >= 128
+dllmgr27[0020]: hook thread 0164
+dllmgr27[0020]: hook thread 0174
+dllmgr27[0020]: hook thread 0178
+dllmgr27[0020]: hook thread 017c
+dllmgr27[0020]: minmax hwnd=0002063c class=PSFloatC min=140x34 max=1548x876
+dllmgr27[0020]: minmax hwnd=0002063c class=PSFloatC min=0x0 max=1548x876
+0024:err:module:import_dll Library comctl32.dll (which is needed by L"C:\\windows\\twain_32\\gphoto2.ds") not found
+0024:err:twain:twain_add_onedriver Failed to load TWAIN Source L"C:\\windows\\twain_32\\gphoto2.ds"
+0024:err:module:import_dll Library comctl32.dll (which is needed by L"C:\\windows\\twain_32\\sane.ds") not found
+0024:err:twain:twain_add_onedriver Failed to load TWAIN Source L"C:\\windows\\twain_32\\sane.ds"
+dllmgr27[0020]: hook thread 0180
+dllmgr27[0020]: hook thread 0184
+dllmgr27[0020]: hook thread 0188
+dllmgr27[0020]: minmax hwnd=0002063c class=PSFloatC min=0x0 max=1548x876
+dllmgr27[0020]: minmax hwnd=0002063c class=PSFloatC min=0x0 max=1548x876
+dllmgr27[0020]: minmax hwnd=0002063c class=PSFloatC min=0x0 max=1548x876
+dllmgr27[0020]: minmax hwnd=0002063c class=PSFloatC min=0x0 max=1548x876
+dllmgr27[0020]: capture tid=0024 hwnd=0002063c class=PSFloatC flags=0057
+dllmgr27[0020]: present hwnd=0002063c
+dllmgr27[0020]: shape check hwnd=0002063c style=14000008 now=5,51-1528,86 cap=5,51-1528,86
+dllmgr27[0020]: minmax hwnd=00010a2a class=CoolTypeFontChange min=140x34 max=1548x876
+dllmgr27[0020]: capture tid=0024 hwnd=00030636 class=PSFloatC flags=0057
+dllmgr27[0020]: present hwnd=00030636
+dllmgr27[0020]: shape check hwnd=00030636 style=94800000 now=8,87-72,529 cap=8,87-72,529
+dllmgr27[0020]: capture tid=0024 hwnd=00020a34 class=PSFloatC flags=0057
+dllmgr27[0020]: present hwnd=00020a34
+dllmgr27[0020]: shape check hwnd=00020a34 style=94800011 now=1314,219-1526,350 cap=1314,219-1526,350
+dllmgr27[0020]: capture tid=0024 hwnd=00020a38 class=PSFloatC flags=0057
+dllmgr27[0020]: present hwnd=00020a38
+dllmgr27[0020]: shape check hwnd=00020a38 style=94800111 now=1314,87-1526,218 cap=1314,87-1526,218
+dllmgr27[0020]: capture tid=0024 hwnd=00020a3c class=PSFloatC flags=0057
+dllmgr27[0020]: present hwnd=00020a3c
+dllmgr27[0020]: shape check hwnd=00020a3c style=94800111 now=1314,484-1526,814 cap=1314,484-1526,814
+dllmgr27[0020]: capture tid=0024 hwnd=00020a40 class=PSFloatC flags=0057
+dllmgr27[0020]: present hwnd=00020a40
+dllmgr27[0020]: shape check hwnd=00020a40 style=94800111 now=1314,351-1526,483 cap=1314,351-1526,483
+dllmgr27[0020]: hook thread 0194
+dllmgr27[0020]: minmax hwnd=00020616 class=#32770 min=140x34 max=1548x876
+dllmgr27[0020]: minmax hwnd=00020616 class=#32770 min=140x34 max=1548x876
+dllmgr27[0020]: minmax hwnd=00020616 class=#32770 min=140x34 max=1548x876
+dllmgr27[0020]: capture tid=0024 hwnd=00020616 class=#32770 flags=0043
+0194:err:sync:RtlpWaitForCriticalSection section 01502750 "?" wait timed out in thread 0194, blocked by 0024, retrying (60 sec)
+dllmgr27[0020]: minmax hwnd=00020a4c class=tooltips_class32 min=140x34 max=1548x876
+dllmgr27[0020]: minmax hwnd=00020a96 class=tooltips_class32 min=140x34 max=1548x876
+dllmgr27[0020]: minmax hwnd=00020a98 class=tooltips_class32 min=140x34 max=1548x876
+dllmgr27[0020]: capture tid=0024 hwnd=00100a7a class=#32770 flags=0043
