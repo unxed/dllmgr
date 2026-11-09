@@ -9,9 +9,9 @@ wine: [wine-11.0]
 patch: https://raw.githubusercontent.com/unxed/dllmgr/main/patches/dllmgr-44.patch
 patch_sha256: 7c88e522a39fafcd35cf8d16c34bbfe2dd3d4beab0f497342183718680f4a5a2
 recipe: "private runtime: wine-11.0 + wine-11.0-app-isolation.patch + winehq-60721.patch + dllmgr-43.patch + dllmgr-44.patch"
-evidence: https://github.com/unxed/dllmgr/issues/44
+evidence: https://github.com/unxed/dllmgr/actions/runs/42591860287
 results:
-  - {check: "custom tool cursors scaled from 32x32 to 64x64 at 192 DPI", wine: wine-11.0, host_arch: x86_64, prefix_arch: win64, dpi: 192, without: fail, with: pass, run: "https://github.com/unxed/dllmgr/issues/44"}
+  - {check: "tests/wine/cursor-scale.sh custom cursor size and hotspot at 192 DPI (XFixesGetCursorImage)", wine: wine-11.0, host_arch: x86_64, prefix_arch: win64, dpi: 192, without: fail, with: pass, run: "https://github.com/unxed/dllmgr/actions/runs/42591860287"}
 license: LGPL-2.1-or-later
 ai_assisted: true
 ---
@@ -64,9 +64,31 @@ The patch is part of the private runtime built by CI, which includes:
 
 ## Results
 
-Owner's stack: Cinnamon, X11, Muffin (compositing WM), 192 DPI. Stand: Wine
-11.0, Xvfb 3072x1728 @192 DPI, Metacity and Muffin. Custom cursors now
-scale from 32x32 to 64x64 at 192 DPI, matching Windows behavior for
-DPI-unaware apps. Tested with `tests/wine/cursor-scale.sh` probe.
+Measured with `tests/wine/cursor-scale.sh` on Xvfb at LogPixels 192:
 
-See [#44](https://github.com/unxed/dllmgr/issues/44) for the full investigation.
+| runtime | mono (CreateCursor) | colour (CreateIconIndirect, 24x24 opaque) |
+|---|---|---|
+| without patch | 32x32, hotspot 15,15 | 32x32, visible 24x24, hotspot 4,4 |
+| with patch | 64x64, hotspot 30,30 | 64x64, visible 48x48, hotspot 8,8 |
+| with patch, `DLLMGR44_NO_CURSOR_SCALE=1` | 32x32, hotspot 15,15 | - |
+
+Photoshop CS2 on the patched runtime creates its cursors at scale 192/96
+(`WINEDEBUG=+cursor`). Built by CI (run 42591860287) together with #43 and
+shipped in the private runtime (v5 and later).
+
+Owner retest on runtime v5 (2026-11-09): most cursors look right, but the
+zoom, eyedropper and hand cursors still look small. On the stand the same
+tools measure 64x64 with 32x32 of visible art (2x, as Windows does at
+200 %), so the scaling itself works there; why the owner still sees them
+small is open. Details:
+[docs/tasks/44-cursors.md](../../docs/tasks/44-cursors.md).
+
+Known limits: over the image canvas Photoshop hides the X cursor
+(`ShowCursor(FALSE)`) and draws the tool cursor itself, so only the palettes
+and dialogs show the scaled X cursor. Inverting (XOR) pixels of colour
+cursors become transparent in Wine's Xcursor path (pre-existing, untouched
+here).
+
+See [#44](https://github.com/unxed/dllmgr/issues/44) and
+[docs/tasks/44-cursors.md](../../docs/tasks/44-cursors.md) for the full
+investigation.

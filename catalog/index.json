@@ -136,17 +136,17 @@
       "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/dllmgr-44.patch",
       "patch_sha256": "7c88e522a39fafcd35cf8d16c34bbfe2dd3d4beab0f497342183718680f4a5a2",
       "recipe": "private runtime: wine-11.0 + wine-11.0-app-isolation.patch + winehq-60721.patch + dllmgr-43.patch + dllmgr-44.patch",
-      "evidence": "https://github.com/unxed/dllmgr/issues/44",
+      "evidence": "https://github.com/unxed/dllmgr/actions/runs/42591860287",
       "results": [
         {
-          "check": "custom tool cursors scaled from 32x32 to 64x64 at 192 DPI",
+          "check": "tests/wine/cursor-scale.sh custom cursor size and hotspot at 192 DPI (XFixesGetCursorImage)",
           "wine": "wine-11.0",
           "host_arch": "x86_64",
           "prefix_arch": "win64",
           "dpi": 192,
           "without": "fail",
           "with": "pass",
-          "run": "https://github.com/unxed/dllmgr/issues/44"
+          "run": "https://github.com/unxed/dllmgr/actions/runs/42591860287"
         }
       ],
       "ai_assisted": true,
@@ -205,8 +205,7 @@
           "exe_sha256": "98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30",
           "wine": "wine-11.0",
           "host_arch": "x86_64",
-          "prefix_arch": "win64",
-          "release": "photoshop-cs2-v1"
+          "prefix_arch": "win64"
         }
       ],
       "path": "bundles/photoshop-cs2.md"
@@ -405,10 +404,10 @@
       "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/winehq-60721.patch",
       "patch_sha256": "451b543dbd32ecb88755865f4a60f18c69b911b1f6063a8018ef22b870ca7d46",
       "recipe": "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 win32u winex11",
-      "evidence": "https://github.com/unxed/dllmgr/actions/runs/42529718835",
+      "evidence": "https://github.com/unxed/dllmgr/issues/27#issuecomment-6725041423",
       "results": [
         {
-          "check": "FastStone first-open no white flash (tests/wine/first-open.sh)",
+          "check": "tests/wine/first-open-x.sh FastStone first-open X-pixel verdict, no interruption",
           "exe_sha256": "05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621",
           "wine": "wine-11.0",
           "host_arch": "x86_64",
@@ -416,17 +415,38 @@
           "dpi": 192,
           "without": "fail",
           "with": "pass",
-          "run": "https://github.com/unxed/dllmgr/issues/36#issuecomment-6725350290"
+          "run": "https://github.com/unxed/dllmgr/issues/27#issuecomment-6725041423"
         },
         {
-          "check": "Photoshop CS2 splash margin shaped, no stale grey frame",
+          "check": "tests/wine/window-occlusion.sh occlusion regression gate (X-pixel verdict)",
+          "exe_sha256": "05c877e57b25c37e75b8c2a07a5f0ecc31e3b1bb8d12aeb9554c93dcde4ce621",
           "wine": "wine-11.0",
           "host_arch": "x86_64",
           "prefix_arch": "win64",
           "dpi": 192,
           "without": "fail",
           "with": "pass",
-          "run": "https://github.com/unxed/dllmgr/issues/36#issuecomment-6734637591"
+          "run": "https://github.com/unxed/dllmgr/issues/27#issuecomment-6725041423"
+        },
+        {
+          "check": "owner's laptop: FastStone normal launch, no first-open flash (private runtime v3)",
+          "wine": "wine-11.0",
+          "host_arch": "x86_64",
+          "prefix_arch": "win64",
+          "dpi": 192,
+          "without": "fail",
+          "with": "pass",
+          "run": "https://github.com/unxed/dllmgr/issues/27#issuecomment-6728896876"
+        },
+        {
+          "check": "experiments/ps-focus/menu-burst.sh Photoshop CS2 menus, no black frame before first paint (private runtime)",
+          "wine": "wine-11.0",
+          "host_arch": "x86_64",
+          "prefix_arch": "win64",
+          "dpi": 192,
+          "without": "fail",
+          "with": "pass",
+          "run": "https://github.com/unxed/dllmgr/issues/45#issuecomment-6737112678"
         }
       ],
       "ai_assisted": true,

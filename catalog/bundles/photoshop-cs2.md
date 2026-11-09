@@ -8,7 +8,6 @@ profiles:
     wine: wine-11.0
     host_arch: x86_64
     prefix_arch: win64
-    release: photoshop-cs2-v1
 title: "Adobe Photoshop CS2: composed application fixes"
 programs: [Photoshop.exe]
 wine: [wine-11.0]
@@ -36,36 +35,49 @@ dllmgr uninstall photoshop-cs2
 dllmgr share photoshop-cs2
 ```
 
-See [installation and sharing](../../docs/recipes.md). `photoshop-cs2-v1`
-composes three Wine core fixes delivered through the private runtime:
+See [installation and sharing](../../docs/recipes.md). The bundle composes
+three Wine core fixes, all delivered through the private runtime (there are
+no private module DLLs for Photoshop, so this profile has no prebuilt-module
+release tag):
 
 - **winehq-60721**: win32u/winex11 window surface fix. Removes the white
-  flash on first window show; enables the version.dll prefill proxy to
-  shape the Photoshop splash margin as transparent and live.
+  flash on first window show (FastStone) and the black frame under the
+  Photoshop menus under a compositing WM (#45).
 - **dllmgr-43**: winex11 focus fix. Prevents focus stealing during startup.
 - **dllmgr-44**: winex11 cursor scaling fix. Scales custom tool cursors at
   192 DPI (32x32 -> 64x64), matching Windows behavior for DPI-unaware apps.
 
 `dllmgr fix photoshop-cs2` installs the private runtime (release
-app-isolation-wine-11.0-v4 or later) and the proxy below in one step.
+app-isolation-wine-11.0-v5 or later, pinned in
+`scripts/private-runtime.json`) and the proxy below in one step.
 
 Additionally, the **version.dll prefill proxy** (built from
 `patches/dllmgr-27/prefill.c` with `DLLMGR27_CAPTIONLESS_ONLY` and
 `DLLMGR27_ACTIVE_IN_RUNTIME`) is installed next to Photoshop.exe by
-`scripts/prefill-proxy.py`. This proxy captures the screen under the splash
-window and shapes its margin via `SetWindowRgn`.
+`scripts/prefill-proxy.py`. The proxy adopts the splash as a managed
+transient window (so it minimizes with the main window) and shapes it from
+the card's own alpha, taken from the `AlphaBlend` call that Photoshop makes
+into `msimg32`; nothing is read back from the screen, so no stale pixels
+can be captured.
 
 All Wine core patches are delivered through the private runtime (see
 [application isolation](../../docs/app-isolation.md)). The version.dll proxy
 is installed per-application by the fix command.
 
+Owner check on runtime v5 (2026-11-09): the splash is shaped, minimizes with
+the main window, and the halo is nearly gone.
+
 ## Remaining work
 
 - The splash's soft shadow is cut (the card is shaped from its own alpha);
   true per-pixel alpha is in progress (#36).
-- Shadow halo around the shaped splash (the soft shadow keeps the background
-  of the moment it was painted).
-- R6025 pure virtual call when closing an image ([#41](https://github.com/unxed/dllmgr/issues/41)).
+- A thin light rim stays at the left and top edges of the card (pixels with
+  128 <= alpha < 255 that Photoshop blends over the white surface).
+- R6025 pure virtual call when closing an image ([#41](https://github.com/unxed/dllmgr/issues/41));
+  the owner also saw it on Alt+F4.
+- The zoom, eyedropper and hand cursors still look small on the owner's
+  machine, although the runtime scales them 2x on the stand
+  ([docs/tasks/44-cursors.md](../../docs/tasks/44-cursors.md)).
 - Menu artifacts under compositing WM ([#45](https://github.com/unxed/dllmgr/issues/45), fixed by
   winehq-60721 in the private runtime).
 - Installer issues: MSI final dialog texts all "&Finish" (F13), msiexec 0x6a6
