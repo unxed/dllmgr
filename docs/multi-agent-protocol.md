@@ -109,6 +109,13 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    open Bugzilla bugs for Photoshop CS3..2024, check each on CS2 (stand,
    Muffin); the ones that reproduce are fixed like our own bugs and get a
    comment there (docs/upstream-outbox.md).
+6k. #51 a plain launch (menu entry, not ) runs on the system
+   Wine: the trampoline fell back silently (owner, v8). Next item: launcher
+   markers instead of a blind 15 s wait, fallback reason in .
+6l. #52 text on the private runtime: contrasty but badly shaped letters
+   after exact 2x blocks; Preferences dialog without antialiasing (owner,
+   v8). Options: exact/smooth setting, grayscale smoothing, text at
+   physical DPI (Windows GDI scaling).
 7. (now urgent: delivers #43, #44, #45) PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI
    (add `build.sh version` to app-isolation.yml packaging like msimg32).
@@ -121,6 +128,9 @@ uninstall faststone` like `fix` (owner, 2026-11-09: say what exactly is
 downloaded, verified, changed and where) (Esc ignored during startup
 until the first paint; owner report 2026-11-08), owner retests listed in
 docs/handoff.md.
+
+After Photoshop CS2 (owner, 2026-11-09): #53 Illustrator CS2, then InDesign
+CS2, same Wayback source as Photoshop CS2, same stand and recipe approach.
 
 Photoshop 2024 queue: #38 shim works (patches/dllmgr-38); next is the entry
 DLL of Photoshop.exe (needs `objdump -p` from a user), then a recipe.
