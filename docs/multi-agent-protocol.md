@@ -88,6 +88,9 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 6c. #45 menu artifacts: reproduced under Muffin with stock Wine (with and
    without the proxy), gone on the private runtime (60721 mechanism):
    docs/tasks/45-menu-black.md. Delivered by PS-3.
+6f. # blur tool cursor leaves 1-pixel artifacts on the canvas (owner,
+   2026-11-09, urgent): reproduce on the stand (Muffin), bisect stock/runtime,
+   proxy on/off; hypothesis in the issue.
 6e. Photoshop CS2 starts very slowly (owner, 2026-11-09; not now). Owner:
    the empty grey main window at the very start and "Scanning for
    plug-ins..." are the noticeably long stages. Seen on the stand: a 60 s
