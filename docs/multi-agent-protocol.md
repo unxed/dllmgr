@@ -75,7 +75,8 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
 
 FastStone queue: #27 every-launch-path follow-up
 (docs/tasks/27-every-launch-path.md; delivered in runtime v3, waits for
-the owner's retest), then #39, then "detailed output" for `dllmgr status/run/
+the owner's retest), then #39 (reproduced, focus mechanism:
+experiments/faststone-esc/README.md), #40 (hidden Esc confirmation), then "detailed output" for `dllmgr status/run/
 uninstall faststone` like `fix` (owner, 2026-11-09: say what exactly is
 downloaded, verified, changed and where) (Esc ignored during startup
 until the first paint; owner report 2026-11-08), owner retests listed in
