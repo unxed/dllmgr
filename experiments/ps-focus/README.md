@@ -66,3 +66,23 @@ x86_64-unix/winex11.so, new WoW64; scripts focus-rt.sh / focus2.sh):
   WM_TAKE_FOCUS.)
 Delivery for Photoshop: needs a Photoshop profile in the private runtime
 (private-app.py is FastStone-only today). WineHQ: words-only report to write.
+
+## Part 1 of #43: splash stays when the main window is minimized (findings)
+
+mini.sh: minimize the main window 3 s into startup, list visible windows.
+- Metacity: main window goes Iconic (WM_STATE 3), the splash stays visible.
+  Its X properties are right: WM_TRANSIENT_FOR = main window,
+  _NET_WM_WINDOW_TYPE_DIALOG, WM_HINTS input False; the WM itself added
+  _NET_WM_STATE_SKIP_PAGER, SKIP_TASKBAR, STICKY. So the WM does not hide this
+  transient with its minimized parent.
+- Muffin on the stand did not minimize the main window at all (xdotool
+  windowminimize; no panel?); the owner sees the same as Metacity.
+- Win32 side: owned popups are hidden by ShowWindow(SW_MINIMIZE) of the owner,
+  which needs Photoshop's main thread; during loading it neither pumps
+  messages nor processes X events, so Wine cannot react in that thread.
+  On Windows a non-pumping app does not minimize normally either (ghosting),
+  so parity is unclear.
+Possible fixes (not started): ask the WM to iconify the X transients of a
+window that the WM iconified, from winex11 on any thread that sees the
+WM_STATE change (needs a thread that processes events while the app is
+busy); or find why the WM keeps a STICKY transient. Parked; owner informed.
