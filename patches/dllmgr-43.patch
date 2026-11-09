@@ -1,0 +1,56 @@
+diff -ru a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
+--- a/dlls/winex11.drv/window.c	2026-11-09 09:42:51.154931925 +0100
++++ b/dlls/winex11.drv/window.c	2026-11-09 09:42:51.175458237 +0100
+@@ -1256,8 +1256,19 @@
+ /***********************************************************************
+  *     window_set_user_time
+  */
++/* Last time the user was with this process: user input in one of its
++ * windows, or the WM making one of them active. Sent with our activation
++ * requests so that the WM can apply its focus-stealing prevention. */
++static Time process_user_time;
++
++void note_process_user_time( Time time )
++{
++    if (time && (long)(time - process_user_time) > 0) process_user_time = time;
++}
++
+ void window_set_user_time( struct x11drv_win_data *data, Time time, BOOL init )
+ {
++    if (!init) note_process_user_time( time );
+     if (init && data->managed) NtUserSetProp( data->hwnd, focus_time_prop, (HANDLE)time );
+     else if (!init && !time) time = 1; /* time == 0 has reserved semantics */
+ 
+@@ -1984,6 +1995,7 @@
+ 
+     received = wine_dbg_sprintf( "_NET_ACTIVE_WINDOW %p/%lx serial %lu time %lu", current_hwnd, value, serial, time );
+     expected = *expect_serial ? wine_dbg_sprintf( ", expected %p/%lx serial %lu", pending_hwnd, *pending, *expect_serial ) : "";
++    if (current_hwnd) note_process_user_time( time );  /* the WM made our window active */
+     if (!handle_state_change( serial, expect_serial, sizeof(value), &value, desired, pending,
+                               current, expected, "", received, NULL ))
+         return;
+@@ -2050,8 +2062,11 @@
+     xev.xclient.display = data->display;
+     xev.xclient.send_event = True;
+     xev.xclient.format = 32;
+-    xev.xclient.data.l[0] = 2; /* source: pager */
+-    xev.xclient.data.l[1] = 0; /* timestamp */
++    /* An application request with the time of the last user interaction,
++     * not a pager request (which WMs obey unconditionally): a process the
++     * user has switched away from must not take the focus back. */
++    xev.xclient.data.l[0] = process_user_time ? 1 : 2; /* source: application / pager */
++    xev.xclient.data.l[1] = process_user_time; /* timestamp */
+     xev.xclient.data.l[2] = X11DRV_get_whole_window( previous ); /* current active */
+     xev.xclient.data.l[3] = 0;
+     xev.xclient.data.l[4] = 0;
+diff -ru a/dlls/winex11.drv/x11drv.h b/dlls/winex11.drv/x11drv.h
+--- a/dlls/winex11.drv/x11drv.h	2026-11-09 09:42:51.159219533 +0100
++++ b/dlls/winex11.drv/x11drv.h	2026-11-09 09:42:51.175674412 +0100
+@@ -721,6 +721,7 @@
+ 
+ extern Window init_clip_window(void);
+ extern void window_set_user_time( struct x11drv_win_data *data, Time time, BOOL init );
++extern void note_process_user_time( Time time );
+ extern UINT get_window_net_wm_state( Display *display, Window window );
+ extern void make_window_embedded( struct x11drv_win_data *data );
+ extern Window create_client_window( HWND hwnd, RECT client_rect, const XVisualInfo *visual, Colormap colormap );

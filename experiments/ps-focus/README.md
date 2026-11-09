@@ -45,3 +45,24 @@ focus-stealing prevention. An application request (source 1) with the time of
 the last user input lets the WM refuse background activations while still
 granting activations that follow user input in the app. Next: patch, rebuild
 winex11.so, test under Muffin with focus.sh.
+
+## Fix: patches/dllmgr-43.patch (verified 2026-11-09)
+
+winex11: a process-wide "last user time" (user input in any of its windows,
+or the WM making one of its windows active) is sent with
+`_NET_ACTIVE_WINDOW` as an application request (source 1); pager requests
+(source 2, timestamp 0) only before any such time exists. Applies on clean
+wine-11.0 and together with winehq-60721.patch; built into the private
+runtime by tests/wine/app-isolation-build.sh.
+
+Stand (Muffin, Photoshop CS2 on a copy of runtime v3 with the rebuilt
+x86_64-unix/winex11.so, new WoW64; scripts focus-rt.sh / focus2.sh):
+- runtime v3 winex11 (control): focus back to Photoshop after ~18 s.
+- patched: focus stays on xlogo for all 30 s, 2/2; also for 70+ s.
+- no switching away: Photoshop gets the focus at startup as before.
+- click on the loaded Photoshop window: Photoshop gets the focus back.
+  (A click while Photoshop is still loading does nothing with or without the
+  patch: its main thread does not process X events then, so it cannot answer
+  WM_TAKE_FOCUS.)
+Delivery for Photoshop: needs a Photoshop profile in the private runtime
+(private-app.py is FastStone-only today). WineHQ: words-only report to write.
