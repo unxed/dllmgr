@@ -58,6 +58,10 @@ Rules (owner's, non-negotiable):
 - The owner cannot always run checks by hand: do not wait for him; verify on
   the stand yourself (experiments/photoshop-cs2-e2e/e2e.sh for Photoshop CS2)
   and queue what only he can check.
+- Owner, 2026-11-09: close Photoshop CS2 bugs (then the next items of the
+  plan) with dllmgr and fix-it-in-wine on your own: how to catch, test and
+  fix them is the agent's job. Ask as little as possible; use the stand,
+  Windows CI runners for Windows comparisons, and your own judgement.
 - Accept EULAs only with explicit owner approval (CS2 trial: approved).
 - Commit messages in English; talk to the owner in Russian, concise.
 - Patches/binaries: CI builds release binaries; private-runtime releases are
