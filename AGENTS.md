@@ -53,6 +53,11 @@ Rules (owner's, non-negotiable):
   Mint and WineHQ reports (owner, 2026-11-09).
 - Do not post to WineHQ Bugzilla or other public trackers without the
   owner's explicit approval. Comments on this repo's own issues are fine.
+- Close an issue yourself as soon as the owner has confirmed the fix (owner,
+  2026-11-09), with a one-line comment saying so; do not ask first.
+- The owner cannot always run checks by hand: do not wait for him; verify on
+  the stand yourself (experiments/photoshop-cs2-e2e/e2e.sh for Photoshop CS2)
+  and queue what only he can check.
 - Accept EULAs only with explicit owner approval (CS2 trial: approved).
 - Commit messages in English; talk to the owner in Russian, concise.
 - Patches/binaries: CI builds release binaries; private-runtime releases are
