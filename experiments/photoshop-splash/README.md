@@ -117,3 +117,37 @@ mixed in (a few pixels wide, hardly visible). Also likely removes the 1 px
 outline if it comes from the rectangle edge. Check first how Windows looks
 in the same scene (Windows CI): if Windows also freezes the margin, this is
 a dllmgr improvement beyond parity, which the owner asked for anyway.
+
+## Shaped splash margin: implemented (2026-11-09, patches/dllmgr-27/prefill.c)
+
+How it works (all public Win32 APIs, in the proxy):
+- For a top-level window without caption and without WS_EX_TOOLWINDOW, at
+  least 200x100, the prefill capture is kept after it was drawn.
+- In the window's own thread (winex11 applies a window region only there;
+  Photoshop's main thread does not pump messages while the splash is up and
+  paints it directly through GetDC/ReleaseDC), at most every 20 ms the proxy
+  compares the window with the capture. Entry points: our message hooks and a
+  ReleaseDC hook. Photoshop.exe gets user32 through its **delay-import** table
+  (resolved after our DllMain), so that slot is patched directly; normal import
+  tables of all modules (also later ones, LdrRegisterDllNotification) too.
+- When more than 10 % is painted and the window's outer 1 px ring is mostly
+  untouched (a margin reaching the border; palettes and dialogs paint their
+  own frame there and are never cut), the pixels still equal to the capture
+  are cut out with SetWindowRgn. DLLMGR27_NO_SHAPE=1 disables it.
+Things tried and dropped on the way: a thread timer and a window timer (never
+dispatched during the splash), a worker thread calling SetWindowRgn (winex11
+queues it to the owner thread, applied only after the splash), waiting for two
+equal measurements (Photoshop goes quiet after the first paint).
+
+Results on the stand (stock Wine 11.0, Metacity, 192 DPI, prefix-auto):
+- Splash with the main window minimized: the margin is see-through (X root
+  visible), card, feather and shadow intact; without shaping it stays the
+  frozen grey snapshot. Trace: `shape hwnd=... 687x463 painted=82%`, edge 0/2296.
+- Full startup (100 s): only the splash is shaped; Navigator/Color/History/
+  Layers palettes, toolbox and options bar normal. (A first version without the
+  edge/toolwindow tests cut holes into partially painted palettes.)
+- FastStone with the same source (msimg32 build): first-open-x 3/3 pass.
+Remaining: the soft shadow keeps the background of the moment it was painted
+(a few px); before Photoshop paints the card the prefill rectangle is still
+shown for a moment (on the stand black, because the main window is not painted
+yet when the splash appears; grey on the owner's desktop).

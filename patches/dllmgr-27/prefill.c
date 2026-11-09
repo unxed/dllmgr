@@ -14,6 +14,8 @@
  *
  * Build (i686 for 32-bit FastStone): see build.sh. */
 #include <windows.h>
+#include <winternl.h>
+#include <psapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
@@ -197,6 +199,169 @@ static void capture_under(HWND hwnd, const WINDOWPOS *pos)
     physical_end(old_ctx);
 }
 
+/* Issue 36 (Photoshop CS2 splash): the app composes its splash (card, feather,
+ * shadow) over whatever its window holds and leaves the margin untouched. With
+ * the prefill that margin is a frozen snapshot of the screen. Once the app has
+ * finished painting, cut the pixels still identical to the snapshot out of the
+ * window (SetWindowRgn), so the margin becomes truly see-through. Only
+ * top-level windows without a caption; windows painted completely (menus, main
+ * windows, FastStone's forms) are left alone. DLLMGR27_NO_SHAPE=1 disables it. */
+struct shape { HWND hwnd; HDC mem; HBITMAP bitmap, old; RECT rect; int tries; LONG last; DWORD when; };
+static struct shape shapes[4];
+static LONG shape_pending;  /* cheap check in the hooks */
+static int (WINAPI *real_release_dc)(HWND, HDC);
+
+static void shape_release(struct shape *s)
+{
+    SelectObject(s->mem, s->old);
+    DeleteObject(s->bitmap);
+    DeleteDC(s->mem);
+    s->hwnd = NULL;
+}
+
+static DWORD *read_bits(HDC src, int x, int y, int w, int h)
+{
+    BITMAPINFO bi = {{sizeof(bi.bmiHeader), w, -h, 1, 32, BI_RGB}};
+    DWORD *bits = NULL, *copy = NULL;
+    HDC mem = CreateCompatibleDC(src);
+    HBITMAP dib = mem ? CreateDIBSection(mem, &bi, DIB_RGB_COLORS, (void **)&bits, NULL, 0) : NULL;
+    if (dib) {
+        HGDIOBJ old = SelectObject(mem, dib);
+        BitBlt(mem, 0, 0, w, h, src, x, y, SRCCOPY);
+        GdiFlush();
+        if ((copy = HeapAlloc(GetProcessHeap(), 0, (SIZE_T)w * h * 4))) memcpy(copy, bits, (SIZE_T)w * h * 4);
+        SelectObject(mem, old);
+        DeleteObject(dib);
+    }
+    if (mem) DeleteDC(mem);
+    return copy;
+}
+
+/* Region of the pixels that differ, one rectangle per run in each row. */
+static HRGN changed_region(const DWORD *a, const DWORD *b, int w, int h)
+{
+    DWORD cap = 1024, n = 0;
+    RGNDATA *data = HeapAlloc(GetProcessHeap(), 0, sizeof(RGNDATAHEADER) + cap * sizeof(RECT));
+    HRGN rgn = NULL;
+    for (int y = 0; data && y < h; y++)
+        for (int x = 0; x < w; ) {
+            int start;
+            while (x < w && (a[y * w + x] & 0xffffff) == (b[y * w + x] & 0xffffff)) x++;
+            if (x >= w) break;
+            start = x;
+            while (x < w && (a[y * w + x] & 0xffffff) != (b[y * w + x] & 0xffffff)) x++;
+            if (n == cap) {
+                RGNDATA *bigger = HeapReAlloc(GetProcessHeap(), 0, data, sizeof(RGNDATAHEADER) + cap * 2 * sizeof(RECT));
+                if (!bigger) { HeapFree(GetProcessHeap(), 0, data); return NULL; }
+                data = bigger; cap *= 2;
+            }
+            SetRect((RECT *)data->Buffer + n++, start, y, x, y + 1);
+        }
+    if (data) {
+        data->rdh.dwSize = sizeof(RGNDATAHEADER);
+        data->rdh.iType = RDH_RECTANGLES;
+        data->rdh.nCount = n;
+        data->rdh.nRgnSize = n * sizeof(RECT);
+        SetRect(&data->rdh.rcBound, 0, 0, w, h);
+        rgn = ExtCreateRegion(NULL, sizeof(RGNDATAHEADER) + n * sizeof(RECT), data);
+        HeapFree(GetProcessHeap(), 0, data);
+    }
+    return rgn;
+}
+
+/* Runs in the window's own thread, from the ReleaseDC and message hooks:
+ * winex11 applies a window region only there, and Photoshop's main thread
+ * does not pump messages while the splash is up (it paints it directly), so
+ * neither timers nor another thread can do it. At most every 20 ms. */
+static void shape_tick(void)
+{
+    LONG left = 0;
+    for (int i = 0; i < 4; i++) {
+        struct shape *s = &shapes[i];
+        int w = s->rect.right - s->rect.left, h = s->rect.bottom - s->rect.top;
+        DWORD *was = NULL, *now = NULL;
+        DPI_AWARENESS_CONTEXT old_ctx;
+        RECT where;
+        HDC dc;
+        LONG changed = 0;
+
+        if (!s->hwnd || GetWindowThreadProcessId(s->hwnd, NULL) != GetCurrentThreadId()) {
+            if (s->hwnd) left++;
+            continue;
+        }
+        if (GetTickCount() - s->when < 20) { left++; continue; }
+        s->when = GetTickCount();
+        if (!IsWindowVisible(s->hwnd) || ++s->tries > 300) { shape_release(s); continue; }
+        old_ctx = physical_begin();
+        if (GetWindowRect(s->hwnd, &where) && EqualRect(&where, &s->rect) &&
+            (dc = GetDCEx(s->hwnd, NULL, DCX_WINDOW | DCX_CACHE))) {
+            now = read_bits(dc, 0, 0, w, h);
+            real_release_dc(s->hwnd, dc);
+            was = read_bits(s->mem, 0, 0, w, h);
+        }
+        if (!now || !was) {
+            shape_release(s);
+        } else {
+            for (LONG k = 0; k < (LONG)w * h; k++) changed += (now[k] & 0xffffff) != (was[k] & 0xffffff);
+            TRACE("shape tick hwnd=%p try=%d painted=%ld/%ld\n", (void *)s->hwnd, s->tries, changed, (LONG)w * h);
+            /* Photoshop fills the whole card at once and later only redraws
+             * text inside it: shape as soon as a real part is painted */
+            if (changed > (LONG)w * h / 10) {
+                /* a splash-like window leaves its outer edge untouched (the
+                 * margin reaches the window border); palettes and dialogs
+                 * paint their own frame there, so they are never cut */
+                LONG edge = 0, edge_changed = 0;
+                for (int x = 0; x < w; x++) {
+                    edge += 2;
+                    edge_changed += (now[x] & 0xffffff) != (was[x] & 0xffffff);
+                    edge_changed += (now[(h - 1) * w + x] & 0xffffff) != (was[(h - 1) * w + x] & 0xffffff);
+                }
+                for (int y = 1; y < h - 1; y++) {
+                    edge += 2;
+                    edge_changed += (now[y * w] & 0xffffff) != (was[y * w] & 0xffffff);
+                    edge_changed += (now[y * w + w - 1] & 0xffffff) != (was[y * w + w - 1] & 0xffffff);
+                }
+                TRACE("shape edge hwnd=%p changed=%ld/%ld\n", (void *)s->hwnd, edge_changed, edge);
+                if (changed <= (LONG)w * h * 97 / 100 && edge_changed * 2 < edge) {
+                    HRGN rgn = changed_region(now, was, w, h);
+                    TRACE("shape hwnd=%p %dx%d painted=%ld%%\n", (void *)s->hwnd, w, h, changed * 100 / ((LONG)w * h));
+                    if (rgn && !SetWindowRgn(s->hwnd, rgn, TRUE)) DeleteObject(rgn);
+                }
+                shape_release(s);
+            } else {
+                s->last = changed;
+                left++;
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, now);
+        HeapFree(GetProcessHeap(), 0, was);
+        physical_end(old_ctx);
+    }
+    shape_pending = left;
+}
+
+/* Keep the capture for shaping instead of dropping it; TRUE if taken over. */
+static BOOL shape_later(struct capture *c, const RECT *now)
+{
+    struct shape *s = NULL;
+    LONG style = GetWindowLongW(c->hwnd, GWL_STYLE);
+    TRACE("shape check hwnd=%p style=%08lx now=%ld,%ld-%ld,%ld cap=%ld,%ld-%ld,%ld\n", (void *)c->hwnd, style,
+          now->left, now->top, now->right, now->bottom, c->rect.left, c->rect.top, c->rect.right, c->rect.bottom);
+    if (GetEnvironmentVariableA("DLLMGR27_NO_SHAPE", NULL, 0) || (style & (WS_CHILD | WS_CAPTION)) == WS_CAPTION ||
+        (GetWindowLongW(c->hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) ||
+        (style & WS_CHILD) || !EqualRect(now, &c->rect) || c->rect.right - c->rect.left < 200 ||
+        c->rect.bottom - c->rect.top < 100)
+        return FALSE;
+    for (int i = 0; i < 4 && !s; i++) if (!shapes[i].hwnd) s = &shapes[i];
+    if (!s || !real_release_dc) return FALSE;
+    TRACE("shape candidate hwnd=%p\n", (void *)c->hwnd);
+    s->hwnd = c->hwnd; s->mem = c->mem; s->bitmap = c->bitmap; s->old = c->old; s->rect = c->rect;
+    s->tries = 0; s->last = -1; s->when = 0;
+    c->hwnd = NULL;
+    shape_pending = 1;
+    return TRUE;
+}
+
 static void present_capture(HWND hwnd)
 {
     struct capture *c = find_capture(hwnd);
@@ -212,6 +377,10 @@ static void present_capture(HWND hwnd)
                    c->rect.bottom - c->rect.top, c->mem, 0, 0, SRCCOPY);
             ReleaseDC(hwnd, dc);
             GdiFlush();
+            if (shape_later(c, &now)) {
+                physical_end(old_ctx);
+                return;
+            }
         }
         physical_end(old_ctx);
     }
@@ -223,9 +392,100 @@ static BOOL top_level_hidden(HWND hwnd)
     return !(GetWindowLongW(hwnd, GWL_STYLE) & WS_CHILD) && !IsWindowVisible(hwnd);
 }
 
+
+/* Photoshop paints the splash text directly (GetDC/ReleaseDC) while its main
+ * thread does not pump messages, so ReleaseDC is the reliable moment in the
+ * window's own thread. Import slots of user32!ReleaseDC are replaced in every
+ * module, also in ones loaded later (LdrRegisterDllNotification). */
+
+static int WINAPI release_dc_hook(HWND hwnd, HDC dc)
+{
+    int ret = real_release_dc(hwnd, dc);
+    if (shape_pending) shape_tick();
+    return ret;
+}
+
+static void hook_module_release_dc(HMODULE module)
+{
+    BYTE *base = (BYTE *)module;
+    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)(base + ((IMAGE_DOS_HEADER *)base)->e_lfanew);
+    IMAGE_DATA_DIRECTORY *dir = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+    IMAGE_IMPORT_DESCRIPTOR *desc;
+
+    if (module == self || !dir->VirtualAddress || !real_release_dc) return;
+    for (desc = (IMAGE_IMPORT_DESCRIPTOR *)(base + dir->VirtualAddress); desc->Name; desc++) {
+        IMAGE_THUNK_DATA *slot = (IMAGE_THUNK_DATA *)(base + desc->FirstThunk);
+        if (lstrcmpiA((char *)base + desc->Name, "user32.dll")) continue;
+        for (; slot->u1.Function; slot++) {
+            DWORD protect;
+            if (slot->u1.Function != (ULONG_PTR)real_release_dc) continue;
+            if (!VirtualProtect(&slot->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) continue;
+            slot->u1.Function = (ULONG_PTR)release_dc_hook;
+            VirtualProtect(&slot->u1.Function, sizeof(void *), protect, &protect);
+            if (debug) {
+                char name[MAX_PATH] = "";
+                GetModuleFileNameA(module, name, sizeof(name));
+                TRACE("ReleaseDC hooked in %s\n", name);
+            }
+        }
+    }
+}
+
+/* Photoshop.exe takes user32 through its delay-import table (resolved on first
+ * call, after our DllMain): point that slot at the hook directly. */
+static void hook_delay_release_dc(HMODULE module)
+{
+    typedef struct { DWORD attrs, name, hmod, iat, nt, bound, unload, stamp; } delay_desc;
+    BYTE *base = (BYTE *)module;
+    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)(base + ((IMAGE_DOS_HEADER *)base)->e_lfanew);
+    IMAGE_DATA_DIRECTORY *dir = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
+    delay_desc *d;
+#define DELAY_PTR(d, v) ((d)->attrs & 1 ? base + (v) : (BYTE *)(ULONG_PTR)(v))
+    if (!dir->VirtualAddress || !real_release_dc) return;
+    for (d = (delay_desc *)(base + dir->VirtualAddress); d->name; d++) {
+        IMAGE_THUNK_DATA *names = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->nt), *slots = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->iat);
+        if (lstrcmpiA((char *)DELAY_PTR(d, d->name), "user32.dll")) continue;
+        for (; names->u1.AddressOfData; names++, slots++) {
+            DWORD protect;
+            if (IMAGE_SNAP_BY_ORDINAL(names->u1.Ordinal) ||
+                strcmp((char *)((IMAGE_IMPORT_BY_NAME *)DELAY_PTR(d, names->u1.AddressOfData))->Name, "ReleaseDC"))
+                continue;
+            if (!VirtualProtect(&slots->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) continue;
+            slots->u1.Function = (ULONG_PTR)release_dc_hook;
+            VirtualProtect(&slots->u1.Function, sizeof(void *), protect, &protect);
+            TRACE("ReleaseDC hooked in the delay imports of %p\n", (void *)module);
+        }
+    }
+#undef DELAY_PTR
+}
+
+typedef struct { ULONG flags; const UNICODE_STRING *full, *base; void *dll; ULONG size; } dll_loaded;
+static void CALLBACK on_dll(ULONG reason, const dll_loaded *data, void *context)
+{
+    if (reason == 1 /* LDR_DLL_NOTIFICATION_REASON_LOADED */) {
+        hook_module_release_dc((HMODULE)data->dll);
+    }
+}
+
+static void hook_release_dc(void)
+{
+    HMODULE modules[512];
+    DWORD bytes = 0;
+    void *cookie;
+    NTSTATUS (NTAPI *reg)(ULONG, void *, void *, void **) =
+        (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "LdrRegisterDllNotification");
+    real_release_dc = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "ReleaseDC");
+    if (!real_release_dc || GetEnvironmentVariableA("DLLMGR27_NO_SHAPE", NULL, 0)) return;
+    if (K32EnumProcessModules(GetCurrentProcess(), modules, sizeof(modules), &bytes))
+        for (DWORD i = 0; i < bytes / sizeof(HMODULE) && i < 512; i++) hook_module_release_dc(modules[i]);
+    hook_delay_release_dc(GetModuleHandleW(NULL));
+    if (reg) reg(0, on_dll, NULL, &cookie);
+}
+
 static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
 {
     const CWPSTRUCT *m = (const CWPSTRUCT *)lparam;
+    if (code == HC_ACTION && shape_pending) shape_tick();
     if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGING &&
         (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW) && top_level_hidden(m->hwnd))
         capture_under(m->hwnd, (WINDOWPOS *)m->lParam);
@@ -401,7 +661,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
             DisableThreadLibraryCalls(instance);
             hook_import(GetModuleHandleW(NULL), "user32.dll", "ShowWindow", (void *)show_prefilled,
                         (void **)&real_show_window);
-        } else hook_thread();
+        } else {
+            hook_thread();
+            hook_release_dc();
+        }
     } else if (reason == DLL_THREAD_ATTACH && !idle && lstrcmpiA(mode, "iat")) {
         hook_thread();
     }
