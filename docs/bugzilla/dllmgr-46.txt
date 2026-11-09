@@ -1,0 +1,40 @@
+Where: https://bugs.winehq.org (new bug; component win32u; search for duplicates first: "DPI scaling", "scaled surface", "halftone", "artifacts")
+Status: PREPARED 2026-11-09, not posted (owner posts). The owner confirmed the fix on runtime v8.
+
+Summary:
+Non DPI aware windows at 200%: XOR-drawn outlines leave pixel trails because only the dirty part is re-stretched with HALFTONE
+
+Text:
+
+Steps: Wine 11.0, X11, Xft.dpi / LogPixels 192 (200 %), a program that is not
+DPI aware and draws a moving outline with XOR (R2_NOT or PATINVERT) directly
+on its window and erases it the same way. Adobe Photoshop CS2 does this for
+the brush outline of the blur, brush and eraser tools: move the tool across a
+textured image.
+
+Result: thin trails of slightly changed pixels stay on the canvas along the
+path of the outline. They disappear only when the area is repainted.
+
+Expected (Windows with DPI virtualization): no trails.
+
+Cause, as far as I can see: the window draws into a 96 DPI surface, and on
+every flush only the dirty rectangle is stretched to the 192 DPI surface
+with STRETCH_HALFTONE. Halftone mixes each source pixel into the neighbouring
+target pixels, so the target pixels just outside a dirty rectangle depend on
+source pixels inside it. When the outline is drawn, the spread of its pixels
+reaches into target pixels outside the dirty rectangle; when the outline is
+erased, the next dirty rectangle again does not cover those target pixels, so
+the spread from the drawn state stays on screen.
+
+What I tried, as an experiment: when the scale is an exact integer (200 %,
+300 %), stretch the dirty part as exact blocks of pixels (no halftone), so a
+source pixel only ever affects its own block; for other scales, grow the
+dirty rectangle by one source pixel before stretching, so the spread is
+recomputed. Photoshop CS2, blur tool moved across a textured image, compared
+with a full repaint: 816 differing pixels before, 0 after. The user who
+reported it confirmed the trails are gone. Side effect at integer scales:
+text and images look sharper and blockier than with halftone; a user may
+prefer either, so a setting may be worth having.
+
+Prepared with the help of an AI agent; the numbers come from screenshot
+comparisons on the same setup before and after the change.
