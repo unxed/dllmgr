@@ -12,3 +12,10 @@ title-bar cross), report whether a runtime-error box is left.
   SLOCoolTypeFont.cpp:1633 (Photoshop.exe 0x01078d08), found with
   WINEDEBUG=+relay,+seh and RelayInclude=_CxxThrowException. Fontconfig
   limited to DejaVu: still fails.
+
+#62 bisect: fresh settings open the file fine; after one normal start and
+exit the prefs store the type font "Caladea-Regular" (first family Wine
+registers in HKLM Fonts) and the next start with a file hits the assert.
+The old Prefs.psp alone reproduces it. Not the cause: font smoothing
+registry values, the version.dll proxy, fontconfig restriction (Wine keeps
+its own registration, so that step was not clean).
