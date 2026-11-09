@@ -200,7 +200,7 @@ if result=$(python3 "$here/manage-faststone.py" apply --fix "$fix" --prefix "$WI
     [ "${DLLMGR_VERBOSE:-0}" = 1 ] && printf '%s\n' "$result"
     ui note "Close Wine apps in this prefix, then wait for wineserver to exit before relaunching FastStone."
     if [ "$fix" = faststone ]; then
-        ui note "To undo: dllmgr uninstall faststone"
+        ui note "To undo: dllmgr unfix faststone"
     else
         ui note "To undo: $here/undo-$fix.sh"
     fi

@@ -22,11 +22,12 @@ Usage:
   dllmgr fix faststone-fonts [--prefix PATH]
   dllmgr run faststone [--exe PATH] [--prefix PATH] -- [FILES...]
   dllmgr status faststone [--prefix PATH]
-  dllmgr fix|uninstall|status photoshop-cs2 [--exe PATH/Photoshop.exe] [--prefix PATH]
+  dllmgr fix|unfix|status photoshop-cs2 [--exe PATH/Photoshop.exe] [--prefix PATH]
   dllmgr run photoshop-cs2 [--exe PATH] [--prefix PATH] -- [FILES...]
-  dllmgr uninstall faststone
-  dllmgr uninstall faststone-avif [--prefix PATH]
-  dllmgr uninstall faststone-fonts [--prefix PATH]
+  dllmgr unfix faststone
+  dllmgr unfix faststone-avif [--prefix PATH]
+  dllmgr unfix faststone-fonts [--prefix PATH]
+  dllmgr cleanup [FIX] [--dry-run] [--yes]   remove all traces of dllmgr (or of one fix)
   dllmgr share faststone
   dllmgr diag [--prefix PATH]      read-only debug report to paste into an issue
 Wine commands use WINEPREFIX (default: ~/.wine).
@@ -57,7 +58,7 @@ case ${1:-} in
         shift
         exec "$here/scripts/fix-prefix.sh" "$@"
         ;;
-    uninstall|unfix)
+    unfix|uninstall)  # "uninstall" kept for old scripts
         if [ "${2:-}" = faststone-fonts ]; then
             shift 2
             exec "$here/scripts/undo-winehq-26037.sh" "$@"
@@ -83,6 +84,10 @@ case ${1:-} in
         esac
         shift 2
         exec python3 "$here/scripts/private-app.py" "$command" --app "$app" "$@"
+        ;;
+    cleanup)
+        shift
+        exec python3 "$here/scripts/cleanup.py" "$@"
         ;;
     share)
         shift

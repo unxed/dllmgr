@@ -31,7 +31,7 @@ outside the prefix.
 
 ```sh
 dllmgr fix photoshop-cs2
-dllmgr uninstall photoshop-cs2
+dllmgr unfix photoshop-cs2
 dllmgr share photoshop-cs2
 ```
 

@@ -68,8 +68,18 @@ same recipe can be applied or removed directly.
 
 ```sh
 dllmgr fix faststone
-dllmgr uninstall faststone
+dllmgr unfix faststone
 ```
+
+`dllmgr unfix FIX` removes one fix (`uninstall` still works as an alias).
+To remove every trace of dllmgr, run `dllmgr cleanup`: it undoes every recipe
+in every Wine prefix it finds (the default prefix, prefixes under your home
+directory that hold dllmgr state, and the prefixes named by dllmgr's menu
+entries; add more with `--prefix`), then deletes dllmgr's state in those
+prefixes, its runtime and helper caches, its menu entries and dllmgr itself.
+`dllmgr cleanup photoshop-cs2` does the same for one fix only. Both ask
+before changing anything; `--dry-run` only lists what would be removed.
+
 
 For FastStone, close all programs in the target prefix before applying or
 removing the fix and let its Wine server exit before relaunching the app.

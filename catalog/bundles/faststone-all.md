@@ -29,7 +29,7 @@ executable by SHA256 anywhere under the prefix's C drive. Use
 
 ```sh
 dllmgr fix faststone
-dllmgr uninstall faststone
+dllmgr unfix faststone
 dllmgr share faststone
 ```
 

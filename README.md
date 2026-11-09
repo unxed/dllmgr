@@ -12,10 +12,10 @@ Normal output shows progress and the result; add `--verbose` for diagnostic
 details. Colour follows the terminal and respects `NO_COLOR`.
 
 FastStone AVIF preview: `dllmgr fix faststone-avif`, undo with
-`dllmgr uninstall faststone-avif`. This experimental x86 WIC codec is separate
+`dllmgr unfix faststone-avif`. This experimental x86 WIC codec is separate
 from the five-fix recipe; see [scope, supported files and evidence](docs/avif.md).
 Corrected Cyrillic Tahoma Bold: `dllmgr fix faststone-fonts`, undo with
-`dllmgr uninstall faststone-fonts`; see [font scope and evidence](docs/fonts.md).
+`dllmgr unfix faststone-fonts`; see [font scope and evidence](docs/fonts.md).
 
 ## How we develop
 
@@ -86,7 +86,7 @@ Planned:
 
 The preview implements `dllmgr fix` (find the programs with recipes in a
 prefix and apply them after a yes), `dllmgr fix faststone`,
-`dllmgr uninstall faststone` and `dllmgr share faststone`. See the [FastStone recipe](catalog/bundles/faststone-all.md)
+`dllmgr unfix faststone` and `dllmgr share faststone`. See the [FastStone recipe](catalog/bundles/faststone-all.md)
 for the supported configuration and measured results. The planned `fix world`,
 subscriptions, unattended updates and GUI are described in the
 [CLI and GUI design](docs/concept.md#10-cli).
