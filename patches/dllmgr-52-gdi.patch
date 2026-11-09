@@ -277,10 +277,10 @@ index bf85d1dd..e5846b1e 100644
      dash_pattern pen_pattern;
      dash_pos dash_pos;
 diff --git a/dlls/win32u/dibdrv/objects.c b/dlls/win32u/dibdrv/objects.c
-index 9825d95f..e3ac9d34 100644
+index 9825d95f..70478bd4 100644
 --- a/dlls/win32u/dibdrv/objects.c
 +++ b/dlls/win32u/dibdrv/objects.c
-@@ -1245,6 +1245,51 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
+@@ -1245,6 +1245,61 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
      return TRUE;
  }
  
@@ -299,18 +299,28 @@ index 9825d95f..e3ac9d34 100644
 +{
 +    DC *dc = get_physdev_dc( &pdev->dev );
 +    BOOL (*line)(dibdrv_physdev *, POINT *, POINT *, HRGN) = pdev->dllmgr_thin_dashed ? dashed_pen_line_region : solid_pen_line_region;
-+    int k = dc->dllmgr_scale, i;
++    int k = dc->dllmgr_scale, i, n = 0;
 +    BOOL ret = TRUE;
-+    POINT *small;
++    POINT *small, p;
 +    HRGN lines, big;
 +
 +    assert( num >= 2 && region );
 +    if (!(small = malloc( num * sizeof(*small) ))) return FALSE;
 +    for (i = 0; i < num; i++)
 +    {
-+        small[i].x = floor_div( pts[i].x, k );
-+        small[i].y = floor_div( pts[i].y, k );
++        p.x = floor_div( pts[i].x, k );
++        p.y = floor_div( pts[i].y, k );
++        if (n && p.x == small[n - 1].x && p.y == small[n - 1].y) continue;
++        /* curves (ellipse, round corners) come as device points one pixel
++         * apart: drop the corner of an L step, so the 96-DPI curve stays
++         * one pixel thin (8-connected) like the unscaled one */
++        if (n >= 2 && abs( p.x - small[n - 2].x ) == 1 && abs( p.y - small[n - 2].y ) == 1 &&
++            abs( small[n - 1].x - small[n - 2].x ) + abs( small[n - 1].y - small[n - 2].y ) == 1)
++            n--;
++        small[n++] = p;
 +    }
++    if (n < 2) small[n++] = small[0];  /* a dot: draw its start pixel */
++    num = n;
 +    if (!(lines = NtGdiCreateRectRgn( 0, 0, 0, 0 )))
 +    {
 +        free( small );
@@ -332,7 +342,7 @@ index 9825d95f..e3ac9d34 100644
  static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
  {
      return TRUE;
-@@ -2251,7 +2296,18 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
+@@ -2251,7 +2306,18 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
          break;
      }
  

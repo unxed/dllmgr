@@ -135,6 +135,13 @@ XOR still cancels. Probe: 2472 -> 920 differing pixels; all thin lines
 and thin-pen rectangles now equal the block upscale
 (gdi-scaling-prims-2.png). The combo button residue line is gone
 (gdi-scaling-combo-thin-pens.png, left exact, right GDI scaling).
+Owner (2026-11-09): the ellipse and round rectangle on the right of
+gdi-scaling-prims-2.png look dirty. Cause: the curve's device points,
+divided by k, form L-shaped steps (4-connected, heavier). Fixed by
+dropping the corner of each L step (the curve stays one 96-DPI pixel thin,
+8-connected): gdi-scaling-prims-3.png, 824 differing pixels, curves as
+clean as the unscaled ones (positions follow the 2x curve, so not
+pixel-identical). #46 blur trail with this build: 0 changed pixels.
 Still different, not seen in UI so far (open items): wide pens of odd
 logical width (3) are one device pixel off and their caps differ; thin
 curves (Ellipse, RoundRect corners) are computed at device resolution, so
