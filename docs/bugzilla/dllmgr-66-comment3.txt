@@ -1,6 +1,5 @@
 Where: https://bugs.winehq.org/show_bug.cgi?id=60741 (follow-up to our previous comment about aac722e8)
-Status: DRAFT 2026-11-10, retest on wine.git master done. Owner posts.
-Note: the previous comment (dllmgr-66-comment2.txt) went out with a placeholder line "[after the master run:] ..."; this one gives that result.
+Status: POSTED by the owner 2026-11-10 as comment 5 (opening "That's exactly what I was busy doing :)"), after Dmitry's comment 4 asked for a wine.git retest. Comment 2 of ours (dllmgr-66-comment2.txt) was posted as comment 3 without the placeholder line. Do not repost.
 
 Text:
 
