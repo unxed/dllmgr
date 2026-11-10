@@ -23,6 +23,7 @@ second one with the link, then add the back link to the first as a comment.
 | 12 | WineHQ 60746 (posted by the owner 2026-11-10) | #36 shape mask: a region span inside one byte of the 1-bit mask vanishes or shifts (set_surface_shape_rect, AND instead of AND NOT); stray pixels next to the Photoshop splash feather | docs/bugzilla/dllmgr-36-shape.txt (posted). Master check 2026-11-10: wine-11.21 (2af4506cc3) dce.c still has `l_mask & r_mask`, so still present by code; run on a master build still to do | posted, retest |
 
 | 13 | WineHQ 60741 (comment) | Dmitry: "should be fixed by aac722e8", please use wine.git. aac722e8 changes only Cyrillic outline advances of Tahoma Bold; Latin advances and bitmap strikes byte-identical, the reported places are Latin | docs/bugzilla/dllmgr-66-comment2.txt (draft; post after a run on master) | due |
+| 14 | WineHQ 60741 (comment) | when the agg modes are stable: all our AGG know-how (run composition in one buffer, max-compose of overlaps, run-width scaling of linear advances, LIGHT hinting, LCD filter weights, bold strikes kept, stem-phase result from #69 research) | to write (owner, 2026-11-10) | waiting for stable agg |
 
 ## Posted (for cross links)
 

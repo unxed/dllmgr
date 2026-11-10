@@ -25,6 +25,7 @@ Usage:
   dllmgr fix|unfix|status photoshop-cs2 [--exe PATH/Photoshop.exe] [--prefix PATH]
   dllmgr run photoshop-cs2 [--exe PATH] [--prefix PATH] -- [FILES...]
   dllmgr set photoshop-cs2|faststone [text=system|bitmap|gray|light|cleartype|agg|agg-rgb] [contrast=1.0..4.0] [scaling=exact|smooth] [alt-click=app|desktop] [tahoma=wine|xo|xo-bold|dejavu|dejavu-bold]
+  dllmgr assoc photoshop-cs2|faststone [all | png jpeg ... | undo]   (default app for file types; no args: show)
   dllmgr unfix faststone
   dllmgr unfix faststone-avif [--prefix PATH]
   dllmgr unfix faststone-fonts [--prefix PATH]
@@ -77,7 +78,7 @@ case ${1:-} in
         export DLLMGR_REQUIRE_PROFILE=1
         exec "$here/scripts/undo-faststone.sh" "$@"
         ;;
-    run|status|set)
+    run|status|set|assoc)
         command=$1
         case ${2:-} in
             faststone|photoshop-cs2) app=$2 ;;

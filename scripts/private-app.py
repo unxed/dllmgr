@@ -725,6 +725,8 @@ def uninstall(args, prefix):
     if args.fix != state['fix']:
         raise Error('A different recipe is installed: ' + state['fix'])
     directory = checked_files(prefix, state)
+    if assoc_record(prefix, state_app(state)).is_file():  # #73: give the file types back first
+        assoc(prefix, state_app(state), state, ['undo'])
     for entry in state['desktops']:
         desktop = Path(entry['path'])
         if not desktop.is_file() or digest(desktop) != entry['installed_sha256']:
@@ -937,10 +939,108 @@ def supervise(prefix, app, argv, env, keep=8):
     return code
 
 
+# #73 file associations, the freedesktop way: the defaults live in
+# $XDG_CONFIG_HOME/mimeapps.list ([Default Applications]), which Cinnamon,
+# Nemo and xdg-open read. Previous defaults are recorded per application in
+# the prefix so "assoc APP undo" and uninstall put them back.
+ASSOC_SECTION = '[Default Applications]'
+
+
+def mimeapps_path():
+    return Path(os.environ.get('XDG_CONFIG_HOME', str(Path.home() / '.config'))) / 'mimeapps.list'
+
+
+def mimeapps_defaults(text):
+    result, section = {}, None
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith('['):
+            section = stripped
+        elif section == ASSOC_SECTION and '=' in stripped and not stripped.startswith('#'):
+            key, value = stripped.split('=', 1)
+            result[key.strip()] = value.strip()
+    return result
+
+
+def mimeapps_update(text, changes):
+    """Set (value str) or remove (value None) keys of [Default Applications]; other lines stay as they are."""
+    lines, out, section, done = text.splitlines(), [], None, set()
+
+    def flush():
+        for key, value in changes.items():
+            if key not in done and value is not None:
+                out.append(key + '=' + value)
+            done.add(key)
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('['):
+            if section == ASSOC_SECTION:
+                flush()
+            section = stripped
+        elif section == ASSOC_SECTION and '=' in stripped and stripped.split('=', 1)[0].strip() in changes:
+            key = stripped.split('=', 1)[0].strip()
+            if key not in done and changes[key] is not None:
+                out.append(key + '=' + changes[key])
+            done.add(key)
+            continue
+        out.append(line)
+    if section == ASSOC_SECTION:
+        flush()
+    if any(v is not None and k not in done for k, v in changes.items()):
+        if out and out[-1].strip():
+            out.append('')
+        out.append(ASSOC_SECTION)
+        flush()
+    return '\n'.join(out) + '\n'
+
+
+def assoc_record(prefix, app):
+    return prefix / '.dllmgr' / ('assoc-' + app + '.json')
+
+
+def assoc(prefix, app, state, values):
+    ours = Path(state['desktops'][0]['path']).name
+    types = [t for t in PROFILES[app]['mime'].split(';') if t]
+    path, record_path = mimeapps_path(), assoc_record(prefix, app)
+    text = path.read_text() if path.is_file() else ''
+    current = mimeapps_defaults(text)
+    record = json.loads(record_path.read_text()) if record_path.is_file() else {}
+    if not values:
+        for t in types:
+            print(('* ' if current.get(t, '').split(';')[0] == ours else '  ') + t + ': ' + (current.get(t) or '(not set)'))
+        print('Set: dllmgr assoc ' + app + ' all | TYPE...   Undo: dllmgr assoc ' + app + ' undo')
+        return
+    if values == ['undo']:
+        changes = {t: (old or None) for t, old in record.items() if current.get(t, '').split(';')[0] == ours}
+        record = {}
+    else:
+        alias = {'psd': 'vnd.adobe.photoshop', 'jpg': 'jpeg', 'jpe': 'jpeg', 'tif': 'tiff'}
+        wanted = types if values == ['all'] else [next((t for t in types if t == v or t.endswith('/' + alias.get(v.lower(), v.lower()))), None) for v in values]
+        if None in wanted:
+            raise Error('Unknown type; choose from ' + ' '.join(types))
+        changes = {}
+        for t in wanted:
+            if current.get(t, '').split(';')[0] != ours:
+                record.setdefault(t, current.get(t, ''))
+                changes[t] = ours + ';'
+    if changes:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(path.name + '.dllmgr-tmp')
+        tmp.write_text(mimeapps_update(text, changes))
+        tmp.replace(path)
+    record_path.parent.mkdir(parents=True, exist_ok=True)
+    if record:
+        record_path.write_text(json.dumps(record, indent=2))
+    elif record_path.exists():
+        record_path.unlink()
+    print('Associations for ' + app + ': ' + (', '.join(sorted(changes)) + (' restored' if values == ['undo'] else ' -> ' + ours)
+                                               if changes else 'nothing to change'))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status', 'set', 'wm-restore'])
-    parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling, alt-click, tahoma)')
+    parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status', 'set', 'assoc', 'wm-restore'])
+    parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling, alt-click, tahoma); assoc: all | TYPE... | undo')
     parser.add_argument('--prefix', type=Path, default=Path(os.environ.get('WINEPREFIX', str(Path.home() / '.wine'))))
     parser.add_argument('--exe', type=Path)
     parser.add_argument('--json', action='store_true', help='machine-readable status')
@@ -961,7 +1061,7 @@ def main():
         parser.error('--fix applies to faststone only')
     else:
         args.fix = args.app
-    if args.values and args.command not in ('set', 'wm-restore'):
+    if args.values and args.command not in ('set', 'assoc', 'wm-restore'):
         parser.error('key=value pairs require set')
     if app_args and args.command != 'run':
         parser.error('application arguments require run')
@@ -990,6 +1090,9 @@ def main():
                 write_settings(prefix, args.app, args.values)
                 print('Settings for ' + args.app + ': ' + settings_line(read_settings(prefix, args.app)) +
                       ' (applied at the next start)')
+        elif args.command == 'assoc':
+            _, state = read_state(prefix, args.exe, args.app)
+            assoc(prefix, args.app, state, args.values)
         elif args.command == 'status':
             _, state = read_state(prefix, args.exe, args.app)
             checked_files(prefix, state)

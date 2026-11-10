@@ -672,6 +672,32 @@ class SettingsTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(private_app.read_settings(Path(tmp), "photoshop-cs2")["text"], "agg-rgb")
 
+    def test_assoc_sets_and_restores_defaults(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix, config = Path(tmp) / "p", Path(tmp) / "cfg"
+            prefix.mkdir()
+            config.mkdir()
+            (config / "mimeapps.list").write_text("[Added Associations]\nimage/png=x.desktop;\n\n"
+                                                  "[Default Applications]\nimage/png=eog.desktop\ntext/plain=ed.desktop\n")
+            state = {"desktops": [{"path": "/a/dllmgr-faststone-1.desktop"}]}
+            with patch.dict(private_app.os.environ, {"XDG_CONFIG_HOME": str(config)}), \
+                    patch("sys.stdout", new=io.StringIO()):
+                private_app.assoc(prefix, "faststone", state, ["png", "jpeg"])
+                d = private_app.mimeapps_defaults((config / "mimeapps.list").read_text())
+                self.assertEqual(d["image/png"], "dllmgr-faststone-1.desktop;")
+                self.assertEqual(d["image/jpeg"], "dllmgr-faststone-1.desktop;")
+                self.assertEqual(d["text/plain"], "ed.desktop")
+                self.assertIn("image/png=x.desktop;", (config / "mimeapps.list").read_text())
+                private_app.assoc(prefix, "faststone", state, ["all"])  # does not overwrite the record
+                private_app.assoc(prefix, "faststone", state, ["undo"])
+                d = private_app.mimeapps_defaults((config / "mimeapps.list").read_text())
+                self.assertEqual(d.get("image/png"), "eog.desktop")
+                self.assertNotIn("image/jpeg", d)
+                self.assertNotIn("image/webp", d)
+                self.assertFalse(private_app.assoc_record(prefix, "faststone").exists())
+                with self.assertRaises(private_app.Error):
+                    private_app.assoc(prefix, "faststone", state, ["psd"])
+
     def test_supervise_logs_how_the_run_ended(self):
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp)
