@@ -154,6 +154,22 @@ try {
         }
         Save-Desktop 'zoom-after'
         $Frames | ConvertTo-Json | Set-Content (Join-Path $Out 'zoom-frames.json')
+        # #47 b: a 16-bit document at 100 % (the stand shows partial frames only with 16-bit)
+        & python (Join-Path $PSScriptRoot 'png16.py') 'C:\t47-16.png' 800 600
+        [void][PS35.Native]::SetForegroundWindow([IntPtr]$Main.Handle);Start-Sleep -Milliseconds 500
+        [System.Windows.Forms.SendKeys]::SendWait('^o');Start-Sleep -Seconds 3
+        [System.Windows.Forms.SendKeys]::SendWait('C:\t47-16.png');Start-Sleep -Milliseconds 500
+        [System.Windows.Forms.SendKeys]::SendWait('{ENTER}');Start-Sleep -Seconds 10
+        Save-Desktop 'zoom16-before'
+        $Frames=@()
+        for($Notch=0;$Notch -lt 2;$Notch++){
+            [PS35.Native]::AltWheel($Cx,$Cy,120,$true,$false)
+            $T0=[DateTime]::UtcNow
+            for($k=0;$k -lt 25;$k++){Save-Desktop ("zoom16-n{0}-f{1:D2}" -f $Notch,$k);$Frames+=@{notch=$Notch;frame=$k;ms=[int]([DateTime]::UtcNow-$T0).TotalMilliseconds}}
+            [PS35.Native]::AltWheel($Cx,$Cy,0,$false,$true)
+            Start-Sleep -Seconds 2
+        }
+        $Frames | ConvertTo-Json | Set-Content (Join-Path $Out 'zoom16-frames.json')
     }catch{Save-Desktop 'zoom-failed';"zoom stage failed: $_" | Set-Content (Join-Path $Out 'zoom-error.txt')}
 }finally{
     Export-InstallLog
