@@ -33,3 +33,24 @@ spacing ("Op en") therefore comes from Wine's Tahoma Bold / synthetic italic
 at 10 px themselves (glyph advances and hinting), not from Photoshop.
 Next: tests/wine/text-kern66.c renders exactly these fonts in each text mode
 to confirm and compare with Windows.
+
+## Cause of the bad spacing (2026-11-10)
+
+tests/wine/text-kern66.c draws exactly Photoshop's fonts (Tahoma -10 bold,
+-10 italic, ANTIALIASED_QUALITY) and shows the same "Op en" / "B ackground"
+(probe-tahoma10-system-vs-gray.png, left text=system, right text=gray).
+
+Wine's own tahomabd.ttf contains embedded bitmap strikes for 9, 10, 11, 12,
+13, 15, 16 px. At 10 px the bitmaps are badly spaced (left bearing / width /
+right bearing in pixels, from FreeType):
+
+    strike 10 px:      O 1/7/0   p 0/5/2   e 0/5/1   n 0/5/2   B 0/6/2
+    outline, unhinted: O 0.23/7.23/0.23   p 0.55/5.59/0.16   e 0.14/5.59/0.20   B 0.67/5.73/0.45
+
+The outline puts p a little right of its cell (0.55 px left, 0.16 px right);
+the bitmap puts it hard left with 2 px on the right: "O" and "p" touch and a
+gap opens before "e". Same for B (0/6/2). In mono rendering (stock text, what
+system Wine shows) Wine uses these bitmaps; with text=gray the outline is used
+and the spacing is better but the strokes heavier.
+So the kerning is a defect of Wine's Tahoma Bold bitmap strikes, not of
+Photoshop or of our scaling.
