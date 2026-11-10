@@ -31,9 +31,18 @@ logs=${RUNNER_TEMP:-${TMPDIR:-/tmp}}/dllmgr-ci-install
 mkdir -p "$logs"
 setup=()
 [ "$winehq" = 0 ] || setup=(--winehq)
-for n in 1 2; do
+for n in 1 2 3; do
     log=$logs/attempt-$n.log
-    if timeout -k 5 150 bash "${BASH_SOURCE[0]}" --attempt "${setup[@]}" "$@" >"$log" 2>&1; then
+    limit=150
+    if [ "$n" = 3 ]; then
+        # The runner's Azure Ubuntu mirror sometimes stalls for an hour
+        # (2026-11-10: three runs in a row): last attempt via archive.ubuntu.com.
+        echo "::warning::switching apt from azure.archive.ubuntu.com to archive.ubuntu.com"
+        sudo sed -i 's#azure\.archive\.ubuntu\.com#archive.ubuntu.com#g' \
+            /etc/apt/sources.list /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/*.list 2>/dev/null || true
+        limit=300
+    fi
+    if timeout -k 5 "$limit" bash "${BASH_SOURCE[0]}" --attempt "${setup[@]}" "$@" >"$log" 2>&1; then
         tail -n 12 "$log"
         exit 0
     else
