@@ -1,0 +1,1 @@
+Built by CI run https://github.com/unxed/dllmgr/actions/runs/42729647131 at commit 72a793c. Contents: #51 handover on the owner's machine (main window hidden from FindWindow), #65 shell32 desktop.ini cache (start about twice as fast), #66 Tahoma Bold from outlines, stripped binaries.
