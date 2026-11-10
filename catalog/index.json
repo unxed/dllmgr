@@ -274,6 +274,29 @@
       "path": "fixes/dllmgr-60.md"
     },
     {
+      "id": "dllmgr-63",
+      "kind": "fix",
+      "title": "comctl32 v6: themed combo drop button as on Windows (DropDownButtonRight part and geometry)",
+      "license": "LGPL-2.1-or-later",
+      "bug": "https://github.com/unxed/dllmgr/issues/63",
+      "dlls": [
+        "comctl32_v6"
+      ],
+      "programs": [
+        "FSViewer.exe"
+      ],
+      "wine": [
+        "wine-11.0"
+      ],
+      "patch": "https://raw.githubusercontent.com/unxed/dllmgr/main/patches/dllmgr-63.patch",
+      "patch_sha256": "f765cd6af96d5b91f3b76c9b9a07046b080d778db7c73b76581579c51409c178",
+      "recipe": "fix-it-in-wine: tools/build_one_dll.sh wine-11.0 comctl32_v6",
+      "binaries": "https://github.com/unxed/dllmgr/releases/tag/faststone-v5",
+      "evidence": "https://github.com/unxed/dllmgr/tree/main/experiments/faststone-63",
+      "ai_assisted": true,
+      "path": "fixes/dllmgr-63.md"
+    },
+    {
       "id": "faststone-all",
       "kind": "bundle",
       "title": "FastStone Image Viewer: composed application fixes",
@@ -289,7 +312,8 @@
         "winehq-59251",
         "winehq-59609",
         "dllmgr-14",
-        "dllmgr-21"
+        "dllmgr-21",
+        "dllmgr-63"
       ],
       "application": "faststone",
       "profiles": [
@@ -299,7 +323,7 @@
           "wine": "wine-11.0",
           "host_arch": "x86_64",
           "prefix_arch": "win64",
-          "release": "faststone-v4"
+          "release": "faststone-v5"
         }
       ],
       "path": "bundles/faststone-all.md"
