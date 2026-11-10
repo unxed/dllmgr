@@ -1,5 +1,5 @@
 Where: https://bugs.winehq.org (new bug; component fonts; search for duplicates first: "tahomabd", "Tahoma bold spacing", "embedded bitmap", "simulated italic")
-Status: PREPARED 2026-11-10 (rewritten with the v5 findings), not posted (owner posts). Text only: no code, no generated bitmaps (owner, 2026-11-10).
+Status: POSTED by the owner as https://bugs.winehq.org/show_bug.cgi?id=60741 (2026-11-10). Follow-up comment: dllmgr-66-comment1.txt. Text only: no code, no generated bitmaps (owner, 2026-11-10).
 
 Summary:
 Tahoma bitmap strikes: Bold letters and regular Cyrillic are placed differently from Windows (uneven spacing, letters touching at 9-13 px)

@@ -1,0 +1,28 @@
+Where: https://bugs.winehq.org/show_bug.cgi?id=60741 (comment; the bug itself was posted by the owner from dllmgr-66.txt)
+Status: PREPARED 2026-11-10, not posted (owner posts). Text only.
+
+Text:
+
+Where this shows up in practice: Adobe Photoshop CS2 (trial, Wine 11.0,
+English UI). Its palettes draw small Tahoma with ExtTextOut, Tahoma height
+-10, ANSI_CHARSET, no smoothing requested:
+
+1. History palette: the name of every history state is drawn in Tahoma Bold
+   10 px. After opening a file the first state reads "Open": "O" and "p"
+   touch, then a gap opens before "e". Longer state names ("New Layer",
+   "Merge Visible", "Duplicate Layer") get the same uneven spacing.
+2. Layers palette: the locked background layer is labelled "Background" in
+   simulated italic Tahoma 10 px (there is no italic face). In Wine it is
+   wider than on Windows, the "B" stands apart from "ackground", and without
+   smoothing the letters break up; with Wine's default smoothing of
+   simulated styles it comes out grey and faint while Windows draws it
+   crisp.
+3. The palette labels "Opacity:", "Lock:" and "Fill:" (Tahoma 10 px
+   regular) are drawn with ETO_CLIPPED into rectangles that end exactly at
+   the text width Windows produces ("Opacity:" at x = 1 in a 37 px wide
+   rectangle). Regular Latin is already right, but any change to Tahoma's
+   glyph placement has to keep these widths, otherwise the colons are cut
+   off.
+
+The same History and Layers palettes on Windows (ClearType on) show even
+spacing in all three places.
