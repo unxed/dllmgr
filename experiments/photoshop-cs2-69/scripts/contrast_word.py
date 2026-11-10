@@ -1,10 +1,11 @@
 """'Contrast:' stem by stem (Tahoma regular, Photoshop placement): peak darkness / ink"""
 from measure import *
+import phase_table  # straight stems
 from phase_table import stem_vals
 for size in (10, 11):
     f = FONTS[('regular', size)]
-    for mode, alpha in (('rgb', 128), ('gray', 192)):
-        for name, v in (('agg', Variant('agg', mode)), ('fix', CWarp('fix', mode, alpha=alpha, ends=0))):
+    for mode, alpha in (('rgb', 128), ('gray', 128)):
+        for name, v in (('agg', Variant('agg', mode)), ('fix', CWarp('fix', mode, alpha=alpha, ends=32))):
             pl = v.place(f, 'Contrast:'); cells = []; pks = []
             for (whole, key), c in zip(pl, 'Contrast:'):
                 for Lp, w, pk, ink in stem_vals(f, c, key, v):

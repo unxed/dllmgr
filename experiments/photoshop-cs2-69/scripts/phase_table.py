@@ -6,6 +6,8 @@ current agg vs the stem fix. Also "Contrast:" stem by stem at Photoshop's
 placement."""
 import sys, numpy as np
 from measure import *
+import measure, straight
+glyph_stems = measure.glyph_stems = lambda font, ch, all_stems=False: straight.straight_stems(font, ch)  # the stems the fix treats
 CHARS = sorted(set(''.join(WORDS)))
 
 def stem_vals(font, ch, key, v):
@@ -46,7 +48,7 @@ if __name__ == '__main__':
     print('|---' * 12 + '|')
     for style in ('regular', 'bold'):
         for size in (10, 11):
-            for mode, alpha in (('rgb', 128), ('gray', 192)):
+            for mode, alpha in (('rgb', 128), ('gray', 128)):
                 res = table(style, size, mode, alpha)
                 for name in ('agg', 'fix'):
                     bins = res[name]
