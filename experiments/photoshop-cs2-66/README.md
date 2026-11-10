@@ -234,3 +234,13 @@ fractional outline edges Wine's strikes do not have (Windows 'j' at 10 px gets
 a two-pixel step there, 'n'/'o' at 11 px end one column further left). Wine
 v13 italic: 25 of 94 identical at 10-11 px, i.e. at that ceiling. Smoother
 italic needs the outline: text=agg (#69).
+
+## Same fixes for every application (owner, 2026-11-10)
+
+All font work (#66 v5 strike placement, tahoma= substitution, #69 agg /
+agg-rgb) is in the shared private runtime (win32u) and in the per-app
+settings of scripts/private-app.py, nothing is Photoshop-specific. v5 is
+always on; the rest is per application: `dllmgr set faststone
+text=agg-rgb`, `dllmgr set faststone tahoma=xo`. Stand check with FastStone
+8.5 on the same runtime build: faststone-system-vs-agg-rgb.png (top
+text=system, bottom text=agg-rgb; 183145 pixels differ on screen).
