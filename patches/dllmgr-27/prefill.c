@@ -1180,6 +1180,100 @@ static void exit_report(void)
     fflush(stderr);
 }
 
+/* #76 crash report (DLLMGR76_OFF=1 turns it off): a module load/unload log
+ * (LdrRegisterDllNotification) and a vectored exception handler that, for an
+ * access violation raised in the main executable, writes to stderr (the run
+ * log) the fault address, its memory state, whether it lies in a module that
+ * was unloaded earlier, the last module events and the recent window events
+ * of #71. It only logs (EXCEPTION_CONTINUE_SEARCH), at most 4 times. */
+#define MODLOG 96
+static struct { DWORD tick, base, size; char load; char name[48]; } modlog[MODLOG];
+static LONG modlog_next;
+
+typedef struct { ULONG Flags; const UNICODE_STRING *FullDllName; const UNICODE_STRING *BaseDllName; void *DllBase; ULONG SizeOfImage; } DLLMGR_DLL_NOTIFY;
+typedef NTSTATUS (NTAPI *LDRREGISTER)(ULONG, void (CALLBACK *)(ULONG, const DLLMGR_DLL_NOTIFY *, void *), void *, void **);
+
+static void CALLBACK dll_notify(ULONG reason, const DLLMGR_DLL_NOTIFY *data, void *context)
+{
+    LONG i = (InterlockedIncrement(&modlog_next) - 1) % MODLOG;
+    int n = 0;
+    modlog[i].tick = GetTickCount();
+    modlog[i].base = (DWORD)(ULONG_PTR)data->DllBase;
+    modlog[i].size = data->SizeOfImage;
+    modlog[i].load = reason == 1;
+    if (data->BaseDllName && data->BaseDllName->Buffer)
+        n = WideCharToMultiByte(CP_UTF8, 0, data->BaseDllName->Buffer, data->BaseDllName->Length / sizeof(WCHAR),
+                                modlog[i].name, sizeof(modlog[i].name) - 1, NULL, NULL);
+    modlog[i].name[n > 0 ? n : 0] = 0;
+}
+
+static void crash_say(const char *text)
+{
+    DWORD written;
+    WriteFile(GetStdHandle(STD_ERROR_HANDLE), text, lstrlenA(text), &written, NULL);
+}
+
+static LONG CALLBACK crash_handler(EXCEPTION_POINTERS *info)
+{
+    static LONG reports;
+    EXCEPTION_RECORD *rec = info->ExceptionRecord;
+    HMODULE exe = GetModuleHandleA(NULL);
+    MEMORY_BASIC_INFORMATION mem;
+    char line[300];
+    DWORD addr, now = GetTickCount();
+    LONG i, last;
+    if (rec->ExceptionCode != EXCEPTION_ACCESS_VIOLATION || rec->NumberParameters < 2) return EXCEPTION_CONTINUE_SEARCH;
+    if (!VirtualQuery(exe, &mem, sizeof(mem))) return EXCEPTION_CONTINUE_SEARCH;
+    {
+        MEMORY_BASIC_INFORMATION code;
+        if (!VirtualQuery(rec->ExceptionAddress, &code, sizeof(code)) || code.AllocationBase != (void *)exe)
+            return EXCEPTION_CONTINUE_SEARCH;
+    }
+    if (InterlockedIncrement(&reports) > 4) return EXCEPTION_CONTINUE_SEARCH;
+    addr = (DWORD)rec->ExceptionInformation[1];
+    if (!VirtualQuery((void *)(ULONG_PTR)addr, &mem, sizeof(mem))) mem.State = 0;
+    wsprintfA(line, "dllmgr76: access violation in main exe +0x%lx, %s 0x%08lx (memory %s), thread %04lx\n",
+              (DWORD)((BYTE *)rec->ExceptionAddress - (BYTE *)exe),
+              rec->ExceptionInformation[0] == 1 ? "writing" : rec->ExceptionInformation[0] == 8 ? "executing" : "reading", addr,
+              mem.State == MEM_FREE ? "free" : mem.State == MEM_RESERVE ? "reserved" : mem.State == MEM_COMMIT ? "committed" : "?",
+              GetCurrentThreadId());
+    crash_say(line);
+    last = modlog_next;
+    for (i = 0; i < MODLOG && i < last; i++) {
+        LONG k = (last - 1 - i) % MODLOG;
+        if (addr >= modlog[k].base && addr - modlog[k].base < modlog[k].size) {
+            wsprintfA(line, "dllmgr76: 0x%08lx is inside %s %s %lu ms ago (base 0x%08lx size 0x%lx)\n", addr, modlog[k].name,
+                      modlog[k].load ? "loaded" : "UNLOADED", now - modlog[k].tick, modlog[k].base, modlog[k].size);
+            crash_say(line);
+            break;
+        }
+    }
+    for (i = last > 12 ? last - 12 : 0; i < last; i++) {
+        LONG k = i % MODLOG;
+        wsprintfA(line, "dllmgr76: %lu ms before: %s %s 0x%08lx-0x%08lx\n", now - modlog[k].tick,
+                  modlog[k].load ? "load" : "unload", modlog[k].name, modlog[k].base, modlog[k].base + modlog[k].size);
+        crash_say(line);
+    }
+    for (i = 1; i <= RECENT; i++) {
+        LONG slot = (recent_next + i) % RECENT;
+        if (recent[slot].tick) {
+            wsprintfA(line, "dllmgr76: %lu ms before: %s\n", now - recent[slot].tick, recent[slot].text);
+            crash_say(line);
+        }
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void start_crash_report(void)
+{
+    void *cookie;
+    LDRREGISTER reg = (LDRREGISTER)GetProcAddress(GetModuleHandleA("ntdll.dll"), "LdrRegisterDllNotification");
+    if (GetEnvironmentVariableA("DLLMGR76_OFF", NULL, 0)) return;
+    if (reg) reg(0, dll_notify, NULL, &cookie);
+    AddVectoredExceptionHandler(1, crash_handler);
+}
+
+
 /* Sampling profiler (DLLMGR_SAMPLE=ms[,seconds[,delay]], off by default): a thread
  * suspends the main thread every few ms and records EIP plus the first
  * frames of its EBP chain. Works under wow64 where perf/gdb/winedbg cannot
@@ -1276,7 +1370,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
         exit_report();
         return TRUE;
     }
-    if (reason == DLL_PROCESS_ATTACH) start_sampler();  /* diagnostics, also with the proxy off */
+    if (reason == DLL_PROCESS_ATTACH) { start_sampler(); start_crash_report(); }  /* diagnostics, also with the proxy off */
     if (GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0)) return TRUE;
     GetEnvironmentVariableA("DLLMGR27_MODE", mode, sizeof(mode));
     if (reason == DLL_PROCESS_ATTACH) {

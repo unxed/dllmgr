@@ -905,7 +905,10 @@ def run_verdict(code, log_tail):
     """#71: one line on how a run ended, from the exit status and the log."""
     how = ('exit code %d' % code) if code >= 0 else ('signal %d' % -code)
     if any(mark in log_tail for mark in CRASH_MARKS):
-        return how + ', crashed: unhandled exception in the log'
+        inside = [l.split('is inside ', 1)[1].split(' (base', 1)[0] for l in log_tail.splitlines()
+                  if l.startswith('dllmgr76:') and ' is inside ' in l]
+        # #76: the proxy's crash report names the module a bad pointer pointed into
+        return how + ', crashed: unhandled exception in the log' + ('; the address was inside ' + inside[-1] if inside else '')
     clicked = [l.split('clicked ', 1)[1].strip() for l in log_tail.splitlines() if l.startswith('dllmgr71:') and ' clicked ' in l]
     if clicked:  # the version.dll proxy's exit report (#71): the last button pressed
         return how + ', the application closed itself; last button: ' + clicked[-1]

@@ -675,6 +675,12 @@ class SettingsTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(private_app.read_settings(Path(tmp), "photoshop-cs2")["text"], "agg-rgb")
 
+    def test_verdict_names_unloaded_module(self):
+        tail = ("dllmgr76: access violation in main exe +0xb249ce, reading 0x76bb1800 (memory reserved), thread 0130\n"
+                "dllmgr76: 0x76bb1800 is inside wineps.drv UNLOADED 512 ms ago (base 0x76ba0000 size 0x150000)\n"
+                "Unhandled exception: page fault on read access to 0x76bb1800 in wow64 32-bit code\n")
+        self.assertIn("inside wineps.drv UNLOADED 512 ms ago", private_app.run_verdict(1, tail))
+
     def test_assoc_sets_and_restores_defaults(self):
         with tempfile.TemporaryDirectory() as tmp:
             prefix, config = Path(tmp) / "p", Path(tmp) / "cfg"

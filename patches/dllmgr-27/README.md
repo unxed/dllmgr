@@ -63,3 +63,15 @@ DLLMGR27_OFF=1 too): a thread in the proxy suspends the main thread every
 Made because perf (sandbox kernel), gdb (no PE frames) and winedbg attach
 (crashes under wow64) cannot sample a 32-bit app here. Summary with Wine
 syscall names: `tools/sample-report.py FILE [WINE_LIB/i386-windows] [--from MS --to MS]`.
+
+## Crash report (#76, DLLMGR76_OFF=1 turns it off)
+
+A module load/unload log (LdrRegisterDllNotification, last 96 events) and
+a vectored exception handler: on an access violation raised in the main
+executable it writes `dllmgr76:` lines to stderr (the run log): fault
+address and memory state, the module the address lay in if it was loaded
+or UNLOADED earlier, the last 12 module events and the recent window events
+of #71. Logging only (the exception goes on), at most 4 reports.
+`dllmgr run` shows the module in the verdict. Check: tests/wine/crash76.c
+(reads from msimg32.dll after FreeLibrary) gives "0x7a4e1000 is inside
+msimg32.dll UNLOADED 0 ms ago".
