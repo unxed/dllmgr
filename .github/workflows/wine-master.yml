@@ -1,0 +1,38 @@
+name: wine-master
+# Stock wine.git build (no dllmgr patches) for retests before WineHQ reports
+# (AGENTS.md, fix-it-in-wine step 10). Artifact: an install tree for /opt/wine-master.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'wine.git commit or branch'
+        default: 'master'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build dependencies
+        timeout-minutes: 8
+        run: bash tests/wine/ci-install.sh git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 libfreetype-dev libfontconfig-dev libx11-dev libxext-dev libxrender-dev libxrandr-dev libxi-dev libxcomposite-dev libxcursor-dev libxfixes-dev libxinerama-dev libgnutls28-dev
+      - name: Build and install
+        run: |
+          src=$RUNNER_TEMP/wine; git init -q $src
+          git -C $src fetch -q --depth 1 https://github.com/wine-mirror/wine.git "${{ inputs.ref }}"
+          git -C $src checkout -q FETCH_HEAD
+          rev=$(git -C $src rev-parse HEAD); ver=$(cat $src/VERSION)
+          mkdir $RUNNER_TEMP/b && cd $RUNNER_TEMP/b
+          $src/configure --prefix=/opt/wine-master --enable-archs=i386,x86_64 --with-x --with-freetype --with-fontconfig --without-oss > configure.log 2>&1 || { tail -60 configure.log; exit 1; }
+          make -j"$(nproc)" > make.log 2>&1 || { tail -80 make.log; exit 1; }
+          make install DESTDIR=$RUNNER_TEMP/inst > install.log 2>&1
+          echo "$ver $rev" > $RUNNER_TEMP/inst/opt/wine-master/SOURCE.txt
+          mkdir -p $GITHUB_WORKSPACE/out
+          tar -C $RUNNER_TEMP/inst/opt -c wine-master | xz -T0 -6 > $GITHUB_WORKSPACE/out/wine-master.tar.xz
+          cat $RUNNER_TEMP/inst/opt/wine-master/SOURCE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wine-master
+          path: out/
