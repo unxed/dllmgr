@@ -354,7 +354,10 @@ def runtime_release(requested):
     """Human-readable runtime origin: release tag of the pin, or a local package."""
     if requested:
         return 'local package ' + str(requested)
-    url = json.loads((HERE / 'private-runtime.json').read_text()).get('url', '')
+    config = json.loads((HERE / 'private-runtime.json').read_text())
+    if config.get('release'):  # published on the runtime-releases branch (raw URL)
+        return config['release']
+    url = config.get('url', '')
     return url.split('/download/', 1)[-1].split('/', 1)[0] if '/download/' in url else url
 
 

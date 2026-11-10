@@ -29,7 +29,14 @@ per [development.md](development.md). Problems hit along the way go to
 [sandbox-findings.md](sandbox-findings.md) and are fixed last, after the
 already existing bugs.
 
-Releases: the cloud session gets HTTP 403 on release creation. The owner
+Releases (since 2026-11-10, owner: no more manual publishing): the agent
+downloads the tested CI artifact (`gh run download RUN -n app-isolation`),
+checks SHA256SUMS, commits the zip with SHA256SUMS, SOURCE.txt and NOTES.txt
+into `app-isolation-wine-11.0-vN/` on the orphan branch `runtime-releases`
+(never rewritten) and pins scripts/private-runtime.json to the raw URL of that
+commit (`https://raw.githubusercontent.com/unxed/dllmgr/<commit>/<dir>/wine-11.0-app-isolation.zip`),
+its SHA256 and `"release": "<dir>"`, after a stand e2e of the package.
+Older note: Releases: the cloud session gets HTTP 403 on release creation. The owner
 allowed (2026-11-08) publishing private-runtime releases after the package
 passed tests by dispatching `.github/workflows/publish-runtime.yml`
 (`gh api -X POST repos/unxed/dllmgr/actions/workflows/publish-runtime.yml/dispatches
