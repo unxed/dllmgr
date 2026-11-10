@@ -1,0 +1,29 @@
+#78/#82 on the owner's laptop stand, 2026-11-10 (agent cc-rcnb-52ab-sub1, paused by owner)
+
+Run t1: runtime v21, fresh copy of prefix-clean, :130 Muffin, t78p-dismiss.sh
+(t78p.sh + DISMISS=1: closes the F26 "program error" box by activating the
+smaller "Adobe Photoshop" window and pressing Enter; worked 1/1 -> 1 window
+left), HIST default 2780 800 (the t46.png row of History; OK on
+1-after-click), no WINEDEBUG.
+
+probe (fgprobe78):
+  before:       main 00010068 foreground 00010068 active 00010068 focus 00040618
+  after-click:  main 00010068 foreground 000208c4 active 000208c4 focus 000208c4
+  after-switch: same as after-click (Wine still sees the palette as fg/active)
+  after-altf4:  main 00010068 foreground 00010068 active 00010068 focus 00040618 flags 4
+000208c4 = History palette (PSFloatC, owner = main, rect 1314,351-1526,483).
+Its exstyle is 0x88 (TOOLWINDOW|TOPMOST) in before/after-click and 0x80 after
+the switch; the Windows reference shows 0x80 for all palettes.
+
+Verdict vs Windows reference: differs. On Windows the click only raises the
+palette and fg/active/focus stay on the main window; on Wine the palette
+becomes foreground, active and focus (#82 cause). Alt+F4 then closes the
+History palette (000208c4 gone from probe-after-altf4, main window and
+document still listed in windows-after-altf4.txt), not Photoshop (#82).
+#78 reproduced: 2-after-switch-25pct.png shows the History palette above
+xclock.
+
+Not done (next): the traced run WDBG=+timestamp,+event,+x11drv (+win if small)
+to find the code path that activates the palette (ButtonPress -> FocusIn /
+set_focus / SetForegroundWindow), log excerpts; commit DISMISS into
+t78p.sh after one more successful dismissal.
