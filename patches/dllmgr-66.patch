@@ -1,5 +1,5 @@
 diff --git a/dlls/win32u/freetype.c b/dlls/win32u/freetype.c
-index 2e324a94..74cb3852 100644
+index 2e324a94..9edb8183 100644
 --- a/dlls/win32u/freetype.c
 +++ b/dlls/win32u/freetype.c
 @@ -57,6 +57,7 @@
@@ -38,7 +38,7 @@ index 2e324a94..74cb3852 100644
          if ((!antialias_fakes || (!font->fake_bold && !font->fake_italic)) && is_hinting_enabled() &&
              dllmgr52_text_mode() < DLLMGR52_GRAY /* dllmgr #52: smooth at every size */)
          {
-@@ -3118,6 +3126,33 @@ static FT_Int get_load_flags( UINT format )
+@@ -3118,6 +3126,77 @@ static FT_Int get_load_flags( UINT format )
      return load_flags;
  }
  
@@ -69,18 +69,73 @@ index 2e324a94..74cb3852 100644
 +    return dllmgr66_wine_tahoma( ft_face ) && !(ft_face->style_flags & (FT_STYLE_FLAG_BOLD | FT_STYLE_FLAG_ITALIC));
 +}
 +
++/* dllmgr #66: Windows draws simulated italic of small Tahoma by shifting the
++ * rows of the upright bitmap (black boxes against Windows GDI, 9-16 px, best
++ * fit: shift = round((height above baseline + 0.5) * 0.34); 10 px: 73 of 94
++ * glyphs identical, Wine's sheared outline: 22). Used for monochrome glyphs of
++ * Wine's regular Tahoma strikes when the slant is the only transform. */
++static int dllmgr66_shear( int top, int row )
++{
++    return (int)floor( ((top - 1 - row) + 0.5) * 0.34 + 0.5 );
++}
++
++static BOOL dllmgr66_only_slant( struct gdi_font *font, const FT_Matrix *matrices, const MAT2 *lpmat )
++{
++    static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
++    int i;
++    if (!matrices || !font->fake_italic || font->fake_bold || getenv( "DLLMGR66_OUTLINE_ITALIC" )) return FALSE;
++    if (lpmat && memcmp( lpmat, &identity, sizeof(identity) )) return FALSE;
++    for (i = 0; i < 3; i++)
++        if (matrices[i].xx != (1 << 16) || matrices[i].xy != (1 << 16) >> 2 ||
++            matrices[i].yx != 0 || matrices[i].yy != (1 << 16)) return FALSE;
++    return TRUE;
++}
++
++/* the sheared copy of a mono strike glyph, rows top-down, DWORD-aligned */
++static DWORD dllmgr66_sheared_bitmap( FT_GlyphSlot glyph, int min_shift, DWORD width, DWORD height,
++                                      DWORD buflen, BYTE *buf )
++{
++    DWORD pitch = ((width + 31) >> 5) << 2, needed = pitch * height;
++    unsigned int r, x;
++
++    if (!buf || !buflen) return needed;
++    if (!needed) return GDI_ERROR;
++    if (needed > buflen) return GDI_ERROR;
++    memset( buf, 0, needed );
++    for (r = 0; r < glyph->bitmap.rows && r < height; r++)
++    {
++        const BYTE *src = glyph->bitmap.buffer + r * glyph->bitmap.pitch;
++        int shift = dllmgr66_shear( glyph->bitmap_top, r ) - min_shift;
++        for (x = 0; x < glyph->bitmap.width; x++)
++            if (src[x >> 3] & (0x80 >> (x & 7)) && x + shift < width)
++                buf[r * pitch + ((x + shift) >> 3)] |= 0x80 >> ((x + shift) & 7);
++    }
++    return needed;
++}
++
  /*************************************************************
   * freetype_get_glyph_outline
   */
-@@ -3133,6 +3168,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3133,6 +3212,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      FT_Int load_flags = get_load_flags(format);
      FT_Matrix transform_matrices[3], *matrices = NULL;
      BOOL vertical_metrics;
 +    FT_Pos dllmgr66_advance = 0;
++    BOOL dllmgr66_bitmap_slant = FALSE;
++    int dllmgr66_min_shift = 0;
  
      TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm, buflen, buf, lpmat);
  
-@@ -3149,6 +3185,22 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3146,9 +3228,31 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+ 
+     vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
+ 
++    if (format == GGO_BITMAP && !vertical_metrics && dllmgr66_tahoma_regular( ft_face ) &&
++        dllmgr66_only_slant( font, matrices, lpmat ))
++    {
++        dllmgr66_bitmap_slant = TRUE;  /* load the upright strike, shift its rows below */
++        matrices = NULL;
++    }
      if (matrices || format != GGO_BITMAP) load_flags |= FT_LOAD_NO_BITMAP;
      if (vertical_metrics) load_flags |= FT_LOAD_VERTICAL_LAYOUT;
  
@@ -103,11 +158,33 @@ index 2e324a94..74cb3852 100644
      err = pFT_Load_Glyph(ft_face, glyph, load_flags & FT_LOAD_NO_HINTING ? load_flags : load_flags | FT_LOAD_PEDANTIC);
      if (err && !(load_flags & FT_LOAD_NO_HINTING))
      {
-@@ -3163,6 +3215,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3163,6 +3267,19 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      }
  
      metrics = ft_face->glyph->metrics;
 +    if (dllmgr66_advance) metrics.horiAdvance = dllmgr66_advance;
++    if (dllmgr66_bitmap_slant)
++    {
++        if (ft_face->glyph->format == FT_GLYPH_FORMAT_BITMAP && ft_face->glyph->bitmap.rows)
++        {
++            FT_GlyphSlot g = ft_face->glyph;
++            int max_shift = dllmgr66_shear( g->bitmap_top, 0 );
++            dllmgr66_min_shift = dllmgr66_shear( g->bitmap_top, g->bitmap.rows - 1 );
++            metrics.horiBearingX = (g->bitmap_left + dllmgr66_min_shift) << 6;
++            metrics.width = (g->bitmap.width + max_shift - dllmgr66_min_shift) << 6;
++        }
++        else dllmgr66_bitmap_slant = FALSE;  /* no strike at this size: plain upright glyph */
++    }
      if(font->fake_bold) {
          if (!get_bold_glyph_outline(ft_face->glyph, font->ppem, &metrics) && metrics.width)
              metrics.width += 1 << 6;
+@@ -3192,6 +3309,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+         return 1;  /* FIXME */
+ 
+     case GGO_BITMAP:
++        if (dllmgr66_bitmap_slant)
++            return dllmgr66_sheared_bitmap( ft_face->glyph, dllmgr66_min_shift, (bbox.xMax - bbox.xMin) >> 6,
++                                            (bbox.yMax - bbox.yMin) >> 6, buflen, buf );
+         return get_mono_glyph_bitmap( ft_face->glyph, bbox, font->fake_bold,
+                                       matrices, buflen, buf );
+ 
