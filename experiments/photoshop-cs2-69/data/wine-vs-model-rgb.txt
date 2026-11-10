@@ -1,0 +1,2 @@
+p-agg-rgb-s0.bmp regular lines: max|diff| vs its model 0 ; identical lines 64 /64 ; lines where the other variant differs 64
+p-agg-rgb-s1.bmp regular lines: max|diff| vs its model 0 ; identical lines 64 /64 ; lines where the other variant differs 64
