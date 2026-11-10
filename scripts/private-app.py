@@ -54,16 +54,22 @@ SETTINGS = {
     'contrast': None,  # DLLMGR52_GAMMA, 1.0 .. 4.0, smoothed text only
     'scaling': ('exact', 'smooth'),  # DLLMGR46_SMOOTH
     'alt-click': ('app', 'desktop'),  # #48: who gets Alt+click, see free_alt_click
+    'tahoma': ('wine', 'xo', 'xo-bold', 'dejavu', 'dejavu-bold'),  # #66: DLLMGR66_TAHOMA[_BOLD]
 }
+# #66: Tahoma served by another family inside the application (the runtime's
+# win32u, patches/dllmgr-66.patch); '-bold' only replaces bold Tahoma. XO Tahion
+# ships with dllmgr (scripts/fonts/xo-tahion) and is copied into the prefix.
+TAHOMA_FAMILIES = {'xo': 'XO Tahion', 'dejavu': 'DejaVu Sans Condensed'}
+TAHOMA_FONTS = {'xo': HERE / 'fonts/xo-tahion'}
 SETTING_DEFAULTS = {
-    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact', 'alt-click': 'app'},
-    'faststone': {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop'},
+    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact', 'alt-click': 'app', 'tahoma': 'wine'},
+    'faststone': {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop', 'tahoma': 'wine'},
 }
 SETTINGS_FILE = '.dllmgr/settings.json'
 
 
 def read_settings(prefix, app):
-    values = dict(SETTING_DEFAULTS.get(app, {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop'}))
+    values = dict(SETTING_DEFAULTS.get(app, {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop', 'tahoma': 'wine'}))
     try:
         stored = json.loads((prefix / SETTINGS_FILE).read_text()).get(app, {})
     except (OSError, ValueError, AttributeError):
@@ -112,7 +118,23 @@ def settings_env(values):
         env['DLLMGR52_GAMMA'] = values['contrast']
     if values['scaling'] == 'smooth':
         env['DLLMGR46_SMOOTH'] = '1'
+    family = TAHOMA_FAMILIES.get(values['tahoma'].split('-')[0])
+    if family:
+        env['DLLMGR66_TAHOMA_BOLD' if values['tahoma'].endswith('-bold') else 'DLLMGR66_TAHOMA'] = family
     return env
+
+
+def install_tahoma_fonts(prefix, values):
+    """#66: the shipped substitute family into the prefix's Fonts (Wine loads it from there)."""
+    source = TAHOMA_FONTS.get(values['tahoma'].split('-')[0])
+    if not source:
+        return
+    fonts = prefix / 'drive_c/windows/Fonts'
+    fonts.mkdir(parents=True, exist_ok=True)
+    for font in sorted(source.glob('*.ttf')):
+        target = fonts / font.name
+        if not target.is_file() or target.read_bytes() != font.read_bytes():
+            shutil.copyfile(font, target)
 
 
 # #48: Cinnamon (Muffin) moves windows on Alt+drag (its default modifier), so
@@ -833,9 +855,10 @@ def launch(args, prefix):
     verify(runtime, state['package_sha256'], Path(state['base']))
     verify_prefix(prefix, Path(state['base']))
     env = dict(os.environ)
-    for name in RULES + ('DLLMGR52_TEXT', 'DLLMGR52_GAMMA', 'DLLMGR46_SMOOTH'):
+    for name in RULES + ('DLLMGR52_TEXT', 'DLLMGR52_GAMMA', 'DLLMGR46_SMOOTH', 'DLLMGR66_TAHOMA', 'DLLMGR66_TAHOMA_BOLD'):
         env.pop(name, None)
     env.update(settings_env(read_settings(prefix, app_of(args))))
+    install_tahoma_fonts(prefix, read_settings(prefix, app_of(args)))
     if 'utf' not in locale.getencoding().lower().replace('-', ''):
         env['LC_ALL'] = 'C.UTF-8'
     env.update(WINEPREFIX=str(prefix), WINEARCH='wow64', DLLMGR_TARGET_EXE=state['target'],
@@ -858,7 +881,7 @@ def launch(args, prefix):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status', 'set', 'wm-restore'])
-    parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling, alt-click)')
+    parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling, alt-click, tahoma)')
     parser.add_argument('--prefix', type=Path, default=Path(os.environ.get('WINEPREFIX', str(Path.home() / '.wine'))))
     parser.add_argument('--exe', type=Path)
     parser.add_argument('--json', action='store_true', help='machine-readable status')
@@ -923,7 +946,7 @@ def main():
                 print('  Launch trampoline: ' + trampoline)
                 print('  Settings: ' + settings_line(read_settings(prefix, args.app)) +
                       ' (change: dllmgr set ' + args.app + ' text=' + '|'.join(SETTINGS['text']) +
-                      ' contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop)')
+                      ' contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop tahoma=' + '|'.join(SETTINGS['tahoma']) + ')')
                 print('  Launch: dllmgr run ' + args.app)
                 for pid, kind in running_on(Path(state['exe']).name):
                     print('  Running: pid ' + str(pid) + ' on the ' + kind)

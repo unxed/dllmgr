@@ -122,3 +122,42 @@ patches/dllmgr-66.patch (v4):
 Images: windows-vs-wine-v4.png (Windows / v3 / v4),
 italic-windows-vs-v4-zoom.png (Windows 10/11 px, Wine v4 10/11 px),
 photoshop-stock-v3-v4.png (Photoshop at 2x: stock, v3, v4).
+
+## v5 and the substitution option (2026-11-10)
+
+Ink-based metrics (text-metrics66.c now reports the inked columns; an outline
+font's black box can carry empty ones): metrics/windows-ink.csv. Pair gaps
+(white columns between letters, 163 pairs of palette words, gapcsv.py):
+
+| bold: pairs differing from Windows / glued where Windows has a gap | 9 px | 10 px | 11 px | 12 px | 13 px |
+|---|---|---|---|---|---|
+| Wine stock strikes | 56/48 | 79/11 | 70/11 | 111/40 | 156/0 |
+| v4 (rounded outline advance) | 69/69 | 20/13 | 20/12 | 73/52 | 147/0 |
+| **v5** | **1/0** | **1/0** | **3/1** | **2/0** | **3/0** |
+| XO Tahion Bold (tahoma=xo) | 91/84 | 116/111 | 86/74 | 71/50 | 78/49 |
+| DejaVu Sans Condensed Bold (tahoma=dejavu) | 85/39 | 80/60 | 87/38 | 77/31 | 86/13 |
+| Wine Tahoma Bold outline, ttfautohint, no strikes | 85/72 | 100/80 | 73/52 | 79/59 | 87/60 |
+
+Key observation: Windows draws every letter and digit of small Tahoma Bold
+with its ink at the origin and exactly one blank column after it (9-13 px:
+59-60 of 62 letters/digits; punctuation differs). Wine's bold strikes already
+have Windows' ink widths at 9-10 px (61 of 62; 11 px 53, 12 px 44); only their
+placement was wrong. v5: for letters/digits (Latin, Greek, Cyrillic, found
+through the cmap) of a bold strike, left bearing 0 and advance = ink width +
+1; punctuation keeps v4. Text width vs Windows: 9-11 px within 0.1 %, 12 px
++2.8 %, 13/15/16 px -13..-16 % (Wine's strikes there are thinner and narrower
+than Windows' glyphs; the spacing is still Windows'). DLLMGR66_V4=1 restores
+v4. Bold 10 px probe row: 30 pixels differ from Windows (stock: 700).
+Image: windows-vs-v5-bold.png (Windows 10/11 px, then Wine v5 10/11 px).
+
+Outline substitutes all glue at palette sizes: FreeType's monochrome
+rendering of a hinted outline (XO Tahion is ParaType-hinted) fills the whole
+advance, while Windows keeps a column free. So substitution is an aesthetic
+choice, not a metric fix. It is still selectable (the owner's request; the
+default is chosen by looks):
+`dllmgr set photoshop-cs2 tahoma=wine|xo|xo-bold|dejavu|dejavu-bold`
+(win32u: DLLMGR66_TAHOMA / DLLMGR66_TAHOMA_BOLD = family; the application
+still sees "Tahoma"; works while Wine's Tahoma is installed, unlike
+[Fonts\Replacements]). XO Tahion ships unmodified in scripts/fonts/xo-tahion
+with its license (copy, modify and redistribute allowed; the font itself may
+not be sold). The PingWin/ROSA "Tahion" predecessors forbid redistribution.

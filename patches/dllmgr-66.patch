@@ -1,5 +1,72 @@
+diff --git a/dlls/win32u/font.c b/dlls/win32u/font.c
+index cc276cac..9e13bd2d 100644
+--- a/dlls/win32u/font.c
++++ b/dlls/win32u/font.c
+@@ -2289,11 +2289,38 @@ static struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs
+     return NULL;
+ }
+ 
++/* dllmgr #66: Tahoma served by another family inside one application (the
++ * runtime gets the `dllmgr set <app> tahoma=` setting as environment):
++ * DLLMGR66_TAHOMA=<family> takes every Tahoma request, DLLMGR66_TAHOMA_BOLD
++ * only the bold ones. The application still sees the name "Tahoma". Unlike
++ * [Fonts\Replacements] this works while Wine's own Tahoma is installed. */
++static const WCHAR *dllmgr66_tahoma_subst( const LOGFONTW *lf )
++{
++    static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
++    static WCHAR all[LF_FACESIZE], bold[LF_FACESIZE];
++    static int init;
++
++    if (!init)
++    {
++        const char *env[2] = {getenv( "DLLMGR66_TAHOMA" ), getenv( "DLLMGR66_TAHOMA_BOLD" )};
++        WCHAR *dst[2] = {all, bold};
++        int i, j;
++        for (i = 0; i < 2; i++)
++            for (j = 0; env[i] && env[i][j] && j < LF_FACESIZE - 1; j++) dst[i][j] = (unsigned char)env[i][j];
++        init = 1;
++    }
++    if (!all[0] && !bold[0]) return NULL;
++    if (wcsicmp( lf->lfFaceName, tahomaW )) return NULL;
++    if (bold[0] && lf->lfWeight > FW_MEDIUM) return bold;
++    return all[0] ? all : NULL;
++}
++
+ static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO *csi, BOOL can_use_bitmap,
+                                                  BOOL *substituted, const WCHAR **orig_name )
+ {
+     BOOL want_vertical = (lf->lfFaceName[0] == '@');
+     struct gdi_font_face *face;
++    const WCHAR *dllmgr66_family;
+ 
+     if (!translate_charset_info( (DWORD *)(INT_PTR)lf->lfCharSet, csi, TCI_SRCCHARSET ))
+     {
+@@ -2301,6 +2328,14 @@ static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO
+         csi->fs.fsCsb[0] = 0;
+     }
+ 
++    if ((dllmgr66_family = dllmgr66_tahoma_subst( lf )) &&
++        (face = find_matching_face_by_name( dllmgr66_family, NULL, lf, csi->fs, can_use_bitmap, NULL )))
++    {
++        TRACE( "dllmgr66: Tahoma -> %s\n", debugstr_w(dllmgr66_family) );
++        *substituted = TRUE;
++        return face;
++    }
++
+     if (lf->lfFaceName[0])
+     {
+         int subst_charset;
+@@ -4571,6 +4606,8 @@ static HFONT font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+ 
+         if (lf.lfOutPrecision == OUT_TT_ONLY_PRECIS)
+             can_use_bitmap = FALSE;
++        /* dllmgr #52: raster glyphs cannot follow the hidden GDI scale */
++        if (dc->dllmgr_scale > 1) can_use_bitmap = FALSE;
+ 
+         lf.lfWidth = abs(lf.lfWidth);
+ 
 diff --git a/dlls/win32u/freetype.c b/dlls/win32u/freetype.c
-index 2e324a94..9edb8183 100644
+index 2e324a94..96d951c8 100644
 --- a/dlls/win32u/freetype.c
 +++ b/dlls/win32u/freetype.c
 @@ -57,6 +57,7 @@
@@ -38,7 +105,7 @@ index 2e324a94..9edb8183 100644
          if ((!antialias_fakes || (!font->fake_bold && !font->fake_italic)) && is_hinting_enabled() &&
              dllmgr52_text_mode() < DLLMGR52_GRAY /* dllmgr #52: smooth at every size */)
          {
-@@ -3118,6 +3126,77 @@ static FT_Int get_load_flags( UINT format )
+@@ -3118,6 +3126,113 @@ static FT_Int get_load_flags( UINT format )
      return load_flags;
  }
  
@@ -62,6 +129,42 @@ index 2e324a94..9edb8183 100644
 +static BOOL dllmgr66_tahoma_bold( FT_Face ft_face )
 +{
 +    return dllmgr66_wine_tahoma( ft_face ) && (ft_face->style_flags & FT_STYLE_FLAG_BOLD);
++}
++
++/* dllmgr #66 v5: Windows draws every letter and digit of small Tahoma Bold
++ * (9-16 px, black boxes against Windows GDI) with its ink starting at the
++ * origin and one blank column after it: advance = ink width + 1 (Latin 10 px:
++ * 60 of 62; punctuation differs and keeps the strike's own placement). Wine's
++ * strikes have the same ink widths at 9-10 px (61 of 62), so this gives the
++ * Windows spacing. Letters are found by character: glyph indexes of Latin,
++ * Greek and Cyrillic letters and of digits, built once from the cmap (every
++ * Tahoma Bold face is the same file). DLLMGR66_V4 keeps the v4 placement. */
++static BOOL dllmgr66_letter_char( FT_ULong ch )
++{
++    if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')) return TRUE;
++    if (ch >= 0xc0 && ch <= 0x24f) return ch != 0xd7 && ch != 0xf7;
++    return (ch >= 0x386 && ch <= 0x3ff) || (ch >= 0x400 && ch <= 0x52f && (ch < 0x482 || ch > 0x489));
++}
++
++static BOOL dllmgr66_bold_letter( FT_Face ft_face, FT_UInt glyph )
++{
++    static unsigned char *bits;
++    static FT_UInt count;
++    static int state = -1;  /* -1 unknown, 0 off (DLLMGR66_V4 or no memory), 1 built */
++
++    if (state < 0)
++    {
++        FT_ULong ch;
++        FT_UInt index;
++        state = 0;
++        if (getenv( "DLLMGR66_V4" ) || ft_face->num_glyphs <= 0) return FALSE;
++        count = ft_face->num_glyphs;
++        if (!(bits = calloc( (count + 7) / 8, 1 ))) return FALSE;
++        for (ch = pFT_Get_First_Char( ft_face, &index ); index; ch = pFT_Get_Next_Char( ft_face, ch, &index ))
++            if (index < count && dllmgr66_letter_char( ch )) bits[index / 8] |= 1 << (index % 8);
++        state = 1;
++    }
++    return state > 0 && glyph < count && (bits[glyph / 8] >> (glyph % 8)) & 1;
 +}
 +
 +static BOOL dllmgr66_tahoma_regular( FT_Face ft_face )
@@ -116,7 +219,7 @@ index 2e324a94..9edb8183 100644
  /*************************************************************
   * freetype_get_glyph_outline
   */
-@@ -3133,6 +3212,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3133,6 +3248,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      FT_Int load_flags = get_load_flags(format);
      FT_Matrix transform_matrices[3], *matrices = NULL;
      BOOL vertical_metrics;
@@ -126,7 +229,7 @@ index 2e324a94..9edb8183 100644
  
      TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm, buflen, buf, lpmat);
  
-@@ -3146,9 +3228,31 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3146,9 +3264,31 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
  
      vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
  
@@ -158,11 +261,18 @@ index 2e324a94..9edb8183 100644
      err = pFT_Load_Glyph(ft_face, glyph, load_flags & FT_LOAD_NO_HINTING ? load_flags : load_flags | FT_LOAD_PEDANTIC);
      if (err && !(load_flags & FT_LOAD_NO_HINTING))
      {
-@@ -3163,6 +3267,19 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3163,6 +3303,26 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      }
  
      metrics = ft_face->glyph->metrics;
 +    if (dllmgr66_advance) metrics.horiAdvance = dllmgr66_advance;
++    if (dllmgr66_advance && ft_face->glyph->format == FT_GLYPH_FORMAT_BITMAP && ft_face->glyph->bitmap.width &&
++        dllmgr66_tahoma_bold( ft_face ) && dllmgr66_bold_letter( ft_face, glyph ))
++    {
++        metrics.horiBearingX = 0;  /* v5: ink at the origin, one blank column after it */
++        metrics.width = ft_face->glyph->bitmap.width << 6;
++        metrics.horiAdvance = (ft_face->glyph->bitmap.width + 1) << 6;
++    }
 +    if (dllmgr66_bitmap_slant)
 +    {
 +        if (ft_face->glyph->format == FT_GLYPH_FORMAT_BITMAP && ft_face->glyph->bitmap.rows)
@@ -178,7 +288,7 @@ index 2e324a94..9edb8183 100644
      if(font->fake_bold) {
          if (!get_bold_glyph_outline(ft_face->glyph, font->ppem, &metrics) && metrics.width)
              metrics.width += 1 << 6;
-@@ -3192,6 +3309,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3192,6 +3352,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
          return 1;  /* FIXME */
  
      case GGO_BITMAP:

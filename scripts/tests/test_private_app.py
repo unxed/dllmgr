@@ -654,15 +654,31 @@ class SettingsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp)
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact", "alt-click": "app"})
+            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact", "alt-click": "app", "tahoma": "wine"})
             self.assertEqual(private_app.settings_env(values), {"DLLMGR52_TEXT": "gray", "DLLMGR52_GAMMA": "2.2"})
             private_app.write_settings(prefix, "photoshop-cs2", ["text=light", "scaling=smooth"])
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth alt-click=app")
+            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth alt-click=app tahoma=wine")
             self.assertEqual(private_app.settings_env(values),
                              {"DLLMGR52_TEXT": "light", "DLLMGR52_GAMMA": "2.2", "DLLMGR46_SMOOTH": "1"})
             # FastStone keeps stock text unless asked
             self.assertEqual(private_app.settings_env(private_app.read_settings(prefix, "faststone")), {})
+
+    def test_tahoma_substitute(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp)
+            private_app.write_settings(prefix, "photoshop-cs2", ["tahoma=xo-bold"])
+            values = private_app.read_settings(prefix, "photoshop-cs2")
+            self.assertEqual(private_app.settings_env(values)["DLLMGR66_TAHOMA_BOLD"], "XO Tahion")
+            private_app.install_tahoma_fonts(prefix, values)
+            fonts = sorted(p.name for p in (prefix / "drive_c/windows/Fonts").iterdir())
+            self.assertEqual(fonts, ["XO_Tahion_Nu.ttf", "XO_Tahion_bold.ttf"])
+            private_app.write_settings(prefix, "photoshop-cs2", ["tahoma=dejavu"])
+            env = private_app.settings_env(private_app.read_settings(prefix, "photoshop-cs2"))
+            self.assertEqual(env["DLLMGR66_TAHOMA"], "DejaVu Sans Condensed")
+            self.assertNotIn("DLLMGR66_TAHOMA_BOLD", env)
+            with self.assertRaises(private_app.Error):
+                private_app.write_settings(prefix, "photoshop-cs2", ["tahoma=comic"])
 
     def test_rejects_bad_values_and_keeps_the_file(self):
         with tempfile.TemporaryDirectory() as tmp:
