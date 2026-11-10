@@ -50,7 +50,7 @@ RULES = ('DLLMGR_TARGET_EXE', 'DLLMGR_COMCTL32', 'DLLMGR_GDIPLUS')
 # User settings per application (#52), kept in the prefix and applied by
 # `dllmgr run` as environment variables the private runtime reads.
 SETTINGS = {
-    'text': ('system', 'bitmap', 'gray', 'light', 'cleartype'),  # DLLMGR52_TEXT
+    'text': ('system', 'bitmap', 'gray', 'light', 'cleartype', 'agg'),  # DLLMGR52_TEXT; agg: #69
     'contrast': None,  # DLLMGR52_GAMMA, 1.0 .. 4.0, smoothed text only
     'scaling': ('exact', 'smooth'),  # DLLMGR46_SMOOTH
     'alt-click': ('app', 'desktop'),  # #48: who gets Alt+click, see free_alt_click

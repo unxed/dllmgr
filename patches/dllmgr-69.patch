@@ -1,0 +1,247 @@
+diff --git a/dlls/win32u/dibdrv/graphics.c b/dlls/win32u/dibdrv/graphics.c
+index 92dea911..1cbd3347 100644
+--- a/dlls/win32u/dibdrv/graphics.c
++++ b/dlls/win32u/dibdrv/graphics.c
+@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dib);
+ struct cached_glyph
+ {
+     GLYPHMETRICS metrics;
++    INT          linear;   /* dllmgr #69: unhinted advance, 1/64 px (0: unknown) */
+     BYTE         bits[1];
+ };
+ 
+@@ -44,6 +45,11 @@ enum glyph_type
+     GLYPH_NBTYPES
+ };
+ 
++/* dllmgr #69 (text=agg): every glyph is cached for three horizontal phases,
++ * 0, 1/3 and 2/3 px; slot = type * 3 + phase */
++#define GLYPH_PHASES           3
++#define GLYPH_SLOTS            (GLYPH_NBTYPES * GLYPH_PHASES)
++
+ #define GLYPH_CACHE_PAGE_SIZE  0x100
+ #define GLYPH_CACHE_PAGES      (0x10000 / GLYPH_CACHE_PAGE_SIZE)
+ 
+@@ -55,7 +61,7 @@ struct cached_font
+     LOGFONTW              lf;
+     XFORM                 xform;
+     UINT                  aa_flags;
+-    struct cached_glyph **glyphs[GLYPH_NBTYPES][GLYPH_CACHE_PAGES];
++    struct cached_glyph **glyphs[GLYPH_SLOTS][GLYPH_CACHE_PAGES];
+ };
+ 
+ static struct list font_cache = LIST_INIT( font_cache );
+@@ -588,7 +594,7 @@ static struct cached_font *add_cached_font( DC *dc, HFONT hfont, UINT aa_flags )
+     if (i > 5)  /* keep at least 5 of the most-recently used fonts around */
+     {
+         ptr = last_unused;
+-        for (i = 0; i < GLYPH_NBTYPES; i++)
++        for (i = 0; i < GLYPH_SLOTS; i++)
+         {
+             for (j = 0; j < GLYPH_CACHE_PAGES; j++)
+             {
+@@ -621,11 +627,11 @@ void release_cached_font( struct cached_font *font )
+     if (font) InterlockedDecrement( &font->ref );
+ }
+ 
+-static struct cached_glyph *add_cached_glyph( struct cached_font *font, UINT index, UINT flags,
++static struct cached_glyph *add_cached_glyph( struct cached_font *font, UINT index, UINT flags, UINT phase,
+                                               struct cached_glyph *glyph )
+ {
+     struct cached_glyph *ret;
+-    enum glyph_type type = (flags & ETO_GLYPH_INDEX) ? GLYPH_INDEX : GLYPH_WCHAR;
++    UINT type = ((flags & ETO_GLYPH_INDEX) ? GLYPH_INDEX : GLYPH_WCHAR) * GLYPH_PHASES + phase;
+     UINT page = index / GLYPH_CACHE_PAGE_SIZE;
+     UINT entry = index % GLYPH_CACHE_PAGE_SIZE;
+ 
+@@ -648,9 +654,9 @@ static struct cached_glyph *add_cached_glyph( struct cached_font *font, UINT ind
+     return ret;
+ }
+ 
+-static struct cached_glyph *get_cached_glyph( struct cached_font *font, UINT index, UINT flags )
++static struct cached_glyph *get_cached_glyph( struct cached_font *font, UINT index, UINT flags, UINT phase )
+ {
+-    enum glyph_type type = (flags & ETO_GLYPH_INDEX) ? GLYPH_INDEX : GLYPH_WCHAR;
++    UINT type = ((flags & ETO_GLYPH_INDEX) ? GLYPH_INDEX : GLYPH_WCHAR) * GLYPH_PHASES + phase;
+     UINT page = index / GLYPH_CACHE_PAGE_SIZE;
+ 
+     if (!font->glyphs[type][page]) return NULL;
+@@ -742,9 +748,10 @@ static const int padding[4] = {0, 3, 2, 1};
+  * For non-antialiased bitmaps convert them to the 17-level format
+  * using only values 0 or 16.
+  */
+-static struct cached_glyph *cache_glyph_bitmap( DC *dc, struct cached_font *font, UINT index, UINT flags )
++static struct cached_glyph *cache_glyph_bitmap( DC *dc, struct cached_font *font, UINT index, UINT flags,
++                                               UINT phase )
+ {
+-    UINT ggo_flags = font->aa_flags;
++    UINT ggo_flags = font->aa_flags | (phase << DLLMGR69_PHASE_SHIFT);
+     static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
+     UINT indices[3] = {0, 0, 0x20};
+     int i, x, y;
+@@ -804,7 +811,14 @@ static struct cached_glyph *cache_glyph_bitmap( DC *dc, struct cached_font *font
+ 
+ done:
+     glyph->metrics = metrics;
+-    return add_cached_glyph( font, index, flags, glyph );
++    glyph->linear = 0;
++    if (dllmgr52_text_mode() == DLLMGR52_AGG && font->aa_flags != GGO_BITMAP)
++    {
++        ret = NtGdiGetGlyphOutline( dc->hSelf, index, (ggo_flags & ~DLLMGR69_PHASE_MASK) | DLLMGR69_LINEAR,
++                                    &metrics, 0, NULL, &identity, FALSE );
++        if (ret != GDI_ERROR && ret > 1) glyph->linear = ret - 1;
++    }
++    return add_cached_glyph( font, index, flags, phase, glyph );
+ }
+ 
+ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT x, INT y,
+@@ -816,6 +830,8 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT
+     dib_info glyph_dib;
+     DWORD text_color;
+     struct font_intensities intensity;
++    BOOL agg;
++    int x0 = x, pen = 0, app = 0;  /* 1/64 px from x0 */
+ 
+     glyph_dib.bit_count    = get_glyph_depth( font->aa_flags );
+     glyph_dib.rect.left    = 0;
+@@ -830,10 +846,28 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT
+     else
+         get_aa_ranges( dib->funcs->pixel_to_colorref( dib, text_color ), intensity.ranges );
+ 
++    /* dllmgr #69 (text=agg, after M. Shemanarev): each glyph goes to the
++     * font's own unhinted position, in thirds of a pixel, but never more than
++     * half a pixel away from where the application put it (its integer
++     * advances or dx), so selections, carets and clip rects still fit */
++    agg = dllmgr52_text_mode() == DLLMGR52_AGG && font->aa_flags != GGO_BITMAP && !(flags & ETO_PDY);
++
+     for (i = 0; i < count; i++)
+     {
+-        if (!(glyph = get_cached_glyph( font, str[i], flags )) &&
+-            !(glyph = cache_glyph_bitmap( dc, font, str[i], flags ))) continue;
++        int gx = x, phase = 0;
++
++        if (agg && ((glyph = get_cached_glyph( font, str[i], flags, 0 )) ||
++                    (glyph = cache_glyph_bitmap( dc, font, str[i], flags, 0 ))))
++        {
++            int ideal = min( max( pen, app - 32 ), app + 32 ), thirds = (ideal * 3 + (ideal >= 0 ? 32 : -32)) / 64;
++            int whole = thirds >= 0 ? thirds / 3 : -((2 - thirds) / 3);
++            phase = thirds - whole * 3;
++            gx = x0 + whole;
++            pen = glyph->linear ? ideal + glyph->linear : app + 64 * (dx ? dx[i] : glyph->metrics.gmCellIncX);
++            app += 64 * (dx ? dx[i] : glyph->metrics.gmCellIncX);
++        }
++        if (!(glyph = get_cached_glyph( font, str[i], flags, phase )) &&
++            !(glyph = cache_glyph_bitmap( dc, font, str[i], flags, phase ))) continue;
+ 
+         glyph_dib.width       = glyph->metrics.gmBlackBoxX;
+         glyph_dib.height      = glyph->metrics.gmBlackBoxY;
+@@ -842,7 +876,7 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT
+         glyph_dib.stride      = get_dib_stride( glyph->metrics.gmBlackBoxX, glyph_dib.bit_count );
+         glyph_dib.bits.ptr    = glyph->bits;
+ 
+-        draw_glyph( dib, x, y, &glyph->metrics, &glyph_dib, text_color, &intensity, clipped_rects, bounds );
++        draw_glyph( dib, agg ? gx : x, y, &glyph->metrics, &glyph_dib, text_color, &intensity, clipped_rects, bounds );
+ 
+         if (dx)
+         {
+diff --git a/dlls/win32u/font.c b/dlls/win32u/font.c
+index 09765640..1811e477 100644
+--- a/dlls/win32u/font.c
++++ b/dlls/win32u/font.c
+@@ -216,6 +216,7 @@ int dllmgr52_text_mode(void)
+         else if (env && !strcmp( env, "gray" )) mode = DLLMGR52_GRAY;
+         else if (env && !strcmp( env, "light" )) mode = DLLMGR52_LIGHT;
+         else if (env && !strcmp( env, "cleartype" )) mode = DLLMGR52_CLEARTYPE;
++        else if (env && !strcmp( env, "agg" )) mode = DLLMGR52_AGG;  /* dllmgr #69 */
+     }
+     return mode;
+ }
+@@ -4651,7 +4654,8 @@ static HFONT font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+             {
+             case DLLMGR52_BITMAP: *aa_flags = GGO_BITMAP; break;
+             case DLLMGR52_GRAY:
+-            case DLLMGR52_LIGHT: *aa_flags = GGO_GRAY4_BITMAP; break;
++            case DLLMGR52_LIGHT:
++            case DLLMGR52_AGG: *aa_flags = GGO_GRAY4_BITMAP; break;
+             case DLLMGR52_CLEARTYPE:
+                 *aa_flags = subpixel_orientation == GGO_GRAY4_BITMAP ? WINE_GGO_HRGB_BITMAP : subpixel_orientation;
+                 break;
+diff --git a/dlls/win32u/freetype.c b/dlls/win32u/freetype.c
+index aef3e313..7705ec7a 100644
+--- a/dlls/win32u/freetype.c
++++ b/dlls/win32u/freetype.c
+@@ -2142,7 +2142,7 @@ static BOOL dllmgr66_tahoma_strike( struct gdi_font *font )
+     int i;
+ 
+     if (smooth < 0) smooth = getenv( "DLLMGR66_SMOOTH_TAHOMA" ) != NULL;
+-    if (smooth || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
++    if (smooth || dllmgr52_text_mode() == DLLMGR52_AGG || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
+     /* regular stays smoothed: Photoshop clips its labels at the ink end of
+      * Windows' ClearType glyphs ("Opacity:" in a 37 px rect, x = 1), the
+      * strike's colon lands one column further and was cut off */
+@@ -3142,7 +3142,8 @@ static FT_Int get_load_flags( UINT format )
+     case GGO_GRAY8_BITMAP:
+     case WINE_GGO_GRAY16_BITMAP:
+         /* dllmgr #52: light hinting keeps the outline shapes */
+-        load_flags |= dllmgr52_text_mode() == DLLMGR52_LIGHT ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_NORMAL;
++        load_flags |= dllmgr52_text_mode() == DLLMGR52_LIGHT || dllmgr52_text_mode() == DLLMGR52_AGG
++                      ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_NORMAL;
+         break;
+     case WINE_GGO_HRGB_BITMAP:
+     case WINE_GGO_HBGR_BITMAP:
+@@ -3283,9 +3284,11 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+     FT_Glyph_Metrics metrics;
+     FT_Error err;
+     FT_BBox bbox;
+-    FT_Int load_flags = get_load_flags(format);
++    FT_Int load_flags = get_load_flags( format & ~(DLLMGR69_PHASE_MASK | DLLMGR69_LINEAR) );
+     FT_Matrix transform_matrices[3], *matrices = NULL;
+     BOOL vertical_metrics;
++    UINT dllmgr69_phase = (format & DLLMGR69_PHASE_MASK) >> DLLMGR69_PHASE_SHIFT;
++    BOOL dllmgr69_linear = (format & DLLMGR69_LINEAR) != 0;
+     FT_Pos dllmgr66_advance = 0;
+     BOOL dllmgr66_bitmap_slant = FALSE;
+     int dllmgr66_min_shift = 0;
+@@ -3297,6 +3300,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+           font->matrix.eM21, font->matrix.eM22);
+ 
+     format &= ~GGO_UNHINTED;
++    format &= ~(DLLMGR69_PHASE_MASK | DLLMGR69_LINEAR);
+ 
+     matrices = get_transform_matrices( font, tategaki, lpmat, transform_matrices );
+ 
+@@ -3341,6 +3345,15 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+     }
+ 
+     metrics = ft_face->glyph->metrics;
++    if (dllmgr69_linear)  /* dllmgr #69 (text=agg): 1 + unhinted advance in 1/64 px, 0: unknown */
++        return (!matrices || dllmgr66_only_slant( font, matrices, lpmat )) && !vertical_metrics &&
++               ft_face->glyph->linearHoriAdvance > 0 ? (UINT)(ft_face->glyph->linearHoriAdvance >> 10) + 1 : 0;
++    if (dllmgr69_phase && ft_face->glyph->format == FT_GLYPH_FORMAT_OUTLINE)
++    {
++        FT_Pos shift = (dllmgr69_phase * 64 + 1) / 3;  /* 1/3 px: 21, 2/3 px: 43 */
++        pFT_Outline_Translate( &ft_face->glyph->outline, shift, 0 );
++        metrics.horiBearingX += shift;
++    }
+     if (dllmgr66_advance) metrics.horiAdvance = dllmgr66_advance;
+     if (!vertical_metrics && !matrices && ft_face->glyph->format == FT_GLYPH_FORMAT_BITMAP && ft_face->glyph->bitmap.width &&
+         ((dllmgr66_tahoma_bold( ft_face ) && dllmgr66_letter( ft_face, glyph ) != DLLMGR66_OTHER) ||
+diff --git a/dlls/win32u/ntgdi_private.h b/dlls/win32u/ntgdi_private.h
+index d7b67b42..cd3ab72c 100644
+--- a/dlls/win32u/ntgdi_private.h
++++ b/dlls/win32u/ntgdi_private.h
+@@ -646,7 +647,13 @@ extern void free_heap_bits( struct gdi_image_bits *bits );
+ void set_gdi_client_ptr( HGDIOBJ handle, void *ptr );
+ 
+ /* dllmgr #52 */
+-enum { DLLMGR52_SYSTEM, DLLMGR52_BITMAP, DLLMGR52_GRAY, DLLMGR52_LIGHT, DLLMGR52_CLEARTYPE };
++enum { DLLMGR52_SYSTEM, DLLMGR52_BITMAP, DLLMGR52_GRAY, DLLMGR52_LIGHT, DLLMGR52_CLEARTYPE, DLLMGR52_AGG };
++/* dllmgr #69 (text=agg): private GetGlyphOutline format bits between the DIB
++ * text renderer and FreeType: render the glyph shifted right by phase/3 px,
++ * or (metrics only) return 1 + the unhinted advance in 1/64 px */
++#define DLLMGR69_PHASE_SHIFT 28
++#define DLLMGR69_PHASE_MASK  (3u << DLLMGR69_PHASE_SHIFT)
++#define DLLMGR69_LINEAR      (1u << 30)
+ extern int dllmgr52_text_mode(void);
+ 
+ #endif /* __WINE_NTGDI_PRIVATE_H */
