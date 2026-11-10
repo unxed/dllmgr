@@ -2,8 +2,8 @@ Where: WineHQ Bugzilla, comment in https://bugs.winehq.org/show_bug.cgi?id=34133
 (Photoshop CS2 splash background; our earlier comment there is c5). If the
 owner prefers a new bug instead, the same text works as a description; first
 search for duplicates ("splash", "initial window contents", "layered").
-Status: DRAFT 2026-11-10. Master retest: see the line marked RETEST below
-(fill in before posting). Owner posts.
+Status: DRAFT 2026-11-10. Master retest done 2026-11-10 (wine.git master, white rectangle still present;
+experiments/photoshop-splash/wine-master-11.21-splash.png). Owner posts.
 
 Text:
 
@@ -59,7 +59,7 @@ complete solution for the shadow would need the application's drawing to be
 over a live background, i.e. composition. On Windows the CS2 splash shows the
 card and its soft shadow over whatever is behind it.
 
-RETEST: wine.git master <commit>: <white rectangle still present / ...>.
+Retested on current wine.git master (Wine version 11.21 2af4506cc3d94e07f39975ba2a8c5bd668edfc26), fresh 192 DPI start: the white rectangle around the card is still there.
 
 Prepared with the help of an AI agent; the description above is in words
 only, no code.
