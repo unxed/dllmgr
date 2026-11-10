@@ -51,7 +51,8 @@ Rules (owner's, non-negotiable):
   (docs/owner-machine.md). Screenshots and the stand show the 2x frame;
   his eyes get it resampled to ~120 DPI. Judge text, thin lines, cursors
   and pixel-exact fixes also after a 0.625 downscale
-  (scripts/as-seen.sh), and keep in mind that HiDPI with fractional scaling
+  (scripts/as-seen.sh; its filter is an assumption until checked with
+  `xrandr --verbose` there), and keep in mind that HiDPI with fractional scaling
   is common: every case where Wine handles it badly is a WineHQ report
   for docs/upstream-outbox.md (owner, 2026-11-10).
 - When a fix lives only in the private runtime (a Wine patch), also look,
