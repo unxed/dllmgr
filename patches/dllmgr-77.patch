@@ -51,3 +51,19 @@
  
      if (lf->lfFaceName[0])
      {
+--- a/dlls/win32u/freetype.c
++++ b/dlls/win32u/freetype.c
+@@ -2152,6 +2152,13 @@
+ 
+     if (smooth < 0) smooth = getenv( "DLLMGR66_SMOOTH_TAHOMA" ) != NULL;
+     if (smooth || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
++    /* dllmgr #77: Tahoma standing in for System (DLLMGR77_SYSTEM) replaces
++     * a raster font to look smoothed; its strikes would bring back the
++     * thin black look */
++    {
++        static const WCHAR systemW[] = {'S','y','s','t','e','m',0};
++        if (!wcsicmp( font->lf.lfFaceName, systemW )) return FALSE;
++    }
+     /* text=agg / agg-rgb: smoothed outlines everywhere but bold, whose
+      * unhinted stems blur at palette sizes (owner: crisp v13 "Open" reads
+      * better than the smoothed one) */

@@ -48,3 +48,13 @@ Results:
   substituted face (DLLMGR66_SMOOTH_TAHOMA smooths all Tahoma in Photoshop,
   too broad), re-run; check the "Try Adobe Photoshop - N days left" variant
   once a prefix shows it again; other System-font dialogs not checked.
+
+## 2026-11-11: #66 strike rule skipped for the System substitute
+
+patches/dllmgr-77.patch now also touches freetype.c: dllmgr66_tahoma_strike
+returns FALSE when the requested face is "System", so Tahoma standing in for
+System is smoothed while the #66 rule stays for Photoshop's own Tahoma.
+Stand (rt-exp, prefix-auto copy, DLLMGR77_SYSTEM=Tahoma only):
+t77-tahoma-fix.png differs from t77-tahoma-smooth.png (the
+DLLMGR66_SMOOTH_TAHOMA=1 run) in 52 pixels out of 1.5 M: same smoothed
+headings, no clipping.
