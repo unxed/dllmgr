@@ -28,3 +28,4 @@ jobs:
           path: |
             kern66*.bmp
             metrics66.csv
+            bits66.txt

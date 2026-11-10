@@ -2,17 +2,20 @@
  * 9-16 px as GDI renders them: origin x (left bearing), black box width and
  * advance (GGO_BITMAP). left/width are the inked columns of the bitmap (an
  * outline font's black box may carry empty columns), boxleft/boxwidth the
- * black box as reported. Writes metrics66.csv; run on Windows and Wine. */
+ * black box as reported. Writes metrics66.csv; run on Windows and Wine.
+ * Also writes bits66.txt: the monochrome bitmaps themselves, one glyph per
+ * line: style size char originx originy rows ('#' ink, '.' blank, rows
+ * separated by '/'), for the per-row comparison of italic with upright. */
 #include <windows.h>
 #include <stdio.h>
 int main(void)
 {
     static const MAT2 identity = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
     HDC dc = CreateCompatibleDC(NULL);
-    FILE *out = fopen("metrics66.csv", "w");
+    FILE *out = fopen("metrics66.csv", "w"), *bits = fopen("bits66.txt", "w");
     int style, size, ch;
     static char buf[65536];
-    if (!out) return 1;
+    if (!out || !bits) return 1;
     fprintf(out, "style,size,char,left,width,advance,boxleft,boxwidth\n");
     for (style = 0; style < 3; style++)
         for (size = 9; size <= 16; size++) {
@@ -32,6 +35,14 @@ int main(void)
                             if (x > last) last = x;
                         }
                 if (first == ~0u) first = 0, last = gm.gmBlackBoxX - 1;
+                fprintf(bits, "%s %d %d %ld %ld ", style == 1 ? "bold" : style == 2 ? "italic" : "regular", size, ch,
+                        gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+                for (y = 0; y < gm.gmBlackBoxY; y++) {
+                    for (x = 0; x < gm.gmBlackBoxX; x++)
+                        fputc((unsigned char)buf[y * pitch + x / 8] & (0x80 >> (x % 8)) ? '#' : '.', bits);
+                    fputc(y + 1 < gm.gmBlackBoxY ? '/' : '\n', bits);
+                }
+                if (!gm.gmBlackBoxY) fputc('\n', bits);
                 fprintf(out, "%s,%d,%d,%ld,%u,%d,%ld,%u\n", style == 1 ? "bold" : style == 2 ? "italic" : "regular", size, ch,
                         gm.gmptGlyphOrigin.x + (long)first, last - first + 1, gm.gmCellIncX,
                         gm.gmptGlyphOrigin.x, gm.gmBlackBoxX);
@@ -40,5 +51,6 @@ int main(void)
             DeleteObject(f);
         }
     fclose(out);
+    fclose(bits);
     return 0;
 }
