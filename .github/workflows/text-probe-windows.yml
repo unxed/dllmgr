@@ -16,6 +16,8 @@ jobs:
         run: |
           gcc -O2 -Wall -o text-kern66.exe tests/wine/text-kern66.c -mwindows -lgdi32
           Start-Process -Wait -FilePath .\text-kern66.exe -ArgumentList bmp
+          Start-Process -Wait -FilePath .\text-kern66.exe -ArgumentList 'bmp 0'
+          Start-Process -Wait -FilePath .\text-kern66.exe -ArgumentList 'bmp 5'
           gcc -O2 -Wall -o text-metrics66.exe tests/wine/text-metrics66.c -lgdi32
           .\text-metrics66.exe; Get-Content metrics66.csv -TotalCount 3
           Get-Item kern66.bmp | Format-List Name,Length
@@ -24,5 +26,5 @@ jobs:
         with:
           name: text-kern66-windows
           path: |
-            kern66.bmp
+            kern66*.bmp
             metrics66.csv
