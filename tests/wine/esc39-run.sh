@@ -4,11 +4,12 @@
 # directory and without FastStone AppData (clean settings, like a first start).
 #   esc39-run.sh OUT FSVIEWER85_DIR SMALL_JPG BIG_JPG
 # Env: PROBE (./esc39-probe.exe), RUNNER=windows|wine, KEY=sendinput|xdotool (wine only), REPS (3),
-#      DELAYS ("300 600 900 1200 1500 2000 3000").
+#      DELAYS (Esc delays in ms with an image), NONE_DELAYS (without one).
 set -uo pipefail
 out=$1 src=$2 small=$3 big=$4
 RUNNER=${RUNNER:-windows} KEY=${KEY:-sendinput} REPS=${REPS:-3}
-DELAYS=${DELAYS:-300 600 900 1200 1500 2000 3000}
+DELAYS=${DELAYS:-200 400 600 800 1000 1200 1400 1600 2000 3000}
+NONE_DELAYS=${NONE_DELAYS:-200 400 600 1000}
 probe=${PROBE:-$PWD/esc39-probe.exe}
 mkdir -p "$out"
 base=${RUNNER_TEMP:-/tmp}; [ "$RUNNER" = windows ] && base=$(cygpath -u "$base")
@@ -56,7 +57,8 @@ for i in $(seq "$REPS"); do
     for img in small big none; do
         case $img in small) f=$small;; big) f=$big;; none) f=-;; esac
         run "$img-observe-$i" "$f" -1 5000
-        for d in $DELAYS; do run "$img-esc$d-$i" "$f" "$d" 9000; done
+        delays=$DELAYS; [ "$img" = none ] && delays=$NONE_DELAYS
+        for d in $delays; do run "$img-esc$d-$i" "$f" "$d" 9000; done
     done
 done
 rm -rf "$work"

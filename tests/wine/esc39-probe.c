@@ -70,6 +70,52 @@ static void send_esc(void)
     SendInput(2, in, sizeof(INPUT));
 }
 
+/* Sleep while answering messages for the launcher window. */
+static void pump_sleep(DWORD ms)
+{
+    MSG msg;
+    DWORD end = GetTickCount() + ms;
+    for (;;) {
+        DWORD left = (long)(end - GetTickCount()) > 0 ? end - GetTickCount() : 0;
+        while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+        if (!left) break;
+        MsgWaitForMultipleObjects(0, NULL, FALSE, left, QS_ALLINPUT);
+    }
+}
+
+/* Be the foreground process before CreateProcess, like a file manager or a
+ * terminal the user just typed into: a process started by the foreground
+ * process may take the foreground itself.  On a CI runner the console host
+ * holds it otherwise and FastStone's windows stay in the background. */
+static HWND launcher_foreground(void)
+{
+    WNDCLASSW wc = {0};
+    HWND h, fg;
+    DWORD fg_thread, me = GetCurrentThreadId();
+    wc.lpfnWndProc = DefWindowProcW;
+    wc.hInstance = GetModuleHandleW(NULL);
+    wc.lpszClassName = L"Esc39Launcher";
+    wc.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
+    RegisterClassW(&wc);
+    h = CreateWindowExW(0, wc.lpszClassName, L"esc39 launcher", WS_POPUP | WS_VISIBLE,
+                        0, 0, 120, 120, NULL, NULL, wc.hInstance, NULL);
+    pump_sleep(50);
+    fg = GetForegroundWindow();
+    fg_thread = fg ? GetWindowThreadProcessId(fg, NULL) : 0;
+    if (fg_thread && fg_thread != me) AttachThreadInput(me, fg_thread, TRUE);
+    keybd_event(VK_MENU, 0x38, 0, 0);
+    keybd_event(VK_MENU, 0x38, KEYEVENTF_KEYUP, 0);
+    BringWindowToTop(h);
+    SetForegroundWindow(h);
+    SetFocus(h);
+    if (fg_thread && fg_thread != me) AttachThreadInput(me, fg_thread, FALSE);
+    pump_sleep(200);
+    return h;
+}
+
 int wmain(int argc, WCHAR **argv)
 {
     STARTUPINFOW si = {sizeof(si)};
@@ -99,6 +145,12 @@ int wmain(int argc, WCHAR **argv)
     cy = GetSystemMetrics(SM_CYSCREEN) / 2;
     if (image) swprintf(cmd, 4096, L"\"%ls\" \"%ls\"", argv[1], image);
     else swprintf(cmd, 4096, L"\"%ls\"", argv[1]);
+    {
+        WCHAR d[256];
+        HWND launcher = launcher_foreground();
+        describe_hwnd(GetForegroundWindow(), d, 256);
+        printf("launcher_foreground=%d foreground=%ls\n", GetForegroundWindow() == launcher, d);
+    }
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&t0);
     if (!CreateProcessW(argv[1], cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
@@ -186,7 +238,7 @@ int wmain(int argc, WCHAR **argv)
         }
         if (t >= stop_at) break;
         fflush(stdout);
-        Sleep(t < 4000 ? 40 : 90);
+        pump_sleep(t < 4000 ? 40 : 90);
     }
     printf("result delay_ms=%ld esc_ms=%ld fg_at_esc=%ls first_image_ms=%ld image_window=%ls "
            "tform_visible_ms=%ld fullscreen_visible_ms=%ld exit_ms=%ld confirm_ms=%ld outcome=%s\n",
