@@ -837,7 +837,13 @@ def watch(prefix, app, argv, env, quick=3.0):
                 os._exit(127)
         _, status = os.waitpid(pid, 0)
         took = time.monotonic() - started
-        how = ('exit code ' + str(os.waitstatus_to_exitcode(status))) if os.WIFEXITED(status) else 'signal ' + str(os.WTERMSIG(status))
+        try:
+            with open(log, 'rb') as tail_file:
+                tail_file.seek(max(0, tail_file.seek(0, 2) - 16384))
+                tail = tail_file.read().decode(errors='replace')
+        except OSError:
+            tail = ''
+        how = run_verdict(os.waitstatus_to_exitcode(status), tail)  # #71
         launch_log(prefix, 'run %s: private runtime (%s) ended (%s) after %.1f s; stderr: .dllmgr/trampoline-run.log' % (app, what, how, took))
         if number == 0 and extra:
             launch_log(prefix, 'run %s: inherited variables not in the clean environment: %s' % (app, ' '.join(extra)[:600]))
