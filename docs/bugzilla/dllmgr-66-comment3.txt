@@ -1,0 +1,31 @@
+Where: https://bugs.winehq.org/show_bug.cgi?id=60741 (follow-up to our previous comment about aac722e8)
+Status: DRAFT 2026-11-10, retest on wine.git master done. Owner posts.
+Note: the previous comment (dllmgr-66-comment2.txt) went out with a placeholder line "[after the master run:] ..."; this one gives that result.
+
+Text:
+
+Result of the run on current wine.git master (wine-11.21, 2af4506cc3),
+X11, 192 DPI prefix:
+
+A probe renders every Latin and Cyrillic letter of Tahoma regular, bold and
+simulated italic at 10, 11 and 13 px with GetGlyphOutline(GGO_BITMAP) and
+records the inked columns and the advance of each glyph. On master the
+result is identical to wine-11.0 for all 161 glyphs at every one of these
+sizes (one italic glyph at 13 px differs). Compared with Windows (same
+probe on Windows Server 2025):
+
+  size  style    advances different from Windows (Latin / Cyrillic)
+  10    regular   0 / 8
+  10    bold     40 / 33
+  10    italic   44 / 38
+  11    regular   0 / 10
+  11    bold     24 / 35
+  11    italic   55 / 49
+
+These are the sizes Photoshop CS2 uses for the places in comment 1
+("Open" and the other history states in Tahoma Bold 10 px, "Background"
+in simulated italic, the palette labels), and Wine draws them from the
+embedded bitmap strikes, which aac722e8 does not change. So the report is
+still valid on master.
+
+Prepared with the help of an AI agent.

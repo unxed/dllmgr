@@ -1,0 +1,20 @@
+Where: https://bugs.winehq.org/show_bug.cgi?id=60746 (comment; the report was posted by the owner 2026-11-10)
+Status: DRAFT 2026-11-10 (retest done on wine.git master). Owner posts.
+
+Text:
+
+Retested with current wine.git master (wine-11.21, 2af4506cc3): still
+present.
+
+Test: a 40x20 WS_POPUP window with SetWindowRgn, every row [0,40) except
+row 5 = [2,4) + [8,40); 192 DPI (LogPixels 192, the window is scaled 2x,
+so row 5 becomes rows 10-11 with spans [4,8) and [16,80)). The region Wine
+keeps is right (GetWindowRgn + PtInRegion: (3,5) inside, (5,5) outside,
+(9,5) inside), but the X shape of the window (XShapeGetRectangles) has rows
+10-11 as [16,80) only: the span [4,8), which ends exactly at a byte
+boundary of the 1-bit mask, is missing.
+
+The cause is the same line in dlls/win32u/dce.c (set_surface_shape_rect)
+as in the original report; it is unchanged in master.
+
+Prepared with the help of an AI agent.
