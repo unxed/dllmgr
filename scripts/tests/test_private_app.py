@@ -699,7 +699,7 @@ class SettingsTest(unittest.TestCase):
                 self.assertNotIn("image/webp", d)
                 self.assertFalse(private_app.assoc_record(prefix, "faststone").exists())
                 with self.assertRaises(private_app.Error):
-                    private_app.assoc(prefix, "faststone", state, ["psd"])
+                    private_app.assoc(prefix, "faststone", state, ["xyz"])
 
     def test_supervise_logs_how_the_run_ended(self):
         with tempfile.TemporaryDirectory() as tmp:

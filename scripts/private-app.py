@@ -33,7 +33,11 @@ PROFILES = {
         proxy='msimg32', modules=True,
         unsupported='Only the verified FastStone 8.5 x86 executable is supported',
         desktop_name='FastStone Image Viewer (dllmgr)', wmclass='fsviewer.exe',
-        mime='image/jpeg;image/png;image/webp;image/avif;'),
+        # #73: the formats FastStone 8.5 opens itself (its folder ships jxl/webp/avif codecs)
+        mime='image/jpeg;image/png;image/gif;image/bmp;image/tiff;image/webp;image/avif;image/jxl;'
+             'image/x-icon;image/vnd.microsoft.icon;image/x-tga;image/x-pcx;image/jp2;'
+             'image/vnd.adobe.photoshop;image/x-adobe-dng;image/x-canon-cr2;image/x-canon-cr3;'
+             'image/x-nikon-nef;image/x-sony-arw;image/x-olympus-orf;image/x-panasonic-rw2;image/x-fuji-raf;'),
     # #36 splash (version.dll prefill proxy), #43 focus, #44 cursors, #45 menus
     # (private runtime). No private DLLs.
     'photoshop-cs2': dict(
@@ -1022,7 +1026,7 @@ def assoc(prefix, app, state, values):
         changes = {t: (old or None) for t, old in record.items() if current.get(t, '').split(';')[0] == ours}
         record = {}
     else:
-        alias = {'psd': 'vnd.adobe.photoshop', 'jpg': 'jpeg', 'jpe': 'jpeg', 'tif': 'tiff'}
+        alias = {'psd': 'vnd.adobe.photoshop', 'jpg': 'jpeg', 'jpe': 'jpeg', 'tif': 'tiff', 'ico': 'x-icon', 'tga': 'x-tga', 'pcx': 'x-pcx', 'dng': 'x-adobe-dng', 'cr2': 'x-canon-cr2', 'cr3': 'x-canon-cr3', 'nef': 'x-nikon-nef', 'arw': 'x-sony-arw', 'orf': 'x-olympus-orf', 'rw2': 'x-panasonic-rw2', 'raf': 'x-fuji-raf'}
         wanted = types if values == ['all'] else [next((t for t in types if t == v or t.endswith('/' + alias.get(v.lower(), v.lower()))), None) for v in values]
         if None in wanted:
             raise Error('Unknown type; choose from ' + ' '.join(types))
