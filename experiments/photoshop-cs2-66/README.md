@@ -93,3 +93,32 @@ dllmgr-66 with text=gray contrast=2.2.
 So the better fix for bold is to keep the strikes' widths (close to Windows)
 and correct where each bitmap sits in its cell; and synthetic italic should
 follow the same no-smoothing rule as the upright face.
+
+## Per-glyph comparison with Windows (2026-11-10)
+
+tests/wine/text-metrics66.c writes the monochrome GDI metrics (left, black
+box width, advance) of Tahoma regular / bold / simulated italic at 9-16 px;
+metrics/windows.csv (text-probe-windows.yml), metrics/wine-stock.csv,
+metrics/wine-dllmgr66-v4.csv. Findings:
+- Wine's regular Tahoma strikes have exactly Windows' advances at every
+  strike size (14 px has no strike: 31 of 94 differ).
+- The Bold strikes do not (10 px: 40 of 94 advances differ, p/n 7 vs 6, B 8
+  vs 7). Hinted outlines (fix v1) were the worst (10 px: 62, text 8 % wider).
+- Wine's simulated italic is wider than Windows', whose italic advances
+  equal the upright ones; Windows draws it unsmoothed by shifting the rows of
+  the upright bitmap.
+
+patches/dllmgr-66.patch (v4):
+- Tahoma Bold keeps its strikes, each glyph gets its outline advance rounded
+  to whole pixels. Advance mismatches vs Windows 9..16 px: 47 24 13 15 36 6 5 5
+  (strikes: 48 40 24 28 46 42 21 21).
+- Simulated italic of Tahoma: the upright glyph's advance (0 mismatches at all
+  strike sizes) and, for monochrome glyphs at strike sizes with no other
+  transform, the upright strike with its rows shifted by
+  round((height above baseline + 0.5) * 0.34), the best fit to Windows' black
+  boxes (DLLMGR66_OUTLINE_ITALIC=1: Wine's sheared outline).
+- gasp also decides for simulated bold/italic, as on Windows: italic at 10-11
+  px crisp, not grey (DLLMGR66_AA_FAKES=1: Wine's default).
+Images: windows-vs-wine-v4.png (Windows / v3 / v4),
+italic-windows-vs-v4-zoom.png (Windows 10/11 px, Wine v4 10/11 px),
+photoshop-stock-v3-v4.png (Photoshop at 2x: stock, v3, v4).
