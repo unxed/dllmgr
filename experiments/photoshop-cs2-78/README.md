@@ -120,3 +120,23 @@ swp_owner_popups places it right after a hidden topmost popup 0x108d0
 (1152x648, ex 0x88), and the server makes it topmost. So it stays above
 other apps. tests/wine/zorder78.c (simple model) does not reproduce it;
 tests/wine/zlist78.c dumps the real z-order.
+
+## 2026-11-11: topmost part, server fix (patches/dllmgr-78.patch, server/window.c)
+
+Photoshop answers its palette's WM_WINDOWPOSCHANGING for HWND_TOP with
+"insert after" its hidden topmost tooltip (tooltips_class32 0x108d0), which
+sits right above a hidden topmost PSToolTip (owned by main). Wine's server
+link_window then makes the palette topmost (the next window is topmost), so
+it stays above other apps (#78).
+tests/wine/zorder78b.c reproduces it in miniature. Windows (windows-probes
+run 42925193669): P stays non-topmost and goes below all topmost windows
+(A, B, P, M). Wine v21: A, P(topmost), B, M.
+Fix: a non-topmost window inserted after a topmost one goes below all
+topmost windows and stays non-topmost (DLLMGR78_OFF=1: Wine's rule).
+rt-exp with it: zorder78b prints exactly the Windows order and "no" for
+both variants.
+Not done yet: the Photoshop stand run with the server fix (t78p-dismiss.sh
+with RT=rt-exp: expect exstyle 0x80 after the click and no palette above
+xclock), Wine's user32 win.c z-order tests with the change, the build
+script entry (tests/wine/app-isolation-build.sh, after dllmgr-77), runtime
+v22 (#77 + #78), e2e, comments on #78/#82.

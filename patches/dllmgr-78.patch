@@ -34,3 +34,25 @@
          {
              set_focus( event->display, hwnd, event_time );
              return;
+--- a/server/window.c
++++ b/server/window.c
+@@ -386,6 +386,19 @@
+         }
+         list_add_before( entry, &win->entry );
+     }
++    else if (!(win->ex_style & WS_EX_TOPMOST) && (previous->ex_style & WS_EX_TOPMOST) &&
++             !getenv( "DLLMGR78_OFF" ))
++    {
++        /* dllmgr #78: a non-topmost window asked to go after a topmost one
++         * stays non-topmost and goes below all topmost windows, as on
++         * Windows (tests/wine/zorder78b.c; Photoshop raises its palettes
++         * after its hidden topmost tooltip, Wine made them topmost). */
++        struct list *entry = previous->entry.next;
++        while (entry != &win->parent->children &&
++               (LIST_ENTRY( entry, struct window, entry )->ex_style & WS_EX_TOPMOST))
++            entry = entry->next;
++        list_add_before( entry, &win->entry );
++    }
+     else
+     {
+         list_add_after( &previous->entry, &win->entry );
