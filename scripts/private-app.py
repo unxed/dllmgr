@@ -894,7 +894,7 @@ def main():
     if '--' in own_args:
         cut = own_args.index('--')
         own_args, app_args = own_args[:cut], own_args[cut + 1:]
-    args = parser.parse_args(own_args)
+    args = parser.parse_intermixed_args(own_args)
     args.app_args = app_args
     if args.app == 'faststone':
         args.fix = args.fix or 'faststone'

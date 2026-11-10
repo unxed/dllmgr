@@ -664,6 +664,16 @@ class SettingsTest(unittest.TestCase):
             # FastStone keeps stock text unless asked
             self.assertEqual(private_app.settings_env(private_app.read_settings(prefix, "faststone")), {})
 
+    def test_set_cli_after_options(self):
+        # the dllmgr wrapper calls: private-app.py set --app APP [--prefix P] key=value...
+        import subprocess, sys as _sys
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "system.reg").write_text("WINE REGISTRY Version 2\n#arch=win64\n")
+            result = subprocess.run([_sys.executable, str(Path(private_app.__file__)), "set", "--app", "photoshop-cs2",
+                                     "--prefix", tmp, "text=agg-rgb", "tahoma=xo"], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(private_app.read_settings(Path(tmp), "photoshop-cs2")["text"], "agg-rgb")
+
     def test_tahoma_substitute(self):
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp)
