@@ -652,13 +652,16 @@ class SettingsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp)
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact", "alt-click": "app", "tahoma": "wine"})
-            self.assertEqual(private_app.settings_env(values), {"DLLMGR52_TEXT": "gray", "DLLMGR52_GAMMA": "2.2"})
+            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact", "alt-click": "app", "tahoma": "wine", "scanner": "off"})
+            off = {"SANE_CONFIG_DIR": "/nonexistent/dllmgr-scanner-off"}
+            self.assertEqual(private_app.settings_env(values), dict({"DLLMGR52_TEXT": "gray", "DLLMGR52_GAMMA": "2.2"}, **off))
             private_app.write_settings(prefix, "photoshop-cs2", ["text=light", "scaling=smooth"])
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth alt-click=app tahoma=wine")
+            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth alt-click=app tahoma=wine scanner=off")
             self.assertEqual(private_app.settings_env(values),
-                             {"DLLMGR52_TEXT": "light", "DLLMGR52_GAMMA": "2.2", "DLLMGR46_SMOOTH": "1"})
+                             dict({"DLLMGR52_TEXT": "light", "DLLMGR52_GAMMA": "2.2", "DLLMGR46_SMOOTH": "1"}, **off))
+            private_app.write_settings(prefix, "photoshop-cs2", ["scanner=on"])
+            self.assertNotIn("SANE_CONFIG_DIR", private_app.settings_env(private_app.read_settings(prefix, "photoshop-cs2")))
             # FastStone keeps stock text unless asked
             self.assertEqual(private_app.settings_env(private_app.read_settings(prefix, "faststone")), {})
 

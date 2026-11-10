@@ -55,6 +55,11 @@ SETTINGS = {
     'scaling': ('exact', 'smooth'),  # DLLMGR46_SMOOTH
     'alt-click': ('app', 'desktop'),  # #48: who gets Alt+click, see free_alt_click
     'tahoma': ('wine', 'xo', 'xo-bold', 'dejavu', 'dejavu-bold'),  # #66: DLLMGR66_TAHOMA[_BOLD]
+    # #47/#65 finding: Wine's TWAIN source (sane.ds) asks libsane for devices when an
+    # application lists TWAIN sources; Photoshop does that at every start and libsane
+    # probes all its backends (~4.5 s of a 19 s start on the stand). off: no SANE
+    # backends for this application (SANE_CONFIG_DIR points nowhere), no TWAIN scanning.
+    'scanner': ('off', 'on'),
 }
 # #66: Tahoma served by another family inside the application (the runtime's
 # win32u, patches/dllmgr-66.patch); '-bold' only replaces bold Tahoma. XO Tahion
@@ -62,7 +67,7 @@ SETTINGS = {
 TAHOMA_FAMILIES = {'xo': 'XO Tahion', 'dejavu': 'DejaVu Sans Condensed'}
 TAHOMA_FONTS = {'xo': HERE / 'fonts/xo-tahion'}
 SETTING_DEFAULTS = {
-    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact', 'alt-click': 'app', 'tahoma': 'wine'},
+    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact', 'alt-click': 'app', 'tahoma': 'wine', 'scanner': 'off'},
     'faststone': {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop', 'tahoma': 'wine'},
 }
 SETTINGS_FILE = '.dllmgr/settings.json'
@@ -70,6 +75,7 @@ SETTINGS_FILE = '.dllmgr/settings.json'
 
 def read_settings(prefix, app):
     values = dict(SETTING_DEFAULTS.get(app, {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop', 'tahoma': 'wine'}))
+    values.setdefault('scanner', 'on')
     try:
         stored = json.loads((prefix / SETTINGS_FILE).read_text()).get(app, {})
     except (OSError, ValueError, AttributeError):
@@ -121,6 +127,8 @@ def settings_env(values):
     family = TAHOMA_FAMILIES.get(values['tahoma'].split('-')[0])
     if family:
         env['DLLMGR66_TAHOMA_BOLD' if values['tahoma'].endswith('-bold') else 'DLLMGR66_TAHOMA'] = family
+    if values.get('scanner') == 'off':
+        env['SANE_CONFIG_DIR'] = '/nonexistent/dllmgr-scanner-off'
     return env
 
 
@@ -1108,7 +1116,7 @@ def main():
                 print('  Launch trampoline: ' + trampoline)
                 print('  Settings: ' + settings_line(read_settings(prefix, args.app)) +
                       ' (change: dllmgr set ' + args.app + ' text=' + '|'.join(SETTINGS['text']) +
-                      ' contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop tahoma=' + '|'.join(SETTINGS['tahoma']) + ')')
+                      ' contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop tahoma=' + '|'.join(SETTINGS['tahoma']) + ' scanner=off|on)')
                 print('  Launch: dllmgr run ' + args.app)
                 for pid, kind in running_on(Path(state['exe']).name):
                     print('  Running: pid ' + str(pid) + ' on the ' + kind)
