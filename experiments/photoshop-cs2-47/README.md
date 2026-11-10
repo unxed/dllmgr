@@ -51,3 +51,11 @@ in one run are unreliable; use one notch per run.
 Open: why Photoshop takes two passes on Wine but one on Windows (draw
 time: 4x the pixels at 192 DPI? a timer it checks?). Owner question: which
 documents show the jumps for you (8 or 16 bit, zoom level)?
+
+Alt held for the whole capture (z16h.sh, like the Windows test): still two
+steps, 133 ms apart (frames 45 and 53). Both steps repaint the whole image
+area (difference masks), i.e. Photoshop draws a fast first pass and then
+the final one. On Windows both land within the first 60 ms capture; on the
+stand the final pass comes 130-250 ms later. Next (not started): where the
+second pass waits (timer / idle detection in Photoshop's message loop under
+Wine), e.g. +timestamp,+message,+timer trace around one notch.
