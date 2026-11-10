@@ -83,3 +83,14 @@ crashes the injected break-in thread with a page fault at 0xffc00d6c in
 wow64 32-bit code, so no PE backtrace either. The last one looks like a
 Wine wow64 debugger bug (to retest on wine.git master before any report).
 Parked until a working sampler exists (#22 needs the same).
+
+## 2026-11-10: first profile with the new sampler
+
+dllmgr-27 proxy with DLLMGR_SAMPLE=10,6 (rt-cur3, stand :96, few fonts),
+FastStone started with an image: the main thread is busy until ~1.25 s,
+then idles in its message loop. In 0-1250 ms (112 samples) it is spread over
+window management syscalls: CreateWindowEx 12 %, MessageCall 12 %,
+ShowWindow 9 %, SetWindowPos 9 %, BitBlt 8 %, DestroyCursor 6 %, GetDC 4 %
+(tools/sample-report.py). No single hot spot on the stand. Next: the same
+sampler on the owner's machine (2543 fonts) and on the Windows runner for
+the per-call comparison.

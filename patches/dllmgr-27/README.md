@@ -53,3 +53,13 @@ there), then exits. No signal within `DLLMGR27_TRAMP_WAIT` ms (default
 backstop. `DLLMGR27_NO_TRAMPOLINE=1` disables only the trampoline.
 Test: tests/wine/trampoline-e2e.sh. Design and measurements:
 docs/tasks/27-every-launch-path.md.
+
+## Sampling profiler (DLLMGR_SAMPLE)
+
+`DLLMGR_SAMPLE=ms[,seconds]` (default 10 ms, 10 s; works with
+DLLMGR27_OFF=1 too): a thread in the proxy suspends the main thread every
+`ms`, records EIP and 5 frames of the EBP chain, and after `seconds` writes
+`%TEMP%\dllmgr-sample-<pid>.txt` ("ms frame0 frame1 ..." as module+offset).
+Made because perf (sandbox kernel), gdb (no PE frames) and winedbg attach
+(crashes under wow64) cannot sample a 32-bit app here. Summary with Wine
+syscall names: `tools/sample-report.py FILE [WINE_LIB/i386-windows] [--from MS --to MS]`.

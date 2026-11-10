@@ -1180,6 +1180,91 @@ static void exit_report(void)
     fflush(stderr);
 }
 
+/* Sampling profiler (DLLMGR_SAMPLE=ms[,seconds], off by default): a thread
+ * suspends the main thread every few ms and records EIP plus the first
+ * frames of its EBP chain. Works under wow64 where perf/gdb/winedbg cannot
+ * see the 32-bit stack. Addresses are resolved to module+offset only after
+ * sampling, never while the main thread is suspended (it may hold the
+ * loader or heap lock). Output: %TEMP%\dllmgr-sample-<pid>.txt, one line per
+ * sample "ms frame0 frame1 ...". */
+#define SAMPLE_DEPTH 6
+#define SAMPLE_MAX 4000
+static DWORD sample_buf[SAMPLE_MAX][SAMPLE_DEPTH + 1];
+
+static void sample_name(DWORD addr, char *out, int size)
+{
+    HMODULE mod;
+    char path[MAX_PATH], *base;
+    if (!addr) { lstrcpynA(out, "-", size); return; }
+    if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           (const char *)(ULONG_PTR)addr, &mod) && GetModuleFileNameA(mod, path, sizeof(path))) {
+        base = strrchr(path, '\\');
+        wsprintfA(out, "%s+0x%lx", base ? base + 1 : path, addr - (DWORD)(ULONG_PTR)mod);
+    }
+    else wsprintfA(out, "0x%08lx", addr);
+}
+
+static DWORD WINAPI sampler(void *arg)
+{
+    HANDLE thread = arg;
+    char value[32], *comma, line[512], name[128], path[MAX_PATH];
+    int interval, seconds = 10, n = 0, i, d;
+    DWORD start = GetTickCount(), got;
+    HANDLE file;
+    GetEnvironmentVariableA("DLLMGR_SAMPLE", value, sizeof(value));
+    interval = atoi(value) > 0 ? atoi(value) : 10;
+    if ((comma = strchr(value, ',')) && atoi(comma + 1) > 0) seconds = atoi(comma + 1);
+    while (n < SAMPLE_MAX && GetTickCount() - start < (DWORD)seconds * 1000) {
+        CONTEXT ctx;
+        DWORD ebp, frame[2];
+        SIZE_T read;
+        Sleep(interval);
+        if (SuspendThread(thread) == (DWORD)-1) break;
+        ctx.ContextFlags = CONTEXT_CONTROL;
+        if (GetThreadContext(thread, &ctx)) {
+            sample_buf[n][0] = GetTickCount() - start;
+            sample_buf[n][1] = ctx.Eip;
+            ebp = ctx.Ebp;
+            for (d = 2; d <= SAMPLE_DEPTH; d++) {
+                if (!ReadProcessMemory(GetCurrentProcess(), (void *)(ULONG_PTR)ebp, frame, sizeof(frame), &read) || read != sizeof(frame) || frame[0] <= ebp) {
+                    for (; d <= SAMPLE_DEPTH; d++) sample_buf[n][d] = 0;
+                    break;
+                }
+                sample_buf[n][d] = frame[1];
+                ebp = frame[0];
+            }
+            n++;
+        }
+        ResumeThread(thread);
+    }
+    GetTempPathA(sizeof(path) - 40, path);
+    wsprintfA(path + lstrlenA(path), "dllmgr-sample-%lu.txt", GetCurrentProcessId());
+    file = CreateFileA(path, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
+    if (file == INVALID_HANDLE_VALUE) return 0;
+    for (i = 0; i < n; i++) {
+        wsprintfA(line, "%lu", sample_buf[i][0]);
+        for (d = 1; d <= SAMPLE_DEPTH; d++) {
+            sample_name(sample_buf[i][d], name, sizeof(name));
+            lstrcatA(line, " ");
+            lstrcatA(line, name);
+        }
+        lstrcatA(line, "\r\n");
+        WriteFile(file, line, lstrlenA(line), &got, NULL);
+    }
+    CloseHandle(file);
+    return 0;
+}
+
+static void start_sampler(void)
+{
+    HANDLE thread;
+    if (!GetEnvironmentVariableA("DLLMGR_SAMPLE", NULL, 0)) return;
+    if (DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread,
+                        THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT, FALSE, 0))
+        CloseHandle(CreateThread(NULL, 0, sampler, thread, 0, NULL));
+}
+
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     char mode[8] = "";
@@ -1187,6 +1272,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
         exit_report();
         return TRUE;
     }
+    if (reason == DLL_PROCESS_ATTACH) start_sampler();  /* diagnostics, also with the proxy off */
     if (GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0)) return TRUE;
     GetEnvironmentVariableA("DLLMGR27_MODE", mode, sizeof(mode));
     if (reason == DLL_PROCESS_ATTACH) {
