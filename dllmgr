@@ -24,7 +24,7 @@ Usage:
   dllmgr status faststone [--prefix PATH]
   dllmgr fix|unfix|status photoshop-cs2 [--exe PATH/Photoshop.exe] [--prefix PATH]
   dllmgr run photoshop-cs2 [--exe PATH] [--prefix PATH] -- [FILES...]
-  dllmgr set photoshop-cs2|faststone [text=system|bitmap|gray|light|cleartype] [contrast=1.0..4.0] [scaling=exact|smooth] [alt-click=app|desktop]
+  dllmgr set photoshop-cs2|faststone [text=system|bitmap|gray|light|cleartype|agg|agg-rgb] [contrast=1.0..4.0] [scaling=exact|smooth] [alt-click=app|desktop] [tahoma=wine|xo|xo-bold|dejavu|dejavu-bold]
   dllmgr unfix faststone
   dllmgr unfix faststone-avif [--prefix PATH]
   dllmgr unfix faststone-fonts [--prefix PATH]
