@@ -193,3 +193,13 @@ every row (bold 513 vs 922-979, italic 440 vs 493-588, regular 409 vs
 Tahoma keeps its strikes at strike sizes; other fonts stay smoothed
 (DLLMGR66_SMOOTH_TAHOMA=1: old behaviour). Under text=gray this gives 1363.
 Image: cleartype-reference-vs-modes.png.
+
+Correction (same day): strikes for regular Tahoma under forced smoothing cut
+Photoshop's label colons: it draws "Opacity:" / "Lock:" with Tahoma -10
+regular, ANTIALIASED_QUALITY, ETO_CLIPPED into a rect ending at the ink end of
+Windows' ClearType glyphs (Opacity: rect 0-37, x = 1); the strike's colon
+lands in column 37 and was clipped. Now only bold and simulated italic keep
+their strikes under text=gray/light/cleartype; regular stays smoothed. Probe
+total vs Windows ClearType 1879 (bold 513, italic 440, regular 925; before
+2493). Stand: stand-v5-palettes-gray.png ("Open" and "Background" crisp,
+colons back).
