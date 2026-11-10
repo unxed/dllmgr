@@ -56,15 +56,6 @@ index cc276cac..9e13bd2d 100644
      if (lf->lfFaceName[0])
      {
          int subst_charset;
-@@ -4571,6 +4606,8 @@ static HFONT font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
- 
-         if (lf.lfOutPrecision == OUT_TT_ONLY_PRECIS)
-             can_use_bitmap = FALSE;
-+        /* dllmgr #52: raster glyphs cannot follow the hidden GDI scale */
-+        if (dc->dllmgr_scale > 1) can_use_bitmap = FALSE;
- 
-         lf.lfWidth = abs(lf.lfWidth);
- 
 diff --git a/dlls/win32u/freetype.c b/dlls/win32u/freetype.c
 index 2e324a94..aef3e313 100644
 --- a/dlls/win32u/freetype.c
