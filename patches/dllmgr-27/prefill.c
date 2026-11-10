@@ -1506,6 +1506,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     if (reason == DLL_PROCESS_ATTACH) { start_sampler(); start_crash_report(); }  /* diagnostics, also with the proxy off */
     if (reason == DLL_PROCESS_ATTACH && GetEnvironmentVariableA("DLLMGR_MSGLOG", NULL, 0))
         CloseHandle(CreateThread(NULL, 0, msglog_writer, NULL, 0, NULL));
+    if ((reason == DLL_PROCESS_ATTACH || reason == DLL_THREAD_ATTACH) && GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0)) {
+        if (!self) self = instance;
+        msglog_thread_hook();  /* the timeline also with the proxy off (reference runs on Windows) */
+    }
     if (GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0)) return TRUE;
     GetEnvironmentVariableA("DLLMGR27_MODE", mode, sizeof(mode));
     if (reason == DLL_PROCESS_ATTACH) {

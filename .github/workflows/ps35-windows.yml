@@ -10,7 +10,22 @@ on:
 permissions:
   contents: read
 jobs:
+  proxy:
+    # #47: the dllmgr-27 version.dll proxy, for the message timeline (DLLMGR_MSGLOG) on Windows
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build version.dll proxy
+        run: |
+          bash tests/wine/ci-install.sh gcc-mingw-w64-i686 binutils-mingw-w64-i686
+          sh patches/dllmgr-27/build.sh version "$RUNNER_TEMP/version.dll"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ps35-proxy
+          path: ${{ runner.temp }}/version.dll
   comparison:
+    needs: proxy
     runs-on: windows-latest
     timeout-minutes: 35
     steps:
@@ -54,10 +69,15 @@ jobs:
         with:
           path: ${{ runner.temp }}/ps35-download
           key: ps35-cs2-919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea
+      - uses: actions/download-artifact@v4
+        with:
+          name: ps35-proxy
+          path: ps35-proxy
       - name: Inspect or measure through public Windows APIs
         shell: powershell
         env:
           PS35_STAGE: ${{ inputs.stage }}
+          DLLMGR_PROXY: ${{ github.workspace }}/ps35-proxy/version.dll
         run: '& tests/wine/ps35-windows.ps1 -Stage $env:PS35_STAGE'
       - name: Preserve text and screenshots, excluding Adobe binaries and trial state
         if: always()

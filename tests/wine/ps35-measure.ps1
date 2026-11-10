@@ -74,6 +74,8 @@ try {
     $Hash=(Get-FileHash $Exe -Algorithm SHA256).Hash.ToLower()
     if($Hash -ne '98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30'){throw 'Installed Photoshop.exe hash mismatch'}
     @{state=$State;exe_sha256=$Hash;dpi=[PS35.Native]::GetDpiForSystem()} | ConvertTo-Json | Set-Content (Join-Path $Out 'installed.json')
+    # #47: message timeline from the dllmgr-27 proxy (proxy itself off), started by a go file at the zoom
+    if($env:DLLMGR_PROXY -and (Test-Path $env:DLLMGR_PROXY)){Copy-Item $env:DLLMGR_PROXY (Join-Path (Split-Path $Exe) 'version.dll') -Force;$env:DLLMGR27_OFF='1';$env:DLLMGR_MSGLOG='8'}
     $Application=Start-Process $Exe -WorkingDirectory (Split-Path $Exe) -PassThru
     $Main=$null;$Stable=0;$Deadline=[DateTime]::UtcNow.AddMinutes(8)
     do {
@@ -145,15 +147,18 @@ try {
         $W=@([PS35.Native]::Windows() | Where-Object {$_.Handle -eq $Main.Handle})[0]
         $Cx=[int]($W.X+$W.Width/2);$Cy=[int]($W.Y+$W.Height/2)
         $Frames=@()
+        $Go=[DateTime]::UtcNow;New-Item -ItemType File -Force (Join-Path $env:TEMP 'dllmgr-msglog-go') | Out-Null
         for($Notch=0;$Notch -lt 2;$Notch++){
             [PS35.Native]::AltWheel($Cx,$Cy,120,$true,$false)
-            $T0=[DateTime]::UtcNow
+            $T0=[DateTime]::UtcNow;$Frames+=@{notch=$Notch;frame=-1;ms=[int]($T0-$Go).TotalMilliseconds}
             for($k=0;$k -lt 25;$k++){Save-Desktop ("zoom-n{0}-f{1:D2}" -f $Notch,$k);$Frames+=@{notch=$Notch;frame=$k;ms=[int]([DateTime]::UtcNow-$T0).TotalMilliseconds}}
             [PS35.Native]::AltWheel($Cx,$Cy,0,$false,$true)
             Start-Sleep -Seconds 2
         }
         Save-Desktop 'zoom-after'
         $Frames | ConvertTo-Json | Set-Content (Join-Path $Out 'zoom-frames.json')
+        Start-Sleep -Seconds 4
+        Get-ChildItem $env:TEMP -Filter 'dllmgr-msglog-*.txt' -ErrorAction SilentlyContinue | Copy-Item -Destination $Out
         # #47 b: a 16-bit document at 100 % (the stand shows partial frames only with 16-bit)
         & python (Join-Path $PSScriptRoot 'png16.py') 'C:\t47-16.png' 800 600
         [void][PS35.Native]::SetForegroundWindow([IntPtr]$Main.Handle);Start-Sleep -Milliseconds 500
