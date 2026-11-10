@@ -77,3 +77,25 @@ later. Windows (DWM) presents resize and repaint together.
 Fix direction (not started): when a window grows, hold its X configure (or
 the flush of the exposed area) until the application has repainted, with a
 short timeout; or paint the exposed area from the surface immediately.
+
+## 2026-11-10 evening: stand reproduction with Ctrl+= and a main-thread profile
+
+z512k.sh (prefix-b, :96, t512.png 8-bit 512x512 at 100 %, Ctrl+= to 200 %,
+60 fps capture): the document window size stays (1054x1054 px, set at
+open); the zoom appears in steps ~30-50 ms apart: first the top-left tile
+of the new zoom with the rest still old, then the rest. Photoshop paints
+the zoomed image tile by tile.
+Experiment DLLMGR47_HOLD (winex11: hold an application's resize until the
+next flush) changed nothing: here no resize happens at the notch (trace),
+so it is not the mechanism in this case (code kept only in the local tree).
+Main-thread profile (DLLMGR_SAMPLE=2,3,go; the third field "go" starts the
+sampler when Z:\tmp\dllmgr-sample-go appears, z512k.sh touches it at the
+notch): before the notch the main thread is still busy in NtGdiGetFontData
+(CoolType reading fonts 30+ s after start); at the notch NtUserSetWindowPos,
+then ZwSetEvent (waking Photoshop's worker threads, "multiprocessor
+support.8bx") and NtUserGetMessage idle; tiles arrive as the workers finish,
+and Wine flushes the window surface each time the main thread goes idle, so
+every tile batch becomes a visible frame. On Windows (CI, earlier) the whole
+zoom is on screen within the first 60 ms capture.
+Next: sample all threads (workers) to see why rendering takes 150-200 ms
+here; and/or coalesce idle flushes within a frame interval.

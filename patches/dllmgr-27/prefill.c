@@ -1274,7 +1274,7 @@ static void start_crash_report(void)
 }
 
 
-/* Sampling profiler (DLLMGR_SAMPLE=ms[,seconds[,delay]], off by default): a thread
+/* Sampling profiler (DLLMGR_SAMPLE=ms[,seconds[,delay|go]], off by default): a thread
  * suspends the main thread every few ms and records EIP plus the first
  * frames of its EBP chain. Works under wow64 where perf/gdb/winedbg cannot
  * see the 32-bit stack. Addresses are resolved to module+offset only after
@@ -1308,9 +1308,15 @@ static DWORD WINAPI sampler(void *arg)
     GetEnvironmentVariableA("DLLMGR_SAMPLE", value, sizeof(value));
     interval = atoi(value) > 0 ? atoi(value) : 10;
     if ((comma = strchr(value, ',')) && atoi(comma + 1) > 0) seconds = atoi(comma + 1);
-    if (comma && (comma = strchr(comma + 1, ',')) && atoi(comma + 1) > 0) {  /* third field: start after N s */
-        Sleep(atoi(comma + 1) * 1000);
-        start = GetTickCount();
+    if (comma && (comma = strchr(comma + 1, ','))) {
+        if (!lstrcmpiA(comma + 1, "go")) {  /* third field "go": start when Z:\tmp\dllmgr-sample-go exists */
+            while (GetFileAttributesA("Z:\\tmp\\dllmgr-sample-go") == INVALID_FILE_ATTRIBUTES) Sleep(50);
+            start = GetTickCount();
+        }
+        else if (atoi(comma + 1) > 0) {  /* third field: start after N s */
+            Sleep(atoi(comma + 1) * 1000);
+            start = GetTickCount();
+        }
     }
     while (n < SAMPLE_MAX && GetTickCount() - start < (DWORD)seconds * 1000) {
         CONTEXT ctx;
