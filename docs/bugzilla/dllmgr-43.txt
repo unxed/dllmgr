@@ -1,5 +1,5 @@
 Where: https://bugs.winehq.org/show_bug.cgi?id=58413  (comment; likely the same mechanism)
-Status: PREPARED 2026-11-09, not posted (owner posts). Duplicate search:
+Status: POSTED by the owner 2026-11-09 (docs/upstream-outbox.md "Posted"). Do not repost.
 "_NET_ACTIVE_WINDOW", "focus stealing", "steals focus": 58413 is the closest.
 
 Text:

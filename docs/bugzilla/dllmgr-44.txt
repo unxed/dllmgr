@@ -1,0 +1,45 @@
+Where: https://bugs.winehq.org (new bug; component winex11.drv; search for duplicates first: "cursor DPI", "cursor scaling", "small cursor HiDPI")
+Status: PREPARED 2026-11-10, not posted (owner posts). Text only.
+
+Summary:
+Custom cursors of DPI-unaware applications are not scaled with the window on HiDPI screens
+
+Text:
+
+Wine 11.0, X11, LogPixels 192 (200 %). Wine already virtualizes the windows
+of DPI-unaware applications: their contents are drawn at 96 DPI and scaled
+2x. The cursors such an application creates are not: an application cursor
+made with CreateCursor or CreateIconIndirect from a 32x32 bitmap appears on
+screen as a 32x32 X cursor, half the size it has relative to the window
+contents. Windows scales the cursors of DPI-virtualized windows by the same
+factor as the window.
+
+Steps: in a prefix with LogPixels 192, a DPI-unaware test program creates a
+32x32 monochrome cursor with hotspot 15,15 (CreateCursor) and a colour
+cursor from a 24x24 opaque bitmap with hotspot 4,4 (CreateIconIndirect),
+and sets them over its window.
+
+Result (X cursor read back with XFixesGetCursorImage): 32x32 with hotspot
+15,15; the colour one 32x32 with a 24x24 visible picture and hotspot 4,4.
+Expected (Windows at 200 % for a DPI-unaware program): 64x64 with hotspot
+30,30; the colour one with a 48x48 picture and hotspot 8,8.
+
+Real-world case: Adobe Photoshop CS2 (DPI-unaware). Its zoom, hand,
+eyedropper, brush and move tool cursors are 16x16 pictures in 32x32 cursors
+and look tiny on a 200 % desktop, while the window contents around them are
+scaled.
+
+In my tests it was enough to scale in winex11's cursor creation by the ratio
+of the monitor DPI to the DPI of the window the cursor is set on (never
+shrinking, DPI-aware windows unchanged), stretch the mask and colour
+bitmaps, scale the hotspot, and cache the scaled X cursor separately from
+the unscaled one.
+
+A related observation: the X cursor theme size on HiDPI desktops is often
+48 (Cinnamon at 200 %), so the theme arrow is 48 px while a scaled 32x32
+application cursor is 64 px with 32 px of visible art; on Windows the
+arrow is about 19 px per 96 DPI and application cursors keep that
+relation.
+
+Prepared with the help of an AI agent; the numbers come from a test program
+on Xvfb and from Photoshop CS2 on the same setup.

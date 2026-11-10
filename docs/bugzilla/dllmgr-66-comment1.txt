@@ -1,5 +1,5 @@
 Where: https://bugs.winehq.org/show_bug.cgi?id=60741 (comment; the bug itself was posted by the owner from dllmgr-66.txt)
-Status: PREPARED 2026-11-10, not posted (owner posts). Text only.
+Status: POSTED by the owner 2026-11-10 as a comment on https://bugs.winehq.org/show_bug.cgi?id=60741. Do not repost.
 
 Text:
 

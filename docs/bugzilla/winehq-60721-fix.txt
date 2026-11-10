@@ -1,5 +1,5 @@
 Where: https://bugs.winehq.org/show_bug.cgi?id=60721  (comment; supersedes winehq-60721-exposure.txt, which was never posted)
-Status: PREPARED 2026-11-09, not posted (owner posts).
+Status: POSTED by the owner 2026-11-09 (docs/upstream-outbox.md "Posted"). Do not repost.
 
 Text:
 
