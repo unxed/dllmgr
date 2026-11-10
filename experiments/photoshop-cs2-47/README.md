@@ -19,3 +19,15 @@ redraw is visible. On the stand the same step takes ~250 ms with 4
 intermediate frames, one of them half redrawn. Next: where the time goes
 (perf of the zoom on the stand) and Wine's surface flush every 50 ms while
 the application is still drawing.
+
+## 2026-11-10: same kind of image as the Windows run
+
+Stand (fresh CS2 reinstall, rt-cur3 = v14 code, 192 DPI), C:\ps47.png
+(1600x1200 8-bit, 8x8 random blocks like the CI image), shown at 50 %,
+one Alt+wheel notch, 60 fps capture (zoom47b.sh): the zoomed image appears
+in one frame (frame 26; the only earlier change is the title, 116 ms
+before). No partial frames. The partial redraws seen before were with
+t46.png, a 16-bit document at 100 %. Whole-system perf of eight notches:
+Photoshop 10 % CPU, the stand's software compositor (llvmpipe) 18 %, mostly
+idle, i.e. not CPU-bound. Open: does the owner still see steps with v14,
+and with which document (bit depth, zoom)?
