@@ -1,5 +1,5 @@
 Where: https://bugs.winehq.org/show_bug.cgi?id=34134 (comment on the owner's own report)
-Status: PREPARED 2026-11-10, not posted (owner posts). Do not change the bug status automatically.
+Status: POSTED by the owner 2026-11-10 as a comment. Do not repost.
 
 Text:
 

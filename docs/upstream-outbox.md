@@ -16,13 +16,14 @@ second one with the link, then add the back link to the first as a comment.
 
 | # | Where | What | Text | State |
 |---|---|---|---|---|
-| 3 | WineHQ (new bug, duplicate search first) | #44 custom cursors of DPI-virtualized windows not scaled (32x32 at 200 %) | docs/bugzilla/dllmgr-44.txt (prepared 2026-11-10; owner posts) | due |
 | 4 | WineHQ 57513 (comment) | PuTTY IME: needs IBus + us,ru + UTF-8; result notify not forwarded to the IME UI window | to write after the bisect | due |
 | 5 | WineHQ (new bug, duplicate search first) | inverting (XOR) pixels of colour cursors become transparent in the Xcursor path | to write after a Windows probe | candidate |
 | 6 | WineHQ (new bug, duplicate search first) | #43 part 1: caption-less owned popups shown without activation are override-redirect, so a splash stays on top of everything when the busy app's main window is minimized (not a Mint bug: Muffin hides managed transients correctly) | to write after a Windows parity check (ghosted app, owned popup) | candidate |
-| 9 | WineHQ 34134 (comment on own report) | #35 Open dialog stays wide after Adobe -> OS: Windows does the same (CI run 42725940901: 592 -> 776 -> 776) | docs/bugzilla/wine-34134-comment.txt (prepared 2026-11-10; owner posts; status unchanged) | due |
 
 ## Posted (for cross links)
+
+- WineHQ 60743 (owner, 2026-11-10): #44 cursors of DPI-unaware applications not scaled (docs/bugzilla/dllmgr-44.txt).
+- WineHQ 34134 (comment, owner, 2026-11-10): #35 Windows behaves the same (docs/bugzilla/wine-34134-comment.txt).
 
 - WineHQ 60737 (owner, 2026-11-09): #46 halftone stretch of the dirty part only (docs/bugzilla/dllmgr-46.txt).
 - WineHQ 60739 (owner, 2026-11-10): #65 desktop.ini lookups on every bind (docs/bugzilla/dllmgr-65.txt).

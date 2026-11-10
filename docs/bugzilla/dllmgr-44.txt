@@ -1,5 +1,5 @@
 Where: https://bugs.winehq.org (new bug; component winex11.drv; search for duplicates first: "cursor DPI", "cursor scaling", "small cursor HiDPI")
-Status: PREPARED 2026-11-10, not posted (owner posts). Text only.
+Status: POSTED by the owner 2026-11-10 as https://bugs.winehq.org/show_bug.cgi?id=60743. Do not repost.
 
 Summary:
 Custom cursors of DPI-unaware applications are not scaled with the window on HiDPI screens
