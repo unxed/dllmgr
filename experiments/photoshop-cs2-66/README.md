@@ -69,3 +69,8 @@ of printable ASCII glyphs shifted >= 1 px against the outline side bearings:
 tahomabd 9/10/11/12/13/15/16 px = 4/16/19/20/51/53/53 of 94; tahoma (regular)
 1-4 of 94 per size, so its designed strikes stay. WineHQ text:
 docs/bugzilla/dllmgr-66.txt (outbox 10).
+
+Photoshop on the stand with the bold-only fix (photoshop-before-after-bold-fix.png):
+1 stock text before, 2 stock text after ("Op en" -> "Open"), 3 ours (gray) before,
+4 ours after. In gray mode "Background" (synthetic italic of the regular face)
+stays heavy: smoothing + contrast curve, a separate question from spacing.
