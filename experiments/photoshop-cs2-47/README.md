@@ -108,3 +108,16 @@ waits for something between tiles (a timer, an idle check, a posted
 message) and that comes later under Wine than on Windows. Next: a
 +timestamp message trace around one notch to see which message wakes each
 tile (GetMessage returns), and compare its timing with Windows.
+
+Message trace (+timestamp,+msg, one Ctrl+= notch): after the key, one
+WM_PAINT, then Photoshop's own timer on its hidden window (SetTimer 30 ms,
+re-armed between 30 and 300 ms) fires every ~30 ms and each tick paints the
+next part of the zoom; between ticks the main thread waits (gap ~25 ms with
+no messages). So the zoom is paced by Photoshop's 30 ms timer: how many
+tiles a tick paints decides how many visible steps there are. Windows shows
+the whole zoom within 60 ms, i.e. one or two ticks.
+Next step (tool): log the message timeline (WM_TIMER/WM_PAINT and the time
+spent in each) from the dllmgr-27 proxy's existing message hooks, on Wine and
+on the Windows CI runner, and compare per-tick work; then find why a tick
+paints less under Wine (per-tile blit cost through the 2x scaling, or a
+time budget check).
