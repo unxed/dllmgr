@@ -1,0 +1,101 @@
+name: faststone-esc39
+# #39: when does FastStone 8.5 start handling Esc after it starts with an
+# image, compared with when the image is first visible; Windows vs Wine 11.0.
+on:
+  workflow_dispatch:
+    inputs:
+      reps:
+        description: Repetitions per delay
+        default: '3'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tests/wine/ci-install.sh gcc-mingw-w64-x86-64 imagemagick
+        timeout-minutes: 6
+      - run: |
+          x86_64-w64-mingw32-gcc -O2 -Wall -municode -o esc39-probe.exe tests/wine/esc39-probe.c -lgdi32 -lwinmm
+          # 6000x4000 photo-sized JPEG; the centre is the probe's colour f0cc5a.
+          convert -size 6000x4000 -seed 39 gradient:'#3060a0-#80c060' -attenuate 0.4 +noise Gaussian \
+            -fill '#f0cc5a' -draw 'rectangle 1500,1000 4500,3000' -quality 92 big.jpg
+          cp tests/wine/fixtures/first-open.jpg small.jpg
+          ls -l big.jpg small.jpg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: esc39-inputs
+          path: |
+            esc39-probe.exe
+            big.jpg
+            small.jpg
+  windows:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: esc39-inputs
+      - shell: bash
+        env:
+          REPS: ${{ inputs.reps }}
+        run: |
+          set -euo pipefail
+          curl --max-time 90 -fsSL https://www.faststonesoft.net/DN/FSViewer85.zip -o fs85.zip
+          echo '685282a063b91daf4388b84be9e0daf3c5feed4073651137eb9fe9421cf39439  fs85.zip' | sha256sum -c
+          unzip -q fs85.zip
+          RUNNER=windows bash tests/wine/esc39-run.sh out "$PWD/FSViewer85" "$PWD/small.jpg" "$PWD/big.jpg"
+          python tests/wine/esc39-summary.py out/results.txt | tee out/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: esc39-windows
+          path: out/
+  wine:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        key: [sendinput, xdotool]
+    env:
+      WINEDEBUG: -all
+      WINEDLLOVERRIDES: mscoree,mshtml=
+      WINEARCH: win64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Wine 11.0 and desktop test tools
+        timeout-minutes: 6
+        run: bash tests/wine/ci-install.sh --winehq --install-recommends winehq-stable xvfb xdotool x11-utils openbox
+      - uses: actions/download-artifact@v4
+        with:
+          name: esc39-inputs
+      - name: Esc timeline under Wine (192 DPI, openbox)
+        env:
+          REPS: ${{ inputs.reps }}
+          KEY: ${{ matrix.key }}
+        run: |
+          set -euo pipefail
+          export WINEPREFIX="$RUNNER_TEMP/esc39-prefix"
+          wineboot -u
+          wine reg add 'HKCU\Control Panel\Desktop' /v LogPixels /t REG_DWORD /d 192 /f
+          wine reg add 'HKCU\Software\Wine\Fonts' /v LogPixels /t REG_DWORD /d 192 /f
+          timeout 30s wineserver -w || wineserver -k
+          wine --version | tee wine-version.txt
+          curl -fsSL --retry 3 --max-time 120 https://www.faststonesoft.net/DN/FSViewer85.zip -o fs85.zip
+          echo '685282a063b91daf4388b84be9e0daf3c5feed4073651137eb9fe9421cf39439  fs85.zip' | sha256sum -c
+          unzip -q fs85.zip
+          xvfb-run -a -s '-screen 0 3072x1728x24' bash -c \
+            'openbox >/dev/null 2>&1 & sleep 1; RUNNER=wine bash tests/wine/esc39-run.sh out "$PWD/FSViewer85" "$PWD/small.jpg" "$PWD/big.jpg"'
+          cp wine-version.txt out/
+          python3 tests/wine/esc39-summary.py out/results.txt | tee out/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: esc39-wine-${{ matrix.key }}
+          path: out/
