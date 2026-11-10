@@ -1,5 +1,5 @@
 {
-  "release": "app-isolation-wine-11.0-v19",
-  "url": "https://raw.githubusercontent.com/unxed/dllmgr/0ac9d4a0f0b7599bb0e86a18b3763f09bdb7f767/app-isolation-wine-11.0-v19/wine-11.0-app-isolation.zip",
-  "sha256": "f1ae33269bfa592ede11b0198c387c3915b1a12e43a498c3a338aa5e9bf15dfe"
+  "release": "app-isolation-wine-11.0-v20",
+  "url": "https://raw.githubusercontent.com/unxed/dllmgr/93b607308430b4d718008ccf737dd4ea3a73fbbd/app-isolation-wine-11.0-v20/wine-11.0-app-isolation.zip",
+  "sha256": "3aaa2fabc1808e439dabac8ccd0e5e1727e5dfd21948d54df4488eddc5f11c13"
 }
