@@ -36,6 +36,7 @@ app=$(winepath -w "$work/FSViewer85/FSViewer.exe")
 if [ -n "$bundle" ]; then
     tag=${version%% *}
     export DLLMGR_TOOLS="$GITHUB_WORKSPACE/fiw/tools"
+    export DLLMGR_UNSAFE_SHARED_RESEARCH=1  # Disposable CI prefix only (dllmgr#25).
     manager="$GITHUB_WORKSPACE/scripts/manage-faststone.py"
     (cd "$bundle" && sha256sum -c SHA256SUMS)
     cp "$bundle/SOURCE.txt" snapshots85/source.txt
