@@ -75,7 +75,7 @@ try {
     if($Hash -ne '98c746a4707a875f8077d79550f7129b459ae784de05b05f349f89ddecf56d30'){throw 'Installed Photoshop.exe hash mismatch'}
     @{state=$State;exe_sha256=$Hash;dpi=[PS35.Native]::GetDpiForSystem()} | ConvertTo-Json | Set-Content (Join-Path $Out 'installed.json')
     $Application=Start-Process $Exe -WorkingDirectory (Split-Path $Exe) -PassThru
-    $Main=$null;$Deadline=[DateTime]::UtcNow.AddMinutes(8)
+    $Main=$null;$Stable=0;$Deadline=[DateTime]::UtcNow.AddMinutes(8)
     do {
         $Candidates=@([PS35.Native]::Windows() | Where-Object {$_.ClassName -eq 'Photoshop'})
         if($Candidates.Count -gt 0){
@@ -83,7 +83,8 @@ try {
             # Photoshop's menu bar is not in its UIA tree (run 42722023921): the main
             # window is ready when it is enabled (no modal first-start window).
             $File=$Main
-            if([PS35.Native]::IsWindowEnabled([IntPtr]$Main.Handle) -and @([PS35.Native]::Windows() | Where-Object {$_.ProcessId -eq $Application.Id -and $_.Handle -ne $Main.Handle -and $_.Text}).Count -eq 0){break}
+            # ready for 5 s in a row: the Activation dialog can come after the main window (run 42724400238)
+            if([PS35.Native]::IsWindowEnabled([IntPtr]$Main.Handle) -and @([PS35.Native]::Windows() | Where-Object {$_.ProcessId -eq $Application.Id -and $_.Handle -ne $Main.Handle -and $_.Text}).Count -eq 0){$Stable++;if($Stable -ge 5){break}}else{$Stable=0}
         }
         foreach($Window in @([PS35.Native]::Windows() | Where-Object {$_.ProcessId -eq $Application.Id})){
             $Dialog=[System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Window.Handle)
