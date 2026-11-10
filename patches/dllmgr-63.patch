@@ -1,6 +1,25 @@
 --- a/dlls/comctl32_v6/combo.c
 +++ b/dlls/comctl32_v6/combo.c
-@@ -755,6 +755,7 @@
+@@ -336,6 +336,18 @@
+          * size the button horizontally and cut-off the text area.
+          */
+         combo->buttonRect.left = combo->buttonRect.right - GetSystemMetrics(SM_CXVSCROLL);
++        /* dllmgr #63: themed, Windows puts the button flush with the 1 px
++         * theme border: client width - SM_CXVSCROLL to client width - 1.
++         * Apps that paint the text field up to client width - SM_CXVSCROLL
++         * themselves (FastStone's path box) would cover its left edge. */
++        if (GetWindowTheme(combo->self))
++        {
++            RECT client;
++
++            GetClientRect(combo->self, &client);
++            combo->buttonRect.right = client.right - 1;
++            combo->buttonRect.left = client.right - GetSystemMetrics(SM_CXVSCROLL);
++        }
+         combo->textRect.right = combo->buttonRect.left;
+     }
+ 
+@@ -755,6 +767,7 @@
  
  static LRESULT COMBO_ThemedPaint(HTHEME theme, HEADCOMBO *lphc, HDC hdc)
  {
@@ -8,15 +27,14 @@
      int button_state;
      RECT frame;
  
-@@ -781,7 +782,14 @@
+@@ -781,7 +794,13 @@
              button_state = CBXS_HOT;
          else
              button_state = CBXS_NORMAL;
 -        DrawThemeBackground(theme, hdc, CP_DROPDOWNBUTTON, button_state, &lphc->buttonRect, NULL);
 +        /* dllmgr #63: like Windows since Vista, the drop-down button is the
 +         * CP_DROPDOWNBUTTONRIGHT part when the theme has it: only the glyph in
-+         * the normal state, a frame on hover and press. (FastStone's path box
-+         * is a ComboBoxEx: a drop-down-list combo with its own edit on top.) */
++         * the normal state, a frame on hover and press. */
 +        button_part = CP_DROPDOWNBUTTON;
 +        if (IsThemePartDefined(theme, CP_DROPDOWNBUTTONRIGHT, 0))
 +            button_part = CP_DROPDOWNBUTTONRIGHT;

@@ -41,3 +41,28 @@ the patch, left normal, right hot):
   frame is visible from x=2669; the first 2-3 columns of the button are
   covered by something drawn later. Open.
 Not shipped yet: needs a catalog fix entry and a faststone-v5 module release.
+
+## 2026-11-10 21:30: hover left side fixed (button geometry like Windows)
+
+Child-window probe (tests/wine/kids63.c, EnumChildWindows of the main
+window): the path box is a TTntComboBox (CBS_DROPDOWNLIST | owner-draw
+fixed | has strings) with a TTntEdit sibling on top; the edit ends before
+the button, so it is not what covers it.
+
+Experiments in our comctl32_v6 (env switches, not shipped):
+- button painted after the text field: no change;
+- no WM_DRAWITEM to the owner: no change;
+- button rect left + 6: the blue left line appears at +6.
+So FastStone paints the text field itself up to client width -
+SM_CXVSCROLL, after the combo has painted. Wine's button is
+[width - 2 - SM_CXVSCROLL, width - 2): its first 2 columns (192 DPI) lie
+under that paint. Windows (themed, #21 capture at 96 DPI): the button is
+[width - SM_CXVSCROLL, width - 1), the left line right after FastStone's
+field, and the 1 px theme border at width - 1.
+
+patches/dllmgr-63.patch now also sets that geometry in CBCalcPlacement for
+themed combos. Stand (t63.sh, dllmgr63-before-after-zoom.png, top
+faststone-v4, bottom the patch; left normal, right hot): normal shows only
+the glyph, hot has the full blue frame, as on Windows.
+Not covered: theme switched on a live combo keeps the old geometry until
+the next resize; Wine's comctl32 combo tests check no horizontal geometry.
