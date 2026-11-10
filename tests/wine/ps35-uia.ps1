@@ -30,6 +30,12 @@ namespace PS35 {
   [DllImport("user32.dll")] static extern void mouse_event(uint f,uint x,uint y,uint d,UIntPtr e);
   // A real click at a point UIA reported for the element (its clickable point).
   public static void Click(int x,int y) { SetCursorPos(x,y);mouse_event(2,0,0,0,UIntPtr.Zero);mouse_event(4,0,0,0,UIntPtr.Zero); }
+  [DllImport("user32.dll")] static extern void keybd_event(byte vk,byte scan,uint f,UIntPtr e);
+  // #47: Alt (VK_MENU) held, one wheel notch at a point
+  public static void AltWheel(int x,int y,int delta,bool press,bool release) {
+   SetCursorPos(x,y); if(press) keybd_event(0x12,0x38,0,UIntPtr.Zero);
+   mouse_event(0x0800,0,0,(uint)delta,UIntPtr.Zero); if(release) keybd_event(0x12,0x38,2,UIntPtr.Zero);
+  }
   [DllImport("user32.dll",EntryPoint="SendMessageTimeoutW",CharSet=CharSet.Unicode,SetLastError=true)]
   static extern IntPtr SendText(IntPtr h,uint m,IntPtr w,string text,uint flags,uint timeout,out IntPtr result);
   public static bool SetText(IntPtr h,string text) {

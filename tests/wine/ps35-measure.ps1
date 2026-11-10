@@ -130,6 +130,31 @@ try {
     $Result=@{os_before=$Before;adobe=$Adobe;os_after=$After;original_os_hwnd_preserved=($Before.Handle -eq $After.Handle);width_growth=($After.Width-$Before.Width);utc=[DateTime]::UtcNow.ToString('o')}
     $Result | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $Out 'comparison.json')
     Write-Host ($Result | ConvertTo-Json -Depth 6 -Compress)
+    # #47: Alt+wheel zoom on Windows, burst of screenshots to compare the redraw with Wine
+    try{
+        foreach($Window in @([PS35.Native]::Windows() | Where-Object {$_.ProcessId -eq $Main.ProcessId -and $_.Text -eq 'Open'})){[void][PS35.Native]::PostMessage([IntPtr]$Window.Handle,0x10,[IntPtr]::Zero,[IntPtr]::Zero)}
+        Start-Sleep -Seconds 2
+        $Img=New-Object System.Drawing.Bitmap 1600,1200;$Rnd=New-Object System.Random 47
+        for($y=0;$y -lt 1200;$y+=8){for($x=0;$x -lt 1600;$x+=8){$C=[System.Drawing.Color]::FromArgb($Rnd.Next(256),[int](($x/1600)*255),[int](($y/1200)*255));$B=New-Object System.Drawing.SolidBrush $C;[System.Drawing.Graphics]::FromImage($Img).FillRectangle($B,$x,$y,8,8);$B.Dispose()}}
+        $Img.Save('C:\ps47.png');$Img.Dispose()
+        [void][PS35.Native]::SetForegroundWindow([IntPtr]$Main.Handle);Start-Sleep -Milliseconds 500
+        [System.Windows.Forms.SendKeys]::SendWait('^o');Start-Sleep -Seconds 3
+        [System.Windows.Forms.SendKeys]::SendWait('C:\ps47.png');Start-Sleep -Milliseconds 500
+        [System.Windows.Forms.SendKeys]::SendWait('{ENTER}');Start-Sleep -Seconds 10
+        Save-Desktop 'zoom-before'
+        $W=@([PS35.Native]::Windows() | Where-Object {$_.Handle -eq $Main.Handle})[0]
+        $Cx=[int]($W.X+$W.Width/2);$Cy=[int]($W.Y+$W.Height/2)
+        $Frames=@()
+        for($Notch=0;$Notch -lt 2;$Notch++){
+            [PS35.Native]::AltWheel($Cx,$Cy,120,$true,$false)
+            $T0=[DateTime]::UtcNow
+            for($k=0;$k -lt 25;$k++){Save-Desktop ("zoom-n{0}-f{1:D2}" -f $Notch,$k);$Frames+=@{notch=$Notch;frame=$k;ms=[int]([DateTime]::UtcNow-$T0).TotalMilliseconds}}
+            [PS35.Native]::AltWheel($Cx,$Cy,0,$false,$true)
+            Start-Sleep -Seconds 2
+        }
+        Save-Desktop 'zoom-after'
+        $Frames | ConvertTo-Json | Set-Content (Join-Path $Out 'zoom-frames.json')
+    }catch{Save-Desktop 'zoom-failed';"zoom stage failed: $_" | Set-Content (Join-Path $Out 'zoom-error.txt')}
 }finally{
     Export-InstallLog
     if($null -ne $Application){
