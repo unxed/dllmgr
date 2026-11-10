@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build dependencies
-        timeout-minutes: 8
+        timeout-minutes: 20
         run: bash tests/wine/ci-install.sh git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 libfreetype-dev libfontconfig-dev libx11-dev libxext-dev libxrender-dev libxrandr-dev libxi-dev libxcomposite-dev libxcursor-dev libxfixes-dev libxinerama-dev libgnutls28-dev
       - name: Build and install
         run: |
