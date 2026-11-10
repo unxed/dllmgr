@@ -43,12 +43,17 @@ make -C "$bld" -j"$(nproc)" __tooldeps__ dlls/ntdll/all tools/wine/wine dlls/gdi
 for arch in i386 x86_64; do
     mkdir -p "out/isolation/$arch-windows"
     cp "$bld/dlls/ntdll/$arch-windows/ntdll.dll" "out/isolation/$arch-windows/"
-    cp "$bld/dlls/shell32/$arch-windows/shell32.dll" "out/isolation/$arch-windows/"
 done
+# #65: Photoshop CS2 is 32-bit; only its shell32 is replaced
+cp "$bld/dlls/shell32/i386-windows/shell32.dll" out/isolation/i386-windows/
 mkdir -p out/isolation/x86_64-unix out/isolation/bin
 cp "$bld/dlls/ntdll/ntdll.so" out/isolation/x86_64-unix/
 cp "$bld/dlls/win32u/win32u.so" "$bld/dlls/winex11.drv/winex11.so" out/isolation/x86_64-unix/
 cp "$bld/tools/wine/wine" out/isolation/bin/
+# Debug info is not needed at run time and doubled the download (v12 candidate: 22.7 MB)
+strip --strip-debug out/isolation/x86_64-unix/*.so out/isolation/bin/wine
+i686-w64-mingw32-strip --strip-debug out/isolation/i386-windows/*.dll
+x86_64-w64-mingw32-strip --strip-debug out/isolation/x86_64-windows/*.dll
 cp patches/wine-11.0-app-isolation.patch patches/winehq-60721.patch patches/dllmgr-43.patch patches/dllmgr-44.patch patches/dllmgr-46.patch patches/dllmgr-49.patch patches/dllmgr-52.patch patches/dllmgr-65.patch patches/dllmgr-66.patch out/isolation/
 printf '%s\n' 'wine-11.0 db11d0fe6a169c457e23d007e20404643d067aa8 + wine-11.0-app-isolation.patch + winehq-60721.patch + dllmgr-43.patch + dllmgr-44.patch + dllmgr-46.patch + dllmgr-49.patch + dllmgr-52.patch + dllmgr-65.patch + dllmgr-66.patch' > out/isolation/SOURCE.txt
 (cd out/isolation && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
