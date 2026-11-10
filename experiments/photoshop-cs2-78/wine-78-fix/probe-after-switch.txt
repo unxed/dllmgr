@@ -1,0 +1,9 @@
+main 00010068 foreground 00010020 active 00000000 focus 00000000 flags 0
+win 000208c4 class=PSFloatC text="" rect=1314,351-1526,483 style=94800111 exstyle=00000088 owner=00010068
+win 000208b4 class=PSFloatC text="" rect=1314,484-1526,854 style=94800111 exstyle=00000080 owner=00010068
+win 000508bc class=PSDocC text="t46.png @ 100% (RGB/8)" rect=81,89-744,618 style=96cf0000 exstyle=00000100 owner=00010068
+win 00010068 class=Photoshop text="Adobe Photoshop" rect=2,2-1532,860 style=16cf0000 exstyle=00000100 owner=00000000
+win 000208a8 class=PSFloatC text="" rect=1314,219-1526,350 style=94800011 exstyle=00000080 owner=00010068
+win 000208ac class=PSFloatC text="" rect=1314,87-1526,218 style=94800111 exstyle=00000080 owner=00010068
+win 00030626 class=PSFloatC text="" rect=8,87-72,529 style=94800000 exstyle=00000080 owner=00010068
+win 00010608 class=PSFloatC text="" rect=30000,30000-30001,30001 style=94800000 exstyle=00000080 owner=00010068

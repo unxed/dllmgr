@@ -1,0 +1,36 @@
+--- a/dlls/winex11.drv/event.c
++++ b/dlls/winex11.drv/event.c
+@@ -673,6 +673,24 @@
+ }
+ 
+ 
++/* dllmgr #78/#82: the WM offers the focus to a window the user clicked
++ * (WM_TAKE_FOCUS). Windows lets such a window decide through
++ * WM_MOUSEACTIVATE; Photoshop's palettes answer MA_NOACTIVATE and stay
++ * inactive, the main window keeps the foreground. Wine 11 activated them
++ * unconditionally (older Wine asked, like here). DLLMGR78_OFF=1: Wine 11. */
++static BOOL dllmgr78_wants_activation( HWND hwnd, HWND foreground )
++{
++    static int off = -1;
++    LRESULT ma;
++
++    if (off < 0) off = getenv( "DLLMGR78_OFF" ) != NULL;
++    if (off || hwnd == foreground) return TRUE;
++    ma = send_message( hwnd, WM_MOUSEACTIVATE, (WPARAM)NtUserGetAncestor( hwnd, GA_ROOT ),
++                       MAKELONG( HTCLIENT, WM_LBUTTONDOWN ) );
++    TRACE( "dllmgr78: %p WM_MOUSEACTIVATE -> %ld\n", hwnd, (long)ma );
++    return ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE;
++}
++
+ /**********************************************************************
+  *              handle_wm_protocols
+  */
+@@ -752,7 +770,7 @@
+                 NtUserIsWindowEnabled( hwnd ), NtUserIsWindowVisible( hwnd ), NtUserGetWindowLongW( hwnd, GWL_STYLE ),
+                 get_focus(), get_active_window(), last_focus );
+ 
+-        if (can_activate_window(hwnd))
++        if (can_activate_window(hwnd) && dllmgr78_wants_activation( hwnd, foreground ))
+         {
+             set_focus( event->display, hwnd, event_time );
+             return;

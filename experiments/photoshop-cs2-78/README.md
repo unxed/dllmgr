@@ -97,3 +97,26 @@ check, relevance unknown. Next chunks to bisect: fonts (FONTCONFIG_FILE
 with a minimal set), the prefix-creation recipe vs the cloud one
 (mscoree/Mono, winetricks bits), the Photoshop settings/Temp dirs, Xvfb
 vs cloud display depth. #78/#82 runs (t78p.sh) wait until startup is clean.
+
+## 2026-11-11: what activates the palette, first fix (patches/dllmgr-78.patch)
+
+Trace (v21, +event,+x11drv,+win): the click makes Muffin send WM_TAKE_FOCUS
+to the palette; winex11 handle_wm_protocols calls set_focus, which makes it
+foreground/active/focus. Wine 11 no longer asks the window (older Wine sent
+WM_MOUSEACTIVATE first). Windows asks: Photoshop's palettes answer
+MA_NOACTIVATE and stay inactive.
+
+dllmgr-78.patch (winex11): before activating on WM_TAKE_FOCUS a window that
+is not the foreground, send WM_MOUSEACTIVATE (HTCLIENT, WM_LBUTTONDOWN);
+MA_NOACTIVATE / MA_NOACTIVATEANDEAT keep the current foreground (the X focus
+goes back to it). DLLMGR78_OFF=1: Wine 11 behaviour.
+Stand (rt-exp, wine-78-fix/): the History palette answers 3 (MA_NOACTIVATE);
+after the click foreground/active/focus stay on the main window (as on
+Windows); document windows answer MA_ACTIVATE and still activate. Alt+F4
+now goes to Photoshop (its "save changes" box comes up) = #82 fixed.
+Still open (#78): the palette becomes WS_EX_TOPMOST (exstyle 0x88; Windows
+0x80) on Photoshop's SetWindowPos(HWND_TOP, SWP_NOACTIVATE) after the click:
+swp_owner_popups places it right after a hidden topmost popup 0x108d0
+(1152x648, ex 0x88), and the server makes it topmost. So it stays above
+other apps. tests/wine/zorder78.c (simple model) does not reproduce it;
+tests/wine/zlist78.c dumps the real z-order.
