@@ -59,3 +59,21 @@ the final one. On Windows both land within the first 60 ms capture; on the
 stand the final pass comes 130-250 ms later. Next (not started): where the
 second pass waits (timer / idle detection in Photoshop's message loop under
 Wine), e.g. +timestamp,+message,+timer trace around one notch.
+
+## 2026-11-10: the owner's screen recording (8-bit photo, v18)
+
+experiments/owner-2026-11-10/alt-wheel-zoom-artifacts.mp4 (25 fps, 3072x1728).
+Frame differences: almost every zoom step changes the screen in two frames
+(40 ms apart), first a part, then the rest. Frame 23
+(owner-2026-11-10/zoom-frame23-mid-resize.png): the document window has
+already grown (title "116%", status still "105.7%"), the zoomed image is
+drawn inside the old extent with the old grey border, and the newly exposed
+strips at the right and bottom show stale screen pixels (old image); the
+next frame is complete. So the artifact is the window resize becoming
+visible before the application's repaint: Photoshop resizes the document
+window on zoom; X shows the larger window at once (new area = old screen
+content), Wine's window surface with the new paint is flushed one frame
+later. Windows (DWM) presents resize and repaint together.
+Fix direction (not started): when a window grows, hold its X configure (or
+the flush of the exposed area) until the application has repainted, with a
+short timeout; or paint the exposed area from the surface immediately.
