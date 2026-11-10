@@ -449,6 +449,11 @@ static BOOL WINAPI alpha_blend_hook(HDC dst, int dx, int dy, int dw, int dh, HDC
                         (int)(all[(sy + y) * bm.bmWidth + sx + x] >> 24) >= min)
                         mask[(p.y + y) * w + p.x + x] = 1;
             if ((rgn = changed_region(mask, none, w, h))) {
+                if (debug) {  /* #36: the region as built, and spot checks at the feather's notch */
+                    DWORD sz = GetRegionData(rgn, 0, NULL);
+                    TRACE("alpha region: %lu bytes, mask(12,60)=%lu (14,60)=%lu, in rgn: %d %d\n", sz,
+                          mask[60 * w + 12], mask[60 * w + 14], PtInRegion(rgn, 12, 60), PtInRegion(rgn, 14, 60));
+                }
                 if (SetWindowRgn(root, rgn, TRUE)) {
                     RECT cr;
                     POINT o = {0, 0};
