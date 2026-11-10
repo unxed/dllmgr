@@ -1,29 +1,31 @@
 diff --git a/dlls/win32u/freetype.c b/dlls/win32u/freetype.c
-index 2e324a94..b25e05d3 100644
+index 2e324a94..a67a9461 100644
 --- a/dlls/win32u/freetype.c
 +++ b/dlls/win32u/freetype.c
-@@ -3118,6 +3118,20 @@ static FT_Int get_load_flags( UINT format )
+@@ -3118,6 +3118,22 @@ static FT_Int get_load_flags( UINT format )
      return load_flags;
  }
  
-+/* dllmgr #66: Wine's own Tahoma (tahoma.ttf, tahomabd.ttf) carries embedded
-+ * bitmap strikes for 8-16 px whose glyphs are badly placed in their cells
-+ * (10 px bold: "p" 0 px left and 2 px right of the ink, the outline has
-+ * 0.55 / 0.16), so monochrome text reads "Op en", "B ackground". Its hinted
-+ * outlines are evenly spaced: use them. DLLMGR66_TAHOMA_BITMAPS=1 keeps the
-+ * strikes. */
++/* dllmgr #66: Wine's own Tahoma Bold (tahomabd.ttf) carries embedded bitmap
++ * strikes for 9-16 px whose glyphs are often badly placed in their cells
++ * (ASCII glyphs off by 1 px or more against the outline: 16 of 94 at 10 px,
++ * 53 of 94 at 16 px; 10 px "p" 0 px left and 2 px right of the ink, the
++ * outline has 0.55 / 0.16), so monochrome text reads "Op en", "B ackground".
++ * Its hinted outlines are evenly spaced: use them. The regular face's strikes
++ * are fine (1-4 of 94) and stay. DLLMGR66_TAHOMA_BITMAPS=1 keeps all strikes. */
 +static BOOL dllmgr66_skip_strikes( FT_Face ft_face )
 +{
 +    static int keep = -1;
 +    if (keep < 0) keep = getenv( "DLLMGR66_TAHOMA_BITMAPS" ) != NULL;
 +    return !keep && FT_HAS_FIXED_SIZES( ft_face ) && FT_IS_SCALABLE( ft_face ) &&
++           (ft_face->style_flags & FT_STYLE_FLAG_BOLD) &&
 +           ft_face->family_name && !strcmp( ft_face->family_name, "Tahoma" );
 +}
 +
  /*************************************************************
   * freetype_get_glyph_outline
   */
-@@ -3146,7 +3160,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3146,7 +3162,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
  
      vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
  

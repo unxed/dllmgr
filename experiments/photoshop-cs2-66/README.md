@@ -63,3 +63,9 @@ are rendered from the hinted outlines instead of the strikes
 (probe-tahoma10-before-after.png, left stock, right fixed): "Open",
 "Background" evenly spaced and crisp. Offline FreeType rendering of 10/11 px
 strikes vs hinted outlines: /home/claude/work/tfix (variants.png).
+
+Narrowed (2026-11-10): only the bold face skips its strikes. FreeType count
+of printable ASCII glyphs shifted >= 1 px against the outline side bearings:
+tahomabd 9/10/11/12/13/15/16 px = 4/16/19/20/51/53/53 of 94; tahoma (regular)
+1-4 of 94 per size, so its designed strikes stay. WineHQ text:
+docs/bugzilla/dllmgr-66.txt (outbox 10).
