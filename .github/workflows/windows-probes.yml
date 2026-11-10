@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['tests/wine/feedback-*.c', '.github/workflows/windows-probes.yml']
+    paths: ['tests/wine/feedback-*.c', 'tests/wine/zorder78b.c', '.github/workflows/windows-probes.yml']
 permissions:
   contents: read
 jobs:
@@ -17,7 +17,7 @@ jobs:
       - run: sudo apt-get install -y -qq gcc-mingw-w64-x86-64 >/dev/null
       - run: |
           mkdir out
-          for src in tests/wine/feedback-setting.c tests/wine/feedback-get.c; do
+          for src in tests/wine/feedback-setting.c tests/wine/feedback-get.c tests/wine/zorder78b.c; do
             x86_64-w64-mingw32-gcc -O2 -Wall -o "out/$(basename "$src" .c).exe" "$src" -luser32
           done
       - uses: actions/upload-artifact@v4
@@ -33,3 +33,4 @@ jobs:
         shell: pwsh
         run: |
           Get-ChildItem probes\*.exe | ForEach-Object { "== $($_.Name)"; & $_.FullName; "exit=$LASTEXITCODE" }
+          "== zorder78b.exe nob"; & probes\zorder78b.exe nob
