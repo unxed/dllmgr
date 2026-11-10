@@ -31,3 +31,23 @@ t46.png, a 16-bit document at 100 %. Whole-system perf of eight notches:
 Photoshop 10 % CPU, the stand's software compositor (llvmpipe) 18 %, mostly
 idle, i.e. not CPU-bound. Open: does the owner still see steps with v14,
 and with which document (bit depth, zoom)?
+
+## 2026-11-10: 16-bit on Windows, and Wine's flush ruled out
+
+Windows (CI run 42803487934, 96 DPI, generated 16-bit 800x600 PNG,
+tests/wine/png16.py, opened at 66.7 %): both Alt+wheel notches are complete
+in the first capture 56-60 ms after the event; no partial frames.
+
+Stand (separate display :96, prefix copy, rt-cur3, C:\t46.png 16-bit at
+100 %, z16.sh, 60 fps): notch 1 changes the screen in two steps ~250 ms
+apart (frame 53: 22491 px changed, 25398 px still differ from the final
+frame; frame 68: final). With Wine's non-idle surface flushes disabled
+(experimental DLLMGR47_NOFLUSH, not kept) notch 1 shows the identical two
+steps (same pixel counts), so the steps are not Wine's 50 ms flush while the
+application draws: Photoshop itself draws the 16-bit zoom in two passes
+here. Caveat found: xdotool "keydown alt click 4 keyup alt" leaves the
+menu bar active (File highlighted) after the first notch, so later notches
+in one run are unreliable; use one notch per run.
+Open: why Photoshop takes two passes on Wine but one on Windows (draw
+time: 4x the pixels at 192 DPI? a timer it checks?). Owner question: which
+documents show the jumps for you (8 or 16 bit, zoom level)?
