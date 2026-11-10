@@ -1,0 +1,1 @@
+Built by CI run https://github.com/unxed/dllmgr/actions/runs/42762794404 at commit cc15730. Changes since v13: #69 text=agg / agg-rgb keep crisp v5 strikes for bold Tahoma; glyphs at unhinted positions scaled to the run width the application expects. Stand e2e: dllmgr fix + dllmgr run with text=agg-rgb, palettes checked, orderly exit recorded.
