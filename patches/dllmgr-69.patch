@@ -1,5 +1,5 @@
 diff --git a/dlls/win32u/dibdrv/graphics.c b/dlls/win32u/dibdrv/graphics.c
-index 92dea911..1cbd3347 100644
+index 92dea911..5c90f4f5 100644
 --- a/dlls/win32u/dibdrv/graphics.c
 +++ b/dlls/win32u/dibdrv/graphics.c
 @@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dib);
@@ -85,7 +85,7 @@ index 92dea911..1cbd3347 100644
      glyph->metrics = metrics;
 -    return add_cached_glyph( font, index, flags, glyph );
 +    glyph->linear = 0;
-+    if (dllmgr52_text_mode() == DLLMGR52_AGG && font->aa_flags != GGO_BITMAP)
++    if (dllmgr52_text_mode() >= DLLMGR52_AGG && font->aa_flags != GGO_BITMAP)
 +    {
 +        ret = NtGdiGetGlyphOutline( dc->hSelf, index, (ggo_flags & ~DLLMGR69_PHASE_MASK) | DLLMGR69_LINEAR,
 +                                    &metrics, 0, NULL, &identity, FALSE );
@@ -112,7 +112,7 @@ index 92dea911..1cbd3347 100644
 +     * font's own unhinted position, in thirds of a pixel, but never more than
 +     * half a pixel away from where the application put it (its integer
 +     * advances or dx), so selections, carets and clip rects still fit */
-+    agg = dllmgr52_text_mode() == DLLMGR52_AGG && font->aa_flags != GGO_BITMAP && !(flags & ETO_PDY);
++    agg = dllmgr52_text_mode() >= DLLMGR52_AGG && font->aa_flags != GGO_BITMAP && !(flags & ETO_PDY);
 +
      for (i = 0; i < count; i++)
      {
@@ -145,18 +145,19 @@ index 92dea911..1cbd3347 100644
          if (dx)
          {
 diff --git a/dlls/win32u/font.c b/dlls/win32u/font.c
-index 09765640..1811e477 100644
+index 09765640..e3a11afc 100644
 --- a/dlls/win32u/font.c
 +++ b/dlls/win32u/font.c
-@@ -216,6 +216,7 @@ int dllmgr52_text_mode(void)
+@@ -216,6 +216,8 @@ int dllmgr52_text_mode(void)
          else if (env && !strcmp( env, "gray" )) mode = DLLMGR52_GRAY;
          else if (env && !strcmp( env, "light" )) mode = DLLMGR52_LIGHT;
          else if (env && !strcmp( env, "cleartype" )) mode = DLLMGR52_CLEARTYPE;
 +        else if (env && !strcmp( env, "agg" )) mode = DLLMGR52_AGG;  /* dllmgr #69 */
++        else if (env && !strcmp( env, "agg-rgb" )) mode = DLLMGR52_AGG_RGB;
      }
      return mode;
  }
-@@ -4651,7 +4654,8 @@ static HFONT font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+@@ -4651,8 +4655,10 @@ static HFONT font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
              {
              case DLLMGR52_BITMAP: *aa_flags = GGO_BITMAP; break;
              case DLLMGR52_GRAY:
@@ -164,32 +165,70 @@ index 09765640..1811e477 100644
 +            case DLLMGR52_LIGHT:
 +            case DLLMGR52_AGG: *aa_flags = GGO_GRAY4_BITMAP; break;
              case DLLMGR52_CLEARTYPE:
++            case DLLMGR52_AGG_RGB:
                  *aa_flags = subpixel_orientation == GGO_GRAY4_BITMAP ? WINE_GGO_HRGB_BITMAP : subpixel_orientation;
                  break;
+             }
 diff --git a/dlls/win32u/freetype.c b/dlls/win32u/freetype.c
-index aef3e313..7705ec7a 100644
+index aef3e313..d536acbf 100644
 --- a/dlls/win32u/freetype.c
 +++ b/dlls/win32u/freetype.c
-@@ -2142,7 +2142,7 @@ static BOOL dllmgr66_tahoma_strike( struct gdi_font *font )
+@@ -101,6 +101,7 @@ MAKE_FUNCPTR(FT_Get_TrueType_Engine_Type);
+ MAKE_FUNCPTR(FT_Get_WinFNT_Header);
+ MAKE_FUNCPTR(FT_Init_FreeType);
+ MAKE_FUNCPTR(FT_Library_SetLcdFilter);
++MAKE_FUNCPTR(FT_Library_SetLcdFilterWeights);
+ MAKE_FUNCPTR(FT_Library_Version);
+ MAKE_FUNCPTR(FT_Load_Glyph);
+ MAKE_FUNCPTR(FT_Get_Advance);  /* dllmgr #66 */
+@@ -1480,6 +1481,7 @@ static BOOL init_freetype(void)
+     LOAD_FUNCPTR(FT_Get_WinFNT_Header)
+     LOAD_FUNCPTR(FT_Init_FreeType)
+     LOAD_FUNCPTR(FT_Library_SetLcdFilter)
++    LOAD_FUNCPTR(FT_Library_SetLcdFilterWeights)
+     LOAD_FUNCPTR(FT_Library_Version)
+     LOAD_FUNCPTR(FT_Load_Glyph)
+     LOAD_FUNCPTR(FT_Get_Advance)
+@@ -1526,6 +1528,13 @@ static BOOL init_freetype(void)
+     }
+ 
+     pFT_Library_SetLcdFilter( library, FT_LCD_FILTER_DEFAULT );
++    if (dllmgr52_text_mode() == DLLMGR52_AGG_RGB)
++    {
++        /* dllmgr #69: M. Shemanarev's soft filter, primary weight 1/3,
++         * secondary 2/9, tertiary 1/9: less colour fringing than ClearType */
++        static unsigned char weights[5] = {28, 57, 85, 57, 28};
++        pFT_Library_SetLcdFilterWeights( library, weights );
++    }
+ 
+     return TRUE;
+ 
+@@ -2142,7 +2151,7 @@ static BOOL dllmgr66_tahoma_strike( struct gdi_font *font )
      int i;
  
      if (smooth < 0) smooth = getenv( "DLLMGR66_SMOOTH_TAHOMA" ) != NULL;
 -    if (smooth || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
-+    if (smooth || dllmgr52_text_mode() == DLLMGR52_AGG || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
++    if (smooth || dllmgr52_text_mode() >= DLLMGR52_AGG || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
      /* regular stays smoothed: Photoshop clips its labels at the ink end of
       * Windows' ClearType glyphs ("Opacity:" in a 37 px rect, x = 1), the
       * strike's colon lands one column further and was cut off */
-@@ -3142,7 +3142,8 @@ static FT_Int get_load_flags( UINT format )
+@@ -3142,11 +3151,13 @@ static FT_Int get_load_flags( UINT format )
      case GGO_GRAY8_BITMAP:
      case WINE_GGO_GRAY16_BITMAP:
          /* dllmgr #52: light hinting keeps the outline shapes */
 -        load_flags |= dllmgr52_text_mode() == DLLMGR52_LIGHT ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_NORMAL;
-+        load_flags |= dllmgr52_text_mode() == DLLMGR52_LIGHT || dllmgr52_text_mode() == DLLMGR52_AGG
++        load_flags |= dllmgr52_text_mode() == DLLMGR52_LIGHT || dllmgr52_text_mode() >= DLLMGR52_AGG
 +                      ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_NORMAL;
          break;
      case WINE_GGO_HRGB_BITMAP:
      case WINE_GGO_HBGR_BITMAP:
-@@ -3283,9 +3284,11 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+-        load_flags |= FT_LOAD_TARGET_LCD;
++        /* dllmgr #69: text=agg-rgb hints vertically only, like text=agg */
++        load_flags |= dllmgr52_text_mode() == DLLMGR52_AGG_RGB ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_LCD;
+         break;
+     case WINE_GGO_VRGB_BITMAP:
+     case WINE_GGO_VBGR_BITMAP:
+@@ -3283,9 +3294,11 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      FT_Glyph_Metrics metrics;
      FT_Error err;
      FT_BBox bbox;
@@ -202,7 +241,7 @@ index aef3e313..7705ec7a 100644
      FT_Pos dllmgr66_advance = 0;
      BOOL dllmgr66_bitmap_slant = FALSE;
      int dllmgr66_min_shift = 0;
-@@ -3297,6 +3300,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3297,6 +3310,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
            font->matrix.eM21, font->matrix.eM22);
  
      format &= ~GGO_UNHINTED;
@@ -210,7 +249,7 @@ index aef3e313..7705ec7a 100644
  
      matrices = get_transform_matrices( font, tategaki, lpmat, transform_matrices );
  
-@@ -3341,6 +3345,15 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3341,6 +3355,15 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      }
  
      metrics = ft_face->glyph->metrics;
@@ -227,7 +266,7 @@ index aef3e313..7705ec7a 100644
      if (!vertical_metrics && !matrices && ft_face->glyph->format == FT_GLYPH_FORMAT_BITMAP && ft_face->glyph->bitmap.width &&
          ((dllmgr66_tahoma_bold( ft_face ) && dllmgr66_letter( ft_face, glyph ) != DLLMGR66_OTHER) ||
 diff --git a/dlls/win32u/ntgdi_private.h b/dlls/win32u/ntgdi_private.h
-index d7b67b42..cd3ab72c 100644
+index d7b67b42..17aed057 100644
 --- a/dlls/win32u/ntgdi_private.h
 +++ b/dlls/win32u/ntgdi_private.h
 @@ -646,7 +647,13 @@ extern void free_heap_bits( struct gdi_image_bits *bits );
@@ -235,7 +274,7 @@ index d7b67b42..cd3ab72c 100644
  
  /* dllmgr #52 */
 -enum { DLLMGR52_SYSTEM, DLLMGR52_BITMAP, DLLMGR52_GRAY, DLLMGR52_LIGHT, DLLMGR52_CLEARTYPE };
-+enum { DLLMGR52_SYSTEM, DLLMGR52_BITMAP, DLLMGR52_GRAY, DLLMGR52_LIGHT, DLLMGR52_CLEARTYPE, DLLMGR52_AGG };
++enum { DLLMGR52_SYSTEM, DLLMGR52_BITMAP, DLLMGR52_GRAY, DLLMGR52_LIGHT, DLLMGR52_CLEARTYPE, DLLMGR52_AGG, DLLMGR52_AGG_RGB };
 +/* dllmgr #69 (text=agg): private GetGlyphOutline format bits between the DIB
 + * text renderer and FreeType: render the glyph shifted right by phase/3 px,
 + * or (metrics only) return 1 + the unhinted advance in 1/64 px */
