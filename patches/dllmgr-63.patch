@@ -1,0 +1,26 @@
+--- a/dlls/comctl32_v6/combo.c
++++ b/dlls/comctl32_v6/combo.c
+@@ -755,6 +755,7 @@
+ 
+ static LRESULT COMBO_ThemedPaint(HTHEME theme, HEADCOMBO *lphc, HDC hdc)
+ {
++    int button_part;
+     int button_state;
+     RECT frame;
+ 
+@@ -781,7 +782,14 @@
+             button_state = CBXS_HOT;
+         else
+             button_state = CBXS_NORMAL;
+-        DrawThemeBackground(theme, hdc, CP_DROPDOWNBUTTON, button_state, &lphc->buttonRect, NULL);
++        /* dllmgr #63: like Windows since Vista, the drop-down button is the
++         * CP_DROPDOWNBUTTONRIGHT part when the theme has it: only the glyph in
++         * the normal state, a frame on hover and press. (FastStone's path box
++         * is a ComboBoxEx: a drop-down-list combo with its own edit on top.) */
++        button_part = CP_DROPDOWNBUTTON;
++        if (IsThemePartDefined(theme, CP_DROPDOWNBUTTONRIGHT, 0))
++            button_part = CP_DROPDOWNBUTTONRIGHT;
++        DrawThemeBackground(theme, hdc, button_part, button_state, &lphc->buttonRect, NULL);
+     }
+ 
+     if ((lphc->dwStyle & CBS_DROPDOWNLIST) == CBS_DROPDOWNLIST)
