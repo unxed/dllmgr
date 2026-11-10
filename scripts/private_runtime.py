@@ -26,8 +26,11 @@ OPTIONAL_GROUPS = (
         # 32-bit only (Photoshop CS2), a 64-bit process keeps the base one
         'i386-windows/shell32.dll': 'lib/wine/i386-windows/shell32.dll',
     },
+    {   # #74: sane.ds Unix side lists TWAIN sources from a device cache (patches/dllmgr-74-sane.patch)
+        'x86_64-unix/sane.so': 'lib/wine/x86_64-unix/sane.so',
+    },
 )
-UNIX_MODES = {'bin/wine', 'x86_64-unix/ntdll.so', 'x86_64-unix/win32u.so', 'x86_64-unix/winex11.so'}
+UNIX_MODES = {'bin/wine', 'x86_64-unix/ntdll.so', 'x86_64-unix/win32u.so', 'x86_64-unix/winex11.so', 'x86_64-unix/sane.so'}
 
 
 class Error(RuntimeError):

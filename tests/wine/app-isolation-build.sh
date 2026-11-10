@@ -49,8 +49,11 @@ git -C "$src" apply "$GITHUB_WORKSPACE/patches/dllmgr-68.patch"
 # #69 stem phase: straight stems soft-snapped half way + Viterbi choice of thirds (agg modes; DLLMGR69_STEM=0 off)
 git -C "$src" apply --check "$GITHUB_WORKSPACE/patches/dllmgr-69-stem.patch"
 git -C "$src" apply "$GITHUB_WORKSPACE/patches/dllmgr-69-stem.patch"
+# #74: TWAIN source list from a SANE device cache, background refresh (Photoshop start -4.5 s, scanning kept)
+git -C "$src" apply --check "$GITHUB_WORKSPACE/patches/dllmgr-74-sane.patch"
+git -C "$src" apply "$GITHUB_WORKSPACE/patches/dllmgr-74-sane.patch"
 (cd "$bld" && "$src/configure" --enable-archs=i386,x86_64 --with-x --with-freetype --with-fontconfig > configure.log 2>&1) || { tail -80 "$bld/configure.log"; exit 1; }
-make -C "$bld" -j"$(nproc)" __tooldeps__ dlls/ntdll/all tools/wine/wine dlls/gdiplus/all dlls/comctl32_v6/all dlls/win32u/all dlls/winex11.drv/all dlls/shell32/all > "$bld/make.log" 2>&1 || { tail -100 "$bld/make.log"; exit 1; }
+make -C "$bld" -j"$(nproc)" __tooldeps__ dlls/ntdll/all tools/wine/wine dlls/gdiplus/all dlls/comctl32_v6/all dlls/win32u/all dlls/winex11.drv/all dlls/shell32/all dlls/sane.ds/all > "$bld/make.log" 2>&1 || { tail -100 "$bld/make.log"; exit 1; }
 for arch in i386 x86_64; do
     mkdir -p "out/isolation/$arch-windows"
     cp "$bld/dlls/ntdll/$arch-windows/ntdll.dll" "out/isolation/$arch-windows/"
@@ -59,12 +62,12 @@ done
 cp "$bld/dlls/shell32/i386-windows/shell32.dll" out/isolation/i386-windows/
 mkdir -p out/isolation/x86_64-unix out/isolation/bin
 cp "$bld/dlls/ntdll/ntdll.so" out/isolation/x86_64-unix/
-cp "$bld/dlls/win32u/win32u.so" "$bld/dlls/winex11.drv/winex11.so" out/isolation/x86_64-unix/
+cp "$bld/dlls/win32u/win32u.so" "$bld/dlls/winex11.drv/winex11.so" "$bld/dlls/sane.ds/sane.so" out/isolation/x86_64-unix/
 cp "$bld/tools/wine/wine" out/isolation/bin/
 # Debug info is not needed at run time and doubled the download (v12 candidate: 22.7 MB)
 strip --strip-debug out/isolation/x86_64-unix/*.so out/isolation/bin/wine
 i686-w64-mingw32-strip --strip-debug out/isolation/i386-windows/*.dll
 x86_64-w64-mingw32-strip --strip-debug out/isolation/x86_64-windows/*.dll
-cp patches/wine-11.0-app-isolation.patch patches/winehq-60721.patch patches/dllmgr-43.patch patches/dllmgr-44.patch patches/dllmgr-46.patch patches/dllmgr-49.patch patches/dllmgr-52.patch patches/dllmgr-65.patch patches/dllmgr-66.patch patches/dllmgr-69.patch patches/dllmgr-36-shape.patch patches/dllmgr-68.patch patches/dllmgr-69-stem.patch out/isolation/
-printf '%s\n' 'wine-11.0 db11d0fe6a169c457e23d007e20404643d067aa8 + wine-11.0-app-isolation.patch + winehq-60721.patch + dllmgr-43.patch + dllmgr-44.patch + dllmgr-46.patch + dllmgr-49.patch + dllmgr-52.patch + dllmgr-65.patch + dllmgr-66.patch + dllmgr-69.patch + dllmgr-36-shape.patch + dllmgr-68.patch + dllmgr-69-stem.patch' > out/isolation/SOURCE.txt
+cp patches/wine-11.0-app-isolation.patch patches/winehq-60721.patch patches/dllmgr-43.patch patches/dllmgr-44.patch patches/dllmgr-46.patch patches/dllmgr-49.patch patches/dllmgr-52.patch patches/dllmgr-65.patch patches/dllmgr-66.patch patches/dllmgr-69.patch patches/dllmgr-36-shape.patch patches/dllmgr-68.patch patches/dllmgr-69-stem.patch patches/dllmgr-74-sane.patch out/isolation/
+printf '%s\n' 'wine-11.0 db11d0fe6a169c457e23d007e20404643d067aa8 + wine-11.0-app-isolation.patch + winehq-60721.patch + dllmgr-43.patch + dllmgr-44.patch + dllmgr-46.patch + dllmgr-49.patch + dllmgr-52.patch + dllmgr-65.patch + dllmgr-66.patch + dllmgr-69.patch + dllmgr-36-shape.patch + dllmgr-68.patch + dllmgr-69-stem.patch + dllmgr-74-sane.patch' > out/isolation/SOURCE.txt
 (cd out/isolation && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)

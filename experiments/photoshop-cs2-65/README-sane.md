@@ -19,3 +19,23 @@ are needed in Photoshop). `dllmgr set photoshop-cs2 scanner=off` is only an
 opt-in speedup. The real fix to find: keep TWAIN scanning and remove the
 start cost (lazy sane.ds: report a source without probing, probe on open;
 or probe in the background).
+
+## Fix that keeps scanning: #74, patches/dllmgr-74-sane.patch
+
+sane.ds Unix side: TWAIN sources from the previous probe's device list
+($XDG_CACHE_HOME/wine-sane-devices) at once; a detached grandchild process
+(fork, no Wine calls) re-probes and rewrites the cache; MSG_OPENDS probes
+in-process as before, so a scan always uses the current devices. No cache
+yet or DLLMGR74_SANE_SYNC=1: the old synchronous probe. A first version
+probed in a pthread: Photoshop died silently right after the source
+manager unloaded sane.ds (thread in an unloaded library), so it uses a
+process instead.
+
+Stand, time to the trial dialog: cached 15.2, 16.4, 15.5, 15.9 s;
+DLLMGR74_SANE_SYNC=1 17.9, 20.7, 20.5 s; first start (no cache) 20.4 s.
+SANE "test" backend (SANE_CONFIG_DIR with dll.conf "test", 2 devices):
+Photoshop's source list (+twain trace) is the same from the cache as from a
+probe; tw/twopen.c (list sources through twain_32, MSG_OPENDS/CLOSEDS):
+open works with stock sane.so, new sane.so without and with cache. Seen in
+passing: asking twain_32 to open "test:1" opens test:0, with stock Wine too
+(DSM / sane.ds identity matching), not touched.

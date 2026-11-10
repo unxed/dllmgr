@@ -1,0 +1,173 @@
+--- a/dlls/sane.ds/unixlib.c
++++ b/dlls/sane.ds/unixlib.c
+@@ -26,7 +26,11 @@
+ #include "config.h"
+ 
+ #include <stdarg.h>
++#include <stdio.h>
+ #include <stdlib.h>
++#include <string.h>
++#include <sys/wait.h>
++#include <unistd.h>
+ #include <sane/sane.h>
+ #include <sane/saneopts.h>
+ 
+@@ -74,11 +78,129 @@
+ 
+ }
+ 
++/* dllmgr #74: listing TWAIN sources made libsane probe every backend on the
++ * calling thread (Photoshop CS2 does it at each start: ~4.5 s with no scanner
++ * attached). Now the sources come from the device list of the previous probe
++ * (a cache file, $XDG_CACHE_HOME/wine-sane-devices) at once, and a detached
++ * child process probes again and rewrites the cache for the next start (no
++ * thread here: the source manager unloads sane.ds right after listing).
++ * Opening a source probes in-process as before, so scanning works with the
++ * current devices. No cache yet, or DLLMGR74_SANE_SYNC=1: the old way. */
++#define CACHE_MAX 32
++static SANE_Device cached_devices[CACHE_MAX];
++static const SANE_Device *cached_list[CACHE_MAX + 1];
++static BOOL probed;  /* device_list is the result of a real probe */
++
++static const char *cache_path(void)
++{
++    static char path[4096];
++    const char *dir = getenv( "XDG_CACHE_HOME" ), *home = getenv( "HOME" );
++
++    if (dir && *dir) snprintf( path, sizeof(path), "%s/wine-sane-devices", dir );
++    else if (home && *home) snprintf( path, sizeof(path), "%s/.cache/wine-sane-devices", home );
++    else return NULL;
++    return path;
++}
++
++static void write_cache( const SANE_Device **list )
++{
++    const char *path = cache_path();
++    char tmp[4200];
++    FILE *f;
++    int i;
++
++    if (!path) return;
++    snprintf( tmp, sizeof(tmp), "%s.%d", path, (int)getpid() );
++    if (!(f = fopen( tmp, "w" ))) return;
++    fputs( "wine-sane-devices 1\n", f );
++    for (i = 0; list && list[i] && i < CACHE_MAX; i++)
++        if (list[i]->name && list[i]->vendor && list[i]->model && !strchr( list[i]->name, '\t' ))
++            fprintf( f, "%s\t%s\t%s\t%s\n", list[i]->name, list[i]->vendor, list[i]->model,
++                     list[i]->type ? list[i]->type : "" );
++    if (fclose( f ) || rename( tmp, path )) unlink( tmp );
++}
++
++static BOOL read_cache(void)
++{
++    const char *path = cache_path();
++    char line[1024], *field[4], *p;
++    FILE *f;
++    int n = 0, k;
++
++    if (!path || !(f = fopen( path, "r" ))) return FALSE;
++    if (!fgets( line, sizeof(line), f ) || strcmp( line, "wine-sane-devices 1\n" ))
++    {
++        fclose( f );
++        return FALSE;
++    }
++    while (n < CACHE_MAX && fgets( line, sizeof(line), f ))
++    {
++        line[strcspn( line, "\n" )] = 0;
++        for (k = 0, p = line; k < 4 && p; k++)
++        {
++            field[k] = p;
++            if ((p = strchr( p, '\t' ))) *p++ = 0;
++        }
++        if (k < 4) continue;
++        cached_devices[n].name = strdup( field[0] );
++        cached_devices[n].vendor = strdup( field[1] );
++        cached_devices[n].model = strdup( field[2] );
++        cached_devices[n].type = strdup( field[3] );
++        cached_list[n] = &cached_devices[n];
++        n++;
++    }
++    cached_list[n] = NULL;
++    fclose( f );
++    return TRUE;
++}
++
++static void refresh_cache_in_background(void)
++{
++    pid_t pid = fork();
++
++    if (pid == 0)
++    {
++        if (fork() == 0)  /* grandchild: nobody has to wait for it */
++        {
++            const SANE_Device **list = NULL;
++            sane_get_devices( &list, SANE_FALSE );
++            write_cache( list );
++        }
++        _exit( 0 );
++    }
++    if (pid > 0) waitpid( pid, NULL, 0 );
++}
++
+ static void detect_sane_devices(void)
+ {
+-    if (device_list && device_list[0]) return;
++    const char *sync = getenv( "DLLMGR74_SANE_SYNC" );
++
++    if (device_list && (device_list[0] || probed)) return;
++    if (!device_list && !(sync && *sync == '1') && read_cache())
++    {
++        device_list = cached_list;
++        refresh_cache_in_background();
++        TRACE("devices from the cache, refreshing it in the background\n");
++        return;
++    }
+     TRACE("detecting sane...\n");
+     sane_get_devices( &device_list, SANE_FALSE );
++    write_cache( device_list );
++    probed = TRUE;
++}
++
++/* a real probe before opening a device */
++static void probe_devices(void)
++{
++    if (probed) return;
++    device_list = NULL;
++    detect_sane_devices();
++    if (!probed)
++    {
++        sane_get_devices( &device_list, SANE_FALSE );
++        write_cache( device_list );
++        probed = TRUE;
++    }
+ }
+ 
+ static TW_UINT16 sane_status_to_twcc(SANE_Status rc)
+@@ -205,6 +327,8 @@
+ 
+ static NTSTATUS process_detach( void *args )
+ {
++    device_list = NULL;  /* dllmgr #74 */
++    probed = FALSE;
+     sane_exit();
+     return STATUS_SUCCESS;
+ }
+@@ -215,7 +339,7 @@
+     static int cur_dev;
+ 
+     detect_sane_devices();
+-    if (!device_list[cur_dev]) return STATUS_DEVICE_NOT_CONNECTED;
++    if (!device_list || !device_list[cur_dev]) return STATUS_DEVICE_NOT_CONNECTED;
+     id->ProtocolMajor = TWON_PROTOCOLMAJOR;
+     id->ProtocolMinor = TWON_PROTOCOLMINOR;
+     id->SupportedGroups = DG_CONTROL | DG_IMAGE | DF_DS2;
+@@ -239,7 +363,8 @@
+     int i;
+ 
+     detect_sane_devices();
+-    if (!device_list[0])
++    probe_devices();  /* dllmgr #74: open with the current device list */
++    if (!device_list || !device_list[0])
+     {
+ 	ERR("No scanners? We should not get to OpenDS?\n");
+         return STATUS_DEVICE_NOT_CONNECTED;
