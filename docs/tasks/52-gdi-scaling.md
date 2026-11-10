@@ -172,3 +172,20 @@ after the owner's 0.625 panel downscale, scripts/as-seen.py). Shapes are
 real 22-px shapes. Open: "100%" in Opacity/Fill is spread out and its "%"
 clipped (digit advances: the application's integer advances at 96 DPI times
 2 vs the 22-px glyphs); the activation dialog shows white patches.
+
+### "100%" spread and clipped: cause (2026-11-10)
+
+Not AGG: the same with text=gray. Dump (local ExtTextOut debug): Photoshop
+draws "100" with ETO_PDY and its own dx (6, 7, 7) at x = 3 and "%" at x =
+23 (dx 11), Tahoma -10, i.e. from metrics it measured itself on the
+GDI-scaled DC. There the font is realized at 20-22 px and the metrics the
+application gets are those of the big font divided by k (rounded up: digit
+6.5 -> 7), not the 10-px font's (digit 6). Photoshop's boxes are sized for
+the 96-DPI layout, so the text gets wider than its box: wider gaps and the
+"%" cut. Windows' GDI scaling keeps every metric the application sees
+identical to 96 DPI. Fix design: on a GDI-scaled DC the metrics side
+(GetTextExtentExPoint, GetCharWidth(s), GetCharABCWidths, GetTextMetrics,
+GetGlyphOutline metrics, ExtTextOut's own deltas) comes from the font
+realized without the hidden scale, times k in device units; only the glyph
+bitmaps come from the k-size font. The AGG placement then scales the run
+to exactly those widths.
