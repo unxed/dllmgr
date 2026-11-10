@@ -141,6 +141,15 @@ Kept in sync by whoever finishes an item (state on 2026-11-08):
    2. #51 handover (several reports depend on which Wine runs);
    3. #65 start hang (60 s critical section); 4. #41 exit error after a
    file; 5. #68 dialog under the canvas; 6. #66, #67; 7. #63, #52b text.
+6o. State 2026-11-10 01:27 (claude-cloud-ada0, out of tokens): runtime
+   build 42728271916 (623d04d) = v13 candidate with #51 window hiding
+   (owner-machine cause), #65 shell32 desktop.ini cache, #66 Tahoma
+   outlines instead of strikes. Next: check artifact sha + SHA256SUMS, stand
+   e2e (experiments/photoshop-cs2-e2e/e2e.sh), give owner the publish
+   command (full target SHA), pin. v12 (42722109276, sha 85592b10...) was
+   offered, not confirmed published. Windows CI ps35 run 42725940901
+   pending (#35/#47). Open: #41 (not reproduced on private runtime), #68
+   (not reproduced on the stand), #63, #67, #52b.
 7. (now urgent: delivers #43, #44, #45) PS-3 recipe `dllmgr fix photoshop-cs2`: install the version.dll prefill
    proxy (#36 splash) with scripts/prefill-proxy.py, binary built by CI
    (add `build.sh version` to app-isolation.yml packaging like msimg32).
