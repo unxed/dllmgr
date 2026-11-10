@@ -71,6 +71,11 @@ SETTINGS = {
     # Beyond Windows, which also draws it as a raster font; the owner asked for it
     # for Photoshop CS2's activation dialog headings.
     'system': ('raster', 'tahoma'),
+    # #71/#76: every start, from any launcher (menu, `dllmgr run`, plain
+    # `wine APP.exe` through the trampoline), keeps a log in .dllmgr/runs
+    # with loader lines (+loaddll) unless WINEDEBUG is set; `dllmgr logs APP`
+    # zips them. off: no +loaddll (the run logs themselves stay).
+    'logs': ('on', 'off'),
 }
 SYSTEM_FAMILIES = {'tahoma': 'Tahoma'}
 # #66: Tahoma served by another family inside the application (the runtime's
@@ -89,6 +94,7 @@ def read_settings(prefix, app):
     values = dict(SETTING_DEFAULTS.get(app, {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop', 'tahoma': 'wine'}))
     values.setdefault('scanner', 'on')
     values.setdefault('system', 'raster')
+    values.setdefault('logs', 'on')
     try:
         stored = json.loads((prefix / SETTINGS_FILE).read_text()).get(app, {})
     except (OSError, ValueError, AttributeError):
@@ -895,7 +901,14 @@ def watch(prefix, app, argv, env, quick=3.0):
         if number == 0 and extra:
             launch_log(prefix, 'run %s: inherited variables not in the clean environment: %s' % (app, ' '.join(extra)[:600]))
         if took >= quick or status == 0:
-            return
+            break
+    try:  # #71/#76: keep it past the next start, beside the terminal runs
+        runs = prefix / RUN_LOGS
+        runs.mkdir(parents=True, exist_ok=True)
+        rotate_runs(runs)
+        shutil.copyfile(log, runs / ('trampoline-' + time.strftime('%Y%m%d-%H%M%S') + '.log'))
+    except OSError:
+        pass
 
 
 def launch(args, prefix):
@@ -927,11 +940,22 @@ def launch(args, prefix):
     argv = [str(runtime / 'bin/wine'), state['target'], *app_args]
     if read_settings(prefix, app_of(args))['alt-click'] == 'app':
         free_alt_click(prefix, app_of(args), env)
+    if read_settings(prefix, app_of(args))['logs'] == 'on' and not env.get('WINEDEBUG'):
+        env['WINEDEBUG'] = RUN_WINEDEBUG  # #76: which module sat at a crash address
     launch_log(prefix, 'run ' + app_of(args) + ': starting the private runtime')
     return argv, env  # started outside the prefix lock by watch() or supervise()
 
 
 RUN_LOGS = '.dllmgr/runs'
+RUN_KEEP = 20
+RUN_WINEDEBUG = '+loaddll'
+
+
+def rotate_runs(logs, keep=RUN_KEEP):
+    """Room for one more run log: keep the newest keep - 1 (both kinds)."""
+    old = sorted(logs.glob('*.log'), key=lambda p: p.name.split('-', 1)[-1])
+    for path in old[:max(0, len(old) - (keep - 1))]:
+        path.unlink(missing_ok=True)
 CRASH_MARKS = ('Unhandled exception', 'unhandled exception', 'page fault', 'Backtrace:', 'starting debugger')
 
 
@@ -951,14 +975,13 @@ def run_verdict(code, log_tail):
     return how
 
 
-def supervise(prefix, app, argv, env, keep=8):
+def supervise(prefix, app, argv, env, keep=RUN_KEEP):
     """#71: start the private Wine from a terminal and stay its parent: its
     stderr goes to the terminal and to .dllmgr/runs/run-TIME.log (the last
     `keep` runs are kept), and launch.log gets how and when it ended."""
     logs = prefix / RUN_LOGS
     logs.mkdir(parents=True, exist_ok=True)
-    for old in sorted(logs.glob('run-*.log'))[:-(keep - 1)]:
-        old.unlink(missing_ok=True)
+    rotate_runs(logs, keep)
     name = 'run-' + time.strftime('%Y%m%d-%H%M%S') + '.log'
     started = time.monotonic()
     tail = b''
@@ -974,6 +997,8 @@ def supervise(prefix, app, argv, env, keep=8):
             out.write(chunk)
             out.flush()
             tail = (tail + chunk)[-16384:]
+            if b':trace:loaddll:' in chunk:  # the log's loader lines stay out of the terminal
+                chunk = b''.join(l for l in chunk.splitlines(True) if b':trace:loaddll:' not in l)
             try:
                 sys.stderr.buffer.write(chunk)
                 sys.stderr.flush()
@@ -988,6 +1013,38 @@ def supervise(prefix, app, argv, env, keep=8):
     verdict = run_verdict(code, tail.decode(errors='replace'))
     launch_log(prefix, 'run %s: ended (%s) after %.0f s; log: %s/%s' % (app, verdict, time.monotonic() - started, RUN_LOGS, name))
     return code
+
+
+def downloads_dir():
+    try:
+        found = subprocess.run(['xdg-user-dir', 'DOWNLOAD'], capture_output=True, text=True, timeout=5).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        found = ''
+    path = Path(found) if found and Path(found) != Path.home() else Path.home() / 'Downloads'
+    return path if path.is_dir() else Path.home()
+
+
+def logs_bundle(prefix, app, out_dir=None):
+    """#71/#76: one zip for the owner to send: the run logs, launch.log,
+    the last trampoline log, settings and installed versions. Read-only."""
+    out = (out_dir or downloads_dir()) / ('dllmgr-logs-' + app + '-' + time.strftime('%Y%m%d-%H%M%S') + '.zip')
+    names = sorted((prefix / RUN_LOGS).glob('*.log')) if (prefix / RUN_LOGS).is_dir() else []
+    extra = [prefix / LAUNCH_LOG, prefix / '.dllmgr/trampoline-run.log', prefix / SETTINGS_FILE]
+    try:
+        _, state = read_state(prefix, None, app)
+        versions = dict(state)
+    except (Error, OSError, ValueError, KeyError) as error:
+        versions = {'state': 'not readable: ' + str(error)}
+    versions.update(dllmgr=dllmgr_version(), app=app, prefix=str(prefix), created=time.strftime('%Y-%m-%d %H:%M:%S %z'),
+                    host=platform.platform())
+    with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as bundle:
+        for path in names:
+            bundle.write(path, 'runs/' + path.name)
+        for path in extra:
+            if path.is_file():
+                bundle.write(path, path.name)
+        bundle.writestr('versions.json', json.dumps(versions, indent=2, ensure_ascii=False) + '\n')
+    return out, len(names)
 
 
 # #73 file associations, the freedesktop way: the defaults live in
@@ -1112,7 +1169,7 @@ def assoc(prefix, app, state, values):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status', 'set', 'assoc', 'wm-restore'])
+    parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status', 'set', 'assoc', 'logs', 'wm-restore'])
     parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling, alt-click, tahoma, system, scanner); assoc: all | TYPE... | undo')
     parser.add_argument('--prefix', type=Path, default=Path(os.environ.get('WINEPREFIX', str(Path.home() / '.wine'))))
     parser.add_argument('--exe', type=Path)
@@ -1163,6 +1220,9 @@ def main():
                 write_settings(prefix, args.app, args.values)
                 print('Settings for ' + args.app + ': ' + settings_line(read_settings(prefix, args.app)) +
                       ' (applied at the next start)')
+        elif args.command == 'logs':
+            out, count = logs_bundle(prefix, args.app)
+            print('✓ ' + str(out) + ' (' + str(count) + ' run logs); send this file')
         elif args.command == 'assoc':
             _, state = read_state(prefix, args.exe, args.app)
             assoc(prefix, args.app, state, args.values)
@@ -1181,7 +1241,7 @@ def main():
                 print('  Launch trampoline: ' + trampoline)
                 print('  Settings: ' + settings_line(read_settings(prefix, args.app)) +
                       ' (change: dllmgr set ' + args.app + ' text=' + '|'.join(SETTINGS['text']) +
-                      ' contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop tahoma=' + '|'.join(SETTINGS['tahoma']) + ' scanner=off|on system=raster|tahoma)')
+                      ' contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop tahoma=' + '|'.join(SETTINGS['tahoma']) + ' scanner=off|on system=raster|tahoma logs=on|off)')
                 print('  Launch: dllmgr run ' + args.app)
                 for pid, kind in running_on(Path(state['exe']).name):
                     print('  Running: pid ' + str(pid) + ' on the ' + kind)

@@ -349,6 +349,7 @@ class PrivateAppTest(unittest.TestCase):
         self.assertEqual(captures["env"]["WINELOADER"], str(self.runtime / "bin/wine"))
         self.assertEqual(captures["env"]["WINESERVER"], str(self.runtime / "bin/wineserver"))
         self.assertEqual(captures["env"]["DLLMGR_TARGET_EXE"], target)
+        self.assertEqual(captures["env"]["WINEDEBUG"], private_app.RUN_WINEDEBUG)  # logs=on by default
         module_path = self.prefix / "drive_c/dllmgr/apps" / state["id"] / state["generation"] / "comctl32.dll"
         expected_module_path = "C:\\dllmgr\\apps\\" + state["id"] + "\\" + state["generation"] + "\\comctl32.dll"
         self.assertEqual(captures["env"]["DLLMGR_COMCTL32"], expected_module_path)
@@ -653,13 +654,13 @@ class SettingsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp)
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact", "alt-click": "app", "tahoma": "wine", "system": "tahoma", "scanner": "on"})
+            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact", "alt-click": "app", "tahoma": "wine", "system": "tahoma", "scanner": "on", "logs": "on"})
             off = {"SANE_CONFIG_DIR": "/nonexistent/dllmgr-scanner-off"}
             tahoma = {"DLLMGR77_SYSTEM": "Tahoma"}  # #77: smoothed "System" by default in Photoshop
             self.assertEqual(private_app.settings_env(values), dict({"DLLMGR52_TEXT": "gray", "DLLMGR52_GAMMA": "2.2"}, **tahoma))
             private_app.write_settings(prefix, "photoshop-cs2", ["text=light", "scaling=smooth", "scanner=off"])
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth alt-click=app tahoma=wine scanner=off system=tahoma")
+            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth alt-click=app tahoma=wine scanner=off system=tahoma logs=on")
             self.assertEqual(private_app.settings_env(values),
                              dict({"DLLMGR52_TEXT": "light", "DLLMGR52_GAMMA": "2.2", "DLLMGR46_SMOOTH": "1"}, **off, **tahoma))
             private_app.write_settings(prefix, "photoshop-cs2", ["system=raster"])
@@ -764,6 +765,29 @@ class SettingsTest(unittest.TestCase):
                     'dllmgr71: 1.1 s before exit: clicked "&Quit" in "Adobe Activation"\n')
             self.assertEqual(private_app.run_verdict(0, tail),
                              'exit code 0, the application closed itself; last button: "&Quit" in "Adobe Activation"')
+
+    def test_run_logs_rotate_and_bundle(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp)
+            runs = prefix / private_app.RUN_LOGS
+            runs.mkdir(parents=True)
+            for i in range(25):
+                kind = "run" if i % 2 else "trampoline"
+                (runs / ("%s-20261111-%06d.log" % (kind, i))).write_text("line %d\n" % i)
+            private_app.rotate_runs(runs)
+            kept = sorted(p.name.split("-", 1)[1] for p in runs.glob("*.log"))
+            self.assertEqual(len(kept), private_app.RUN_KEEP - 1)
+            self.assertEqual(kept[-1], "20261111-000024.log")  # oldest go first, across both kinds
+            (prefix / private_app.LAUNCH_LOG).write_text("run photoshop-cs2: ended (exit code 0)\n")
+            self.assertEqual(private_app.read_settings(prefix, "photoshop-cs2")["logs"], "on")
+            out, count = private_app.logs_bundle(prefix, "photoshop-cs2", out_dir=prefix)
+            self.assertEqual(count, private_app.RUN_KEEP - 1)
+            with zipfile.ZipFile(out) as bundle:
+                names = bundle.namelist()
+                self.assertIn("launch.log", names)
+                self.assertIn("versions.json", names)
+                self.assertEqual(len([n for n in names if n.startswith("runs/")]), count)
+                self.assertIn("not readable", json.loads(bundle.read("versions.json"))["state"])
 
     def test_tahoma_substitute(self):
         with tempfile.TemporaryDirectory() as tmp:
