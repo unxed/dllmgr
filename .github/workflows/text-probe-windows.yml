@@ -1,0 +1,22 @@
+name: text-probe-windows
+# #66: render Photoshop CS2's palette fonts (Tahoma 10/11 px bold, italic,
+# regular) with real Windows GDI into a 96-DPI bitmap, to compare with Wine.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and render
+        shell: pwsh
+        run: |
+          gcc -O2 -Wall -o text-kern66.exe tests/wine/text-kern66.c -mwindows -lgdi32
+          Start-Process -Wait -FilePath .\text-kern66.exe -ArgumentList bmp
+          Get-Item kern66.bmp | Format-List Name,Length
+          Get-ItemProperty 'HKCU:\Control Panel\Desktop' -Name FontSmoothing,FontSmoothingType -ErrorAction SilentlyContinue | Format-List
+      - uses: actions/upload-artifact@v4
+        with: {name: text-kern66-windows, path: kern66.bmp}
