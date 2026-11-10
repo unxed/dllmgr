@@ -217,3 +217,20 @@ keeps the design's shapes and spacing). The real gain is native rendering at
 2x on HiDPI screens instead of upscaling 96-DPI text.
 Image: agg-prototype-compare.png (Windows, Wine v13, AGG 1x RGB/grey, AGG
 native 2x RGB/grey).
+
+## Simulated italic: why bitmap shearing has a ceiling (2026-11-10)
+
+bits66.txt (monochrome bitmaps, Windows and Wine), rows.py, stitch.py,
+tierule.py. Windows shifts each row of simulated Tahoma italic by
+round_half_away((y + 0.5) / 3) px (y = row height above the baseline;
+slope 1/3, Wine's own outline shear uses 0.25); the v4 formula gives the same
+shifts. But Windows' italic is its sheared *hinted outline* rasterized, not a
+shifted bitmap: applying the best row-shift rule to Windows' own upright
+glyphs reproduces only 24-30 of 94 italic glyphs exactly (2.7 px differ per
+glyph at 9-11 px); all stitching / tie-row variants tried (fill the step,
+union, round down, narrow runs at the half-pixel rows y = 1, 4, 7) are worse.
+The differences sit in the half-pixel rows, where the result depends on the
+fractional outline edges Wine's strikes do not have (Windows 'j' at 10 px gets
+a two-pixel step there, 'n'/'o' at 11 px end one column further left). Wine
+v13 italic: 25 of 94 identical at 10-11 px, i.e. at that ceiling. Smoother
+italic needs the outline: text=agg (#69).
