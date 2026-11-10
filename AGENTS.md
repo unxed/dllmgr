@@ -66,6 +66,13 @@ Rules (owner's, non-negotiable):
 - A bug that shows only with a Linux Mint component (Muffin, Cinnamon,
   ...) also gets a Linux Mint report, with cross links both ways between the
   Mint and WineHQ reports (owner, 2026-11-09).
+- Never switch off an application feature (scanning, printing, plug-ins,
+  ...) by default to gain speed or work around a bug without the owner's
+  explicit permission; offer it as an opt-in setting and look for a fix that
+  keeps the feature (owner, 2026-11-10, scanner=off was reverted).
+- Building your own diagnostic tools (profilers, probes, stand helpers) to
+  work faster and see deeper is wanted, not a side quest (owner, 2026-11-10,
+  about the DLLMGR_SAMPLE sampler).
 - Retest on current wine.git master (or the commit a Wine developer names)
   before proposing any WineHQ report or comment; reports already filed get
   the same retest and an updating comment if the result differs (owner,

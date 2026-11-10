@@ -63,6 +63,8 @@ SETTINGS = {
     # application lists TWAIN sources; Photoshop does that at every start and libsane
     # probes all its backends (~4.5 s of a 19 s start on the stand). off: no SANE
     # backends for this application (SANE_CONFIG_DIR points nowhere), no TWAIN scanning.
+    # Default on everywhere: features are never switched off without the owner's
+    # explicit permission (owner, 2026-11-10); the real fix is a lazy sane.ds.
     'scanner': ('off', 'on'),
 }
 # #66: Tahoma served by another family inside the application (the runtime's
@@ -71,7 +73,7 @@ SETTINGS = {
 TAHOMA_FAMILIES = {'xo': 'XO Tahion', 'dejavu': 'DejaVu Sans Condensed'}
 TAHOMA_FONTS = {'xo': HERE / 'fonts/xo-tahion'}
 SETTING_DEFAULTS = {
-    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact', 'alt-click': 'app', 'tahoma': 'wine', 'scanner': 'off'},
+    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact', 'alt-click': 'app', 'tahoma': 'wine'},
     'faststone': {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop', 'tahoma': 'wine'},
 }
 SETTINGS_FILE = '.dllmgr/settings.json'

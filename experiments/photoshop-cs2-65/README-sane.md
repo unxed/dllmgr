@@ -13,8 +13,9 @@ trial Activation dialog, experiments/photoshop-cs2-47/tstart.sh):
 - no backends (SANE_CONFIG_DIR=/nonexistent): 14.6, 15.2 s
 So ~4.5 s of the start is local backend probing with no scanner attached.
 
-Change: setting `scanner=off|on` (dllmgr set photoshop-cs2 scanner=on to
-scan via TWAIN); Photoshop defaults to off (SANE_CONFIG_DIR points nowhere
-for this application only). Upstream idea (not a patch): sane.ds could
-report one TWAIN source without probing and pick the device on MSG_OPENDS,
-as Windows TWAIN drivers do.
+Setting `scanner=off|on`, default **on** for every application (the owner,
+2026-11-10: never switch a feature off without explicit permission; scanners
+are needed in Photoshop). `dllmgr set photoshop-cs2 scanner=off` is only an
+opt-in speedup. The real fix to find: keep TWAIN scanning and remove the
+start cost (lazy sane.ds: report a source without probing, probe on open;
+or probe in the background).
