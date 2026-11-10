@@ -1,0 +1,53 @@
+Where: https://bugs.winehq.org (new bug; component fonts; search for duplicates first: "tahomabd", "Tahoma bold spacing", "embedded bitmap", "simulated italic")
+Status: PREPARED 2026-11-10, not posted (owner posts).
+
+Summary:
+Tahoma Bold (tahomabd.ttf) bitmap strikes have wrong advance widths: small bold text is unevenly spaced ("Op en", "B ackground")
+
+Text:
+
+Steps: Wine 11.0. Draw text with Tahoma Bold at a small pixel size without
+antialiasing, for example CreateFont with height -10, FW_BOLD, ANSI_CHARSET,
+and TextOut "Open" and "Background". Adobe Photoshop CS2 does exactly this in
+its History and Layers palettes.
+
+Result: the letters are unevenly spaced: "O" and "p" touch and a gap opens
+before "e"; "B" stands apart from "ackground"; "Hist ory".
+
+Cause, as far as I can see: Wine's tahomabd.ttf contains embedded bitmap
+strikes for 9, 10, 11, 12, 13, 15 and 16 pixels, and monochrome glyphs come
+from them. Many of these glyphs have the wrong advance width and sit in the
+wrong place in their cell. Example at 10 pixels, left bearing / ink width /
+advance in pixels:
+
+  "p"  strike 0 / 5 / 7    Windows 0 / 5 / 6
+  "n"  strike 0 / 5 / 7    Windows 0 / 5 / 6
+  "B"  strike 0 / 6 / 8    Windows 0 / 6 / 7
+  "O"  strike 1 / 7 / 8    Windows 0 / 7 / 8
+
+Compared with Windows GDI (the same small test program run on a Windows
+machine, monochrome GetGlyphOutline metrics of the 94 printable ASCII
+glyphs): the regular Tahoma strikes have exactly the Windows advance widths
+at every strike size, the Bold strikes do not: the advance differs for 48,
+40, 24, 28, 46, 21, 21 of 94 glyphs at 9, 10, 11, 12, 13, 15, 16 px.
+
+What I tried, as an experiment: keep the Bold strikes but give each glyph
+the outline's advance rounded to whole pixels. Advance mismatches with
+Windows drop to 47, 24, 13, 15, 36, 5, 5 and the text is evenly spaced and
+as wide as on Windows, in the test program and in Photoshop CS2. Rendering
+from the hinted outlines instead also spaces it evenly but makes it about
+8 % wider than Windows. A proper fix is probably to correct the advances and
+positions in the font source.
+
+Related, same test: simulated italic of Tahoma (there is no italic face)
+differs from Windows in two ways. Windows keeps the upright advance widths
+(Wine's are wider) and draws it at 10-11 px without smoothing, crisp, as the
+gasp table asks for the upright face; Wine smooths simulated styles
+regardless of gasp (AntialiasFakeBoldOrItalic), so it comes out grey and
+faint. The black boxes Windows produces match the upright bitmap with its
+rows shifted right by about 0.34 pixel per pixel of height above the
+baseline. I can file that separately if preferred.
+
+Prepared with the help of an AI agent; the numbers come from FreeType and
+GDI measurements of the fonts shipped with Wine 11.0 and of a Windows
+Server 2025 GitHub Actions runner.
