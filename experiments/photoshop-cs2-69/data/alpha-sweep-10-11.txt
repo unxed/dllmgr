@@ -1,0 +1,14 @@
+(10, 11) rgb alpha   0 peak 0.62 cv 0.121 seen 0.119 smooth 0.123 | ink cv 0.100 | white 0.155 | centroid 0.130/0.30 | w 0.60
+(10, 11) rgb alpha  64 peak 0.64 cv 0.088 seen 0.093 smooth 0.117 | ink cv 0.071 | white 0.141 | centroid 0.096/0.28 | w 0.74
+(10, 11) rgb alpha  96 peak 0.65 cv 0.072 seen 0.080 smooth 0.117 | ink cv 0.070 | white 0.148 | centroid 0.107/0.38 | w 0.75
+(10, 11) rgb alpha 128 peak 0.67 cv 0.059 seen 0.069 smooth 0.116 | ink cv 0.067 | white 0.163 | centroid 0.125/0.42 | w 0.66
+(10, 11) rgb alpha 160 peak 0.68 cv 0.049 seen 0.063 smooth 0.115 | ink cv 0.067 | white 0.198 | centroid 0.146/0.47 | w 0.64
+(10, 11) rgb alpha 192 peak 0.69 cv 0.040 seen 0.057 smooth 0.113 | ink cv 0.066 | white 0.245 | centroid 0.179/0.67 | w 0.65
+(10, 11) rgb alpha 256 peak 0.71 cv 0.035 seen 0.056 smooth 0.113 | ink cv 0.064 | white 0.265 | centroid 0.248/0.78 | w 0.61
+(10, 11) gray alpha   0 peak 0.68 cv 0.295 seen 0.287 smooth 0.265 | ink cv 0.109 | white 0.155 | centroid 0.131/0.33 | w 0.37
+(10, 11) gray alpha  64 peak 0.72 cv 0.246 seen 0.242 smooth 0.240 | ink cv 0.106 | white 0.141 | centroid 0.098/0.27 | w 0.45
+(10, 11) gray alpha  96 peak 0.75 cv 0.226 seen 0.224 smooth 0.230 | ink cv 0.101 | white 0.148 | centroid 0.109/0.37 | w 0.44
+(10, 11) gray alpha 128 peak 0.78 cv 0.192 seen 0.193 smooth 0.212 | ink cv 0.104 | white 0.163 | centroid 0.129/0.43 | w 0.48
+(10, 11) gray alpha 160 peak 0.81 cv 0.181 seen 0.183 smooth 0.210 | ink cv 0.094 | white 0.198 | centroid 0.153/0.47 | w 0.54
+(10, 11) gray alpha 192 peak 0.90 cv 0.130 seen 0.140 smooth 0.186 | ink cv 0.097 | white 0.245 | centroid 0.185/0.70 | w 0.53
+(10, 11) gray alpha 256 peak 0.98 cv 0.076 seen 0.091 smooth 0.158 | ink cv 0.097 | white 0.265 | centroid 0.247/0.78 | w 0.80

@@ -9,7 +9,7 @@ shift(p) = (p * 64 + 1) / 3):
            >= as many rows whose ink run matches the group's edges +-1/8 px
   target = stem width rounded to whole px (>= 1), centre such that the left
            edge lands on a pixel edge (nearest)
-  move   = alpha of the way (alpha in 1/256: rgb 128 = .5, grey 192 = .75)
+  move   = alpha of the way (alpha in 1/256; DLLMGR69_STEM=1: 128 = half way)
   warp   = piecewise linear x map through the stem edges, constant shift
            outside; skipped when stems would collide or move > 0.75 px
 dibdrv: each glyph may take its third, or one third less or more; Viterbi
