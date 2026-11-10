@@ -22,7 +22,8 @@ static void agg_place( LONGLONG lin, LONGLONG lin_total, LONGLONG app_total, int
 
 /* dllmgr #69: position of every glyph of an agg run, in thirds of a pixel.
  * With the stem fix (DLLMGR69_STEM) a glyph may also take the third left or
- * right of its place (the first and the last glyph keep theirs): a Viterbi
+ * right of its place (the first and the last glyph only within half a pixel
+ * of the design): a Viterbi
  * pass picks the choices that keep the white between neighbours as the
  * design has it, counting where the stem warp moved the first and last stem
  * edge of each glyph (cost: 20 gap error^2 + mean displacement^2) */
@@ -59,7 +60,10 @@ static BOOL agg_place_run( DC *dc, struct cached_font *font, UINT flags, const W
             left[d] = pos + glyph->stem_l;
             right[d] = pos + glyph->stem_r;
             mean = (left[d] + right[d]) / 2;
-            unary = (i == 0 || i == count - 1) && d != 1 ? inf : mean * mean;
+            /* the first and the last glyph: a shifted third only with both
+             * stem edges within half a pixel of the design */
+            unary = (i == 0 || i == count - 1) && d != 1 &&
+                    (left[d] > 32 || left[d] < -32 || right[d] > 32 || right[d] < -32) ? inf : mean * mean;
             if (!i) { next[d] = unary; continue; }
             for (j = 0; j < 3; j++)
             {
@@ -83,7 +87,6 @@ static BOOL agg_place_run( DC *dc, struct cached_font *font, UINT flags, const W
     free( back );
     return TRUE;
 }
-
 
 int main(void)
 {

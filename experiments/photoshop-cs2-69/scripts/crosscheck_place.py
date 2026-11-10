@@ -14,6 +14,6 @@ for style in ('regular', 'bold'):
                     e = [cmodel.edges(f, c, (ph * 64 + 1) // 3, alpha) for ph in range(3)]
                     rows.append(f"{lin} {app} " + ' '.join(f"{a} {b}" for a, b in e))
                 inp.append(' '.join(rows))
-                exp.append([wh * 3 + ((s * 3 + 32) // 64) for wh, s in cmodel.place(f, w, alpha, ends=0)])
+                exp.append([wh * 3 + ((s * 3 + 32) // 64) for wh, s in cmodel.place(f, w, alpha, ends=32)])
 out = subprocess.run(['ctest/place'], input='\n'.join(inp) + '\n', capture_output=True, text=True).stdout.split('\n')
 print(sum(list(map(int, o.split())) == e for o, e in zip(out, exp)), '/', len(exp), 'runs placed identically')

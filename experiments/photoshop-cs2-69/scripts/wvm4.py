@@ -4,7 +4,7 @@ for path, kind in [('p-agg-rgb-s0.bmp', 0), ('p-agg-rgb-s1.bmp', 128)]:
     for k, strip in lines(img):
         if k >= 64: continue
         res = []
-        for v in (Variant('agg', 'rgb'), CWarp('stem', 'rgb', alpha=128, ends=0)):
+        for v in (Variant('agg', 'rgb'), CWarp("stem", "rgb", alpha=128, ends=32)):
             m = model(k, v); best = None
             for dy in range(0, strip.shape[0] - m.shape[0] + 1):
                 for dx in range(8):

@@ -13,6 +13,9 @@ import sys, json, numpy as np
 import measure
 from measure import *
 
+import straight
+# metric and the snapping candidates use the straight-stem set (straight.py)
+measure.glyph_stems = lambda font, ch, all_stems=False: straight.straight_stems(font, ch)
 _orig_render = measure.render_glyph
 
 @functools.lru_cache(maxsize=200000)
@@ -34,26 +37,27 @@ class PhaseDark(Variant):
     """phase-dependent stem darkening: a glyph whose stems straddle pixels
     gets its coverage boosted (1 - (1 - c)^(1 + k * 2 * split)), split =
     mean distance of its stems' left edges from the pixel grid (0..0.5)"""
-    k = 1.0
+    dk = 1.0
     def place(self, font, text):
-        return [(w, ('dark', s, self.k)) for w, s in thirds_place(font, text, 3)]
+        return [(w, ('dark', s, self.dk)) for w, s in thirds_place(font, text, 3)]
 
+ONLY = None
 def cands(mode):
-    a = 128 if mode == 'rgb' else 192
     K = dict(biases=(0.0,), stem_sh=(-1, 0, 1))
     return [
         ('A', 'agg (current): 1/3 px phases, vertical-only hinting', Variant('agg', mode)),
         ('B', 'whole-px positions + full hinting (classic, rejected in #69)', Snap('snap', mode, flags=LOAD_NORMAL)),
         ('C', 'finer phases: 1/6 px', Variant('sixths', mode, step=6)),
         ('D1', 'global darkening: embolden 0.2 px, gamma 1.4', Variant('emb', mode, gamma=1.4, emb=0.2) if mode == 'gray' else Variant('emb', mode, emb=0.2)),
-        ('D2', 'phase-dependent darkening k=1', PhaseDark('pd1', mode, k=1.0)),
-        ('D3', 'phase-dependent darkening k=2', PhaseDark('pd2', mode, k=2.0)),
+        ('D2', 'phase-dependent darkening k=1', PhaseDark('pd1', mode, dk=1.0)),
+        ('D3', 'phase-dependent darkening k=2', PhaseDark('pd2', mode, dk=2.0)),
         ('E', 'per-glyph phase for sharpest bitmap (Viterbi, +-1/3 px)', SharpPhase('sharp', mode)),
         ('F1', 'hard stem snap to whole px (outline warp), advance fractional', StemSnap('snap1', mode)),
         ('F2', 'hard stem snap to 1/3 px grid (rgb only meaningful)', StemSnap('snap13', mode, grid=1/3, tol=0.17)),
         ('G', 'hard stem snap + rounding/phase by Viterbi on white gaps', StemSnapDP2('dp2', mode, alpha=1.0, **K)),
         ('H', 'soft stem snap a=0.5 + Viterbi (float model)', StemSnapDP2('dp2', mode, alpha=0.5, **K)),
-        ('I', f'chosen: soft snap {a}/256 + phase Viterbi (C, stem-fix.diff)', CWarp('fix', mode, alpha=a, ends=0)),
+        ('I', 'chosen: soft snap 128/256 + phase Viterbi (C, stem-fix.diff)', CWarp('fix', mode, alpha=128, ends=32)),
+        ('I192', 'as I, alpha 192/256 (DLLMGR69_STEM=192)', CWarp('fix', mode, alpha=192, ends=32)),
     ]
 
 if __name__ == '__main__':
@@ -64,7 +68,8 @@ if __name__ == '__main__':
     print('|---|---|---|---|---|---|---|---|---|---|')
     for mode in ('rgb', 'gray'):
         for cid, name, v in cands(mode):
-            if len(sys.argv) > 2: v.k = 1  # native 2x text (#52b GDI scaling): no 2x upscale in the panel model
+            if len(sys.argv) > 3 and cid not in sys.argv[3].split(','): continue
+            if len(sys.argv) > 2 and sys.argv[2] == 'native': v.k = 1  # native 2x text (#52b GDI scaling): no 2x upscale in the panel model
             rs = run([v], sizes=sizes, styles=('regular',))
             m = lambda k: float(np.mean([r[k] for r in rs]))
             row = dict(mode=mode, id=cid, name=name, **{k: m(k) for k in rs[0] if isinstance(rs[0][k], float)})

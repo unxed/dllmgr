@@ -12,22 +12,25 @@ int dllmgr69_stem_alpha(void)
         int v = env ? atoi( env ) : 0;
 
         if (v <= 0 || dllmgr52_text_mode() < DLLMGR52_AGG) alpha = 0;
-        else if (v == 1) alpha = dllmgr52_text_mode() == DLLMGR52_AGG_RGB ? 128 : 192;
+        else if (v == 1) alpha = 128;
         else alpha = min( v, 256 );
     }
     return alpha;
 }
 
-/* left and right edges (26.6, from the glyph origin) of the vertical stems:
- * columns of the outline rasterised 16x wide whose longest run of coverage
- * >= 128 is at least about half an x-height, grouped, at most 0.3 em wide */
+/* left and right edges (26.6, from the glyph origin) of the straight
+ * vertical stems: columns of the outline rasterised 16x wide whose longest
+ * run of coverage >= 128 is at least about half an x-height, grouped,
+ * 0.35 px .. 0.3 em wide, and straight: in at least as many rows the ink run
+ * through the group's middle column starts and ends within 1/8 px of the
+ * group's edges (round bowls and slivers fail, they are left alone) */
 static int dllmgr69_find_stems( FT_Outline *outline, int ppem, FT_Pos stems[DLLMGR69_STEM_MAX][2] )
 {
     FT_Vector *points = outline->points, *wide;
     FT_Bitmap bitmap;
     FT_BBox cbox;
     BYTE *buf = NULL, *tall = NULL;
-    int i, n = 0, w, h, x, y, start, run, best;
+    int i, n = 0, w, h, x, y, start, run, best, mid, a, b, good;
     int minrun = max( 3, (ppem * 245 + 500) / 1000 );
 
     if (outline->n_points <= 0 || ppem <= 0) return 0;
@@ -71,6 +74,18 @@ static int dllmgr69_find_stems( FT_Outline *outline, int ppem, FT_Pos stems[DLLM
         if (!tall[x]) { x++; continue; }
         for (start = x; x < w && tall[x]; x++) ;
         if ((x - start) * 10 > 3 * ppem * DLLMGR69_STEM_OS) continue;  /* not a stem */
+        if ((x - start) * 20 < 7 * DLLMGR69_STEM_OS) continue;           /* a sliver */
+        mid = (start + x) / 2;
+        for (y = good = 0; y < h; y++)
+        {
+            BYTE *line = buf + y * w;
+
+            if (line[mid] < 128) continue;
+            for (a = mid; a > 0 && line[a - 1] >= 128; a--) ;
+            for (b = mid; b < w - 1 && line[b + 1] >= 128; b++) ;
+            if (abs( a - start ) <= DLLMGR69_STEM_OS / 8 && abs( b + 1 - x ) <= DLLMGR69_STEM_OS / 8) good++;
+        }
+        if (good < minrun) continue;  /* round or joined: not a straight stem */
         if (n == DLLMGR69_STEM_MAX) { n = 0; break; }
         stems[n][0] = ((cbox.xMin >> 6) + start) * (64 / DLLMGR69_STEM_OS);
         stems[n][1] = ((cbox.xMin >> 6) + x) * (64 / DLLMGR69_STEM_OS);

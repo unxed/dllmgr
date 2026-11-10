@@ -3,9 +3,10 @@ soft stem snapping in freetype.c + phase choice (Viterbi) in dibdrv.
 
 freetype.c, for an agg render at phase p (outline already shifted by
 shift(p) = (p * 64 + 1) / 3):
-  stems  = columns of the light-hinted outline, rasterised 16x wide, whose
-           longest vertical run of coverage >= 128 is >= max(3, 0.245 ppem)
-           rows, grouped, at most 0.3 em wide
+  stems  = straight stems (straight.py): columns of the light-hinted outline,
+           rasterised 16x wide, whose longest vertical run of coverage >= 128
+           is >= max(3, 0.245 ppem) rows, grouped, 0.35 px .. 0.3 em wide, with
+           >= as many rows whose ink run matches the group's edges +-1/8 px
   target = stem width rounded to whole px (>= 1), centre such that the left
            edge lands on a pixel edge (nearest)
   move   = alpha of the way (alpha in 1/256: rgb 128 = .5, grey 192 = .75)
@@ -14,10 +15,11 @@ shift(p) = (p * 64 + 1) / 3):
 dibdrv: each glyph may take its third, or one third less or more; Viterbi
   over the run minimises sum (left-edge error_i - right-edge error_{i-1})^2
   + 1/20 (mean error_i)^2, edge error = placed - ideal + warp displacement
-  of the first / last stem edge; first and last glyph within 0.5 px."""
+  of the first / last stem edge; first and last glyph: a shifted third only
+  with both edge errors within 0.5 px (ends=32)."""
 import functools
 import numpy as np
-from stems import glyph_stems
+from straight import straight_stems
 
 MAXMOVE = 48  # 0.75 px
 
@@ -30,7 +32,7 @@ def cdiv(a, b):
 @functools.lru_cache(maxsize=None)
 def knots(font, ch, shift64, alpha256, keepw=True):
     """[(old, new), ...] in 26.6 relative to the pen (whole px), or ()"""
-    st = glyph_stems(font, ch, True)
+    st = straight_stems(font, ch)
     out = []
     for L, R, rows, w in st:
         l = int(round(L * 64)) + shift64
@@ -112,7 +114,7 @@ def place(font, text, alpha256, ends=32, wgap=20, keepw=True):
         lin += font.metrics(c)[0]
 
     def unary(i, o):
-        if (i == 0 or i == n - 1) and (o[4] if ends == 0 else (abs(o[0]) > ends or abs(o[1]) > ends)):
+        if (i == 0 or i == n - 1) and o[4] and (ends == 0 or abs(o[0]) > ends or abs(o[1]) > ends):
             return INF  # ends == 0: first and last glyph keep their third
         m = cdiv(o[0] + o[1], 2)
         return m * m

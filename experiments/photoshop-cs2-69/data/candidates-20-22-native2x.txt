@@ -1,0 +1,11 @@
+sizes (20, 22), Tahoma regular
+| mode | id | candidate | peak cv | seen | smooth | ink cv | white rms | centroid rms / max | width |
+|---|---|---|---|---|---|---|---|---|---|
+| rgb | A | agg (current): 1/3 px phases, vertical-only hinting | 0.058 | 0.129 | nan | 0.046 | 0.134 | 0.128 / 0.35 | 1.06 |
+| rgb | B | whole-px positions + full hinting (classic, rejected in #69) | 0.016 | 0.087 | nan | 0.088 | 0.779 | 0.776 / 1.96 | 0.87 |
+| rgb | I | chosen: soft snap 128/256 + phase Viterbi (C, stem-fix.diff) | 0.043 | 0.105 | nan | 0.041 | 0.136 | 0.120 / 0.42 | 0.94 |
+| rgb | I192 | as I, alpha 192/256 (DLLMGR69_STEM=192) | 0.034 | 0.095 | nan | 0.039 | 0.177 | 0.171 / 0.65 | 0.88 |
+| gray | A | agg (current): 1/3 px phases, vertical-only hinting | 0.000 | 0.159 | nan | 0.066 | 0.134 | 0.129 / 0.37 | 0.27 |
+| gray | B | whole-px positions + full hinting (classic, rejected in #69) | 0.000 | 0.100 | nan | 0.095 | 0.779 | 0.770 / 1.95 | 0.80 |
+| gray | I | chosen: soft snap 128/256 + phase Viterbi (C, stem-fix.diff) | 0.000 | 0.145 | nan | 0.060 | 0.136 | 0.124 / 0.44 | 0.37 |
+| gray | I192 | as I, alpha 192/256 (DLLMGR69_STEM=192) | 0.022 | 0.128 | nan | 0.059 | 0.177 | 0.175 / 0.65 | 0.41 |
