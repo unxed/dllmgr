@@ -1,0 +1,1 @@
+wine-11.0 db11d0fe6a169c457e23d007e20404643d067aa8 + wine-11.0-app-isolation.patch + winehq-60721.patch + dllmgr-43.patch + dllmgr-44.patch + dllmgr-46.patch + dllmgr-49.patch + dllmgr-52.patch + dllmgr-65.patch + dllmgr-66.patch + dllmgr-69.patch + dllmgr-36-shape.patch
