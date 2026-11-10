@@ -20,7 +20,9 @@ second one with the link, then add the back link to the first as a comment.
 | 5 | WineHQ (new bug, duplicate search first) | inverting (XOR) pixels of colour cursors become transparent in the Xcursor path | to write after a Windows probe | candidate |
 | 6 | WineHQ (new bug, duplicate search first) | #43 part 1: caption-less owned popups shown without activation are override-redirect, so a splash stays on top of everything when the busy app's main window is minimized (not a Mint bug: Muffin hides managed transients correctly) | to write after a Windows parity check (ghosted app, owned popup) | candidate |
 | 11 | WineHQ (new bugs, one per case, duplicate search first) | HiDPI with fractional scaling (X11 screen at 2x, panel at 1.25x via xrandr; the owner's Cinnamon setup): collect every case where Wine output degrades after the downscale (thin lines, 1-px text detail, cursor sizes, DPI it reports) | to write per case after stand checks with scripts/as-seen.py | candidate |
-| 12 | WineHQ (new bug, duplicate search first) | #36 shape mask: a region span inside one byte of the 1-bit mask vanishes or shifts (set_surface_shape_rect, AND instead of AND NOT); stray pixels next to the Photoshop splash feather | docs/bugzilla/dllmgr-36-shape.txt (prepared 2026-11-10; owner posts) | due |
+| 12 | WineHQ 60746 (posted by the owner 2026-11-10) | #36 shape mask: a region span inside one byte of the 1-bit mask vanishes or shifts (set_surface_shape_rect, AND instead of AND NOT); stray pixels next to the Photoshop splash feather | docs/bugzilla/dllmgr-36-shape.txt (posted). Master check 2026-11-10: wine-11.21 (2af4506cc3) dce.c still has `l_mask & r_mask`, so still present by code; run on a master build still to do | posted, retest |
+
+| 13 | WineHQ 60741 (comment) | Dmitry: "should be fixed by aac722e8", please use wine.git. aac722e8 changes only Cyrillic outline advances of Tahoma Bold; Latin advances and bitmap strikes byte-identical, the reported places are Latin | docs/bugzilla/dllmgr-66-comment2.txt (draft; post after a run on master) | due |
 
 ## Posted (for cross links)
 

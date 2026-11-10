@@ -1,0 +1,22 @@
+Where: https://bugs.winehq.org/show_bug.cgi?id=60741 (reply to comment 2)
+Status: DRAFT 2026-11-10. Post only after the run on current wine.git
+master (the font-file check below is done; the application run on master is
+still to do, fix-it-in-wine step 10 "Retest on the latest Wine").
+
+Text:
+
+Thanks. I checked aac722e8 ("fonts: Fix the advance widths of some
+Cyrillic letters in Tahoma Bold") against the three places from comment 1.
+
+The commit changes the outline advance widths of 48 Cyrillic letters in
+tahomabd.ttf. The embedded bitmap strikes (EBLC/EBDT) and the advances of
+all Latin letters, digits, ":" and "%" are byte-identical to the previous
+revision. The places in comment 1 are Latin text at 10 px, which Wine draws
+from those bitmap strikes ("Open", "New Layer", "Merge Visible" in Tahoma
+Bold; "Background" in simulated italic Tahoma; "Opacity:", "Lock:",
+"Fill:" in regular Tahoma), so they are not affected by this commit.
+
+[after the master run:] Retested with wine.git master <commit> (wine-11.21):
+<result per place>.
+
+Prepared with the help of an AI agent.
