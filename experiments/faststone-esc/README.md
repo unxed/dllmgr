@@ -94,3 +94,44 @@ ShowWindow 9 %, SetWindowPos 9 %, BitBlt 8 %, DestroyCursor 6 %, GetDC 4 %
 (tools/sample-report.py). No single hot spot on the stand. Next: the same
 sampler on the owner's machine (2543 fonts) and on the Windows runner for
 the per-call comparison.
+
+## 2026-11-11: Windows comparison (CI)
+
+Agent cc-rcnb-52ab. Workflow .github/workflows/faststone-esc39.yml
+(tests/wine/esc39-probe.c, esc39-run.sh, esc39-summary.py): FastStone 8.5
+portable, fresh copy and no FastStone AppData per run (clean settings, so
+ConfirmOnESCExit is on: the confirmation TMessageWithNoMorebox counts as
+"Esc handled"), launched by a probe whose own window is foreground first
+(like a file manager); windows/foreground/centre pixel logged every ~50 ms;
+one SendInput Esc per run at a fixed delay. Images: 800x600 fixture
+(small) and a 6000x4000 JPEG (big), centre colour f0cc5a.
+
+- Windows, 3 reps: https://github.com/unxed/dllmgr/actions/runs/42925251966
+  (windows-latest, 1024x768, 96 DPI)
+- Wine 11.0, 1 rep (openbox, 3072x1728, 192 DPI, SendInput and xdotool
+  agree): https://github.com/unxed/dllmgr/actions/runs/42924161314
+  (its Windows job is invalid: the console host kept the foreground; fixed
+  in 3fa0ca6). The 3-rep Wine jobs of run 42925251966 were still running
+  when the session was paused.
+
+| | image visible ms | TFullScreenWindow ms | last Esc ignored | first Esc handled | gap image -> Esc works |
+|---|---|---|---|---|---|
+| Windows small | 141-175 | 360-410 | 200 (3/3) | 400 (3/3) | ~0.2 s |
+| Windows big | 394-439 | 624-660 | 400 (3/3), 600 (1/3) | 600 (2/3), 800 (3/3) | ~0.2 s |
+| Windows no image | - | - | none | 200 (3/3) | - |
+| Wine small | 256 | 1051-1095 | 600 | 900 | ~0.8 s |
+| Wine big | 704-750 | 1542-1628 | 1200 | 1500 | ~0.8 s |
+| Wine no image | - | - | none | 300 | - |
+
+Same mechanism on Windows: the image is first shown by the early TForm,
+the foreground then goes to the zero-size TApplication, and Esc works only
+once TFullScreenWindow exists; an Esc before that is lost on Windows too.
+So the behaviour is FastStone's own, but under Wine the window between
+"image visible" and "Esc works" is ~4x longer (~0.8 s vs ~0.2 s, the
+TFullScreenWindow comes ~0.8 s after the TForm instead of ~0.2 s), which is
+what makes it noticeable. Not posted on #39 yet (session paused): the
+owner's rule was "same as Windows -> not ours"; Windows is the same in kind
+but not in length, so the verdict is the owner's call.
+Next: read the 3-rep Wine artifacts of run 42925251966, then decide; if
+pursued, the ~0.6 s extra is the #22 startup latency (main-thread window
+management calls, see the sampler profile above).
