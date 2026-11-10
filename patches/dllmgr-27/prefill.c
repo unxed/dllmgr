@@ -980,6 +980,45 @@ static int close_instance_mutexes(void)
     return closed;
 }
 
+/* #51 (owner machine, experiments/photoshop-cs2-51/owner-machine): the
+ * trampoline can run after Photoshop's main window (class "Photoshop")
+ * exists; the private instance then finds it with FindWindow and exits 0 in
+ * 0.3 s, before it could signal. Move this process's windows of the
+ * application's main class under a hidden window of ours while we wait:
+ * FindWindow only sees top-level and message-only windows (message-only does
+ * not help, Wine and Windows both find those). Give them back if the private
+ * runtime does not take over. */
+#define TRAMP_MAX_HIDDEN 16
+static HWND tramp_hidden[TRAMP_MAX_HIDDEN], tramp_holder;
+static int tramp_hidden_count;
+
+static BOOL CALLBACK hide_main_window(HWND hwnd, LPARAM lparam)
+{
+    char cls[64];
+    DWORD pid = 0;
+    GetWindowThreadProcessId(hwnd, &pid);
+    if (pid == GetCurrentProcessId() && tramp_hidden_count < TRAMP_MAX_HIDDEN &&
+        GetClassNameA(hwnd, cls, sizeof(cls)) && !lstrcmpA(cls, "Photoshop") && hwnd != tramp_holder &&
+        (tramp_holder || (tramp_holder = CreateWindowExA(0, "STATIC", "dllmgr51", WS_POPUP, 0, 0, 0, 0,
+                                                         NULL, NULL, NULL, NULL))) &&
+        SetParent(hwnd, tramp_holder)) {
+        tramp_hidden[tramp_hidden_count++] = hwnd;
+        TRACE("trampoline: main window %p moved under %p\n", (void *)hwnd, (void *)tramp_holder);
+    }
+    return TRUE;
+}
+
+static void restore_main_windows(void)
+{
+    while (tramp_hidden_count) {
+        HWND hwnd = tramp_hidden[--tramp_hidden_count];
+        SetParent(hwnd, NULL);
+        TRACE("trampoline: main window %p restored\n", (void *)hwnd);
+    }
+    if (tramp_holder) DestroyWindow(tramp_holder);
+    tramp_holder = NULL;
+}
+
 /* The private instance owns the single-instance mutex again: it took over. */
 static BOOL instance_mutex_back(void)
 {
@@ -996,7 +1035,7 @@ static void trampoline(void)
     WCHAR *prefix = read_companion(), *app = NULL, *cmd = NULL, *end;
     const WCHAR *args = own_arguments();
     char wait_text[16] = "";
-    DWORD wait = 15000, n, waited;
+    DWORD wait = 15000, n, waited, poll = 100;
     HANDLE event = NULL;
     int mutexes;
 
@@ -1016,15 +1055,19 @@ static void trampoline(void)
     if (!(event = CreateEventW(NULL, TRUE, FALSE, TRAMP_EVENT))) goto done;
     ResetEvent(event);
     mutexes = close_instance_mutexes();
+    if (!GetEnvironmentVariableA("DLLMGR51_NO_HIDE", NULL, 0)) EnumWindows(hide_main_window, 0);
     if (!CreateProcessW(app, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
         TRACE("trampoline: cannot start launcher (error %lu), staying on stock Wine\n", GetLastError());
+        restore_main_windows();
         goto done;
     }
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
     TRACE("trampoline: started %ls, waiting %lu ms\n", cmd, wait);
-    for (waited = 0; waited < wait; waited += 100) {
-        if (WaitForSingleObject(event, 100) == WAIT_OBJECT_0) {
+    if (GetEnvironmentVariableA("DLLMGR51_POLL_MS", wait_text, sizeof(wait_text)))  /* test switch: slow mutex polling */
+        poll = atoi(wait_text);
+    for (waited = 0; waited < wait; waited += poll) {
+        if (WaitForSingleObject(event, poll) == WAIT_OBJECT_0) {
             TRACE("trampoline: private runtime took over, exiting\n");
             ExitProcess(0);
         }
@@ -1033,6 +1076,7 @@ static void trampoline(void)
             ExitProcess(0);
         }
     }
+    restore_main_windows();
     TRACE("trampoline: no signal from the private runtime, staying on stock Wine\n");
 done:
     if (event) CloseHandle(event);
