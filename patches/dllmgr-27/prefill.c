@@ -953,6 +953,8 @@ static DWORD WINAPI msglog_writer(void *arg)
     GetEnvironmentVariableA("DLLMGR_MSGLOG", value, sizeof(value));
     GetTempPathA(sizeof(go) - 40, go);
     lstrcpyA(path, go);
+    wsprintfA(line, "%sdllmgr-msglog-alive-%lu", go, GetCurrentProcessId());  /* shows that the proxy loaded */
+    CloseHandle(CreateFileA(line, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL));
     lstrcatA(go, "dllmgr-msglog-go");
     while (GetFileAttributesA(go) == INVALID_FILE_ATTRIBUTES) Sleep(20);
     QueryPerformanceFrequency(&msglog_freq);

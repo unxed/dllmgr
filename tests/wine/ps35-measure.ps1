@@ -158,7 +158,8 @@ try {
         Save-Desktop 'zoom-after'
         $Frames | ConvertTo-Json | Set-Content (Join-Path $Out 'zoom-frames.json')
         Start-Sleep -Seconds 4
-        Get-ChildItem $env:TEMP -Filter 'dllmgr-msglog-*.txt' -ErrorAction SilentlyContinue | Copy-Item -Destination $Out
+        Get-ChildItem $env:TEMP -Filter 'dllmgr-msglog-*' -ErrorAction SilentlyContinue | Copy-Item -Destination $Out
+        @{proxy=$env:DLLMGR_PROXY;exists=[bool]($env:DLLMGR_PROXY -and (Test-Path $env:DLLMGR_PROXY));installed=(Test-Path (Join-Path (Split-Path $Exe) 'version.dll'));temp=$env:TEMP;files=@(Get-ChildItem $env:TEMP -Filter 'dllmgr-*' -ErrorAction SilentlyContinue | ForEach-Object Name)} | ConvertTo-Json | Set-Content (Join-Path $Out 'msglog-proxy.json')
         # #47 b: a 16-bit document at 100 % (the stand shows partial frames only with 16-bit)
         & python (Join-Path $PSScriptRoot 'png16.py') 'C:\t47-16.png' 800 600
         [void][PS35.Native]::SetForegroundWindow([IntPtr]$Main.Handle);Start-Sleep -Milliseconds 500
