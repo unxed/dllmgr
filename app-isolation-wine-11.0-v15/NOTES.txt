@@ -1,0 +1,1 @@
+Built by CI run https://github.com/unxed/dllmgr/actions/runs/42776455788 at commit f3eaaef. Changes since v14: #71 the version.dll proxy reports the ExitProcess callers, the last shown windows and clicked buttons (dllmgr status shows "last button: ..."). Stand e2e: dllmgr fix + dllmgr run, Quit in the activation dialog -> verdict recorded.
