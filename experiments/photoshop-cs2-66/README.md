@@ -203,3 +203,17 @@ their strikes under text=gray/light/cleartype; regular stays smoothed. Probe
 total vs Windows ClearType 1879 (bold 513, italic 440, regular 925; before
 2493). Stand: stand-v5-palettes-gray.png ("Open" and "Background" crisp,
 colons back).
+
+## AGG prototype (2026-11-10)
+
+agg66.py renders the probe lines the way M. Shemanarev proposes ("Texts
+Rasterization Exposures"; the owner translated it for Habr): FreeType light
+hinting (vertical only), unhinted fractional advances, 1/3 px horizontal
+positioning, RGB with a soft 5-tap filter (1/3, 2/9, 1/9) or grey, blending
+in linear light with coverage gamma 2.2 (2.2 gives Windows' total ink:
+2473 vs 2549). Summed difference to Windows ClearType: AGG RGB ~2350, grey
+~2360, current Wine v13 rule 1879 (crisp strikes are pixel-closer at 1x, AGG
+keeps the design's shapes and spacing). The real gain is native rendering at
+2x on HiDPI screens instead of upscaling 96-DPI text.
+Image: agg-prototype-compare.png (Windows, Wine v13, AGG 1x RGB/grey, AGG
+native 2x RGB/grey).
