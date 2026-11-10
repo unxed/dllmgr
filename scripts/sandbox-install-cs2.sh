@@ -46,7 +46,7 @@ echo "$SHA  $INSTALLER" | sha256sum -c -
 
 step "unpack (unzip == WinZip SFX output, verified identical)"
 SRC=$STAND_DIR/dl/unpacked
-rm -rf "$SRC"; mkdir -p "$SRC"; unzip -q "$INSTALLER" -d "$SRC"
+[ -e "$SRC" ] && chmod -R u+w "$SRC"; rm -rf "$SRC"; mkdir -p "$SRC"; unzip -q "$INSTALLER" -d "$SRC"
 cd "$SRC/Photoshop CS2"
 "$WINE/wine" Setup.exe >"$LOG" 2>&1 &
 
@@ -91,7 +91,7 @@ click "$w" 448 282   # uncheck the unlabeled checkbox (do not auto-launch)
 click "$w" 688 646   # the enabled Finish button
 
 step "dismiss msiexec crash (F14), if it happens"
-if w=$(win 'Program Error' 30 2>/dev/null); then click "$w" 704 496; fi
+if w=$(win 'Program Error|Программная ошибка' 30 2>/dev/null); then click "$w" 704 496; fi
 "$WINE/wineserver" -w
 
 step "verify"

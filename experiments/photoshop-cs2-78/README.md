@@ -50,3 +50,22 @@ before and after the switch and runs with WDBG=+event):
   its owner's WM frame (XConfigureWindow, CWSibling|CWStackMode Above).
   Result: no change, History still above xclock (t78d). Not yet known
   whether the code ran (no trace), or whether Muffin restacked afterwards.
+
+## 2026-11-10 19:35: Windows reference (CI run 42874590228)
+
+`ps35-windows` measure with `only=palette` (tests/wine/ps35-palette.ps1,
+public APIs only; windows-palette.json, windows-after-click.png):
+- Palettes are top-level `PSFloatC` windows owned by the main window
+  (`Photoshop`), style 0x94800011/0x94800111 (WS_POPUP|WS_VISIBLE|
+  WS_CLIPSIBLINGS|WS_BORDER|...), exstyle 0x80 = WS_EX_TOOLWINDOW.
+- A click into a palette (the 3rd one, list area) raises it to the top of
+  the z-order, but foreground, active and focus windows stay exactly as
+  before: the main window is active, the focus does not move.
+- Alt+F4 right after that click closes Photoshop (the main window is gone).
+
+So on Windows a palette never becomes the active window. On Wine it does
+(FocusIn on the palette after the click): that is both #78 (activation
+raises the unmanaged palette above everything, set_input_focus) and #82
+(Alt+F4 goes to the palette). The fix must keep the palette from becoming
+active, not restack it afterwards. tests/wine/fgprobe78.c prints the same
+foreground/active/focus data on Wine.

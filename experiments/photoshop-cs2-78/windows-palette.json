@@ -1,0 +1,212 @@
+{
+    "main":  131588,
+    "windows":  [
+                    {
+                        "handle":  67380,
+                        "class":  "PSFloatC",
+                        "text":  "",
+                        "x":  798,
+                        "y":  486,
+                        "w":  212,
+                        "h":  220,
+                        "style":  "94800111",
+                        "exstyle":  "00000080",
+                        "owner":  131588
+                    },
+                    {
+                        "handle":  67396,
+                        "class":  "PSFloatC",
+                        "text":  "",
+                        "x":  798,
+                        "y":  353,
+                        "w":  212,
+                        "h":  132,
+                        "style":  "94800111",
+                        "exstyle":  "00000080",
+                        "owner":  131588
+                    },
+                    {
+                        "handle":  67368,
+                        "class":  "PSFloatC",
+                        "text":  "",
+                        "x":  798,
+                        "y":  221,
+                        "w":  212,
+                        "h":  131,
+                        "style":  "94800011",
+                        "exstyle":  "00000080",
+                        "owner":  131588
+                    },
+                    {
+                        "handle":  67372,
+                        "class":  "PSFloatC",
+                        "text":  "",
+                        "x":  798,
+                        "y":  89,
+                        "w":  212,
+                        "h":  131,
+                        "style":  "94800111",
+                        "exstyle":  "00000080",
+                        "owner":  131588
+                    },
+                    {
+                        "handle":  66794,
+                        "class":  "PSFloatC",
+                        "text":  "",
+                        "x":  12,
+                        "y":  89,
+                        "w":  64,
+                        "h":  442,
+                        "style":  "94800000",
+                        "exstyle":  "00000080",
+                        "owner":  131588
+                    },
+                    {
+                        "handle":  66762,
+                        "class":  "PSFloatC",
+                        "text":  "",
+                        "x":  30000,
+                        "y":  30000,
+                        "w":  1,
+                        "h":  1,
+                        "style":  "94800000",
+                        "exstyle":  "00000080",
+                        "owner":  131588
+                    },
+                    {
+                        "handle":  131588,
+                        "class":  "Photoshop",
+                        "text":  "Adobe Photoshop",
+                        "x":  -8,
+                        "y":  -8,
+                        "w":  1040,
+                        "h":  736,
+                        "style":  "17CF0000",
+                        "exstyle":  "00000100",
+                        "owner":  0
+                    }
+                ],
+    "before":  {
+                   "tag":  "before",
+                   "foreground":  131588,
+                   "active":  131588,
+                   "focus":  197122,
+                   "flags":  0,
+                   "main_exists":  true
+               },
+    "palette":  {
+                    "handle":  67368,
+                    "class":  "PSFloatC",
+                    "text":  "",
+                    "x":  798,
+                    "y":  221,
+                    "w":  212,
+                    "h":  131,
+                    "style":  "94800011",
+                    "exstyle":  "00000080",
+                    "owner":  131588
+                },
+    "after_click":  {
+                        "tag":  "after-click",
+                        "foreground":  131588,
+                        "active":  131588,
+                        "focus":  197122,
+                        "flags":  0,
+                        "main_exists":  true
+                    },
+    "windows_after_click":  [
+                                {
+                                    "handle":  67368,
+                                    "class":  "PSFloatC",
+                                    "text":  "",
+                                    "x":  798,
+                                    "y":  221,
+                                    "w":  212,
+                                    "h":  131,
+                                    "style":  "94800011",
+                                    "exstyle":  "00000080",
+                                    "owner":  131588
+                                },
+                                {
+                                    "handle":  67380,
+                                    "class":  "PSFloatC",
+                                    "text":  "",
+                                    "x":  798,
+                                    "y":  486,
+                                    "w":  212,
+                                    "h":  220,
+                                    "style":  "94800111",
+                                    "exstyle":  "00000080",
+                                    "owner":  131588
+                                },
+                                {
+                                    "handle":  67396,
+                                    "class":  "PSFloatC",
+                                    "text":  "",
+                                    "x":  798,
+                                    "y":  353,
+                                    "w":  212,
+                                    "h":  132,
+                                    "style":  "94800111",
+                                    "exstyle":  "00000080",
+                                    "owner":  131588
+                                },
+                                {
+                                    "handle":  67372,
+                                    "class":  "PSFloatC",
+                                    "text":  "",
+                                    "x":  798,
+                                    "y":  89,
+                                    "w":  212,
+                                    "h":  131,
+                                    "style":  "94800111",
+                                    "exstyle":  "00000080",
+                                    "owner":  131588
+                                },
+                                {
+                                    "handle":  66794,
+                                    "class":  "PSFloatC",
+                                    "text":  "",
+                                    "x":  12,
+                                    "y":  89,
+                                    "w":  64,
+                                    "h":  442,
+                                    "style":  "94800000",
+                                    "exstyle":  "00000080",
+                                    "owner":  131588
+                                },
+                                {
+                                    "handle":  66762,
+                                    "class":  "PSFloatC",
+                                    "text":  "",
+                                    "x":  30000,
+                                    "y":  30000,
+                                    "w":  1,
+                                    "h":  1,
+                                    "style":  "94800000",
+                                    "exstyle":  "00000080",
+                                    "owner":  131588
+                                },
+                                {
+                                    "handle":  131588,
+                                    "class":  "Photoshop",
+                                    "text":  "Adobe Photoshop",
+                                    "x":  -8,
+                                    "y":  -8,
+                                    "w":  1040,
+                                    "h":  736,
+                                    "style":  "17CF0000",
+                                    "exstyle":  "00000100",
+                                    "owner":  0
+                                }
+                            ],
+    "after_altf4":  {
+                        "tag":  "after-alt-f4",
+                        "foreground":  131354,
+                        "active":  131354,
+                        "focus":  131390,
+                        "flags":  0,
+                        "main_exists":  false
+                    },
+    "windows_after_altf4":  null
+}
