@@ -161,3 +161,14 @@ right. Also: the region form of a diagonal thin line ended one pixel late
 (Wine's solid_line_region adds a pixel after the last step; the direct form
 does not), now cut. Result: resize + scroll probe 0 differing pixels
 against exact 2x blocks.
+
+## 2026-11-10: with AGG text (#69 phase 3 preview)
+
+Local build (stack + dllmgr-52-gdi + #69), DLLMGR52_GDI_SCALE=1 with
+DLLMGR52_TEXT=agg-rgb: Photoshop's palettes get text rasterized at 2x with
+the AGG placement (experiments/photoshop-cs2-52/gdi-scaling-agg-rgb-2x.png,
+left v14 exact 2x, right GDI scaling + agg-rgb; -as-seen.png: the same
+after the owner's 0.625 panel downscale, scripts/as-seen.py). Shapes are
+real 22-px shapes. Open: "100%" in Opacity/Fill is spread out and its "%"
+clipped (digit advances: the application's integer advances at 96 DPI times
+2 vs the 22-px glyphs); the activation dialog shows white patches.
