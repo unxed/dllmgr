@@ -25,6 +25,7 @@ second one with the link, then add the back link to the first as a comment.
 | 13 | WineHQ 60741 (comment) | Dmitry: "should be fixed by aac722e8", please use wine.git. aac722e8 changes only Cyrillic outline advances of Tahoma Bold; Latin advances and bitmap strikes byte-identical, the reported places are Latin | posted as comments 3 (aac722e8 check) and 5 (master 11.21 == 11.0 for all glyphs at 10/11/13 px), docs/bugzilla/dllmgr-66-comment2.txt, -comment3.txt | posted |
 | 14 | WineHQ 60741 (comment) | when the agg modes are stable: all our AGG know-how (run composition in one buffer, max-compose of overlaps, run-width scaling of linear advances, LIGHT hinting, LCD filter weights, bold strikes kept, stem-phase result from #69 research) | to write (owner, 2026-11-10) | waiting for stable agg |
 | 15 | WineHQ (new bug, duplicate search first) | winedbg attach to a 32-bit process under wow64 (new-style WINEARCH=wow64 build) crashes the break-in thread: page fault at 0xffc00d6c in wow64 32-bit code, no backtrace (experiments/faststone-esc/README.md) | to write after a retest on wine.git master | candidate |
+| 16 | WineHQ 34133 (comment) or a new bug | Photoshop splash background: all findings in words (initial window contents, prefill proof, live margin by region cut, 60746 shape bug, screen reads), master retest still white | docs/bugzilla/winehq-splash-background.txt | due (owner posts) |
 
 ## Posted (for cross links)
 
