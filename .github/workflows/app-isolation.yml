@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Wine 11 and build dependencies
-        timeout-minutes: 6
+        timeout-minutes: 15
         run: bash tests/wine/ci-install.sh --winehq --install-recommends winehq-stable git gcc make flex bison gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 libfreetype-dev libfontconfig-dev libx11-dev libxext-dev libxrender-dev libxrandr-dev libxi-dev libxcomposite-dev libxcursor-dev libxfixes-dev libxinerama-dev libsane-dev xvfb
       - name: Build pinned private runtime
         timeout-minutes: 22
