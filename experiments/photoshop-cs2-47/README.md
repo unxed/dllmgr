@@ -99,3 +99,12 @@ every tile batch becomes a visible frame. On Windows (CI, earlier) the whole
 zoom is on screen within the first 60 ms capture.
 Next: sample all threads (workers) to see why rendering takes 150-200 ms
 here; and/or coalesce idle flushes within a frame interval.
+
+All-thread profile (new DLLMGR_SAMPLE_ALL=1, 6 threads, ~10 ms ticks,
+z512k.sh): during the 150-200 ms of tile-by-tile zoom no thread is busy;
+the main thread sits in NtUserGetMessage between tiles, the workers in
+waits. So the zoom is not slow because of CPU work under Wine: Photoshop
+waits for something between tiles (a timer, an idle check, a posted
+message) and that comes later under Wine than on Windows. Next: a
++timestamp message trace around one notch to see which message wakes each
+tile (GetMessage returns), and compare its timing with Windows.

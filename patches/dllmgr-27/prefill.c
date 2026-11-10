@@ -16,6 +16,7 @@
 #include <windows.h>
 #include <winternl.h>
 #include <psapi.h>
+#include <tlhelp32.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
@@ -1298,12 +1299,60 @@ static void sample_name(DWORD addr, char *out, int size)
     else wsprintfA(out, "0x%08lx", addr);
 }
 
+static DWORD sample_tid[SAMPLE_MAX];
+
+/* one sample of one thread (suspended by the caller): EIP + EBP chain */
+static void sample_thread(HANDLE thread, DWORD tid, DWORD t, int *n)
+{
+    CONTEXT ctx;
+    DWORD ebp, frame[2];
+    SIZE_T read;
+    int d;
+    ctx.ContextFlags = CONTEXT_CONTROL;
+    if (*n >= SAMPLE_MAX || !GetThreadContext(thread, &ctx)) return;
+    sample_buf[*n][0] = t;
+    sample_tid[*n] = tid;
+    sample_buf[*n][1] = ctx.Eip;
+    ebp = ctx.Ebp;
+    for (d = 2; d <= SAMPLE_DEPTH; d++) {
+        if (!ReadProcessMemory(GetCurrentProcess(), (void *)(ULONG_PTR)ebp, frame, sizeof(frame), &read) || read != sizeof(frame) || frame[0] <= ebp) {
+            for (; d <= SAMPLE_DEPTH; d++) sample_buf[*n][d] = 0;
+            break;
+        }
+        sample_buf[*n][d] = frame[1];
+        ebp = frame[0];
+    }
+    (*n)++;
+}
+
+/* DLLMGR_SAMPLE_ALL=1: every thread of the process (Photoshop renders in worker threads) */
+static void sample_all_threads(DWORD t, int *n)
+{
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    THREADENTRY32 te;
+    DWORD pid = GetCurrentProcessId(), self = GetCurrentThreadId();
+    if (snap == INVALID_HANDLE_VALUE) return;
+    te.dwSize = sizeof(te);
+    if (Thread32First(snap, &te)) do {
+        HANDLE thread;
+        if (te.th32OwnerProcessID != pid || te.th32ThreadID == self) continue;
+        if (!(thread = OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT, FALSE, te.th32ThreadID))) continue;
+        if (SuspendThread(thread) != (DWORD)-1) {
+            sample_thread(thread, te.th32ThreadID, t, n);
+            ResumeThread(thread);
+        }
+        CloseHandle(thread);
+    } while (Thread32Next(snap, &te));
+    CloseHandle(snap);
+}
+
 static DWORD WINAPI sampler(void *arg)
 {
     HANDLE thread = arg;
     char value[32], *comma, line[512], name[128], path[MAX_PATH];
     int interval, seconds = 10, n = 0, i, d;
-    DWORD start = GetTickCount(), got;
+    BOOL all = GetEnvironmentVariableA("DLLMGR_SAMPLE_ALL", NULL, 0) != 0;
+    DWORD start = GetTickCount(), got, main_tid = GetThreadId(thread);
     HANDLE file;
     GetEnvironmentVariableA("DLLMGR_SAMPLE", value, sizeof(value));
     interval = atoi(value) > 0 ? atoi(value) : 10;
@@ -1319,34 +1368,21 @@ static DWORD WINAPI sampler(void *arg)
         }
     }
     while (n < SAMPLE_MAX && GetTickCount() - start < (DWORD)seconds * 1000) {
-        CONTEXT ctx;
-        DWORD ebp, frame[2];
-        SIZE_T read;
         Sleep(interval);
-        if (SuspendThread(thread) == (DWORD)-1) break;
-        ctx.ContextFlags = CONTEXT_CONTROL;
-        if (GetThreadContext(thread, &ctx)) {
-            sample_buf[n][0] = GetTickCount() - start;
-            sample_buf[n][1] = ctx.Eip;
-            ebp = ctx.Ebp;
-            for (d = 2; d <= SAMPLE_DEPTH; d++) {
-                if (!ReadProcessMemory(GetCurrentProcess(), (void *)(ULONG_PTR)ebp, frame, sizeof(frame), &read) || read != sizeof(frame) || frame[0] <= ebp) {
-                    for (; d <= SAMPLE_DEPTH; d++) sample_buf[n][d] = 0;
-                    break;
-                }
-                sample_buf[n][d] = frame[1];
-                ebp = frame[0];
-            }
-            n++;
+        if (all) sample_all_threads(GetTickCount() - start, &n);
+        else {
+            if (SuspendThread(thread) == (DWORD)-1) break;
+            sample_thread(thread, main_tid, GetTickCount() - start, &n);
+            ResumeThread(thread);
         }
-        ResumeThread(thread);
     }
     GetTempPathA(sizeof(path) - 40, path);
     wsprintfA(path + lstrlenA(path), "dllmgr-sample-%lu.txt", GetCurrentProcessId());
     file = CreateFileA(path, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
     if (file == INVALID_HANDLE_VALUE) return 0;
     for (i = 0; i < n; i++) {
-        wsprintfA(line, "%lu", sample_buf[i][0]);
+        if (all) wsprintfA(line, "%lu t%04lx%s", sample_buf[i][0], sample_tid[i], sample_tid[i] == main_tid ? "m" : "");
+        else wsprintfA(line, "%lu", sample_buf[i][0]);
         for (d = 1; d <= SAMPLE_DEPTH; d++) {
             sample_name(sample_buf[i][d], name, sizeof(name));
             lstrcatA(line, " ");
@@ -1364,7 +1400,7 @@ static void start_sampler(void)
     HANDLE thread;
     if (!GetEnvironmentVariableA("DLLMGR_SAMPLE", NULL, 0)) return;
     if (DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread,
-                        THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT, FALSE, 0))
+                        THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT | THREAD_QUERY_LIMITED_INFORMATION, FALSE, 0))
         CloseHandle(CreateThread(NULL, 0, sampler, thread, 0, NULL));
 }
 

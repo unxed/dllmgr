@@ -60,6 +60,9 @@ docs/tasks/27-every-launch-path.md.
 DLLMGR27_OFF=1 too): a thread in the proxy suspends the main thread every
 `ms`, records EIP and 5 frames of the EBP chain, and after `seconds` writes
 `%TEMP%\dllmgr-sample-<pid>.txt` ("ms frame0 frame1 ..." as module+offset).
+`DLLMGR_SAMPLE=ms,seconds,go` starts when Z:\tmp\dllmgr-sample-go appears
+(touch it at the moment of interest); `DLLMGR_SAMPLE_ALL=1` samples every
+thread (lines "ms tTID[m] frames", m = main thread).
 Made because perf (sandbox kernel), gdb (no PE frames) and winedbg attach
 (crashes under wow64) cannot sample a 32-bit app here. Summary with Wine
 syscall names: `tools/sample-report.py FILE [WINE_LIB/i386-windows] [--from MS --to MS]`.
