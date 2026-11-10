@@ -74,3 +74,22 @@ Photoshop on the stand with the bold-only fix (photoshop-before-after-bold-fix.p
 1 stock text before, 2 stock text after ("Op en" -> "Open"), 3 ours (gray) before,
 4 ours after. In gray mode "Background" (synthetic italic of the regular face)
 stays heavy: smoothing + contrast curve, a separate question from spacing.
+
+## Windows reference (2026-11-10, text-probe-windows.yml run 42732000312)
+
+tests/wine/text-kern66.c renders Photoshop's palette fonts into a 96-DPI
+DIB (no screen grab), rows: bold 10/11 px, italic 10/11 px, regular 10/11 px.
+windows-vs-wine-palette-fonts.png, panels top to bottom: Windows Server 2025
+GDI (MS Tahoma), Wine 11.0 stock, Wine + dllmgr-66 (text=system), Wine +
+dllmgr-66 with text=gray contrast=2.2.
+
+- Bold 10 px: Windows compact and even. Stock Wine strikes: "Op en",
+  "B ackground". dllmgr-66 (hinted outlines): even, but about 13 % wider than
+  Windows (and than the strikes): outline advances are larger.
+- Italic (synthetic, Tahoma has no italic): Windows draws it crisp black (no
+  smoothing at this size); Wine draws it smoothed, grey and faint.
+- Regular: close to Windows in stock/system mode; text=gray squeezes 10 px.
+
+So the better fix for bold is to keep the strikes' widths (close to Windows)
+and correct where each bitmap sits in its cell; and synthetic italic should
+follow the same no-smoothing rule as the upright face.
