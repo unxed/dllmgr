@@ -1,0 +1,20 @@
+xwininfo: Window id: 0x21f (the root window) (has no name)
+  Root window id: 0x21f (the root window) (has no name)
+     0x1600069 (has no name): ("photoshop.exe" "photoshop.exe")  424x264+2628+702  +2628+702
+     0x400116 (has no name): ()  3020x1705+20+22  +20+22
+     0x4000f8 (has no name): ()  1650x1285+160+193  +160+193
+     0x1600067 (has no name): ("photoshop.exe" "photoshop.exe")  424x740+2628+968  +2628+968
+     0x1600065 (has no name): ("photoshop.exe" "photoshop.exe")  424x262+2628+174  +2628+174
+     0x1600063 (has no name): ("photoshop.exe" "photoshop.exe")  424x262+2628+438  +2628+438
+     0x160000e (has no name): ("photoshop.exe" "photoshop.exe")  128x884+16+174  +16+174
+     0x40001c (has no name): ()  3064x1703+2+19  +2+19
+     0x1600078 (has no name): ("photoshop.exe" "photoshop.exe")  1x1+0+0  +0+0
+     0x160006b (has no name): ("photoshop.exe" "photoshop.exe")  2608x264+16+1444  +16+1444
+     0x1600061 (has no name): ("photoshop.exe" "photoshop.exe")  424x450+2200+174  +2200+174
+     0x160005f "Font Capture": ("photoshop.exe" "photoshop.exe")  226x4+6+58  +6+58
+     0x160005e (has no name): ("photoshop.exe" "photoshop.exe")  1x1+592+164  +592+164
+     0x160005d (has no name): ("photoshop.exe" "photoshop.exe")  1x1+592+164  +592+164
+     0x160005c (has no name): ("photoshop.exe" "photoshop.exe")  1x1+592+164  +592+164
+     0x160005b (has no name): ("photoshop.exe" "photoshop.exe")  1x1+706+164  +706+164
+     0x160005a (has no name): ("photoshop.exe" "photoshop.exe")  1x1+84+164  +84+164
+     0x1600059 (has no name): ("photoshop.exe" "photoshop.exe")  1x1+526+164  +526+164

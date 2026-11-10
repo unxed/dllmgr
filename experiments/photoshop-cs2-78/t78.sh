@@ -12,9 +12,12 @@ F=$(xdotool search --name '^Adobe Photoshop$' | head -1); xdotool windowactivate
 xdotool key ctrl+o; sleep 4; xdotool key --delay 120 backslash p s 4 7 period p n g; xdotool key Return; sleep 8
 (xclock -geometry 3000x1650+30+30 &); sleep 2
 F=$(xdotool search --name '^Adobe Photoshop$' | head -1); xdotool windowactivate --sync "$F"; sleep 2
+xdotool mousemove 2780 800 click 1; sleep 2   # a history state in the History palette
 import -window root $OUT/1-ps.png
 wmctrl -a xclock; sleep 3
 import -window root $OUT/2-after-alttab.png
 xprop -root _NET_ACTIVE_WINDOW
 for w in $(xprop -root _NET_CLIENT_LIST_STACKING | sed 's/.*# //;s/,//g'); do echo "$w $(xprop -id $w WM_NAME _NET_WM_STATE WM_CLASS 2>/dev/null | tr '\n' ' ' | cut -c1-150)"; done
+xwininfo -root -children | grep -i 'photoshop\|xclock\|has no name' | head -20 > $OUT/xtree.txt
+for w in $(xwininfo -root -children | awk '/0x/{print $1}'); do xwininfo -id $w | grep -q 'Override Redirect State: yes' && xwininfo -id $w -stats | grep -E 'Window id|Map State|Absolute upper-left|Width|Height' | tr '\n' ' ' && echo; done > $OUT/override.txt
 pkill xclock; $RT/bin/wineserver -k
