@@ -1,0 +1,98 @@
+--- a/dlls/winex11.drv/event.c
++++ b/dlls/winex11.drv/event.c
+@@ -871,6 +871,87 @@
+ /**********************************************************************
+  *              focus_out
+  */
++/* dllmgr #78: the process lost the X focus to a foreign window.  Unmanaged
++ * (override-redirect) owned popups such as Photoshop palettes were raised
++ * with a plain XConfigureWindow(Above) while the app was active, so the
++ * window manager restacks the new active window below them and they stay on
++ * top of other applications.  Put every mapped unmanaged owned popup of this
++ * thread right above its owner's top-level (WM frame) X window, keeping
++ * their relative order, as Windows keeps owned windows next to their owner.
++ * DLLMGR78_OFF=1 disables it. */
++static int dllmgr78_error( Display *display, XErrorEvent *event, void *arg )
++{
++    return 1;
++}
++
++static Window dllmgr78_frame( Display *display, Window window, Window root )
++{
++    Window parent = 0, r, *children;
++    unsigned int count;
++
++    while (window)
++    {
++        if (!XQueryTree( display, window, &r, &parent, &children, &count )) return 0;
++        if (children) XFree( children );
++        if (parent == root) return window;
++        window = parent;
++    }
++    return 0;
++}
++
++static void dllmgr78_lower_popups( Display *display )
++{
++    static int enabled = -1;
++    Window root = DefaultRootWindow( display ), r, p, *children = NULL, prev = 0;
++    HWND prev_owner = 0;
++    unsigned int i, count;
++
++    if (enabled < 0)
++    {
++        const char *env = getenv( "DLLMGR78_OFF" );
++        enabled = !(env && atoi( env ));
++    }
++    if (!enabled || is_virtual_desktop()) return;
++    if (!XQueryTree( display, root, &r, &p, &children, &count )) return;
++
++    X11DRV_expect_error( display, dllmgr78_error, NULL );
++    for (i = 0; i < count; i++)  /* bottom to top */
++    {
++        struct x11drv_win_data *data, *owner_data;
++        XWindowAttributes attr;
++        XWindowChanges changes;
++        HWND hwnd, owner;
++        Window owner_window = 0;
++
++        if (XFindContext( display, children[i], winContext, (char **)&hwnd ) || !hwnd) continue;
++        if (!(owner = NtUserGetWindowRelative( hwnd, GW_OWNER ))) continue;
++        if (!(data = get_win_data( hwnd ))) continue;
++        if (data->managed || data->embedded || data->whole_window != children[i])
++        {
++            release_win_data( data );
++            continue;
++        }
++        release_win_data( data );
++        if (!XGetWindowAttributes( display, children[i], &attr ) || attr.map_state != IsViewable ||
++            !attr.override_redirect) continue;
++        if (owner != prev_owner)
++        {
++            if (!(owner_data = get_win_data( owner ))) continue;
++            if (owner_data->managed) owner_window = owner_data->whole_window;
++            release_win_data( owner_data );
++            if (!owner_window || !(prev = dllmgr78_frame( display, owner_window, root ))) continue;
++            prev_owner = owner;
++        }
++        changes.sibling = prev;
++        changes.stack_mode = Above;
++        XConfigureWindow( display, children[i], CWSibling | CWStackMode, &changes );
++        TRACE( "dllmgr78: %p/%lx above %lx\n", hwnd, children[i], prev );
++        prev = children[i];
++    }
++    X11DRV_check_error();
++    XFree( children );
++}
++
+ static void focus_out( Display *display , HWND hwnd )
+  {
+     if (xim_in_compose_mode()) return;
+@@ -879,6 +960,7 @@
+     xim_set_focus( hwnd, FALSE );
+ 
+     if (is_virtual_desktop()) return;
++    if (!is_current_process_focused()) dllmgr78_lower_popups( display );
+     if (hwnd != NtUserGetForegroundWindow()) return;
+     if (!(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_MINIMIZE))
+         send_message( hwnd, WM_CANCELMODE, 0, 0 );
