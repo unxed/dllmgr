@@ -2,8 +2,7 @@ Where: WineHQ Bugzilla, comment in https://bugs.winehq.org/show_bug.cgi?id=34133
 (Photoshop CS2 splash background; our earlier comment there is c5). If the
 owner prefers a new bug instead, the same text works as a description; first
 search for duplicates ("splash", "initial window contents", "layered").
-Status: DRAFT 2026-11-10. Master retest done 2026-11-10 (wine.git master, white rectangle still present;
-experiments/photoshop-splash/wine-master-11.21-splash.png). Owner posts.
+Status: POSTED by the owner 2026-11-10 as a comment in 34133. Do not repost.
 
 Text:
 

@@ -1,5 +1,5 @@
 Where: https://bugs.winehq.org/show_bug.cgi?id=60746 (comment; the report was posted by the owner 2026-11-10)
-Status: DRAFT 2026-11-10 (retest done on wine.git master). Owner posts.
+Status: POSTED by the owner 2026-11-10 as a comment in 60746. Do not repost.
 
 Text:
 
