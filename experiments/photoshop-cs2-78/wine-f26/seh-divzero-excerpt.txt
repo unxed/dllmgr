@@ -1,0 +1,40 @@
+314191.935:0024:trace:winspool:GetDefaultPrinterW L"Epson-LQ-850,wineps.drv,CUPS:Epson-LQ-850"
+314191.935:0024:trace:winspool:OpenPrinter2W (L"Epson-LQ-850",0022DA30,00000000,00000000)
+314192.064:0024:trace:winspool:OpenPrinter2W (L"Epson-LQ-850",0022D58C,00000000,00000000)
+314194.597:0024:trace:seh:dispatch_exception code=c0000094 (EXCEPTION_INT_DIVIDE_BY_ZERO) flags=0 addr=0000000066B52670
+314194.597:0024:trace:seh:dispatch_exception rip=000000007bf01110 rsp=00007ffffe1ff5f0 rbp=000000000022de48 eflags=00210246
+314194.597:0024:trace:seh:dispatch_exception rax=0000000000001157 rbx=0000000000000000 rcx=0000000011574b2e rdx=0000000000000000
+314194.597:0024:trace:seh:dispatch_exception rsi=000000000a5e14e0 rdi=0000000000000000  r8=0000000000000230  r9=0000000000000000
+314194.597:0024:trace:seh:dispatch_exception r10=0000000000000008 r11=0000000000200202 r12=000000007ffc0000 r13=00007ffffe1ffd24
+314194.597:0024:trace:seh:dispatch_exception r14=00007ffffe1ff5f0 r15=0000000000000000 mxcsr=00001fa0 cs=0033 ss=0000
+314194.597:0024:trace:seh:call_seh_handlers calling handler 00006FFFFB221564 (rec=00007FFFFE1FF360, frame=7ffffe1ff640 context=00007FFFFE1FEE70, dispatch=00007FFFFE1FE760)
+314194.597:0024:trace:seh:RtlGetExtendedContextLength2 context_flags 0x1007f, length 00007FFFFE1FE2C4, compaction_mask ffffffffffffffff.
+314194.597:0024:trace:seh:RtlInitializeExtendedContext2 context 000000000022D858, context_flags 0x1007f, context_ex 00007FFFFE1FE2C8, compaction_mask ffffffffffffffff.
+314194.597:0024:trace:seh:RtlCopyExtendedContext dst 000000000022DB24, context_flags 0x10040, src 00007FFFFE1FF340.
+314194.597:0024:trace:seh:RtlUnwindEx code=c0000094 flags=2 end_frame=00007FFFFE1FF640 target_ip=00006FFFFB22155C
+314194.597:0024:trace:seh:RtlUnwindEx rip=00006ffffff76cc5 rsp=00007ffffe1fdad0 rbp=00007ffffe1fe190 eflags=00200202
+314194.597:0024:trace:seh:RtlUnwindEx rax=000000007ffc0000 rbx=00007ffffe1ff360 rcx=00007ffffe1fe190 rdx=00006ffffb22155c
+314194.597:0024:trace:seh:RtlUnwindEx rsi=00007ffffe1fe190 rdi=00007ffffe1ff640  r8=00007ffffe1ff360  r9=4546464646373030
+314194.597:0024:trace:seh:RtlUnwindEx r10=fffffffffffffffe r11=0000000000200202 r12=00007ffffe1fdc30 r13=000000007ffc0000
+314194.597:0024:trace:seh:RtlUnwindEx r14=000000007ffc2000 r15=00007ffffe1ff640 mxcsr=00001fa0 cs=0033 ss=002b
+314194.597:0024:trace:seh:RtlRestoreContext returning to 00006FFFFB22155C stack 00007FFFFE1FF640
+314194.597:0024:trace:seh:dispatch_exception code=c0000094 (EXCEPTION_INT_DIVIDE_BY_ZERO) flags=0 addr=66B52670
+314194.597:0024:trace:seh:dispatch_exception eip=66b52670 esp=0022dd3c ebp=0022de48 eflags=00210246
+314194.597:0024:trace:seh:dispatch_exception eax=00001157 ebx=00000000 ecx=11574b2e edx=00000000
+314194.597:0024:trace:seh:dispatch_exception esi=0a5e14e0 edi=00000000 cs=0023 ds=002b es=002b fs=0063 gs=002b ss=002b
+314194.597:0024:trace:seh:call_seh_handlers calling handler at 66B6E059 code=c0000094 flags=0
+314194.597:0024:trace:seh:call_seh_handlers handler at 66B6E059 returned 1
+314194.597:0024:trace:seh:call_seh_handlers calling handler at 66B6E430 code=c0000094 flags=0
+314194.597:0024:trace:seh:call_seh_handlers handler at 66B6E430 returned 1
+314194.597:0024:trace:seh:call_seh_handlers calling handler at 66B6DA98 code=c0000094 flags=0
+314194.597:0024:trace:seh:call_seh_handlers handler at 66B6DA98 returned 1
+314194.597:0024:trace:seh:call_seh_handlers calling handler at 66B6D678 code=c0000094 flags=0
+314194.597:0024:trace:seh:call_seh_handlers handler at 66B6D678 returned 1
+314194.597:0024:trace:seh:call_seh_handlers calling handler at 011FA7E8 code=c0000094 flags=0
+314194.597:0024:trace:seh:call_seh_handlers handler at 011FA7E8 returned 1
+314194.597:0024:trace:seh:call_seh_handlers calling handler at 011B0715 code=c0000094 flags=0
+314194.597:0024:trace:seh:call_seh_handlers handler at 011B0715 returned 1
+314194.597:0024:trace:seh:call_seh_handlers calling handler at 01227C78 code=c0000094 flags=0
+314194.597:0024:trace:seh:cxx_frame_handler handling C exception code c0000094  rec 0022D808 frame 0022EEA4 trylevel 0 descr 0145BD54 nested_frame 00000000
+314194.597:0024:trace:seh:find_catch_handler found catch(...) block
+314194.597:0024:trace:seh:_CreateFrameInfo (0022D5DC, FB23DA64)

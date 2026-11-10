@@ -69,3 +69,31 @@ raises the unmanaged palette above everything, set_input_focus) and #82
 (Alt+F4 goes to the palette). The fix must keep the palette from becoming
 active, not restack it afterwards. tests/wine/fgprobe78.c prints the same
 foreground/active/focus data on Wine.
+
+## 2026-11-10 20:40: F26 startup "program error" bisect (owner's laptop stand)
+
+startup-error.sh, runtime v21, each run on a fresh copy of prefix-clean
+(Wine Gecko x86 installed), Muffin, :130. The modal "Could not complete
+your request because of a program error" comes up right after the trial
+dialog, over the opened t46.png (`wine-f26/1-started-25pct.png`), in all
+five runs:
+
+| run | change | program error |
+|-----|--------|---------------|
+| se1 | Gecko installed in the prefix | YES |
+| se2 | + EXTRA="LANG=C LC_ALL=C LANGUAGE=C" (host is ru_RU.UTF-8) | YES |
+| se3 | WDBG=+seh,+loaddll,+mshtml,+winspool (trace only) | YES |
+| se4 | + CUPS_SERVER=/nonexistent (printer stays in the registry) | YES |
+| se5 | printer Epson-LQ-850 deleted from the prefix + CUPS hidden: 0 printers | YES |
+
+Ruled out: Gecko (mshtml.dll is never loaded during startup, so the
+Welcome Screen is not an HTML page here), the locale, the host's CUPS
+printer. The only rare exception in the se3 +seh trace (the rest are
+thousands of routine c0000005/e06d7363/80000026) is one handled
+INT_DIVIDE_BY_ZERO at 66B52670 in an Adobe licence-cleanup temp DLL
+(`Adobelm_Cleanup...\~de2fd8.tmp` at 66B00000), ~2.5 s after the printer
+setup (`wine-f26/seh-divzero-excerpt.txt`); probably the licence code's own
+check, relevance unknown. Next chunks to bisect: fonts (FONTCONFIG_FILE
+with a minimal set), the prefix-creation recipe vs the cloud one
+(mscoree/Mono, winetricks bits), the Photoshop settings/Temp dirs, Xvfb
+vs cloud display depth. #78/#82 runs (t78p.sh) wait until startup is clean.
