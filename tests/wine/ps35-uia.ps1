@@ -36,6 +36,18 @@ namespace PS35 {
    SetCursorPos(x,y); if(press) keybd_event(0x12,0x38,0,UIntPtr.Zero);
    mouse_event(0x0800,0,0,(uint)delta,UIntPtr.Zero); if(release) keybd_event(0x12,0x38,2,UIntPtr.Zero);
   }
+  // #78/#82: which window is active/focused after a click into a palette
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern IntPtr GetWindow(IntPtr h,uint cmd);
+  [DllImport("user32.dll",EntryPoint="GetWindowLongW")] public static extern int GetWindowLong(IntPtr h,int index);
+  [StructLayout(LayoutKind.Sequential)] public struct GUITHREADINFO { public int cbSize,flags; public IntPtr hwndActive,hwndFocus,hwndCapture,hwndMenuOwner,hwndMoveSize,hwndCaret; public RECT rcCaret; }
+  [DllImport("user32.dll")] static extern bool GetGUIThreadInfo(uint tid,ref GUITHREADINFO info);
+  public static long[] ThreadState(IntPtr h) {
+   uint pid;uint tid=GetWindowThreadProcessId(h,out pid);var g=new GUITHREADINFO();g.cbSize=Marshal.SizeOf(g);
+   if(!GetGUIThreadInfo(tid,ref g))return new long[]{0,0,0};
+   return new long[]{g.hwndActive.ToInt64(),g.hwndFocus.ToInt64(),g.flags};
+  }
+  public static void Key(byte vk,bool up) { keybd_event(vk,0,up?2u:0u,UIntPtr.Zero); }
   [DllImport("user32.dll",EntryPoint="SendMessageTimeoutW",CharSet=CharSet.Unicode,SetLastError=true)]
   static extern IntPtr SendText(IntPtr h,uint m,IntPtr w,string text,uint flags,uint timeout,out IntPtr result);
   public static bool SetText(IntPtr h,string text) {

@@ -116,6 +116,7 @@ try {
     $WindowPattern=$null
     if($Root.TryGetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern,[ref]$WindowPattern)){$WindowPattern.SetWindowVisualState([System.Windows.Automation.WindowVisualState]::Maximized)}
     Save-Desktop 'workspace'
+    if($env:PS35_ONLY -eq 'palette'){. (Join-Path $PSScriptRoot 'ps35-palette.ps1');return}
     # File > Open by its shortcut: the menu bar is not reachable through UIA
     [void][PS35.Native]::SetForegroundWindow([IntPtr]$Main.Handle);Start-Sleep -Milliseconds 500
     [System.Windows.Forms.SendKeys]::SendWait('^o')

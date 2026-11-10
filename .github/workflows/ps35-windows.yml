@@ -7,6 +7,10 @@ on:
         type: choice
         options: [inspect, measure, probe]
         default: inspect
+      only:
+        description: "measure: run only this part after startup (palette = #78/#82 focus probe)"
+        type: string
+        default: ''
 permissions:
   contents: read
 jobs:
@@ -77,6 +81,7 @@ jobs:
         shell: powershell
         env:
           PS35_STAGE: ${{ inputs.stage }}
+          PS35_ONLY: ${{ inputs.only }}
           DLLMGR_PROXY: ${{ github.workspace }}/ps35-proxy/version.dll
         run: '& tests/wine/ps35-windows.ps1 -Stage $env:PS35_STAGE'
       - name: Preserve text and screenshots, excluding Adobe binaries and trial state
