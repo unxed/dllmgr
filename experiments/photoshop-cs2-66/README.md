@@ -172,3 +172,24 @@ pairs differing / glued: Russian regular 9-13 px 11/0 0/0 0/0 7/0 8/0, Russian
 bold 33/0 33/0 0/0 8/0 0/0 (Wine's 9-10 px Cyrillic bold strikes are wider
 than Windows' glyphs, +6 % width: a strike-drawing difference); Latin as in
 the table above. Default: tahoma=wine (owner: "choose yourself").
+
+## Reference = Windows ClearType; strikes win (2026-11-10)
+
+Photoshop's palettes use DEFAULT_QUALITY (dump: no quality), so on Windows
+they are ClearType (CI frames: coloured fringes on "Open"). Probe at
+DEFAULT_QUALITY on Windows (kern66-q0.bmp, ClearType on the runner) vs Wine
+modes, summed RGB difference of the six Tahoma rows (/1000):
+
+| | tahoma=wine | xo | dejavu |
+|---|---|---|---|
+| strikes (text=system/bitmap) | **1363** | 2054-2335 | 2821-3447 |
+| text=cleartype (outline) | 2114 | 2067 | 3100 |
+| text=gray (outline, Photoshop default so far) | 2493 | 2054 | 3033 |
+| text=light | 2124 | 2272 | 3068 |
+
+So the hand-drawn strikes with v5 spacing are the closest to Windows in
+every row (bold 513 vs 922-979, italic 440 vs 493-588, regular 409 vs
+666-925). New rule: with smoothing forced (text=gray/light/cleartype) Wine's
+Tahoma keeps its strikes at strike sizes; other fonts stay smoothed
+(DLLMGR66_SMOOTH_TAHOMA=1: old behaviour). Under text=gray this gives 1363.
+Image: cleartype-reference-vs-modes.png.

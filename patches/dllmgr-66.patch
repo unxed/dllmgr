@@ -66,7 +66,7 @@ index cc276cac..9e13bd2d 100644
          lf.lfWidth = abs(lf.lfWidth);
  
 diff --git a/dlls/win32u/freetype.c b/dlls/win32u/freetype.c
-index 2e324a94..18d5c978 100644
+index 2e324a94..53e2e50d 100644
 --- a/dlls/win32u/freetype.c
 +++ b/dlls/win32u/freetype.c
 @@ -57,6 +57,7 @@
@@ -93,7 +93,47 @@ index 2e324a94..18d5c978 100644
      LOAD_FUNCPTR(FT_Load_Sfnt_Table)
      LOAD_FUNCPTR(FT_Matrix_Multiply)
      LOAD_FUNCPTR(FT_MulDiv)
-@@ -2140,6 +2143,11 @@ static UINT freetype_get_aa_flags( struct gdi_font *font, UINT aa_flags, BOOL an
+@@ -2124,6 +2127,27 @@ static BOOL freetype_load_font( struct gdi_font *font )
+ /*************************************************************
+  * freetype_get_aa_flags
+  */
++static BOOL dllmgr66_wine_tahoma( FT_Face ft_face );
++
++/* dllmgr #66: with smoothing forced at every size (#52 text=gray/light/
++ * cleartype), Wine's Tahoma still uses its hand-drawn strikes where it has
++ * one: closest to Photoshop's palettes on Windows (ClearType, probe rows
++ * Tahoma 10/11 px bold/italic/regular, summed colour difference: strikes 1363,
++ * grey outline 2493, Wine's ClearType outline 2114). DLLMGR66_SMOOTH_TAHOMA=1
++ * smooths it like any other font. */
++static BOOL dllmgr66_tahoma_strike( struct gdi_font *font )
++{
++    static int smooth = -1;
++    FT_Face ft_face = get_ft_face( font );
++    int i;
++
++    if (smooth < 0) smooth = getenv( "DLLMGR66_SMOOTH_TAHOMA" ) != NULL;
++    if (smooth || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
++    for (i = 0; i < ft_face->num_fixed_sizes; i++)
++        if ((ft_face->available_sizes[i].y_ppem + 32) >> 6 == font->ppem) return TRUE;
++    return FALSE;
++}
++
+ static UINT freetype_get_aa_flags( struct gdi_font *font, UINT aa_flags, BOOL antialias_fakes )
+ {
+     /* fixup the antialiasing flags for that font */
+@@ -2133,13 +2157,22 @@ static UINT freetype_get_aa_flags( struct gdi_font *font, UINT aa_flags, BOOL an
+     case WINE_GGO_HBGR_BITMAP:
+     case WINE_GGO_VRGB_BITMAP:
+     case WINE_GGO_VBGR_BITMAP:
+-        if (is_subpixel_rendering_enabled()) break;
++        if (is_subpixel_rendering_enabled())
++        {
++            if (dllmgr52_text_mode() >= DLLMGR52_GRAY && dllmgr66_tahoma_strike( font )) aa_flags = GGO_BITMAP;
++            break;
++        }
+         aa_flags = GGO_GRAY4_BITMAP;
+         /* fall through */
+     case GGO_GRAY2_BITMAP:
      case GGO_GRAY4_BITMAP:
      case GGO_GRAY8_BITMAP:
      case WINE_GGO_GRAY16_BITMAP:
@@ -105,7 +145,16 @@ index 2e324a94..18d5c978 100644
          if ((!antialias_fakes || (!font->fake_bold && !font->fake_italic)) && is_hinting_enabled() &&
              dllmgr52_text_mode() < DLLMGR52_GRAY /* dllmgr #52: smooth at every size */)
          {
-@@ -3118,6 +3126,120 @@ static FT_Int get_load_flags( UINT format )
+@@ -2151,6 +2184,8 @@ static UINT freetype_get_aa_flags( struct gdi_font *font, UINT aa_flags, BOOL an
+                 aa_flags = GGO_BITMAP;
+             }
+         }
++        else if (dllmgr52_text_mode() >= DLLMGR52_GRAY && dllmgr66_tahoma_strike( font ))
++            aa_flags = GGO_BITMAP;
+     }
+     return aa_flags;
+ }
+@@ -3118,6 +3153,120 @@ static FT_Int get_load_flags( UINT format )
      return load_flags;
  }
  
@@ -226,7 +275,7 @@ index 2e324a94..18d5c978 100644
  /*************************************************************
   * freetype_get_glyph_outline
   */
-@@ -3133,6 +3255,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3133,6 +3282,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      FT_Int load_flags = get_load_flags(format);
      FT_Matrix transform_matrices[3], *matrices = NULL;
      BOOL vertical_metrics;
@@ -236,7 +285,7 @@ index 2e324a94..18d5c978 100644
  
      TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm, buflen, buf, lpmat);
  
-@@ -3146,9 +3271,31 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3146,9 +3298,31 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
  
      vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
  
@@ -268,7 +317,7 @@ index 2e324a94..18d5c978 100644
      err = pFT_Load_Glyph(ft_face, glyph, load_flags & FT_LOAD_NO_HINTING ? load_flags : load_flags | FT_LOAD_PEDANTIC);
      if (err && !(load_flags & FT_LOAD_NO_HINTING))
      {
-@@ -3163,6 +3310,27 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3163,6 +3337,27 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      }
  
      metrics = ft_face->glyph->metrics;
@@ -296,7 +345,7 @@ index 2e324a94..18d5c978 100644
      if(font->fake_bold) {
          if (!get_bold_glyph_outline(ft_face->glyph, font->ppem, &metrics) && metrics.width)
              metrics.width += 1 << 6;
-@@ -3192,6 +3360,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3192,6 +3387,9 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
          return 1;  /* FIXME */
  
      case GGO_BITMAP:
