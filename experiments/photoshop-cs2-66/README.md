@@ -54,3 +54,12 @@ system Wine shows) Wine uses these bitmaps; with text=gray the outline is used
 and the spacing is better but the strokes heavier.
 So the kerning is a defect of Wine's Tahoma Bold bitmap strikes, not of
 Photoshop or of our scaling.
+
+## Fix (2026-11-10, patches/dllmgr-66.patch, win32u freetype.c)
+
+Monochrome glyphs of Wine's Tahoma (family "Tahoma" with embedded strikes)
+are rendered from the hinted outlines instead of the strikes
+(DLLMGR66_TAHOMA_BITMAPS=1 keeps the strikes). Probe at 96 DPI
+(probe-tahoma10-before-after.png, left stock, right fixed): "Open",
+"Background" evenly spaced and crisp. Offline FreeType rendering of 10/11 px
+strikes vs hinted outlines: /home/claude/work/tfix (variants.png).
