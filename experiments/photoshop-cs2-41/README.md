@@ -58,3 +58,12 @@ the modal "Adobe Activation" dialog at start (click "Continue Trial" at
 1788,1372 on the 3072x1728 stand), then `xdotool windowactivate --sync`
 on the frame and `xdotool key ctrl+n` opens the New dialog. Earlier "keyboard
 does not reach Photoshop" was that modal dialog holding focus.
+
+#41, 2026-11-10, runtime v16, plain `wine Photoshop.exe` (trampoline):
+open-close.sh (File > Open typed as `\name.png`, relative to the drive
+root; xdotool `type` with "C:" mistypes in this dialog). File > Open
+ps47.png then File > Exit: clean exit. Same then window-manager close:
+clean. Seven Open + Ctrl+W cycles alternating t46.png (16-bit) and
+ps47.png: no R6025. Not reproduced. The owner's report predates runtime
+v10, which fixed CoolType's NULL fallback font (#62); a pure virtual call
+while text objects are destroyed would fit that, but this is unproven.
