@@ -37,3 +37,16 @@ before and after the switch and runs with WDBG=+event):
   `XConfigureWindow(Above)` by sync_window_position, which nothing undoes;
 - a click into it re-activates Photoshop (owner: "brings the whole
   Photoshop back and does nothing else").
+
+## 19:05: map states and the first fix attempt
+
+- t78m.sh (t78c): after the switch all palettes stay mapped (IsViewable);
+  Photoshop does not hide them. The event trace: ButtonPress on the History
+  palette, FocusOut on the main frame, FocusIn on the palette (the palette
+  takes the X input focus, i.e. it becomes the active Win32 window -> #82),
+  then FocusOut on the palette when xclock is activated.
+- Attempt 1 (local only, not shipped): in winex11 focus_out, when the X focus
+  left the process, restack every mapped unmanaged owned popup right above
+  its owner's WM frame (XConfigureWindow, CWSibling|CWStackMode Above).
+  Result: no change, History still above xclock (t78d). Not yet known
+  whether the code ran (no trace), or whether Muffin restacked afterwards.
