@@ -1,5 +1,5 @@
 diff --git a/dlls/win32u/dibdrv/graphics.c b/dlls/win32u/dibdrv/graphics.c
-index 92dea911..5c90f4f5 100644
+index 92dea911..d42090ea 100644
 --- a/dlls/win32u/dibdrv/graphics.c
 +++ b/dlls/win32u/dibdrv/graphics.c
 @@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dib);
@@ -95,24 +95,35 @@ index 92dea911..5c90f4f5 100644
  }
  
  static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT x, INT y,
-@@ -816,6 +830,8 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT
+@@ -816,6 +830,9 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT
      dib_info glyph_dib;
      DWORD text_color;
      struct font_intensities intensity;
 +    BOOL agg;
-+    int x0 = x, pen = 0, app = 0;  /* 1/64 px from x0 */
++    int x0 = x;
++    LONGLONG lin = 0, lin_total = 0, app_total = 0;  /* 1/64 px */
  
      glyph_dib.bit_count    = get_glyph_depth( font->aa_flags );
      glyph_dib.rect.left    = 0;
-@@ -830,10 +846,28 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT
+@@ -830,10 +847,37 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT
      else
          get_aa_ranges( dib->funcs->pixel_to_colorref( dib, text_color ), intensity.ranges );
  
-+    /* dllmgr #69 (text=agg, after M. Shemanarev): each glyph goes to the
-+     * font's own unhinted position, in thirds of a pixel, but never more than
-+     * half a pixel away from where the application put it (its integer
-+     * advances or dx), so selections, carets and clip rects still fit */
++    /* dllmgr #69 (text=agg, after M. Shemanarev): glyphs go to the font's
++     * own unhinted (fractional) positions, in thirds of a pixel, scaled so
++     * that the run starts and ends exactly where the application put it (its
++     * integer advances or dx): even spacing inside, selections, carets and
++     * clip rects still fit at the ends */
 +    agg = dllmgr52_text_mode() >= DLLMGR52_AGG && font->aa_flags != GGO_BITMAP && !(flags & ETO_PDY);
++    for (i = 0; agg && i < count; i++)
++    {
++        if (!(glyph = get_cached_glyph( font, str[i], flags, 0 )) &&
++            !(glyph = cache_glyph_bitmap( dc, font, str[i], flags, 0 ))) { agg = FALSE; break; }
++        if (!glyph->linear) { agg = FALSE; break; }
++        lin_total += glyph->linear;
++        app_total += 64 * (dx ? dx[i] : glyph->metrics.gmCellIncX);
++    }
++    if (lin_total <= 0) agg = FALSE;
 +
      for (i = 0; i < count; i++)
      {
@@ -120,22 +131,21 @@ index 92dea911..5c90f4f5 100644
 -            !(glyph = cache_glyph_bitmap( dc, font, str[i], flags ))) continue;
 +        int gx = x, phase = 0;
 +
-+        if (agg && ((glyph = get_cached_glyph( font, str[i], flags, 0 )) ||
-+                    (glyph = cache_glyph_bitmap( dc, font, str[i], flags, 0 ))))
++        if (agg && (glyph = get_cached_glyph( font, str[i], flags, 0 )))
 +        {
-+            int ideal = min( max( pen, app - 32 ), app + 32 ), thirds = (ideal * 3 + (ideal >= 0 ? 32 : -32)) / 64;
++            int ideal = (int)(lin * app_total / lin_total);  /* 1/64 px from x0 */
++            int thirds = (ideal * 3 + (ideal >= 0 ? 32 : -32)) / 64;
 +            int whole = thirds >= 0 ? thirds / 3 : -((2 - thirds) / 3);
 +            phase = thirds - whole * 3;
 +            gx = x0 + whole;
-+            pen = glyph->linear ? ideal + glyph->linear : app + 64 * (dx ? dx[i] : glyph->metrics.gmCellIncX);
-+            app += 64 * (dx ? dx[i] : glyph->metrics.gmCellIncX);
++            lin += glyph->linear;
 +        }
 +        if (!(glyph = get_cached_glyph( font, str[i], flags, phase )) &&
 +            !(glyph = cache_glyph_bitmap( dc, font, str[i], flags, phase ))) continue;
  
          glyph_dib.width       = glyph->metrics.gmBlackBoxX;
          glyph_dib.height      = glyph->metrics.gmBlackBoxY;
-@@ -842,7 +876,7 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT
+@@ -842,7 +886,7 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT
          glyph_dib.stride      = get_dib_stride( glyph->metrics.gmBlackBoxX, glyph_dib.bit_count );
          glyph_dib.bits.ptr    = glyph->bits;
  
@@ -170,7 +180,7 @@ index 09765640..e3a11afc 100644
                  break;
              }
 diff --git a/dlls/win32u/freetype.c b/dlls/win32u/freetype.c
-index aef3e313..d536acbf 100644
+index aef3e313..e92c3009 100644
 --- a/dlls/win32u/freetype.c
 +++ b/dlls/win32u/freetype.c
 @@ -101,6 +101,7 @@ MAKE_FUNCPTR(FT_Get_TrueType_Engine_Type);
@@ -203,16 +213,18 @@ index aef3e313..d536acbf 100644
  
      return TRUE;
  
-@@ -2142,7 +2151,7 @@ static BOOL dllmgr66_tahoma_strike( struct gdi_font *font )
-     int i;
+@@ -2143,6 +2152,10 @@ static BOOL dllmgr66_tahoma_strike( struct gdi_font *font )
  
      if (smooth < 0) smooth = getenv( "DLLMGR66_SMOOTH_TAHOMA" ) != NULL;
--    if (smooth || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
-+    if (smooth || dllmgr52_text_mode() >= DLLMGR52_AGG || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
+     if (smooth || !dllmgr66_wine_tahoma( ft_face )) return FALSE;
++    /* text=agg / agg-rgb: smoothed outlines everywhere but bold, whose
++     * unhinted stems blur at palette sizes (owner: crisp v13 "Open" reads
++     * better than the smoothed one) */
++    if (dllmgr52_text_mode() >= DLLMGR52_AGG && !(ft_face->style_flags & FT_STYLE_FLAG_BOLD)) return FALSE;
      /* regular stays smoothed: Photoshop clips its labels at the ink end of
       * Windows' ClearType glyphs ("Opacity:" in a 37 px rect, x = 1), the
       * strike's colon lands one column further and was cut off */
-@@ -3142,11 +3151,13 @@ static FT_Int get_load_flags( UINT format )
+@@ -3142,11 +3155,13 @@ static FT_Int get_load_flags( UINT format )
      case GGO_GRAY8_BITMAP:
      case WINE_GGO_GRAY16_BITMAP:
          /* dllmgr #52: light hinting keeps the outline shapes */
@@ -228,7 +240,7 @@ index aef3e313..d536acbf 100644
          break;
      case WINE_GGO_VRGB_BITMAP:
      case WINE_GGO_VBGR_BITMAP:
-@@ -3283,9 +3294,11 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3283,9 +3298,11 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      FT_Glyph_Metrics metrics;
      FT_Error err;
      FT_BBox bbox;
@@ -241,7 +253,7 @@ index aef3e313..d536acbf 100644
      FT_Pos dllmgr66_advance = 0;
      BOOL dllmgr66_bitmap_slant = FALSE;
      int dllmgr66_min_shift = 0;
-@@ -3297,6 +3310,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3297,6 +3314,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
            font->matrix.eM21, font->matrix.eM22);
  
      format &= ~GGO_UNHINTED;
@@ -249,7 +261,7 @@ index aef3e313..d536acbf 100644
  
      matrices = get_transform_matrices( font, tategaki, lpmat, transform_matrices );
  
-@@ -3341,6 +3355,15 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
+@@ -3341,6 +3359,15 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT
      }
  
      metrics = ft_face->glyph->metrics;
