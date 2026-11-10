@@ -71,6 +71,27 @@ Also seen: with any smoothing, Windows (ClearType) keeps the same advance
 widths as the monochrome rendering, and applications rely on them: Photoshop
 CS2 clips its "Opacity:" label at the ink end of Windows' glyphs.
 
+A different way to get readable small text without hand-made hinting:
+Maxim Shemanarev's "Texts Rasterization Exposures" (2007; author of
+Anti-Grain Geometry): hint only vertically (FreeType's light hinting), keep
+the font's unhinted, fractional advance widths instead of rounding every
+glyph to whole pixels, place glyphs horizontally with subpixel precision
+(1/3 pixel is enough), render with LCD subpixels through a soft filter
+(primary weight 1/3, secondary 2/9, tertiary 1/9) or plain grey, and blend
+with a gamma around 2. Shapes and spacing then follow the design at any
+size, with no need for per-font hinting programs or bitmap strikes.
+Original: https://agg.sourceforge.net/antigrain.com/research/font_rasterization/index.html
+Archived copy: http://web.archive.org/web/20071231160438/http://antigrain.com:80/research/font_rasterization/index.html
+In GDI terms this can be done without changing what applications measure:
+GetTextExtent / GetCharWidth keep their integer advances, and inside one
+ExtTextOut call the glyphs are placed at the unhinted positions scaled so
+that the run starts and ends exactly where the application expects it (its
+dx or integer advances), each glyph rendered at one of three horizontal
+phases. Tried with Tahoma 10-11 px against Windows ClearType output: summed
+colour difference 1889-1904 (Wine stock grey smoothing 2493). Bold at
+these sizes still reads better from the bitmap strikes (unhinted bold
+stems blur), so they can stay for bold.
+
 Prepared with the help of an AI agent; the numbers come from FreeType and
 GDI measurements of the fonts shipped with Wine 11.0 and of a Windows
 Server 2025 GitHub Actions runner.
