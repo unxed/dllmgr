@@ -872,10 +872,60 @@ def launch(args, prefix):
     if read_settings(prefix, app_of(args))['alt-click'] == 'app':
         free_alt_click(prefix, app_of(args), env)
     launch_log(prefix, 'run ' + app_of(args) + ': starting the private runtime')
-    if not watched_run():
-        os.execve(runtime / 'bin/wine', argv, env)
-        return  # only reached when execve is mocked in tests
-    return argv, env  # watched: started outside the prefix lock by watch()
+    return argv, env  # started outside the prefix lock by watch() or supervise()
+
+
+RUN_LOGS = '.dllmgr/runs'
+CRASH_MARKS = ('Unhandled exception', 'unhandled exception', 'page fault', 'Backtrace:', 'starting debugger')
+
+
+def run_verdict(code, log_tail):
+    """#71: one line on how a run ended, from the exit status and the log."""
+    how = ('exit code %d' % code) if code >= 0 else ('signal %d' % -code)
+    if any(mark in log_tail for mark in CRASH_MARKS):
+        return how + ', crashed: unhandled exception in the log'
+    if code == 0 and 'CoSuspendClassObjects' in log_tail:
+        return how + ', the application closed itself (orderly exit)'
+    return how
+
+
+def supervise(prefix, app, argv, env, keep=8):
+    """#71: start the private Wine from a terminal and stay its parent: its
+    stderr goes to the terminal and to .dllmgr/runs/run-TIME.log (the last
+    `keep` runs are kept), and launch.log gets how and when it ended."""
+    logs = prefix / RUN_LOGS
+    logs.mkdir(parents=True, exist_ok=True)
+    for old in sorted(logs.glob('run-*.log'))[:-(keep - 1)]:
+        old.unlink(missing_ok=True)
+    name = 'run-' + time.strftime('%Y%m%d-%H%M%S') + '.log'
+    started = time.monotonic()
+    tail = b''
+    with open(logs / name, 'wb') as out:
+        proc = subprocess.Popen(argv, env=env, stderr=subprocess.PIPE)
+        while True:
+            try:
+                chunk = proc.stderr.read1(65536)
+            except KeyboardInterrupt:  # Ctrl+C reaches Wine too; keep logging until it ends
+                continue
+            if not chunk:
+                break
+            out.write(chunk)
+            out.flush()
+            tail = (tail + chunk)[-16384:]
+            try:
+                sys.stderr.buffer.write(chunk)
+                sys.stderr.flush()
+            except OSError:
+                pass  # terminal gone: keep the log
+        while True:
+            try:
+                code = proc.wait()
+                break
+            except KeyboardInterrupt:
+                continue
+    verdict = run_verdict(code, tail.decode(errors='replace'))
+    launch_log(prefix, 'run %s: ended (%s) after %.0f s; log: %s/%s' % (app, verdict, time.monotonic() - started, RUN_LOGS, name))
+    return code
 
 
 def main():
@@ -963,7 +1013,10 @@ def main():
                 launch_log(prefix, 'run ' + args.app + ': failed: ' + (str(error) or type(error).__name__))
                 raise
     if args.command == 'run' and watched:
-        watch(prefix, args.app, *watched)
+        if watched_run():
+            watch(prefix, args.app, *watched)
+        else:
+            sys.exit(supervise(prefix, args.app, *watched) & 0xff)
 
 
 if __name__ == '__main__':

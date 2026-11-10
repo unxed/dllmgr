@@ -2,6 +2,7 @@
 import hashlib
 import importlib.util
 import json
+import io
 import os
 from pathlib import Path
 import struct
@@ -327,12 +328,8 @@ class PrivateAppTest(unittest.TestCase):
         args = SimpleNamespace(exe=self.exe, app_args=app_args)
         captures = {}
 
-        def capture_exec(path, argv, env):
-            captures.update(path=path, argv=argv, env=env)
-
         with patch.object(private_app, "verify") as verify, \
              patch.object(private_app.os, "chdir") as chdir, \
-             patch.object(private_app.os, "execve", side_effect=capture_exec), \
              patch.dict(os.environ, {
                  "DLLMGR_TARGET_EXE": "inherited-target",
                  "DLLMGR_COMCTL32": "inherited-comctl",
@@ -340,7 +337,8 @@ class PrivateAppTest(unittest.TestCase):
                  "WINELOADER": "inherited-loader",
                  "WINESERVER": "inherited-server",
              }, clear=False):
-            private_app.launch(args, self.prefix.resolve())
+            argv, env = private_app.launch(args, self.prefix.resolve())
+            captures.update(path=Path(argv[0]), argv=argv, env=env)
 
         target = r"C:\Program Files\FastStone\FSViewer.exe"
         self.assertEqual(captures["path"], self.runtime / "bin/wine")
@@ -496,9 +494,9 @@ class PrivateAppTest(unittest.TestCase):
             with self.assertRaises(private_app.Error):
                 private_app.read_state(self.prefix.resolve())  # FastStone profile untouched
             captures = {}
-            with patch.object(private_app, "verify"), patch.object(private_app.os, "chdir"), \
-                 patch.object(private_app.os, "execve", side_effect=lambda p, a, e: captures.update(argv=a, env=e)):
-                private_app.launch(args, self.prefix.resolve())
+            with patch.object(private_app, "verify"), patch.object(private_app.os, "chdir"):
+                argv, env = private_app.launch(args, self.prefix.resolve())
+                captures.update(argv=argv, env=env)
             self.assertEqual(captures["argv"][1], "C:\\Program Files (x86)\\Adobe\\Adobe Photoshop CS2\\Photoshop.exe")
             self.assertEqual(captures["env"]["DLLMGR_TARGET_EXE"], captures["argv"][1])
             self.assertNotIn("DLLMGR_COMCTL32", captures["env"])
@@ -673,6 +671,22 @@ class SettingsTest(unittest.TestCase):
                                      "--prefix", tmp, "text=agg-rgb", "tahoma=xo"], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(private_app.read_settings(Path(tmp), "photoshop-cs2")["text"], "agg-rgb")
+
+    def test_supervise_logs_how_the_run_ended(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp)
+            (prefix / ".dllmgr").mkdir()
+            script = "import sys; sys.stderr.write('0024:fixme:ole:CoSuspendClassObjects\\n'); sys.exit(0)"
+            with patch.object(private_app.sys, "stderr", new=io.TextIOWrapper(io.BytesIO())):
+                code = private_app.supervise(prefix, "photoshop-cs2", [sys.executable, "-c", script], dict(os.environ))
+            self.assertEqual(code, 0)
+            line = (prefix / private_app.LAUNCH_LOG).read_text().splitlines()[-1]
+            self.assertIn("ended (exit code 0, the application closed itself (orderly exit))", line)
+            logs = list((prefix / private_app.RUN_LOGS).glob("run-*.log"))
+            self.assertEqual(len(logs), 1)
+            self.assertIn("CoSuspendClassObjects", logs[0].read_text())
+            self.assertIn("crashed", private_app.run_verdict(5, "wine: Unhandled exception 0xc0000005"))
+            self.assertEqual(private_app.run_verdict(-9, ""), "signal 9")
 
     def test_tahoma_substitute(self):
         with tempfile.TemporaryDirectory() as tmp:
