@@ -862,5 +862,14 @@ class AltClickTest(unittest.TestCase):
             self.assertEqual(state["value"], "<Ctrl>")
 
 
+class AssocHookOrderTest(unittest.TestCase):
+    """#73: `dllmgr run` sets DLLMGR_TARGET_EXE, and the msimg32 proxy returns early
+    for it; the ShellExecuteA hook must be installed before that return."""
+    def test_hook_before_private_runtime_return(self):
+        src = (Path(__file__).resolve().parents[2] / 'patches/dllmgr-27/prefill.c').read_text()
+        main = src[src.index('BOOL WINAPI DllMain'):]
+        self.assertLess(main.index('"ShellExecuteA"'), main.index('GetEnvironmentVariableA("DLLMGR_TARGET_EXE"'))
+
+
 if __name__ == "__main__":
     unittest.main()

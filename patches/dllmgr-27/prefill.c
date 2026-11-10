@@ -1517,6 +1517,11 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     if (reason == DLL_PROCESS_ATTACH) {
         debug = GetEnvironmentVariableA("DLLMGR27_DEBUG", NULL, 0) != 0;
         self = instance;
+        /* #73: before the early return below: `dllmgr run` sets both
+         * DLLMGR73_ASSOC and DLLMGR_TARGET_EXE */
+        if (GetEnvironmentVariableA("DLLMGR73_ASSOC", NULL, 0))
+            hook_import(GetModuleHandleW(NULL), "shell32.dll", "ShellExecuteA", (void *)shell_execute_assoc,
+                        (void **)&real_shell_execute_a);
         /* Started by `dllmgr run` (private runtime with the real fix): tell a
          * waiting stock-Wine trampoline that we are up, and add nothing else. */
         if (GetEnvironmentVariableA("DLLMGR_TARGET_EXE", NULL, 0)) {
@@ -1546,9 +1551,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
                 TRACE("trampoline armed\n");
             }
         }
-        if (GetEnvironmentVariableA("DLLMGR73_ASSOC", NULL, 0))
-            hook_import(GetModuleHandleW(NULL), "shell32.dll", "ShellExecuteA", (void *)shell_execute_assoc,
-                        (void **)&real_shell_execute_a);
         if (!lstrcmpiA(mode, "iat")) {
             /* legacy mode: only ShowWindow imported by the exe itself */
             DisableThreadLibraryCalls(instance);
