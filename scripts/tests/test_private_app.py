@@ -681,6 +681,19 @@ class SettingsTest(unittest.TestCase):
                 "Unhandled exception: page fault on read access to 0x76bb1800 in wow64 32-bit code\n")
         self.assertIn("inside wineps.drv UNLOADED 512 ms ago", private_app.run_verdict(1, tail))
 
+    def test_download_cache_reuses_verified_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / "src.zip"
+            src.write_bytes(b"package")
+            sha = hashlib.sha256(b"package").hexdigest()
+            with patch.dict(private_app.os.environ, {"XDG_CACHE_HOME": str(Path(tmp) / "cache")}):
+                private_app.download(src.as_uri(), Path(tmp) / "a.zip", sha)
+                src.unlink()  # a second download would fail now
+                with patch("sys.stdout", new=io.StringIO()) as out:
+                    private_app.download(src.as_uri(), Path(tmp) / "b.zip", sha, "Downloading x")
+                self.assertEqual((Path(tmp) / "b.zip").read_bytes(), b"package")
+                self.assertIn("Cached x (no download)", out.getvalue())
+
     def test_assoc_sets_and_restores_defaults(self):
         with tempfile.TemporaryDirectory() as tmp:
             prefix, config = Path(tmp) / "p", Path(tmp) / "cfg"

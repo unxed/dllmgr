@@ -366,7 +366,19 @@ def checked_files(prefix, state):
     return directory
 
 
-def download(url, dest, checksum=None, label=None):
+def download_cache():
+    """#75: verified downloads by sha256, so a second `dllmgr fix` does not fetch them again."""
+    return Path(os.environ.get('XDG_CACHE_HOME', str(Path.home() / '.cache'))) / 'dllmgr/downloads'
+
+
+def download(url, dest, checksum=None, label=None, keep=12):
+    cached = download_cache() / checksum if checksum else None
+    if cached and cached.is_file() and digest(cached) == checksum:
+        shutil.copyfile(cached, dest)
+        os.utime(cached)
+        if label:
+            print('  ' + label.replace('Downloading', 'Cached', 1) + ' (no download)')
+        return
     with urllib.request.urlopen(url, timeout=60) as response, dest.open('wb') as stream:
         bar = Progress(label, int(response.headers.get('Content-Length') or 0)) if label else None
         for block in iter(lambda: response.read(256 * 1024), b''):
@@ -377,6 +389,16 @@ def download(url, dest, checksum=None, label=None):
             bar.close()
     if checksum and digest(dest) != checksum:
         raise Error('Download checksum mismatch: ' + dest.name)
+    if cached:
+        try:
+            cached.parent.mkdir(parents=True, exist_ok=True)
+            tmp = cached.with_name(cached.name + '.tmp')
+            shutil.copyfile(dest, tmp)
+            tmp.replace(cached)
+            for old in sorted(cached.parent.iterdir(), key=lambda f: f.stat().st_mtime)[:-keep]:
+                old.unlink(missing_ok=True)
+        except OSError:
+            pass  # the cache is only a saving
 
 
 def patched_modules(package):
