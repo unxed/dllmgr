@@ -1,0 +1,27 @@
+sizes (10, 11), Tahoma regular
+| mode | id | candidate | peak cv | seen | smooth | ink cv | white rms | centroid rms / max | width |
+|---|---|---|---|---|---|---|---|---|---|
+| rgb | A | agg (current): 1/3 px phases, vertical-only hinting | 0.116 | 0.117 | 0.119 | 0.032 | 0.155 | 0.130 / 0.30 | 0.60 |
+| rgb | B | whole-px positions + full hinting (classic, rejected in #69) | 0.007 | 0.042 | 0.110 | 0.029 | 0.562 | 0.517 / 1.61 | 0.82 |
+| rgb | C | finer phases: 1/6 px | 0.126 | 0.124 | 0.122 | 0.031 | 0.092 | 0.071 / 0.19 | 0.62 |
+| rgb | D1 | global darkening: embolden 0.2 px, gamma 1.4 | 0.107 | 0.106 | 0.106 | 0.024 | 0.251 | 0.130 / 0.34 | 0.94 |
+| rgb | D2 | phase-dependent darkening k=1 | 0.073 | 0.227 | nan | 0.072 | 0.210 | 0.130 / 0.31 | 0.69 |
+| rgb | D3 | phase-dependent darkening k=2 | 0.071 | 0.077 | 0.110 | 0.086 | 0.278 | 0.131 / 0.32 | 0.69 |
+| rgb | E | per-glyph phase for sharpest bitmap (Viterbi, +-1/3 px) | 0.116 | 0.117 | 0.119 | 0.032 | 0.155 | 0.130 / 0.30 | 0.60 |
+| rgb | F1 | hard stem snap to whole px (outline warp), advance fractional | 0.024 | 0.049 | 0.111 | 0.033 | 0.307 | 0.271 / 0.85 | 0.70 |
+| rgb | F2 | hard stem snap to 1/3 px grid (rgb only meaningful) | 0.102 | 0.106 | 0.114 | 0.031 | 0.174 | 0.154 / 0.42 | 0.65 |
+| rgb | G | hard stem snap + rounding/phase by Viterbi on white gaps | 0.024 | 0.048 | 0.111 | 0.033 | 0.239 | 0.212 / 0.81 | 0.73 |
+| rgb | H | soft stem snap a=0.5 + Viterbi (float model) | 0.056 | 0.068 | 0.114 | 0.027 | 0.157 | 0.117 / 0.34 | 0.77 |
+| rgb | I | chosen: soft snap 128/256 + phase Viterbi (C, stem-fix.diff) | 0.061 | 0.072 | 0.117 | 0.029 | 0.209 | 0.170 / 0.54 | 0.52 |
+| gray | A | agg (current): 1/3 px phases, vertical-only hinting | 0.286 | 0.286 | 0.268 | 0.105 | 0.155 | 0.131 / 0.33 | 0.37 |
+| gray | B | whole-px positions + full hinting (classic, rejected in #69) | 0.006 | 0.053 | 0.141 | 0.063 | 0.562 | 0.521 / 1.62 | 0.92 |
+| gray | C | finer phases: 1/6 px | 0.279 | 0.278 | 0.258 | 0.098 | 0.092 | 0.072 / 0.20 | 0.37 |
+| gray | D1 | global darkening: embolden 0.2 px, gamma 1.4 | 0.319 | 0.320 | 0.310 | 0.066 | 0.251 | 0.132 / 0.33 | 0.37 |
+| gray | D2 | phase-dependent darkening k=1 | 0.196 | 0.290 | nan | 0.154 | 0.210 | 0.141 / 0.35 | 0.37 |
+| gray | D3 | phase-dependent darkening k=2 | 0.131 | 0.137 | 0.154 | 0.176 | 0.278 | 0.155 / 0.41 | 0.37 |
+| gray | E | per-glyph phase for sharpest bitmap (Viterbi, +-1/3 px) | 0.224 | 0.227 | 0.240 | 0.111 | 0.271 | 0.251 / 0.78 | 0.67 |
+| gray | F1 | hard stem snap to whole px (outline warp), advance fractional | 0.000 | 0.051 | 0.137 | 0.106 | 0.307 | 0.270 / 0.85 | 0.90 |
+| gray | F2 | hard stem snap to 1/3 px grid (rgb only meaningful) | 0.277 | 0.275 | 0.261 | 0.139 | 0.174 | 0.155 / 0.42 | 0.55 |
+| gray | G | hard stem snap + rounding/phase by Viterbi on white gaps | 0.000 | 0.051 | 0.137 | 0.105 | 0.239 | 0.212 / 0.80 | 0.81 |
+| gray | H | soft stem snap a=0.5 + Viterbi (float model) | 0.186 | 0.191 | 0.210 | 0.090 | 0.157 | 0.119 / 0.33 | 0.47 |
+| gray | I | chosen: soft snap 192/256 + phase Viterbi (C, stem-fix.diff) | 0.161 | 0.166 | 0.202 | 0.093 | 0.288 | 0.224 / 0.67 | 0.39 |
