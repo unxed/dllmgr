@@ -66,14 +66,20 @@ SETTINGS = {
     # Default on everywhere: features are never switched off without the owner's
     # explicit permission (owner, 2026-11-10); the real fix is a lazy sane.ds.
     'scanner': ('off', 'on'),
+    # #77: the raster "System" font (vgasys.fon) served by a smoothed TrueType
+    # family inside the application (patches/dllmgr-77.patch, DLLMGR77_SYSTEM).
+    # Beyond Windows, which also draws it as a raster font; the owner asked for it
+    # for Photoshop CS2's activation dialog headings.
+    'system': ('raster', 'tahoma'),
 }
+SYSTEM_FAMILIES = {'tahoma': 'Tahoma'}
 # #66: Tahoma served by another family inside the application (the runtime's
 # win32u, patches/dllmgr-66.patch); '-bold' only replaces bold Tahoma. XO Tahion
 # ships with dllmgr (scripts/fonts/xo-tahion) and is copied into the prefix.
 TAHOMA_FAMILIES = {'xo': 'XO Tahion', 'dejavu': 'DejaVu Sans Condensed'}
 TAHOMA_FONTS = {'xo': HERE / 'fonts/xo-tahion'}
 SETTING_DEFAULTS = {
-    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact', 'alt-click': 'app', 'tahoma': 'wine'},
+    'photoshop-cs2': {'text': 'gray', 'contrast': '2.2', 'scaling': 'exact', 'alt-click': 'app', 'tahoma': 'wine', 'system': 'tahoma'},
     'faststone': {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop', 'tahoma': 'wine'},
 }
 SETTINGS_FILE = '.dllmgr/settings.json'
@@ -82,6 +88,7 @@ SETTINGS_FILE = '.dllmgr/settings.json'
 def read_settings(prefix, app):
     values = dict(SETTING_DEFAULTS.get(app, {'text': 'system', 'contrast': '1.6', 'scaling': 'exact', 'alt-click': 'desktop', 'tahoma': 'wine'}))
     values.setdefault('scanner', 'on')
+    values.setdefault('system', 'raster')
     try:
         stored = json.loads((prefix / SETTINGS_FILE).read_text()).get(app, {})
     except (OSError, ValueError, AttributeError):
@@ -133,6 +140,8 @@ def settings_env(values):
     family = TAHOMA_FAMILIES.get(values['tahoma'].split('-')[0])
     if family:
         env['DLLMGR66_TAHOMA_BOLD' if values['tahoma'].endswith('-bold') else 'DLLMGR66_TAHOMA'] = family
+    if SYSTEM_FAMILIES.get(values.get('system')):
+        env['DLLMGR77_SYSTEM'] = SYSTEM_FAMILIES[values['system']]
     if values.get('scanner') == 'off':
         env['SANE_CONFIG_DIR'] = '/nonexistent/dllmgr-scanner-off'
     return env
@@ -899,7 +908,7 @@ def launch(args, prefix):
     verify(runtime, state['package_sha256'], Path(state['base']))
     verify_prefix(prefix, Path(state['base']))
     env = dict(os.environ)
-    for name in RULES + ('DLLMGR52_TEXT', 'DLLMGR52_GAMMA', 'DLLMGR46_SMOOTH', 'DLLMGR66_TAHOMA', 'DLLMGR66_TAHOMA_BOLD'):
+    for name in RULES + ('DLLMGR52_TEXT', 'DLLMGR52_GAMMA', 'DLLMGR46_SMOOTH', 'DLLMGR66_TAHOMA', 'DLLMGR66_TAHOMA_BOLD', 'DLLMGR77_SYSTEM'):
         env.pop(name, None)
     env.update(settings_env(read_settings(prefix, app_of(args))))
     install_tahoma_fonts(prefix, read_settings(prefix, app_of(args)))
@@ -1104,7 +1113,7 @@ def assoc(prefix, app, state, values):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['install', 'uninstall', 'run', 'status', 'set', 'assoc', 'wm-restore'])
-    parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling, alt-click, tahoma); assoc: all | TYPE... | undo')
+    parser.add_argument('values', nargs='*', help='set: key=value pairs (text, contrast, scaling, alt-click, tahoma, system, scanner); assoc: all | TYPE... | undo')
     parser.add_argument('--prefix', type=Path, default=Path(os.environ.get('WINEPREFIX', str(Path.home() / '.wine'))))
     parser.add_argument('--exe', type=Path)
     parser.add_argument('--json', action='store_true', help='machine-readable status')
@@ -1172,7 +1181,7 @@ def main():
                 print('  Launch trampoline: ' + trampoline)
                 print('  Settings: ' + settings_line(read_settings(prefix, args.app)) +
                       ' (change: dllmgr set ' + args.app + ' text=' + '|'.join(SETTINGS['text']) +
-                      ' contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop tahoma=' + '|'.join(SETTINGS['tahoma']) + ' scanner=off|on)')
+                      ' contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop tahoma=' + '|'.join(SETTINGS['tahoma']) + ' scanner=off|on system=raster|tahoma)')
                 print('  Launch: dllmgr run ' + args.app)
                 for pid, kind in running_on(Path(state['exe']).name):
                     print('  Running: pid ' + str(pid) + ' on the ' + kind)

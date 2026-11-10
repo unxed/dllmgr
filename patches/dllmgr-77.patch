@@ -1,0 +1,53 @@
+--- a/dlls/win32u/font.c
++++ b/dlls/win32u/font.c
+@@ -2317,12 +2317,35 @@
+     return all[0] ? all : NULL;
+ }
+ 
++/* dllmgr #77: the raster "System" font replaced by a TrueType family inside
++ * one application (the runtime gets `dllmgr set <app> system=` as
++ * environment): DLLMGR77_SYSTEM=<family>. vgasys.fon cannot be smoothed and
++ * looks jagged when the window is scaled to HiDPI; Photoshop CS2's activation
++ * dialog draws its headings with it. The application still sees "System". */
++static const WCHAR *dllmgr77_system_subst( const LOGFONTW *lf )
++{
++    static const WCHAR systemW[] = {'S','y','s','t','e','m',0};
++    static WCHAR family[LF_FACESIZE];
++    static int init;
++
++    if (!init)
++    {
++        const char *env = getenv( "DLLMGR77_SYSTEM" );
++        int j;
++        for (j = 0; env && env[j] && j < LF_FACESIZE - 1; j++) family[j] = (unsigned char)env[j];
++        init = 1;
++    }
++    if (!family[0] || wcsicmp( lf->lfFaceName, systemW )) return NULL;
++    return family;
++}
++
+ static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO *csi, BOOL can_use_bitmap,
+                                                  BOOL *substituted, const WCHAR **orig_name )
+ {
+     BOOL want_vertical = (lf->lfFaceName[0] == '@');
+     struct gdi_font_face *face;
+     const WCHAR *dllmgr66_family;
++    const WCHAR *dllmgr77_family;
+ 
+     if (!translate_charset_info( (DWORD *)(INT_PTR)lf->lfCharSet, csi, TCI_SRCCHARSET ))
+     {
+@@ -2337,6 +2360,14 @@
+         *substituted = TRUE;
+         return face;
+     }
++
++    if ((dllmgr77_family = dllmgr77_system_subst( lf )) &&
++        (face = find_matching_face_by_name( dllmgr77_family, NULL, lf, csi->fs, FALSE, NULL )))
++    {
++        TRACE( "dllmgr77: System -> %s\n", debugstr_w(dllmgr77_family) );
++        *substituted = TRUE;
++        return face;
++    }
+ 
+     if (lf->lfFaceName[0])
+     {

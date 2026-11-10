@@ -653,14 +653,17 @@ class SettingsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp)
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact", "alt-click": "app", "tahoma": "wine", "scanner": "on"})
+            self.assertEqual(values, {"text": "gray", "contrast": "2.2", "scaling": "exact", "alt-click": "app", "tahoma": "wine", "system": "tahoma", "scanner": "on"})
             off = {"SANE_CONFIG_DIR": "/nonexistent/dllmgr-scanner-off"}
-            self.assertEqual(private_app.settings_env(values), {"DLLMGR52_TEXT": "gray", "DLLMGR52_GAMMA": "2.2"})
+            tahoma = {"DLLMGR77_SYSTEM": "Tahoma"}  # #77: smoothed "System" by default in Photoshop
+            self.assertEqual(private_app.settings_env(values), dict({"DLLMGR52_TEXT": "gray", "DLLMGR52_GAMMA": "2.2"}, **tahoma))
             private_app.write_settings(prefix, "photoshop-cs2", ["text=light", "scaling=smooth", "scanner=off"])
             values = private_app.read_settings(prefix, "photoshop-cs2")
-            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth alt-click=app tahoma=wine scanner=off")
+            self.assertEqual(private_app.settings_line(values), "text=light contrast=2.2 scaling=smooth alt-click=app tahoma=wine scanner=off system=tahoma")
             self.assertEqual(private_app.settings_env(values),
-                             dict({"DLLMGR52_TEXT": "light", "DLLMGR52_GAMMA": "2.2", "DLLMGR46_SMOOTH": "1"}, **off))
+                             dict({"DLLMGR52_TEXT": "light", "DLLMGR52_GAMMA": "2.2", "DLLMGR46_SMOOTH": "1"}, **off, **tahoma))
+            private_app.write_settings(prefix, "photoshop-cs2", ["system=raster"])
+            self.assertNotIn("DLLMGR77_SYSTEM", private_app.settings_env(private_app.read_settings(prefix, "photoshop-cs2")))
             private_app.write_settings(prefix, "photoshop-cs2", ["scanner=on"])
             self.assertNotIn("SANE_CONFIG_DIR", private_app.settings_env(private_app.read_settings(prefix, "photoshop-cs2")))
             # FastStone keeps stock text unless asked
