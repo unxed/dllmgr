@@ -75,3 +75,15 @@ of #71. Logging only (the exception goes on), at most 4 reports.
 `dllmgr run` shows the module in the verdict. Check: tests/wine/crash76.c
 (reads from msimg32.dll after FreeLibrary) gives "0x7a4e1000 is inside
 msimg32.dll UNLOADED 0 ms ago".
+
+## FastStone "Association Settings" (#73, DLLMGR73_ASSOC)
+
+FastStone's button calls ShellExecuteA("open", "control", "/name
+Microsoft.DefaultPrograms /page pageDefaultProgram") (+relay trace), which
+does nothing in Wine. When `dllmgr run faststone` sets DLLMGR73_ASSOC (a Unix
+command line: `'<dllmgr>' assoc faststone dialog`), the msimg32 proxy hooks
+the exe's ShellExecuteA import and runs that command through Z:\bin\sh
+instead. Stand check: the button ran the command (a marker file appeared).
+`dllmgr assoc faststone dialog` shows a zenity checklist of the file types;
+checked types get FastStone as the default, unchecked ones get their
+previous default back.

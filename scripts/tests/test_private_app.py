@@ -3,6 +3,7 @@ import hashlib
 import importlib.util
 import json
 import io
+import subprocess
 import os
 from pathlib import Path
 import struct
@@ -693,6 +694,27 @@ class SettingsTest(unittest.TestCase):
                     private_app.download(src.as_uri(), Path(tmp) / "b.zip", sha, "Downloading x")
                 self.assertEqual((Path(tmp) / "b.zip").read_bytes(), b"package")
                 self.assertIn("Cached x (no download)", out.getvalue())
+
+    def test_assoc_dialog_applies_checklist(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix, config = Path(tmp) / "p", Path(tmp) / "cfg"
+            prefix.mkdir(); config.mkdir()
+            (config / "mimeapps.list").write_text("[Default Applications]\nimage/png=eog.desktop\n")
+            state = {"desktops": [{"path": "/a/dllmgr-faststone-1.desktop"}]}
+            answers = iter(["image/png image/gif\n", "image/gif\n"])
+            def fake(argv, **kw):
+                self.assertEqual(argv[0], "zenity")
+                return subprocess.CompletedProcess(argv, 0, next(answers), "")
+            with patch.dict(private_app.os.environ, {"XDG_CONFIG_HOME": str(config)}), \
+                    patch.object(private_app.subprocess, "run", fake), patch("sys.stdout", new=io.StringIO()):
+                private_app.assoc(prefix, "faststone", state, ["dialog"])
+                d = private_app.mimeapps_defaults((config / "mimeapps.list").read_text())
+                self.assertEqual(d["image/png"], "dllmgr-faststone-1.desktop;")
+                self.assertEqual(d["image/gif"], "dllmgr-faststone-1.desktop;")
+                private_app.assoc(prefix, "faststone", state, ["dialog"])  # png unchecked: eog comes back
+                d = private_app.mimeapps_defaults((config / "mimeapps.list").read_text())
+                self.assertEqual(d["image/png"], "eog.desktop")
+                self.assertEqual(d["image/gif"], "dllmgr-faststone-1.desktop;")
 
     def test_assoc_sets_and_restores_defaults(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -909,6 +909,9 @@ def launch(args, prefix):
                WINELOADER=str(runtime / 'bin/wine'), WINESERVER=str(runtime / 'bin/wineserver'))
     for name in state['files'] if directory is not None else ():
         env['DLLMGR_' + ('COMCTL32' if name == 'comctl32.dll' else 'GDIPLUS')] = winpath(prefix, directory / name)
+    if app_of(args) == 'faststone' and '"' not in str(HERE) and "'" not in str(HERE):
+        # #73: FastStone's "Association Settings" button opens dllmgr's file-type dialog (msimg32 proxy)
+        env['DLLMGR73_ASSOC'] = "'" + str(HERE.parent / 'dllmgr') + "' assoc faststone dialog"
     # ExecArguments stays an argv list; image filenames never become shell code.
     app_args = [winpath(prefix, Path(arg)) if Path(arg).is_file() else arg for arg in args.app_args]
     os.chdir(exe.parent)
@@ -1049,7 +1052,29 @@ def assoc(prefix, app, state, values):
             print(('* ' if current.get(t, '').split(';')[0] == ours else '  ') + t + ': ' + (current.get(t) or '(not set)'))
         print('Set: dllmgr assoc ' + app + ' all | TYPE...   Undo: dllmgr assoc ' + app + ' undo')
         return
-    if values == ['undo']:
+    if values == ['dialog']:  # #73: checklist (zenity), from FastStone's "Association Settings"
+        rows = []
+        for t in types:
+            rows += ['TRUE' if current.get(t, '').split(';')[0] == ours else 'FALSE', t]
+        try:
+            answer = subprocess.run(['zenity', '--list', '--checklist', '--title', 'File types for ' + PROFILES[app]['title'],
+                                     '--text', 'Open these file types with ' + PROFILES[app]['title'] + ' by default:',
+                                     '--column', 'Default', '--column', 'Type', '--separator', ' ',
+                                     '--width', '480', '--height', '560', *rows], capture_output=True, text=True)
+        except FileNotFoundError:
+            raise Error('zenity is not installed; use: dllmgr assoc ' + app + ' all | TYPE... | undo')
+        if answer.returncode != 0:
+            return
+        chosen = answer.stdout.split()
+        set_types = [t for t in chosen if t in types and current.get(t, '').split(';')[0] != ours]
+        drop = [t for t in types if t not in chosen and current.get(t, '').split(';')[0] == ours]
+        changes = {}
+        for t in set_types:
+            record.setdefault(t, current.get(t, ''))
+            changes[t] = ours + ';'
+        for t in drop:
+            changes[t] = record.pop(t, '') or None
+    elif values == ['undo']:
         changes = {t: (old or None) for t, old in record.items() if current.get(t, '').split(';')[0] == ours}
         record = {}
     else:

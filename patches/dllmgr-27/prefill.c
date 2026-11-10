@@ -1363,6 +1363,30 @@ static void start_sampler(void)
 }
 
 
+/* #73: FastStone's "Association Settings" button calls
+ * ShellExecuteA("open", "control", "/name Microsoft.DefaultPrograms ..."),
+ * which does nothing in Wine. With DLLMGR73_ASSOC set by dllmgr (a Unix
+ * command line), the proxy runs it instead: dllmgr's own file-type dialog. */
+static HINSTANCE (WINAPI *real_shell_execute_a)(HWND, LPCSTR, LPCSTR, LPCSTR, LPCSTR, INT);
+
+static HINSTANCE WINAPI shell_execute_assoc(HWND hwnd, LPCSTR op, LPCSTR file, LPCSTR params, LPCSTR dir, INT show)
+{
+    char command[1024], line[1100];
+    if (file && !lstrcmpiA(file, "control") && params && strstr(params, "Microsoft.DefaultPrograms") &&
+        GetEnvironmentVariableA("DLLMGR73_ASSOC", command, sizeof(command)) && !strchr(command, '"')) {
+        STARTUPINFOA si = { sizeof(si) };
+        PROCESS_INFORMATION pi;
+        wsprintfA(line, "/bin/sh -c \"%s\"", command);
+        if (CreateProcessA("Z:\\bin\\sh", line, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+            CloseHandle(pi.hThread);
+            CloseHandle(pi.hProcess);
+            return (HINSTANCE)33;
+        }
+    }
+    return real_shell_execute_a(hwnd, op, file, params, dir, show);
+}
+
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     char mode[8] = "";
@@ -1405,6 +1429,9 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
                 TRACE("trampoline armed\n");
             }
         }
+        if (GetEnvironmentVariableA("DLLMGR73_ASSOC", NULL, 0))
+            hook_import(GetModuleHandleW(NULL), "shell32.dll", "ShellExecuteA", (void *)shell_execute_assoc,
+                        (void **)&real_shell_execute_a);
         if (!lstrcmpiA(mode, "iat")) {
             /* legacy mode: only ShowWindow imported by the exe itself */
             DisableThreadLibraryCalls(instance);
