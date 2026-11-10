@@ -1,0 +1,12 @@
+›  Downloading Wine runtime app-isolation-wine-11.0-v11 from github.com/unxed/dllmgr
+› Target: C:\Program Files (x86)\Adobe\Adobe Photoshop CS2\Photoshop.exe · prefix /tmp/opencode/opencode-owner-51a7/prefix · base wine-11.0 at /opt/wine-stable
+› Runtime: app-isolation-wine-11.0-v11
+  Runtime ready: /tmp/opencode/opencode-owner-51a7/data/dllmgr/runtimes/929163e83e638e8e5b9101074a5e15c7a31f87ebd7844834fcf8b3e88bc05316
+  Patched Wine modules in it: bin/wine, i386-windows/ntdll.dll, x86_64-unix/ntdll.so, x86_64-unix/win32u.so, x86_64-unix/winex11.so, x86_64-windows/ntdll.dll
+  Launcher routed through dllmgr: /tmp/opencode/opencode-owner-51a7/data/applications/dllmgr-photoshop-cs2-34b57c9bb5992b62fcf7.desktop
+✓ Photoshop CS2 fixes installed privately for C:\Program Files (x86)\Adobe\Adobe Photoshop CS2\Photoshop.exe
+  Versions: dllmgr 719ddb2 (installed) · runtime app-isolation-wine-11.0-v11 (sha256 8ef0d5ae10a3) · modules none (runtime and proxy only)
+  Launch trampoline already installed: any start of this Photoshop.exe gets the fixes.
+    files: /tmp/opencode/opencode-owner-51a7/prefix/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2/version.dll (sha256 1f94264d1c5c), version.dllmgr; load order: HKCU\Software\Wine\AppDefaults\Photoshop.exe\DllOverrides version=native,builtin
+  Launch: dllmgr run photoshop-cs2
+  Shared prefix DLLs and system Wine were not changed.

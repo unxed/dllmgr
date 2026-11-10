@@ -1,0 +1,6 @@
+2.519 dllmgr27[0020]: trampoline armed
+2.519 dllmgr27[0020]: hook thread 0024
+3.079 dllmgr27[0020]: trampoline: closed single-instance mutex PS3.0.5WIN (handle 0x90)
+3.389 dllmgr27[0020]: trampoline: started "Z:\home\unxed\.local\bin\dllmgr" run photoshop-cs2 --prefix "/tmp/opencode/opencode-owner-51a7/prefix" --exe "/tmp/opencode/opencode-owner-51a7/prefix/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2/Photoshop.exe" --, waiting 15000 ms
+18.431 dllmgr27[0020]: trampoline: no signal from the private runtime, staying on stock Wine
+18.438 dllmgr27[0020]: capture tid=0024 hwnd=00030054 class=PSFloatC flags=0057

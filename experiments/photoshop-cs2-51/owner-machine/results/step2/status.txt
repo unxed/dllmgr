@@ -1,0 +1,11 @@
+✓ Photoshop CS2 · photoshop-cs2 · private runtime verified
+  C:\Program Files (x86)\Adobe\Adobe Photoshop CS2\Photoshop.exe
+  Versions: dllmgr 719ddb2 (installed) · runtime app-isolation-wine-11.0-v11 (sha256 8ef0d5ae10a3) · modules none (runtime and proxy only)
+  Launch trampoline: ok
+  Settings: text=gray contrast=2.2 scaling=exact alt-click=app (change: dllmgr set photoshop-cs2 text=system|bitmap|gray|light|cleartype contrast=1.0..4.0 scaling=exact|smooth alt-click=app|desktop)
+  Launch: dllmgr run photoshop-cs2
+  Running: pid 968649 on the system Wine
+  Last launches: 2026-11-10 01:06:19 pid 968739 run photoshop-cs2: private runtime (inherited environment) ended (exit code 0) after 0.4 s; stderr: .dllmgr/trampoline-run.log
+                 2026-11-10 01:06:19 pid 968739 run photoshop-cs2: inherited variables not in the clean environment: AGENT AI_AGENT BROWSER CINNAMON_VERSION COLORFGBG COLORTERM DESKTOP_SESSION FARHOME FARLANG FARPID GDMSESSION GDM_LANG GIO_LAUNCHED_DESKTOP_FILE GIO_LAUNCHED_DESKTOP_FILE_PID GJS_DEBUG_OUTPUT GJS_DEBUG_TOPICS GNOME_DESKTOP_SESSION_ID GOPATH GPG_AGENT_INFO GSETTINGS_BACKEND GTK3_MODULES GTK_MODULES G_FILENAME_ENCODING HISTCONTROL LESSCLOSE LESSOPEN LIBVIRT_DEFAULT_URI LS_COLORS OLDPWD OPENCODE OPENCODE_RESUME_FALLBACK_MODELS OPENCODE_RESUME_FAVORITE_CHECK_AFTER_MS OPENCODE_RESUME_FAVORITE_MIN_TURNS OPENCODE_RESUME_FAVORITE_RETURN OPENCODE_RESUME_MAX_ROTATIONS OPENCODE_RESUME_MODEL_COOLDOWN_MS O
+  Last trampoline run (2026-11-10 01:06:19, .dllmgr/trampoline-run.log):
+    == attempt 1: inherited environment

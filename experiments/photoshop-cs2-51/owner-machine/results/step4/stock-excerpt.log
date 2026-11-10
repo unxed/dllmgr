@@ -1,0 +1,60 @@
+0.188 003c:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=6ffffd7db4ad
+0.188 003c:Ret  KERNEL32.CreateMutexW() retval=000000b0 ret=6ffffd7db4ad
+0.192 003c:Call KERNEL32.CreateMutexW(00000000,00000001,00000000) ret=140004b78
+0.192 003c:Ret  KERNEL32.CreateMutexW() retval=000000c8 ret=140004b78
+0.273 003c:Call KERNEL32.CreateMutexW(00000000,00000001,00000000) ret=140004b78
+0.273 003c:Ret  KERNEL32.CreateMutexW() retval=000000f4 ret=140004b78
+0.575 0080:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=6ffffd7db4ad
+0.575 0080:Ret  KERNEL32.CreateMutexW() retval=0000007c ret=6ffffd7db4ad
+0.576 003c:Call KERNEL32.CreateMutexW(00000000,00000001,00000000) ret=140004b78
+0.576 003c:Ret  KERNEL32.CreateMutexW() retval=00000114 ret=140004b78
+0.656 003c:Call KERNEL32.CreateMutexW(00000000,00000001,00000000) ret=140004b78
+0.657 003c:Ret  KERNEL32.CreateMutexW() retval=00000130 ret=140004b78
+0.917 00c0:Call KERNEL32.CreateMutexW(00000000,00000001,7fffff78fc20 L"__wine_clipboard_WinSta0") ret=14000dd29
+0.918 00c0:Ret  KERNEL32.CreateMutexW() retval=00000094 ret=14000dd29
+0.921 00c4:Call KERNEL32.CreateMutexW(00000000,00000001,1400137c8 L"__wine_display_settings_restorer_mutex") ret=14000dd29
+0.921 0074:Ret  window proc 0000000140002D70 (hwnd=000000000001002E,msg=WM_NCCREATE,wp=00000000,lp=7ffffe2fea88) retval=00000001
+0.943 0074:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=6ffffd7db4ad
+0.943 0074:Ret  KERNEL32.CreateMutexW() retval=000000b4 ret=6ffffd7db4ad
+1.051 0050:Call KERNEL32.CreateMutexW(00000000,00000001,00000000) ret=140004b78
+1.052 0050:Ret  KERNEL32.CreateMutexW() retval=000000e0 ret=140004b78
+1.106 010c:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=6ffffd7db4ad
+1.106 010c:Ret  KERNEL32.CreateMutexW() retval=00000060 ret=6ffffd7db4ad
+1.107 010c:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=6ffffd7db4ad
+1.107 010c:Ret  KERNEL32.CreateMutexW() retval=00000078 ret=6ffffd7db4ad
+1.372 002c:Call KERNEL32.CreateMutexW(00000000,00000000,7ffffe2fe450 L"c:!users!unxed!appdata!local!microsoft!windows!inetcache!") ret=6ffffae0da10
+1.372 002c:Ret  KERNEL32.CreateMutexW() retval=0000006c ret=6ffffae0da10
+1.372 002c:Call KERNEL32.CreateMutexW(00000000,00000000,7ffffe2fe450 L"c:!users!unxed!appdata!local!microsoft!windows!history!") ret=6ffffae0da10
+1.372 002c:Ret  KERNEL32.CreateMutexW() retval=00000070 ret=6ffffae0da10
+1.373 002c:Call KERNEL32.CreateMutexW(00000000,00000000,7ffffe2fe450 L"c:!users!unxed!appdata!local!microsoft!windows!inetcookies!") ret=6ffffae0da10
+1.373 002c:Ret  KERNEL32.CreateMutexW() retval=00000074 ret=6ffffae0da10
+1.763 0024:Call KERNEL32.CreateMutexW(00000000,00000001,01362ebc L"PS3.0.5WIN") ret=00ee53ad
+1.763 0024:Ret  KERNEL32.CreateMutexW() retval=00000090 ret=00ee53ad
+1.768 0024:Call user32.FindWindowW(0180f978 L"Photoshop",00000000) ret=00ee5dcc
+1.768 0024:Ret  user32.FindWindowW() retval=00000000 ret=00ee5dcc
+1.790 0024:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=7919d60d
+1.790 0024:Ret  KERNEL32.CreateMutexW() retval=000000a8 ret=7919d60d
+2.381 dllmgr27[0020]: trampoline armed
+2.381 dllmgr27[0020]: hook thread 0024
+2.866 dllmgr27[0020]: trampoline: closed single-instance mutex PS3.0.5WIN (handle 0x90)
+3.132 0024:Call KERNEL32.OpenMutexW(00100000,00000000,7811e8bc L"goingDownForeverPS4.0") ret=78111ae8
+3.138 dllmgr27[0020]: trampoline: started "Z:\home\unxed\.local\bin\dllmgr" run photoshop-cs2 --prefix "/tmp/opencode/opencode-owner-51a7/prefix" --exe "/tmp/opencode/opencode-owner-51a7/prefix/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2/Photoshop.exe" --, waiting 15000 ms
+3.239 0024:Call KERNEL32.OpenMutexW(00100000,00000000,7811e1bc L"PS3.0.5WIN") ret=78112138
+18.187 dllmgr27[0020]: trampoline: no signal from the private runtime, staying on stock Wine
+18.187 0024:Ret  hook proc 78111CC0 (id=WH_CBT,code=3,wp=00010604,lp=0180f16c) retval=00000000
+31.353 0140:Call KERNEL32.CreateMutexW(00000000,00000001,00000000) ret=140004b78
+31.353 0140:Ret  KERNEL32.CreateMutexW() retval=00000180 ret=140004b78
+31.665 0158:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=6ffffd7db4ad
+31.665 0158:Ret  KERNEL32.CreateMutexW() retval=00000084 ret=6ffffd7db4ad
+32.673 0024:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=793e744b
+32.673 0024:Ret  KERNEL32.CreateMutexW() retval=000000cc ret=793e744b
+32.675 0024:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=793e744b
+32.675 0024:Ret  KERNEL32.CreateMutexW() retval=000000d8 ret=793e744b
+32.693 0024:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=793e744b
+32.693 0024:Ret  KERNEL32.CreateMutexW() retval=000000f4 ret=793e744b
+32.698 0024:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=793e744b
+32.698 0024:Ret  KERNEL32.CreateMutexW() retval=000000e8 ret=793e744b
+32.698 0024:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=793e744b
+32.698 0024:Ret  KERNEL32.CreateMutexW() retval=000000f8 ret=793e744b
+32.699 0024:Call KERNEL32.CreateMutexW(00000000,00000000,00000000) ret=793e744b
+32.699 0024:Ret  KERNEL32.CreateMutexW() retval=000000cc ret=793e744b
