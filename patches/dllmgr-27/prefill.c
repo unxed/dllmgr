@@ -1180,7 +1180,7 @@ static void exit_report(void)
     fflush(stderr);
 }
 
-/* Sampling profiler (DLLMGR_SAMPLE=ms[,seconds], off by default): a thread
+/* Sampling profiler (DLLMGR_SAMPLE=ms[,seconds[,delay]], off by default): a thread
  * suspends the main thread every few ms and records EIP plus the first
  * frames of its EBP chain. Works under wow64 where perf/gdb/winedbg cannot
  * see the 32-bit stack. Addresses are resolved to module+offset only after
@@ -1188,7 +1188,7 @@ static void exit_report(void)
  * loader or heap lock). Output: %TEMP%\dllmgr-sample-<pid>.txt, one line per
  * sample "ms frame0 frame1 ...". */
 #define SAMPLE_DEPTH 6
-#define SAMPLE_MAX 4000
+#define SAMPLE_MAX 20000
 static DWORD sample_buf[SAMPLE_MAX][SAMPLE_DEPTH + 1];
 
 static void sample_name(DWORD addr, char *out, int size)
@@ -1214,6 +1214,10 @@ static DWORD WINAPI sampler(void *arg)
     GetEnvironmentVariableA("DLLMGR_SAMPLE", value, sizeof(value));
     interval = atoi(value) > 0 ? atoi(value) : 10;
     if ((comma = strchr(value, ',')) && atoi(comma + 1) > 0) seconds = atoi(comma + 1);
+    if (comma && (comma = strchr(comma + 1, ',')) && atoi(comma + 1) > 0) {  /* third field: start after N s */
+        Sleep(atoi(comma + 1) * 1000);
+        start = GetTickCount();
+    }
     while (n < SAMPLE_MAX && GetTickCount() - start < (DWORD)seconds * 1000) {
         CONTEXT ctx;
         DWORD ebp, frame[2];
