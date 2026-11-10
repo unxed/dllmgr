@@ -73,6 +73,10 @@ Rules (owner's, non-negotiable):
 - Building your own diagnostic tools (profilers, probes, stand helpers) to
   work faster and see deeper is wanted, not a side quest (owner, 2026-11-10,
   about the DLLMGR_SAMPLE sampler).
+- Do not ask the owner to check anything that can be checked on the stand;
+  check it yourself in the same environment the owner uses (e.g. the
+  `dllmgr run` environment variables), and ask only for what needs his real
+  machine or his judgement (owner, 2026-11-10, after the #73 button miss).
 - Retest on current wine.git master (or the commit a Wine developer names)
   before proposing any WineHQ report or comment; reports already filed get
   the same retest and an updating comment if the result differs (owner,
