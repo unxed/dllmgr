@@ -22,6 +22,7 @@ second one with the link, then add the back link to the first as a comment.
 | 5 | WineHQ (new bug, duplicate search first) | inverting (XOR) pixels of colour cursors become transparent in the Xcursor path | to write after a Windows probe | candidate |
 | 6 | WineHQ (new bug, duplicate search first) | #43 part 1: caption-less owned popups shown without activation are override-redirect, so a splash stays on top of everything when the busy app's main window is minimized (not a Mint bug: Muffin hides managed transients correctly) | to write after a Windows parity check (ghosted app, owned popup) | candidate |
 | 8 | WineHQ (new bug, duplicate search first) | #65 shell32 reads desktop.ini of every folder on each bind; each miss lists the directory on a case-sensitive FS: Photoshop CS2 start 29.6 -> 14.9 s with a 2 s miss cache | docs/bugzilla/dllmgr-65.txt (prepared 2026-11-10; owner posts) | posted: https://bugs.winehq.org/show_bug.cgi?id=60739 (owner, 2026-11-10) |
+| 9 | WineHQ 34134 (comment on own report) | #35 Open dialog stays wide after Adobe -> OS: Windows does the same (CI run 42725940901: 592 -> 776 -> 776) | docs/bugzilla/wine-34134-comment.txt (prepared 2026-11-10; owner posts; status unchanged) | due |
 
 ## Posted (for cross links)
 

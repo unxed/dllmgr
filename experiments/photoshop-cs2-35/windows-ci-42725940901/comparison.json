@@ -1,0 +1,47 @@
+{
+    "original_os_hwnd_preserved":  true,
+    "utc":  "2026-11-10T00:10:23.3555789Z",
+    "os_before":  {
+                      "Handle":  264044,
+                      "ProcessId":  2032,
+                      "Text":  "Open",
+                      "ClassName":  "#32770",
+                      "X":  216,
+                      "Y":  39,
+                      "Width":  592,
+                      "Height":  593,
+                      "ClientWidth":  576,
+                      "ClientHeight":  554,
+                      "Dpi":  96,
+                      "utc":  "2026-11-10T00:10:11.1880441Z"
+                  },
+    "adobe":  {
+                  "Handle":  67492,
+                  "ProcessId":  2032,
+                  "Text":  "Open",
+                  "ClassName":  "SCLNoFlickerWindowClass",
+                  "X":  216,
+                  "Y":  39,
+                  "Width":  776,
+                  "Height":  593,
+                  "ClientWidth":  760,
+                  "ClientHeight":  554,
+                  "Dpi":  96,
+                  "utc":  "2026-11-10T00:10:12.3480512Z"
+              },
+    "width_growth":  184,
+    "os_after":  {
+                     "Handle":  264044,
+                     "ProcessId":  2032,
+                     "Text":  "Open",
+                     "ClassName":  "#32770",
+                     "X":  216,
+                     "Y":  39,
+                     "Width":  776,
+                     "Height":  593,
+                     "ClientWidth":  760,
+                     "ClientHeight":  554,
+                     "Dpi":  96,
+                     "utc":  "2026-11-10T00:10:23.3489455Z"
+                 }
+}

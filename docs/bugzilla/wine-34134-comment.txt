@@ -1,0 +1,23 @@
+Where: https://bugs.winehq.org/show_bug.cgi?id=34134 (comment on the owner's own report)
+Status: PREPARED 2026-11-10, not posted (owner posts). Do not change the bug status automatically.
+
+Text:
+
+Retested with Wine 11.0 and compared with real Windows.
+
+Wine 11.0 (X11, 192 DPI, Photoshop CS2 9.0 tryout): File > Open shows the
+system Open dialog 604 x 602 (outer window, logical units). "Use Adobe
+Dialog" makes it 768 x 602; "Use OS Dialog" goes back to the system dialog,
+which stays 768 x 602.
+
+Windows Server 2025 (96 DPI, same Photoshop CS2 9.0 tryout, measured with
+public window APIs): system Open dialog 592 x 593, after "Use Adobe Dialog"
+776 x 593, after "Use OS Dialog" the same system dialog window stays
+776 x 593 (same window handle, not recreated).
+
+So Windows behaves the same way: the dialog keeps the larger size after
+switching back. This looks like Photoshop's own behaviour, not a Wine bug.
+I think this report can be closed.
+
+Prepared with the help of an AI agent; the Windows numbers come from an
+automated run on a GitHub Actions Windows runner.
