@@ -7,6 +7,11 @@ sys.path.insert(0, __file__.rsplit('/', 1)[0])
 WORDS = ["Open", "Background", "History", "Layers", "Channels", "Paths", "Actions", "Navigator", "Info",
          "Histogram", "Color", "Swatches", "Styles", "Brushes", "Tool Presets", "Layer Comps", "Opacity", "Fill",
          "Normal", "Lock", "lena.jpeg", "Snapshot", "Merge Visible", "New Layer", "Duplicate", "Image", "Select"]
+RU = ["Открыть", "Фон", "История", "Слои", "Каналы", "Контуры", "Операции", "Навигатор", "Инфо", "Гистограмма",
+      "Цвет", "Образцы", "Стили", "Кисти", "Непрозрачность", "Заливка", "Обычные", "Объединить видимые",
+      "Новый слой", "Создать дубликат", "Изображение", "Выделение", "Ёлка", "Щит", "Жук", "Шрифт", "Эффекты"]
+if '--ru' in sys.argv:
+    sys.argv.remove('--ru'); WORDS = RU
 load = lambda p: {(r['style'], int(r['size']), int(r['char'])): (int(r['left']), int(r['width']), int(r['advance']))
                   for r in csv.DictReader(open(p))}
 W, N = load(sys.argv[1]), load(sys.argv[2])

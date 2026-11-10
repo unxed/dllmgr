@@ -161,3 +161,14 @@ still sees "Tahoma"; works while Wine's Tahoma is installed, unlike
 [Fonts\Replacements]). XO Tahion ships unmodified in scripts/fonts/xo-tahion
 with its license (copy, modify and redistribute allowed; the font itself may
 not be sold). The PingWin/ROSA "Tahion" predecessors forbid redistribution.
+
+v5 with Cyrillic (probe now measures А-я, Ё, ё; gapcsv.py --ru, 168 pairs of
+Russian palette words): Windows uses the same rule for regular Cyrillic, and
+Wine's regular Cyrillic strikes did not follow it (glued 9-20 pairs at 9-12
+px). Final v5: bold Latin + Cyrillic + Greek letters and regular Cyrillic +
+Greek letters get "ink at origin, advance = ink + 1"; digits (tabular),
+punctuation and regular Latin (already exact) keep their placement. Result,
+pairs differing / glued: Russian regular 9-13 px 11/0 0/0 0/0 7/0 8/0, Russian
+bold 33/0 33/0 0/0 8/0 0/0 (Wine's 9-10 px Cyrillic bold strikes are wider
+than Windows' glyphs, +6 % width: a strike-drawing difference); Latin as in
+the table above. Default: tahoma=wine (owner: "choose yourself").
