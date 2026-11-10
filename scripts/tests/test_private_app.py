@@ -687,6 +687,10 @@ class SettingsTest(unittest.TestCase):
             self.assertIn("CoSuspendClassObjects", logs[0].read_text())
             self.assertIn("crashed", private_app.run_verdict(5, "wine: Unhandled exception 0xc0000005"))
             self.assertEqual(private_app.run_verdict(-9, ""), "signal 9")
+            tail = ('dllmgr71: process exit (ExitProcess), thread 0024, callers: VERSION.dll+0x13ce\n'
+                    'dllmgr71: 1.1 s before exit: clicked "&Quit" in "Adobe Activation"\n')
+            self.assertEqual(private_app.run_verdict(0, tail),
+                             'exit code 0, the application closed itself; last button: "&Quit" in "Adobe Activation"')
 
     def test_tahoma_substitute(self):
         with tempfile.TemporaryDirectory() as tmp:

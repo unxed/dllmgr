@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include <string.h>
 
 /* DLLMGR27_DEBUG=1: one line per decision on stderr (compact). */
 static int debug;
@@ -846,6 +847,27 @@ static void fade_in_begin(HWND hwnd) {}
 static void fade_in_painted(HWND hwnd) {}
 #endif
 
+/* #71: the last few UI events (top-level windows shown, buttons clicked),
+ * printed by exit_report: an "orderly exit" then says which dialog and
+ * button led to it (e.g. "Quit" in "Adobe Activation"). */
+#define RECENT 8
+static struct { DWORD tick; char text[200]; } recent[RECENT];
+static LONG recent_next;
+
+static void remember(const char *what, HWND hwnd, HWND parent)
+{
+    WCHAR title[64] = L"", ptitle[64] = L"";
+    char t[100], pt[100];
+    LONG slot = InterlockedIncrement(&recent_next) % RECENT;
+    GetWindowTextW(hwnd, title, ARRAYSIZE(title));
+    if (parent) GetWindowTextW(parent, ptitle, ARRAYSIZE(ptitle));
+    WideCharToMultiByte(CP_UTF8, 0, title, -1, t, sizeof(t), NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, ptitle, -1, pt, sizeof(pt), NULL, NULL);
+    recent[slot].tick = GetTickCount();
+    if (parent) snprintf(recent[slot].text, sizeof(recent[slot].text), "%s \"%s\" in \"%s\"", what, t, pt);
+    else snprintf(recent[slot].text, sizeof(recent[slot].text), "%s \"%s\"", what, t);
+}
+
 static LRESULT CALLBACK before(int code, WPARAM wparam, LPARAM lparam)
 {
     const CWPSTRUCT *m = (const CWPSTRUCT *)lparam;
@@ -874,8 +896,12 @@ static LRESULT CALLBACK after(int code, WPARAM wparam, LPARAM lparam)
         TRACE("minmax hwnd=%p class=%s min=%ldx%ld max=%ldx%ld\n", (void *)m->hwnd, cls,
               mm->ptMinTrackSize.x, mm->ptMinTrackSize.y, mm->ptMaxTrackSize.x, mm->ptMaxTrackSize.y);
     }
+    if (code == HC_ACTION && m->message == WM_COMMAND && HIWORD(m->wParam) == BN_CLICKED && m->lParam)
+        remember("clicked", (HWND)m->lParam, m->hwnd);
     if (code == HC_ACTION && m->message == WM_WINDOWPOSCHANGED &&
         (((WINDOWPOS *)m->lParam)->flags & SWP_SHOWWINDOW)) {
+        if (!(GetWindowLongW(m->hwnd, GWL_STYLE) & WS_CHILD) && GetWindowTextLengthW(m->hwnd))
+            remember("shown", m->hwnd, NULL);
         present_capture(m->hwnd);
         adopt_owner_shown(m->hwnd);
     }
@@ -1104,9 +1130,58 @@ static LRESULT CALLBACK cbt(int code, WPARAM wparam, LPARAM lparam)
     return CallNextHookEx(NULL, code, wparam, lparam);
 }
 
+/* #71: when the process ends through ExitProcess, the exiting thread runs
+ * our DLL_PROCESS_DETACH: report who called it (return addresses as
+ * module+offset) and which of the process's windows were still visible, on
+ * stderr, which `dllmgr run` keeps in .dllmgr/runs/. One line per item,
+ * prefix "dllmgr71:". Costs nothing while the program runs.
+ * DLLMGR71_OFF=1 turns it off. */
+static BOOL CALLBACK exit_window(HWND hwnd, LPARAM lparam)
+{
+    DWORD pid = 0;
+    WCHAR title[128];
+    char utf8[400];
+    GetWindowThreadProcessId(hwnd, &pid);
+    if (pid != GetCurrentProcessId() || !IsWindowVisible(hwnd)) return TRUE;
+    if (!GetWindowTextW(hwnd, title, ARRAYSIZE(title))) return TRUE;
+    WideCharToMultiByte(CP_UTF8, 0, title, -1, utf8, sizeof(utf8), NULL, NULL);
+    fprintf(stderr, "dllmgr71: visible window \"%s\"%s\n", utf8, hwnd == GetForegroundWindow() ? " (foreground)" : "");
+    (*(int *)lparam)++;
+    return *(int *)lparam < 12;
+}
+
+static void exit_report(void)
+{
+    void *frames[24];
+    USHORT n = RtlCaptureStackBackTrace(1, ARRAYSIZE(frames), frames, NULL), i;
+    int windows = 0;
+    fprintf(stderr, "dllmgr71: process exit (ExitProcess), thread %04lx, callers:", GetCurrentThreadId());
+    for (i = 0; i < n; i++) {
+        HMODULE module = NULL;
+        char name[MAX_PATH] = "?", *base;
+        if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                               frames[i], &module) && module)
+            GetModuleFileNameA(module, name, sizeof(name));
+        base = strrchr(name, '\\') ? strrchr(name, '\\') + 1 : name;
+        fprintf(stderr, " %s+0x%lx", base, (unsigned long)((BYTE *)frames[i] - (BYTE *)module));
+    }
+    fprintf(stderr, "\n");
+    for (i = 1; i <= RECENT; i++) {
+        LONG slot = (recent_next + i) % RECENT;
+        if (recent[slot].tick)
+            fprintf(stderr, "dllmgr71: %.1f s before exit: %s\n", (GetTickCount() - recent[slot].tick) / 1000.0, recent[slot].text);
+    }
+    EnumWindows(exit_window, (LPARAM)&windows);
+    fflush(stderr);
+}
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     char mode[8] = "";
+    if (reason == DLL_PROCESS_DETACH && reserved && !GetEnvironmentVariableA("DLLMGR71_OFF", NULL, 0)) {
+        exit_report();
+        return TRUE;
+    }
     if (GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0)) return TRUE;
     GetEnvironmentVariableA("DLLMGR27_MODE", mode, sizeof(mode));
     if (reason == DLL_PROCESS_ATTACH) {

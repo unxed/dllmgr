@@ -890,7 +890,10 @@ def run_verdict(code, log_tail):
     how = ('exit code %d' % code) if code >= 0 else ('signal %d' % -code)
     if any(mark in log_tail for mark in CRASH_MARKS):
         return how + ', crashed: unhandled exception in the log'
-    if code == 0 and 'CoSuspendClassObjects' in log_tail:
+    clicked = [l.split('clicked ', 1)[1].strip() for l in log_tail.splitlines() if l.startswith('dllmgr71:') and ' clicked ' in l]
+    if clicked:  # the version.dll proxy's exit report (#71): the last button pressed
+        return how + ', the application closed itself; last button: ' + clicked[-1]
+    if code == 0 and ('CoSuspendClassObjects' in log_tail or 'dllmgr71: process exit' in log_tail):
         return how + ', the application closed itself (orderly exit)'
     return how
 
