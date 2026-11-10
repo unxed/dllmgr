@@ -66,6 +66,10 @@ Rules (owner's, non-negotiable):
 - A bug that shows only with a Linux Mint component (Muffin, Cinnamon,
   ...) also gets a Linux Mint report, with cross links both ways between the
   Mint and WineHQ reports (owner, 2026-11-09).
+- Retest on current wine.git master (or the commit a Wine developer names)
+  before proposing any WineHQ report or comment; reports already filed get
+  the same retest and an updating comment if the result differs (owner,
+  2026-11-10; fix-it-in-wine SKILL.md step 10, PR #14 there).
 - Do not post to WineHQ Bugzilla or other public trackers without the
   owner's explicit approval. Comments on this repo's own issues are fine.
 - Close an issue yourself as soon as the owner has confirmed the fix (owner,
