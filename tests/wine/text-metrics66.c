@@ -19,11 +19,11 @@ int main(void)
             HFONT f = CreateFontA(-size, 0, 0, 0, style == 1 ? FW_BOLD : FW_NORMAL, style == 2, 0, 0, ANSI_CHARSET,
                                   0, 0, NONANTIALIASED_QUALITY, 0, "Tahoma");
             HFONT o = SelectObject(dc, f);
-            for (ch = 0x21; ch < 0x7f; ch++) {
+            for (ch = 0x21; ch <= 0x451; ch = ch == 0x7e ? 0x401 : ch == 0x401 ? 0x410 : ch + 1) {  /* ASCII, Ё, А-я, ё */
                 GLYPHMETRICS gm;
                 unsigned x, y, pitch, first = ~0u, last = 0;
                 memset(buf, 0, sizeof(buf));
-                if (GetGlyphOutlineA(dc, ch, GGO_BITMAP, &gm, sizeof(buf), buf, &identity) == GDI_ERROR) continue;
+                if (GetGlyphOutlineW(dc, ch, GGO_BITMAP, &gm, sizeof(buf), buf, &identity) == GDI_ERROR) continue;
                 pitch = ((gm.gmBlackBoxX + 31) / 32) * 4;
                 for (y = 0; y < gm.gmBlackBoxY; y++)
                     for (x = 0; x < gm.gmBlackBoxX; x++)
