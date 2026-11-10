@@ -1,0 +1,27 @@
+--- a/dlls/winex11.drv/window.c
++++ b/dlls/winex11.drv/window.c
+@@ -1271,16 +1271,22 @@
+ void window_set_user_time( struct x11drv_win_data *data, Time time, BOOL init )
+ {
+     if (!init) note_process_user_time( time );
++    /* dllmgr #68: a window mapped for activation carries the time of the user's
++     * last interaction with this process (the key or click that opened it), so
++     * the WM's focus-stealing prevention lets it on top of the window that had
++     * that interaction instead of stacking it below as a background popup. */
+     if (init && data->managed) NtUserSetProp( data->hwnd, focus_time_prop, (HANDLE)time );
++    if (init && time == (Time)-1 && process_user_time && (data->user_time == (Time)-1 || !data->user_time))
++        time = process_user_time;
+     else if (!init && !time) time = 1; /* time == 0 has reserved semantics */
++    else if (init && !data->user_time == !time) return;
+ 
+-    if (init && !data->user_time == !time) return;
+     if (!init && data->user_time == time) return;
+     data->user_time = time;
+ 
+     TRACE( "window %p/%lx, requesting _NET_WM_USER_TIME %ld serial %lu\n", data->hwnd, data->whole_window,
+            data->user_time, NextRequest( data->display ) );
+-    if (init && time) XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_USER_TIME) );
++    if (init && time == (Time)-1) XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_USER_TIME) );
+     else XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_USER_TIME), XA_CARDINAL,
+                           32, PropModeReplace, (unsigned char *)&time, 1 );
+ }
