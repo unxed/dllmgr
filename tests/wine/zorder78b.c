@@ -34,8 +34,9 @@ int main(int argc, char **argv)
     wc.lpfnWndProc = palproc; wc.lpszClassName = "z78b"; wc.hInstance = GetModuleHandleA(0);
     RegisterClassA(&wc);
     M = CreateWindowExA(0, "z78b", "main", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 600, 400, 0, 0, 0, 0);
-    A = CreateWindowExA(WS_EX_TOOLWINDOW | WS_EX_TOPMOST, "z78b", "", WS_POPUP | WS_BORDER, 0, 0, 10, 10, 0, 0, 0, 0);
+    /* B first: A ends up above B, as in Photoshop's z-order */
     if (!nob) B = CreateWindowExA(WS_EX_TOPMOST, "z78b", "", WS_POPUP, 5000, 5000, 50, 50, M, 0, 0, 0);
+    A = CreateWindowExA(WS_EX_TOOLWINDOW | WS_EX_TOPMOST, "z78b", "", WS_POPUP | WS_BORDER, 0, 0, 10, 10, 0, 0, 0, 0);
     P = CreateWindowExA(WS_EX_TOOLWINDOW, "z78b", "", WS_POPUP | WS_CAPTION | WS_VISIBLE, 500, 120, 200, 120, M, 0, 0, 0);
     SetForegroundWindow(M);
     for (t = GetTickCount(); GetTickCount() - t < 500; Sleep(10))
