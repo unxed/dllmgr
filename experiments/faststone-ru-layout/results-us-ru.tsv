@@ -1,0 +1,22 @@
+us-ru	browser	ctrl+38	works	Ctrl+A: status bar 'Выбрано' 1 -> 3
+us-ru	browser	ctrl+54/ctrl+55	works	Ctrl+C, Ctrl+V: 3 file(s) pasted into the parent
+us-ru	browser	F2	works	opens 'Переименование'
+us-ru	rename-text	g,h,b,d,t,n	typed	file renamed to: ghbdtn.jpg 
+us-ru	browser	ctrl+27	works	opens 'Изменение размера'
+us-ru	browser	53	works	opens 'Обрезка'
+us-ru	browser	Return	works	fullscreen viewer opens
+us-ru	viewer	Next	works	PgDn: a.jpg -> ghbdtn.jpg
+us-ru	viewer	Prior	works	PgUp: ghbdtn.jpg -> a.jpg
+us-ru	viewer	86	works	zoom % changes
+us-ru	viewer	82	works	zoom % changes
+us-ru	viewer	shift+21	works	zoom % changes
+us-ru	viewer	20	works	zoom % changes
+us-ru	viewer	39	works	opens 'Слайдшоу'
+us-ru	viewer	ctrl+27	works	opens 'Изменение размера'
+us-ru	viewer	31	works	I: properties panel shown
+us-ru	viewer	53	works	opens 'Обрезка'
+us-ru	viewer	40	works	opens 'Рисование'
+us-ru	viewer	26	works	E: 'no external program defined' notice
+us-ru	viewer	27	works	R: rotated
+us-ru	viewer	46	works	L: rotated back
+us-ru	viewer	Escape	works	back to the browser
