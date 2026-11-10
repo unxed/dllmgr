@@ -1,0 +1,24 @@
+--- a/b/dlls/win32u/font.c	2026-11-10 01:12:01.142209845 +0100
++++ b/dlls/win32u/font.c	2026-11-10 01:12:01.160484258 +0100
+@@ -5851,6 +5851,21 @@
+     if (!dc) return FALSE;
+     if (count > INT_MAX) return FALSE;
+ 
++    { /* DEBUG #66 (local only): dump text, font and dx */
++        static int dump = -1;
++        if (dump < 0) dump = getenv( "DLLMGR66_DUMP" ) != NULL;
++        if (dump && str && count && count < 40)
++        {
++            char buf[512]; int n, i; LOGFONTW f = {0}; HFONT hf = dc->hFont;
++            NtGdiExtGetObjectW( hf, sizeof(f), &f );
++            n = snprintf( buf, sizeof(buf), "66: %s at %d,%d flags %x font %s h=%d w=%d it=%d glyph=%d dx:",
++                          debugstr_wn(str, count), x, y, flags, debugstr_w(f.lfFaceName), (int)f.lfHeight,
++                          (int)f.lfWeight, f.lfItalic, !!(flags & ETO_GLYPH_INDEX) );
++            for (i = 0; lpDx && i < (int)count && n < 480; i++) n += snprintf( buf + n, sizeof(buf) - n, " %d", lpDx[i] );
++            fprintf( stderr, "%s\n", buf );
++        }
++    }
++
+     align = dc->attr->text_align;
+     breakRem = dc->breakRem;
+     layout = dc->attr->layout;

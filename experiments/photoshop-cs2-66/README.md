@@ -17,3 +17,19 @@ draws "Background" italic/bold itself (shear / double strike) over GDI text,
 so the smoothing + contrast of every stroke is doubled. Owner (2026-11-10):
 the stock look (1) is much better for these. To compare with Windows: CI
 capture of the same palettes (tests/wine/ps35-measure.ps1, pending).
+
+## How Photoshop draws them (2026-11-10, local debug build)
+
+debug-exttextout-dump.patch (local only, never in a runtime): every
+ExtTextOut logs text, font and dx (DLLMGR66_DUMP=1). dump-history-layers.txt:
+
+    "Open"       Tahoma h=-10 weight 700 (bold)          no dx
+    "Background" Tahoma h=-10 weight 400 italic          no dx
+    "t46.png"    Tahoma h=-10 weight 400                 no dx
+
+So ADM uses real GDI fonts (10 px, ANTIALIASED_QUALITY per the font trace)
+and lets GDI place the glyphs; no double strike, no own spacing. The uneven
+spacing ("Op en") therefore comes from Wine's Tahoma Bold / synthetic italic
+at 10 px themselves (glyph advances and hinting), not from Photoshop.
+Next: tests/wine/text-kern66.c renders exactly these fonts in each text mode
+to confirm and compare with Windows.
