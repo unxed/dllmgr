@@ -1,52 +1,75 @@
 Where: https://bugs.winehq.org (new bug; component fonts; search for duplicates first: "tahomabd", "Tahoma bold spacing", "embedded bitmap", "simulated italic")
-Status: PREPARED 2026-11-10, not posted (owner posts).
+Status: PREPARED 2026-11-10 (rewritten with the v5 findings), not posted (owner posts). Text only: no code, no generated bitmaps (owner, 2026-11-10).
 
 Summary:
-Tahoma Bold (tahomabd.ttf) bitmap strikes have wrong advance widths: small bold text is unevenly spaced ("Op en", "B ackground")
+Tahoma bitmap strikes: Bold letters and regular Cyrillic are placed differently from Windows (uneven spacing, letters touching at 9-13 px)
 
 Text:
 
 Steps: Wine 11.0. Draw text with Tahoma Bold at a small pixel size without
 antialiasing, for example CreateFont with height -10, FW_BOLD, ANSI_CHARSET,
 and TextOut "Open" and "Background". Adobe Photoshop CS2 does exactly this in
-its History and Layers palettes.
+its History and Layers palettes. Russian text in regular Tahoma at 9-12 px
+shows the same kind of problem.
 
-Result: the letters are unevenly spaced: "O" and "p" touch and a gap opens
-before "e"; "B" stands apart from "ackground"; "Hist ory".
+Result: letters are unevenly spaced: "O" and "p" touch, a gap opens before
+"e"; "B" stands apart from "ackground"; "Hist ory".
 
-Cause, as far as I can see: Wine's tahomabd.ttf contains embedded bitmap
-strikes for 9, 10, 11, 12, 13, 15 and 16 pixels, and monochrome glyphs come
-from them. Many of these glyphs have the wrong advance width and sit in the
-wrong place in their cell. Example at 10 pixels, left bearing / ink width /
-advance in pixels:
+How Windows places these glyphs (measured with GetGlyphOutline GGO_BITMAP on
+a Windows Server 2025 machine, inked columns of the 94 printable ASCII
+glyphs and of the Russian alphabet, 9-16 px):
 
-  "p"  strike 0 / 5 / 7    Windows 0 / 5 / 6
-  "n"  strike 0 / 5 / 7    Windows 0 / 5 / 6
-  "B"  strike 0 / 6 / 8    Windows 0 / 6 / 7
-  "O"  strike 1 / 7 / 8    Windows 0 / 7 / 8
+1. Every letter of small Tahoma Bold, Latin and Cyrillic, has its ink start
+   exactly at the origin and exactly one blank column after it: left bearing
+   0, advance = ink width + 1. At 9-13 px this holds for 59-60 of the 62
+   Latin letters and digits and 63-67 of the 67 Cyrillic letters. The
+   exceptions are digits (tabular, e.g. "1" at 10 px: left bearing 1, ink 4,
+   advance 7) and "f", whose ink touches the next letter. Punctuation does
+   not follow the rule.
+2. Regular Tahoma follows the same rule. Wine's regular Latin strikes already
+   match Windows exactly (advances and positions), but the regular Cyrillic
+   strikes do not: 9-20 letter pairs out of 168 in common Russian words touch
+   at 9-12 px where Windows leaves a gap.
 
-Compared with Windows GDI (the same small test program run on a Windows
-machine, monochrome GetGlyphOutline metrics of the 94 printable ASCII
-glyphs): the regular Tahoma strikes have exactly the Windows advance widths
-at every strike size, the Bold strikes do not: the advance differs for 48,
-40, 24, 28, 46, 21, 21 of 94 glyphs at 9, 10, 11, 12, 13, 15, 16 px.
+What Wine's strikes do instead: their ink widths are mostly right (Bold
+9-10 px: 61 of 62 Latin letters and digits have the Windows ink width; 11 px
+53, 12 px 44), but the placement in the cell is not. Examples, Bold 10 px,
+left bearing / ink width / advance in pixels:
 
-What I tried, as an experiment: keep the Bold strikes but give each glyph
-the outline's advance rounded to whole pixels. Advance mismatches with
-Windows drop to 47, 24, 13, 15, 36, 5, 5 and the text is evenly spaced and
-as wide as on Windows, in the test program and in Photoshop CS2. Rendering
-from the hinted outlines instead also spaces it evenly but makes it about
-8 % wider than Windows. A proper fix is probably to correct the advances and
-positions in the font source.
+  "p"  Wine 0 / 5 / 7    Windows 0 / 5 / 6
+  "n"  Wine 0 / 5 / 7    Windows 0 / 5 / 6
+  "B"  Wine 0 / 6 / 8    Windows 0 / 6 / 7
+  "O"  Wine 1 / 7 / 8    Windows 0 / 7 / 8
 
-Related, same test: simulated italic of Tahoma (there is no italic face)
-differs from Windows in two ways. Windows keeps the upright advance widths
-(Wine's are wider) and draws it at 10-11 px without smoothing, crisp, as the
-gasp table asks for the upright face; Wine smooths simulated styles
-regardless of gasp (AntialiasFakeBoldOrItalic), so it comes out grey and
-faint. The black boxes Windows produces match the upright bitmap with its
-rows shifted right by about 0.34 pixel per pixel of height above the
-baseline. I can file that separately if preferred.
+Advance widths of the Bold strikes differ from Windows for 48, 40, 24, 28,
+46, 21, 21 of 94 glyphs at 9, 10, 11, 12, 13, 15, 16 px.
+
+Measured effect of applying rule 1 to Wine's own strikes (letters only,
+digits and punctuation untouched), as an experiment: in 163 letter pairs
+from palette words, the white gap between two letters differs from Windows
+in 1, 1, 3, 2, 3 pairs at 9, 10, 11, 12, 13 px (unchanged strikes: 56, 79,
+70, 111, 156), and the line width matches Windows within 0.1 % at 9-11 px.
+For Russian words: 0 pairs touching anywhere. The 13, 15 and 16 px Bold
+strikes are also thinner and narrower than Windows' glyphs (text 13-16 %
+narrower), and the 9-10 px Cyrillic Bold strikes are about 6 % wider; those
+are differences in the drawn glyphs themselves.
+
+Simulated italic of Tahoma (there is no italic face), same measurements:
+- Windows keeps the upright advance widths; Wine's are wider.
+- Windows draws it at 10-11 px without smoothing (the upright face's gasp
+  table), Wine smooths simulated styles regardless of gasp
+  (AntialiasFakeBoldOrItalic), so it comes out grey and faint.
+- Windows' slant is 1/3, not Wine's 0.25: each row of the italic glyph is
+  shifted right by round((h + 0.5) / 3) pixels against the upright glyph,
+  h = row height above the baseline (0 = the row just above it), halves
+  rounded away from zero. This is the rasterized sheared hinted outline;
+  shifting the upright bitmap rows reproduces only about 30 % of Windows'
+  italic glyphs exactly, the rest differ in the rows where the shift is
+  exactly half a pixel (h = 1, 4, 7, ...).
+
+Also seen: with any smoothing, Windows (ClearType) keeps the same advance
+widths as the monochrome rendering, and applications rely on them: Photoshop
+CS2 clips its "Opacity:" label at the ink end of Windows' glyphs.
 
 Prepared with the help of an AI agent; the numbers come from FreeType and
 GDI measurements of the fonts shipped with Wine 11.0 and of a Windows
