@@ -1,0 +1,41 @@
+Where: https://bugs.winehq.org (new bug; component win32u; search for duplicates first: "SetWindowRgn shape", "window region pixels missing", "set_surface_shape_rect")
+Status: PREPARED 2026-11-10, not posted (owner posts). Text only.
+
+Summary:
+Window regions lose or misplace narrow spans inside one byte of the shape mask (client-side graphics)
+
+Text:
+
+With client-side graphics (the default), a window region set with
+SetWindowRgn is turned into a 1-bit shape mask for the X window. A span of
+a region row that starts and ends within the same 8-pixel group of that
+mask comes out wrong: if the span ends exactly at a multiple of 8 it
+disappears, otherwise the pixels after its end are set instead of the
+span itself.
+
+Steps: a popup window 40 x 20 at 96 DPI with a region built from
+one-pixel-high rectangles, all rows [0,40) except row 5, which has two
+spans [2,4) and [8,40). Read back the X window's bounding shape
+(XShapeGetRectangles).
+
+Result: row 5 has only [8,40); the span [2,4) is missing (same with 192
+DPI, where it becomes [4,8) in device pixels and still vanishes).
+GetWindowRgn returns the correct region, so the region itself is right;
+only the shape mask is wrong.
+
+Cause, as far as I can see: when the left and right edge of a span fall
+into the same byte of the 1-bit mask, the code combines the "from left
+edge to the end of the byte" mask with the "from right edge to the end of
+the byte" mask by AND, which keeps the bits after the span. It needs the
+complement of the second mask (bits before the right edge), as the
+multi-byte case already does. With that change the test row comes out as
+[2,4) + [8,40).
+
+Real-world effect: the Adobe Photoshop CS2 splash screen (and its About
+box) is shaped from the alpha of the splash picture; in the concave notch
+next to the feather a few pixels of the window background stay visible
+(white on the splash, grey in the About box), and the outline of shaped
+windows in general can have stray or missing pixels.
+
+Prepared with the help of an AI agent; the shapes were read back from the
+X server on Xvfb.

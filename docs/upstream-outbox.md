@@ -20,6 +20,7 @@ second one with the link, then add the back link to the first as a comment.
 | 5 | WineHQ (new bug, duplicate search first) | inverting (XOR) pixels of colour cursors become transparent in the Xcursor path | to write after a Windows probe | candidate |
 | 6 | WineHQ (new bug, duplicate search first) | #43 part 1: caption-less owned popups shown without activation are override-redirect, so a splash stays on top of everything when the busy app's main window is minimized (not a Mint bug: Muffin hides managed transients correctly) | to write after a Windows parity check (ghosted app, owned popup) | candidate |
 | 11 | WineHQ (new bugs, one per case, duplicate search first) | HiDPI with fractional scaling (X11 screen at 2x, panel at 1.25x via xrandr; the owner's Cinnamon setup): collect every case where Wine output degrades after the downscale (thin lines, 1-px text detail, cursor sizes, DPI it reports) | to write per case after stand checks with scripts/as-seen.py | candidate |
+| 12 | WineHQ (new bug, duplicate search first) | #36 shape mask: a region span inside one byte of the 1-bit mask vanishes or shifts (set_surface_shape_rect, AND instead of AND NOT); stray pixels next to the Photoshop splash feather | docs/bugzilla/dllmgr-36-shape.txt (prepared 2026-11-10; owner posts) | due |
 
 ## Posted (for cross links)
 
