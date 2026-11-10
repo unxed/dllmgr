@@ -90,3 +90,14 @@ instead. Stand check: the button ran the command (a marker file appeared).
 `dllmgr assoc faststone dialog` shows a zenity checklist of the file types;
 checked types get FastStone as the default, unchecked ones get their
 previous default back.
+
+## Message timeline (#47, DLLMGR_MSGLOG=seconds)
+
+A WH_GETMESSAGE hook per hooked thread records every message removed from
+the queue (time in 0.1 ms, thread, message, window, wParam) from the moment
+%TEMP%\dllmgr-msglog-go exists, for `seconds`; then writes
+%TEMP%\dllmgr-msglog-<pid>.txt. Same proxy on Wine and on Windows, to
+compare when Photoshop's paint timer fires. Not yet verified end to end
+(the first build imported libgcc_s for a 64-bit division and broke the
+proxy; fixed with double arithmetic, and build.sh now refuses MinGW runtime
+DLL imports).

@@ -121,3 +121,7 @@ spent in each) from the dllmgr-27 proxy's existing message hooks, on Wine and
 on the Windows CI runner, and compare per-tick work; then find why a tick
 paints less under Wine (per-tile blit cost through the 2x scaling, or a
 time budget check).
+
+hold-resize-experiment.diff: the DLLMGR47_HOLD experiment (winex11, local
+tree only, not in any patch): no effect in the Ctrl+= case because no resize
+happens there. Kept for the owner's grown-window case (#47 video, #81).

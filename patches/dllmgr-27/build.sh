@@ -15,4 +15,8 @@ esac
 # vSetDdrawflag is only exported by msimg32.def; harmless in version.dll.
 i686-w64-mingw32-gcc -O2 -Wall -shared -s -o "$out" prefill.c $extra "$kind.def" \
 	-Wl,--enable-stdcall-fixup -Wl,--kill-at -lgdi32 -luser32
+# the proxy must load in any prefix: no MinGW runtime DLLs (a 64-bit division once pulled in libgcc_s)
+if i686-w64-mingw32-objdump -p "$out" | grep -qiE "DLL Name: (libgcc|libwinpthread|libstdc)"; then
+	echo "build.sh: $out imports a MinGW runtime DLL" >&2; exit 1
+fi
 echo "built $out"

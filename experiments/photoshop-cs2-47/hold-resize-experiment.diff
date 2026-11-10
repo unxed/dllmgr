@@ -1,0 +1,113 @@
+diff -u a/dlls/winex11.drv/bitblt.c b/dlls/winex11.drv/bitblt.c
+--- a/dlls/winex11.drv/bitblt.c
++++ b/dlls/winex11.drv/bitblt.c
+@@ -1798,6 +1798,8 @@
+     const unsigned char *src = color_bits;
+     unsigned char *dst = (unsigned char *)ximage->data;
+ 
++    dllmgr47_release_held( window_surface->hwnd, FALSE );  /* new size together with the new paint */
++
+     if (alpha_bits == -1)
+     {
+         if (alpha_mask || color_info->bmiHeader.biBitCount != 32) alpha_bits = 0;
+diff -u a/dlls/winex11.drv/event.c b/dlls/winex11.drv/event.c
+--- a/dlls/winex11.drv/event.c
++++ b/dlls/winex11.drv/event.c
+@@ -482,6 +482,7 @@
+ 
+     if (!data) return FALSE;
+     if (data->current_event) mask = 0;  /* don't process nested events */
++    dllmgr47_release_held( NULL, TRUE );  /* the window was not flushed in time */
+ 
+     prev_event.type = 0;
+     for (;;)
+diff -u a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
+--- a/dlls/winex11.drv/window.c
++++ b/dlls/winex11.drv/window.c
+@@ -1416,6 +1416,52 @@
+     }
+ }
+ 
++/* dllmgr #47: an application's resize of its window (Photoshop grows the
++ * document window when zooming) became visible at once, while the window's
++ * new contents came one surface flush later: the newly exposed strips showed
++ * stale screen pixels for a frame or more. With DLLMGR47_HOLD=1 a size change
++ * requested by the application is held back until the next flush of that
++ * window's surface (or 100 ms), so the new size and the new paint appear
++ * together. One window at a time; any other configure releases it first. */
++static pthread_mutex_t held_mutex = PTHREAD_MUTEX_INITIALIZER;
++static struct
++{
++    HWND hwnd;
++    Display *display;
++    Window window;
++    int screen;
++    unsigned int mask;
++    XWindowChanges changes;
++    UINT tick;
++} held;
++
++static BOOL dllmgr47_hold_enabled(void)
++{
++    static int enabled = -1;
++    if (enabled < 0)
++    {
++        const char *env = getenv( "DLLMGR47_HOLD" );
++        enabled = env && *env == '1';
++    }
++    return enabled;
++}
++
++/* hwnd: release that window's held resize; NULL: any held resize, or only an
++ * old one (> 100 ms) when timeout_only */
++void dllmgr47_release_held( HWND hwnd, BOOL timeout_only )
++{
++    if (!held.hwnd) return;
++    pthread_mutex_lock( &held_mutex );
++    if (held.hwnd && (hwnd ? held.hwnd == hwnd : !timeout_only || NtGetTickCount() - held.tick > 100))
++    {
++        TRACE( "releasing held resize of %p\n", held.hwnd );
++        XReconfigureWMWindow( held.display, held.window, held.screen, held.mask, &held.changes );
++        XFlush( held.display );
++        held.hwnd = 0;
++    }
++    pthread_mutex_unlock( &held_mutex );
++}
++
+ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL above )
+ {
+     UINT style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), mask = 0;
+@@ -1486,6 +1532,22 @@
+     data->configure_serial = NextRequest( data->display );
+     TRACE( "window %p/%lx, requesting config %s mask %#x above %u, serial %lu\n", data->hwnd, data->whole_window,
+            wine_dbgstr_rect(new_rect), mask, above, data->configure_serial );
++    dllmgr47_release_held( NULL, FALSE );  /* keep the order of configure requests */
++    if (dllmgr47_hold_enabled() && (mask & (CWWidth | CWHeight)) && !data->embedded &&
++        data->whole_window != root_window && data->current_state.wm_state == NormalState)
++    {
++        pthread_mutex_lock( &held_mutex );
++        held.hwnd = data->hwnd;
++        held.display = data->display;
++        held.window = data->whole_window;
++        held.screen = data->vis.screen;
++        held.mask = mask;
++        held.changes = changes;
++        held.tick = NtGetTickCount();
++        pthread_mutex_unlock( &held_mutex );
++        TRACE( "holding the resize of %p until its next flush\n", data->hwnd );
++        return;
++    }
+     XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
+ }
+ 
+diff -u a/dlls/winex11.drv/x11drv.h b/dlls/winex11.drv/x11drv.h
+--- a/dlls/winex11.drv/x11drv.h
++++ b/dlls/winex11.drv/x11drv.h
+@@ -720,6 +720,7 @@
+ extern BOOL is_net_supported( Atom atom );
+ 
+ extern Window init_clip_window(void);
++extern void dllmgr47_release_held( HWND hwnd, BOOL timeout_only );
+ extern void window_set_user_time( struct x11drv_win_data *data, Time time, BOOL init );
+ extern void note_process_user_time( Time time );
+ extern UINT get_window_net_wm_state( Display *display, Window window );

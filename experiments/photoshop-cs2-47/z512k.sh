@@ -4,7 +4,7 @@ OUT=$1; shift; mkdir -p $OUT; RT=/home/claude/work/rt-cur3
 export DISPLAY=:96 WINEPREFIX=/home/claude/work/photoshop-cs2/prefix-b
 PS="$WINEPREFIX/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2"
 $RT/bin/wineserver -k 2>/dev/null; sleep 1; cd "$PS"
-date +%s%N > $OUT/start; (env "$@" DLLMGR27_NO_TRAMPOLINE=1 WINEARCH=wow64 WINELOADER=$RT/bin/wine WINESERVER=$RT/bin/wineserver WINEDLLOVERRIDES=version=n,b WINEDEBUG=${WD:--all} setsid $RT/bin/wine Photoshop.exe > $OUT/wine.log 2>&1 &)
+date +%s%N > $OUT/start; (env "$@" DLLMGR27_NO_TRAMPOLINE=1 WINEARCH=wow64 WINELOADER=$RT/bin/wine WINESERVER=$RT/bin/wineserver WINEDLLOVERRIDES=version=n,b WINEDEBUG=${WD:--all} setsid $RT/bin/wine Photoshop.exe > ${LOG:-$OUT/wine.log} 2>&1 &)
 for i in $(seq 60); do sleep 3; wmctrl -l 2>/dev/null | grep -q 'Activation' && break; done
 sleep 3; xdotool mousemove 1770 1359 click 1; sleep 5; wmctrl -c 'Adobe Updater Preferences' 2>/dev/null; sleep 1
 F=$(xdotool search --name '^Adobe Photoshop$' | head -1); xdotool windowactivate --sync "$F"
@@ -13,7 +13,7 @@ wmctrl -l | cut -c20-80 | grep "@"
 for n in 1; do
   rm -f $OUT/n$n-*.png; xdotool mousemove 900 700; sleep 1
   ffmpeg -loglevel error -f x11grab -framerate 60 -video_size 3072x1728 -i :96 -t 2 -vf "crop=2000:1500:100:150,scale=500:375" $OUT/n$n-%03d.png &
-  FF=$!; touch /tmp/dllmgr-sample-go; sleep 0.5; date +%s%N > $OUT/notch; xdotool key ctrl+equal; wait $FF; sleep 1; xdotool key Escape; sleep 1; import -window root $OUT/settled$n.png
+  FF=$!; touch /tmp/dllmgr-sample-go "$WINEPREFIX/drive_c/users/root/AppData/Local/Temp/dllmgr-msglog-go"; sleep 0.5; date +%s%N > $OUT/notch; xdotool key ctrl+equal; wait $FF; sleep 1; xdotool key Escape; sleep 1; import -window root $OUT/settled$n.png
 done
 sleep 6; python3 - $OUT <<'PY'
 import sys, glob

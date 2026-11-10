@@ -915,12 +915,79 @@ static LRESULT CALLBACK after(int code, WPARAM wparam, LPARAM lparam)
     return CallNextHookEx(NULL, code, wparam, lparam);
 }
 
+/* Message timeline (#47, DLLMGR_MSGLOG=seconds, off by default): a
+ * WH_GETMESSAGE hook records every message the thread removes from its queue
+ * (time in 0.1 ms, message, window, wParam) once %TEMP%\dllmgr-msglog-go
+ * exists, for `seconds`; then %TEMP%\dllmgr-msglog-<pid>.txt is written.
+ * Same proxy on Wine and Windows, so the two timelines can be compared. */
+#define MSGLOG_MAX 20000
+static struct { DWORD t; UINT msg; DWORD hwnd; DWORD wparam; DWORD tid; } msglog[MSGLOG_MAX];
+static LONG msglog_n;
+static volatile LONG msglog_on;
+static LARGE_INTEGER msglog_freq, msglog_start;
+
+static LRESULT CALLBACK msglog_hook(int code, WPARAM wparam, LPARAM lparam)
+{
+    if (code == HC_ACTION && wparam == PM_REMOVE && msglog_on) {
+        const MSG *m = (const MSG *)lparam;
+        LONG i = InterlockedIncrement(&msglog_n) - 1;
+        if (i < MSGLOG_MAX) {
+            LARGE_INTEGER now;
+            QueryPerformanceCounter(&now);
+            msglog[i].t = (DWORD)((double)(now.QuadPart - msglog_start.QuadPart) * 10000.0 / (double)msglog_freq.QuadPart);  /* no 64-bit division: it would pull in libgcc_s */
+            msglog[i].msg = m->message;
+            msglog[i].hwnd = (DWORD)(ULONG_PTR)m->hwnd;
+            msglog[i].wparam = (DWORD)m->wParam;
+            msglog[i].tid = GetCurrentThreadId();
+        }
+    }
+    return CallNextHookEx(NULL, code, wparam, lparam);
+}
+
+static DWORD WINAPI msglog_writer(void *arg)
+{
+    char value[16], path[MAX_PATH], go[MAX_PATH], line[128];
+    DWORD got;
+    LONG i, n;
+    HANDLE file;
+    GetEnvironmentVariableA("DLLMGR_MSGLOG", value, sizeof(value));
+    GetTempPathA(sizeof(go) - 40, go);
+    lstrcpyA(path, go);
+    lstrcatA(go, "dllmgr-msglog-go");
+    while (GetFileAttributesA(go) == INVALID_FILE_ATTRIBUTES) Sleep(20);
+    QueryPerformanceFrequency(&msglog_freq);
+    QueryPerformanceCounter(&msglog_start);
+    msglog_on = 1;
+    Sleep((atoi(value) > 0 ? atoi(value) : 5) * 1000);
+    msglog_on = 0;
+    Sleep(50);
+    n = msglog_n < MSGLOG_MAX ? msglog_n : MSGLOG_MAX;
+    wsprintfA(path + lstrlenA(path), "dllmgr-msglog-%lu.txt", GetCurrentProcessId());
+    file = CreateFileA(path, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
+    if (file == INVALID_HANDLE_VALUE) return 0;
+    for (i = 0; i < n; i++) {
+        wsprintfA(line, "%lu.%lu %04lx %04x %08lx %lx\r\n", msglog[i].t / 10, msglog[i].t % 10, msglog[i].tid,
+                  msglog[i].msg, msglog[i].hwnd, msglog[i].wparam);
+        WriteFile(file, line, lstrlenA(line), &got, NULL);
+    }
+    CloseHandle(file);
+    return 0;
+}
+
+static void msglog_thread_hook(void)
+{
+    if (GetEnvironmentVariableA("DLLMGR_MSGLOG", NULL, 0))
+        SetWindowsHookExW(WH_GETMESSAGE, msglog_hook, self, GetCurrentThreadId());
+}
+
+
 static void hook_thread(void)
 {
     DWORD tid = GetCurrentThreadId();
     TRACE("hook thread %04lx\n", tid);
     SetWindowsHookExW(WH_CALLWNDPROC, before, self, tid);
     SetWindowsHookExW(WH_CALLWNDPROCRET, after, self, tid);
+    msglog_thread_hook();
 }
 
 /* Trampoline (issue 27, docs/tasks/27-every-launch-path.md): a stock-Wine
@@ -1437,6 +1504,8 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
         return TRUE;
     }
     if (reason == DLL_PROCESS_ATTACH) { start_sampler(); start_crash_report(); }  /* diagnostics, also with the proxy off */
+    if (reason == DLL_PROCESS_ATTACH && GetEnvironmentVariableA("DLLMGR_MSGLOG", NULL, 0))
+        CloseHandle(CreateThread(NULL, 0, msglog_writer, NULL, 0, NULL));
     if (GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0)) return TRUE;
     GetEnvironmentVariableA("DLLMGR27_MODE", mode, sizeof(mode));
     if (reason == DLL_PROCESS_ATTACH) {
