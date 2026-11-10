@@ -13,6 +13,13 @@ rendering and timing; the dump itself is not stored in the repo).
   (3072x1728) are not what the owner sees. Crisp 1-px detail at 2x becomes
   0.625-px detail; pixel-exact comparisons should also be checked after a
   0.625 downscale.
+  How it is set (owner's screenshot of Cinnamon "Display", 2026-11-10):
+  Resolution 1920 x 1080 (16:9), 60.02 Hz, landscape, **Monitor scaling
+  125 %** (choices 75/100/125/150/175/200 %). Cinnamon implements a
+  fractional 125 % on X11 as integer UI scale 2 (Xft.dpi 192, GDK scale 2)
+  plus an xrandr transform that makes the X screen 1920 * 1.6 = 3072 wide
+  and scales it back by 1/1.6 = 0.625 to the panel: 2 * 0.625 = 1.25.
+  Any Mint user who picks 125/150/175 % gets this kind of setup.
 - Xft: antialias 1, hinting 1, hintslight, rgba rgb; text-scaling-factor 1.0.
 - Cursor theme Bibata-Modern-Classic, size 24 (#44 theme matching).
 - 2543 fonts (fc-list), the stand has 701 (#70).
