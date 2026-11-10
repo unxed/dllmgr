@@ -1,0 +1,65 @@
+Where: WineHQ Bugzilla, comment in https://bugs.winehq.org/show_bug.cgi?id=34133
+(Photoshop CS2 splash background; our earlier comment there is c5). If the
+owner prefers a new bug instead, the same text works as a description; first
+search for duplicates ("splash", "initial window contents", "layered").
+Status: DRAFT 2026-11-10. Master retest: see the line marked RETEST below
+(fill in before posting). Owner posts.
+
+Text:
+
+Summary of what we found about the Photoshop CS2 splash screen under Wine
+(Wine 11.0 and wine.git master, X11, 96 and 192 DPI, CS2 9.0 tryout), in
+case it helps a proper fix.
+
+1. The splash is a plain top-level window (class PSFloatC, style 0x94000200,
+   ex-style 0x00000101). It is not layered and has no window region. The
+   rounded card, the feather and the soft shadow are drawn by Photoshop
+   itself into its own rectangular window. Photoshop's main thread does not
+   pump messages while the splash is up; it paints through GetDC/ReleaseDC.
+
+2. Photoshop composes the shadow and the antialiased edges over the existing
+   contents of its own, just-shown window: it expects the window to contain
+   what was on the screen under it. In Wine a new window's surface starts
+   filled with 0xFFFFFF (white; older Wine versions showed black, as in the
+   original report), so the margin outside the card becomes a white (or
+   black) rectangle.
+
+3. Confirmation: filling a new top-level window, right after it is shown,
+   with the screen contents under it (captured from the screen DC before the
+   window appears) makes the white rectangle disappear, with the card and
+   shadow drawn over the real background. We did this in a version.dll proxy
+   loaded into Photoshop only (WH_CALLWNDPROC hooks: capture on
+   WM_SHOWWINDOW, draw on WM_WINDOWPOSCHANGED with SWP_SHOWWINDOW). Capture
+   and drawing must be done in physical pixels for DPI-unaware applications
+   at 192 DPI, otherwise the copy is scaled twice.
+
+4. A snapshot alone leaves the margin frozen: anything that changes behind
+   the splash later (a window opened, the main window minimized) is hidden
+   by the stale copy. So we additionally cut the untouched margin out of the
+   window with SetWindowRgn after Photoshop has drawn: pixels still equal to
+   the snapshot were never painted by Photoshop and are pure background. The
+   margin then is really see-through and live; only the few pixels of the
+   soft shadow keep the background of the moment they were drawn.
+
+5. While doing 4 we hit a Wine bug in the X shape built from a window region
+   on the client-side rendering path (bug 60746): a span that starts and
+   ends inside the same byte of the 1-bit mask (for example x 4..8 at 192
+   DPI) is dropped, which left a fringe of 16 white or grey pixels left of
+   the feather. With that line fixed the fringe is 0 pixels.
+
+6. Screen reads: BitBlt from the screen DC over an area covered by a shown
+   but not yet painted window returns white (0xFFFFFF) on Wine, i.e. Wine's
+   own surface contents rather than what X shows there.
+
+What would fix it in Wine without application-specific code, as far as we
+can tell: initialize the surface of a newly shown top-level window from the
+screen contents under it (what Windows without composition effectively
+shows before the application paints), instead of a constant colour; a
+complete solution for the shadow would need the application's drawing to be
+over a live background, i.e. composition. On Windows the CS2 splash shows the
+card and its soft shadow over whatever is behind it.
+
+RETEST: wine.git master <commit>: <white rectangle still present / ...>.
+
+Prepared with the help of an AI agent; the description above is in words
+only, no code.
