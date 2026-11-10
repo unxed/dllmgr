@@ -72,3 +72,14 @@ Next: sample the main thread in the 5969.85-5970.94 gap (relay with
 RelayFromInclude=FSViewer.exe limited to kernel32/user32/gdi32 file, registry
 and shell calls, or winedbg backtraces every 100 ms) and time the same span
 on the Windows runner.
+
+## 2026-11-10: sampling the gap is blocked by tooling
+
+Tried three ways to sample FastStone's main thread in the ~1.1 s gap
+(runtime rt-cur3, wow64): `perf` does not run on this sandbox kernel
+(linux-tools for 6.18 missing); gdb attach sees only Unix-side frames
+without the 32-bit PE stack; `winedbg` attach (stdin "attach 0x20 / bt")
+crashes the injected break-in thread with a page fault at 0xffc00d6c in
+wow64 32-bit code, so no PE backtrace either. The last one looks like a
+Wine wow64 debugger bug (to retest on wine.git master before any report).
+Parked until a working sampler exists (#22 needs the same).
