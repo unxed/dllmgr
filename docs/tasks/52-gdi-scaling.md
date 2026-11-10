@@ -189,3 +189,17 @@ GetGlyphOutline metrics, ExtTextOut's own deltas) comes from the font
 realized without the hidden scale, times k in device units; only the glyph
 bitmaps come from the k-size font. The AGG placement then scales the run
 to exactly those widths.
+
+### 96-DPI metrics on GDI-scaled DCs (2026-11-10, patches/dllmgr-52b.patch)
+
+patches/dllmgr-52b.patch (font.c, applies after dllmgr-52-gdi; opt-in path
+only): font_SelectFont also realizes the font without the hidden scale
+(`mfont`); GetTextExtentExPoint(I), GetCharWidth, GetCharABCWidths(I) and
+GetTextMetrics take their values from it, times k in device units, so the
+application gets exactly the 96-DPI integers after the device-to-logical
+division. Glyph bitmaps still come from the k-size font. Photoshop: "100%"
+in Opacity/Fill fits its box again (experiments/photoshop-cs2-52/
+gdi-scaling-52b-metrics.png, text=agg-rgb). Not covered yet (doubtful
+spots, add when an app needs them): GetOutlineTextMetrics, GetGlyphOutline
+metrics, GetCharWidthInfo, kerning pairs. Next: the activation dialog's
+white patches, then the `scaling=gdi` setting.

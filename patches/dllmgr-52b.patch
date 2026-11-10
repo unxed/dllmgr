@@ -1,0 +1,151 @@
+--- a/dlls/win32u/font.c
++++ b/dlls/win32u/font.c
+@@ -55,6 +55,8 @@
+ {
+     struct gdi_physdev dev;
+     struct gdi_font   *font;
++    struct gdi_font   *mfont;  /* dllmgr #52b: the font without the hidden GDI scale, for metrics */
++    UINT               mk;     /* dllmgr #52b: that scale */
+ };
+ 
+ static inline struct font_physdev *get_font_dev( PHYSDEV dev )
+@@ -3238,6 +3240,7 @@
+     struct font_physdev *physdev = get_font_dev( dev );
+ 
+     release_gdi_font( physdev->font );
++    release_gdi_font( physdev->mfont );
+     free( physdev );
+     return TRUE;
+ }
+@@ -3882,6 +3885,21 @@
+ }
+ 
+ 
++/* dllmgr #52b: on a GDI-scaled DC the application must see the 96-DPI metrics,
++ * so advances come from the unscaled font, times the hidden scale (device units). */
++static DWORD metrics_outline( struct font_physdev *physdev, UINT glyph, UINT format, ABC *abc )
++{
++    DWORD ret;
++
++    if (!physdev->mfont) return get_glyph_outline( physdev->font, glyph, format, NULL, abc, 0, NULL, NULL );
++    ret = get_glyph_outline( physdev->mfont, glyph, format, NULL, abc, 0, NULL, NULL );
++    abc->abcA *= (int)physdev->mk;
++    abc->abcB *= physdev->mk;
++    abc->abcC *= (int)physdev->mk;
++    return ret;
++}
++
++
+ /*************************************************************
+  * font_GetCharABCWidths
+  */
+@@ -3902,7 +3920,7 @@
+     for (i = 0; i < count; i++)
+     {
+         c = chars ? chars[i] : first + i;
+-        get_glyph_outline( physdev->font, c, GGO_METRICS, NULL, &buffer[i], 0, NULL, NULL );
++        metrics_outline( physdev, c, GGO_METRICS, &buffer[i] );
+     }
+     pthread_mutex_unlock( &font_lock );
+     return TRUE;
+@@ -3927,8 +3945,7 @@
+ 
+     pthread_mutex_lock( &font_lock );
+     for (c = 0; c < count; c++, buffer++)
+-        get_glyph_outline( physdev->font, gi ? gi[c] : first + c, GGO_METRICS | GGO_GLYPH_INDEX,
+-                           NULL, buffer, 0, NULL, NULL );
++        metrics_outline( physdev, gi ? gi[c] : first + c, GGO_METRICS | GGO_GLYPH_INDEX, buffer );
+     pthread_mutex_unlock( &font_lock );
+     return TRUE;
+ }
+@@ -3955,7 +3972,7 @@
+     for (i = 0; i < count; i++)
+     {
+         c = chars ? chars[i] : i + first;
+-        if (get_glyph_outline( physdev->font, c, GGO_METRICS, NULL, &abc, 0, NULL, NULL ) == GDI_ERROR)
++        if (metrics_outline( physdev, c, GGO_METRICS, &abc ) == GDI_ERROR)
+             buffer[i] = 0;
+         else
+             buffer[i] = abc.abcA + abc.abcB + abc.abcC;
+@@ -4314,7 +4331,7 @@
+     pthread_mutex_lock( &font_lock );
+     for (i = pos = 0; i < count; i++)
+     {
+-        get_glyph_outline( physdev->font, str[i], GGO_METRICS, NULL, &abc, 0, NULL, NULL );
++        metrics_outline( physdev, str[i], GGO_METRICS, &abc );
+         pos += abc.abcA + abc.abcB + abc.abcC;
+         dxs[i] = pos;
+     }
+@@ -4343,8 +4360,7 @@
+     pthread_mutex_lock( &font_lock );
+     for (i = pos = 0; i < count; i++)
+     {
+-        get_glyph_outline( physdev->font, indices[i], GGO_METRICS | GGO_GLYPH_INDEX,
+-                           NULL, &abc, 0, NULL, NULL );
++        metrics_outline( physdev, indices[i], GGO_METRICS | GGO_GLYPH_INDEX, &abc );
+         pos += abc.abcA + abc.abcB + abc.abcC;
+         dxs[i] = pos;
+     }
+@@ -4438,7 +4454,27 @@
+     }
+ 
+     pthread_mutex_lock( &font_lock );
+-    if (font_funcs->set_outline_text_metrics( physdev->font ) ||
++    if (physdev->mfont)  /* dllmgr #52b: 96-DPI metrics times the hidden scale */
++    {
++        struct gdi_font *m = physdev->mfont;
++        UINT k = physdev->mk;
++
++        if (font_funcs->set_outline_text_metrics( m ) || font_funcs->set_bitmap_text_metrics( m ))
++        {
++            *metrics = m->otm.otmTextMetrics;
++            scale_font_metrics( m, metrics );
++            metrics->tmHeight *= k;
++            metrics->tmAscent *= k;
++            metrics->tmDescent *= k;
++            metrics->tmInternalLeading *= k;
++            metrics->tmExternalLeading *= k;
++            metrics->tmAveCharWidth *= k;
++            metrics->tmMaxCharWidth *= k;
++            metrics->tmOverhang *= k;
++            ret = TRUE;
++        }
++    }
++    else if (font_funcs->set_outline_text_metrics( physdev->font ) ||
+         font_funcs->set_bitmap_text_metrics( physdev->font ))
+     {
+         *metrics = physdev->font->otm.otmTextMetrics;
+@@ -4586,7 +4622,7 @@
+ static HFONT font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+ {
+     struct font_physdev *physdev = get_font_dev( dev );
+-    struct gdi_font *font = NULL, *prev = physdev->font;
++    struct gdi_font *font = NULL, *prev = physdev->font, *mprev = physdev->mfont, *mfont = NULL;
+     DC *dc = get_physdev_dc( dev );
+ 
+     if (hfont)
+@@ -4648,6 +4684,13 @@
+         pthread_mutex_lock( &font_lock );
+ 
+         font = select_font( &lf, dcmat, can_use_bitmap );
++        if (font && dc->dllmgr_scale > 1)  /* dllmgr #52b: the same font without the hidden scale */
++        {
++            LOGFONTW lf1 = lf;
++            lf1.lfHeight = lf.lfHeight / (int)dc->dllmgr_scale;
++            lf1.lfWidth = lf.lfWidth / (int)dc->dllmgr_scale;
++            if (lf1.lfHeight || !lf.lfHeight) mfont = select_font( &lf1, dcmat, FALSE );
++        }
+ 
+         if (font)
+         {
+@@ -4676,7 +4719,10 @@
+         pthread_mutex_unlock( &font_lock );
+     }
+     physdev->font = font;
++    physdev->mfont = mfont;
++    physdev->mk = mfont ? dc->dllmgr_scale : 1;
+     if (prev) release_gdi_font( prev );
++    if (mprev) release_gdi_font( mprev );
+     return font ? hfont : 0;
+ }
+ 
