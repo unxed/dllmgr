@@ -145,3 +145,18 @@ SHA256 `919b642d910995089a21c27780eb4e54140ac917549d7d34ceab6157c01d02ea`
   https://web.archive.org/web/20240522171734/http://download.adobe.com/pub/adobe/photoshop/win/cs2/Photoshop_CS2.exe
 - Keep it at `/home/claude/work/photoshop-cs2/dl/`, outside the repo; never
   commit or upload the installer or prefix contents.
+
+## Muffin does not survive between replies (2026-11-10)
+
+A Muffin started detached (`sandbox-stand.sh up`) is usually stopped a few
+minutes after the agent's reply ends; Xvfb keeps running and the root
+window keeps a stale _NET_SUPPORTING_WM_CHECK, so `up` thinks a WM runs and
+does not start one. Symptoms: `wmctrl -l` prints nothing, scripts waiting
+for a window title time out (e.g. 240 s to "Activation"), the screen shows
+undecorated windows. Start the WM in the same command as the experiment:
+`pgrep -f "muffin --sm-disable" >/dev/null || (setsid dbus-run-session --
+muffin --sm-disable --x11 --replace >LOG 2>&1 &); sleep 2`. Once Muffin
+also crashed (assertion in meta_workspace_add_window) after gdb/winedbg
+experiments on the same display; restart it the same way.
+A second stand on :96 (STAND_DIR=/home/claude/work/cur/m96) with a prefix
+copy keeps experiments apart from :95.
