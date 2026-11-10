@@ -19,6 +19,7 @@ second one with the link, then add the back link to the first as a comment.
 | 4 | WineHQ 57513 (comment) | PuTTY IME: needs IBus + us,ru + UTF-8; result notify not forwarded to the IME UI window | to write after the bisect | due |
 | 5 | WineHQ (new bug, duplicate search first) | inverting (XOR) pixels of colour cursors become transparent in the Xcursor path | to write after a Windows probe | candidate |
 | 6 | WineHQ (new bug, duplicate search first) | #43 part 1: caption-less owned popups shown without activation are override-redirect, so a splash stays on top of everything when the busy app's main window is minimized (not a Mint bug: Muffin hides managed transients correctly) | to write after a Windows parity check (ghosted app, owned popup) | candidate |
+| 11 | WineHQ (new bugs, one per case, duplicate search first) | HiDPI with fractional scaling (X11 screen at 2x, panel at 1.25x via xrandr; the owner's Cinnamon setup): collect every case where Wine output degrades after the downscale (thin lines, 1-px text detail, cursor sizes, DPI it reports) | to write per case after stand checks with scripts/as-seen.sh | candidate |
 
 ## Posted (for cross links)
 

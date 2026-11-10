@@ -45,6 +45,15 @@ Rules (owner's, non-negotiable):
 - Reproduce every owner complaint on the owner's stack first: Linux Mint
   Cinnamon, X11, Muffin (`STAND_WM=muffin`, the stand default). Other WMs
   only as an extra comparison (owner, 2026-11-09).
+- **Trap: what the owner sees is not the X screen.** His laptop panel is
+  1920x1080, the X screen 3072x1728: Cinnamon's fractional scaling renders
+  at 2x and xrandr scales the whole framebuffer by 0.625 to the panel
+  (docs/owner-machine.md). Screenshots and the stand show the 2x frame;
+  his eyes get it resampled to ~120 DPI. Judge text, thin lines, cursors
+  and pixel-exact fixes also after a 0.625 downscale
+  (scripts/as-seen.sh), and keep in mind that HiDPI with fractional scaling
+  is common: every case where Wine handles it badly is a WineHQ report
+  for docs/upstream-outbox.md (owner, 2026-11-10).
 - When a fix lives only in the private runtime (a Wine patch), also look,
   without waiting to be asked, for an in-process workaround (proxy DLL,
   hooks, Win32-only means) that gives the same result on any Wine, and ship
