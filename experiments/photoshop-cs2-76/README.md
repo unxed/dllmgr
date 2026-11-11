@@ -103,6 +103,49 @@ It is a workaround for Photoshop's own bug; no Wine patch is involved, so
 nothing goes to docs/upstream-outbox.md until the trigger is known (if the
 trigger turns out to be a Wine window-tree difference, that is the report).
 
+## Clean-room implementation (2026-11-11)
+
+Written from the plain-text description above only (sections "Cause" and
+"Fix"), by an agent that did not read Photoshop.exe or any Adobe binary and
+did not look at the earlier guard (b5fb763's proxy diff, removed in 2da5a9b).
+Facts used: the hit test at exe+0xb01a90 with (point, out record) -> part
+code, its GetDlgItem(.., 0) through the delay-import slot, NULL leaving the
+record unset, part 0 as "nothing here", link stamp 0x42400fac.
+
+patches/dllmgr-27/prefill.c, "#76 hit-test guard" (version.dll build, also
+with DLLMGR27_OFF=1; `DLLMGR76_NO_GUARD=1` turns it off):
+- the exe's delay-import slot of user32 GetDlgItem points to a hook;
+- the hook acts only for a NULL answer to id 0 when its return address lies
+  in the hit test's body (exe+0xb01a90 .. +0x1000) and the call instruction
+  there is `call [that slot]`;
+- it finds the hit test's frame on the stack: the first return address right
+  after a `call exe+0xb01a90`, followed by the arguments (point, out); the out
+  pointer must lie on the same stack, above that frame;
+- it sets the record to NULL and swaps the hit test's return address for a
+  stub that makes the part code 0 and continues at the real return address
+  (one redirect at a time);
+- one `dllmgr76: guard: hit test from exe+0x.. on HWND (class .., parent/owner
+  ..) without a view child; answered 'nothing here'` line per window;
+  `DLLMGR76_TRACE=N` logs the first N such calls with point, record and frame.
+
+Stand (:134, Muffin, 192 DPI, runtime v21, fresh copies of prefix-clean,
+proxy from `build.sh version`, `t76.sh`):
+- SCEN=fake, guard on, `DLLMGR76_TRACE=1000`: the guard fired, Photoshop
+  stayed up through both fake76 variants. 924 hit-test calls took the empty
+  path (492 from exe+0xa76688, 288 from +0x748cd3, 144 from +0xa73dcf; the
+  same callers as guard-run.txt), the frame was found every time. Log:
+  `dllmgr76: guard: hit test from exe+0xa76688 on 0003093E (class PSFloatC,
+  parent/owner 00000000 ) without a view child; answered 'nothing here'`.
+- SCEN=fake with `DLLMGR76_NO_GUARD=1`: no guard line, Photoshop up (the
+  crashing caller exe+0x4a0130 is still not reached by the synthetic
+  trigger, as before).
+- normal start with C:\t46.png (MENU_ONLY=1: startup, idle, hover sweep,
+  File menu): document window and palettes as usual, no guard line, no
+  unhandled exception.
+- All runs, guard on or off, also log a handled access violation at
+  exe+0xd599e3/7 shortly after the startup box; unrelated to the guard
+  (docs/sandbox-findings.md F29).
+
 ## Next steps
 
 1. Ship the proxy (next runtime/proxy build) and ask nothing of the owner:

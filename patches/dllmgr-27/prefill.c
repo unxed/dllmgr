@@ -1343,6 +1343,156 @@ static void start_crash_report(void)
     AddVectoredExceptionHandler(1, crash_handler);
 }
 
+#ifdef DLLMGR27_CAPTIONLESS_ONLY
+/* #76 hit-test guard (on by default, DLLMGR76_NO_GUARD=1 turns it off;
+ * experiments/photoshop-cs2-76/README.md). Photoshop.exe 9.0 (link stamp
+ * 0x42400fac) finds the window under the cursor with a hit test at
+ * exe+0xb01a90 (screen point, out window record -> part code). For a window
+ * of its document or palette class it asks GetDlgItem(w, 0) for the content
+ * view; when there is none it returns part 4/5 but never writes the record,
+ * and one caller then takes the cursor point for a record pointer (crash at
+ * exe+0xb249ce). The exe's delay-import slot of GetDlgItem gets a hook that
+ * acts only for calls made through that slot from the hit test: when the
+ * answer is NULL, the record is set to NULL and the hit test returns through
+ * a stub that makes its part code 0, its own "nothing here" answer, which
+ * every caller handles. One "dllmgr76: guard:" line per such window on
+ * stderr (the run log). DLLMGR76_TRACE=N logs the first N such calls. */
+#define PS9_STAMP 0x42400fac
+#define PS9_HIT_TEST 0xb01a90
+#define PS9_HIT_TEST_SPAN 0x1000  /* the GetDlgItem calls lie in the hit test's own body */
+
+static BYTE *guard_exe, *guard_code_end;
+static void **guard_slot;
+static HWND (WINAPI *real_get_dlg_item)(HWND, int);
+static LONG guard_trace;
+static HWND guard_logged[32];
+static LONG guard_logged_n;
+static DWORD *guard_where;  /* stack slot of the hit test's return address while redirected */
+static void *volatile guard_return __asm__("dllmgr76_guard_return") __attribute__((used));
+
+/* The redirected hit test returns here: part code 0, then on to its caller
+ * (the stack is as the hit test left it, whatever its calling convention). */
+void guard_nothing(void) __asm__("dllmgr76_guard_nothing");
+__asm__(".text\n"
+        "dllmgr76_guard_nothing:\n"
+        "\tpushl dllmgr76_guard_return\n"
+        "\tmovl $0, dllmgr76_guard_return\n"
+        "\txorl %eax, %eax\n"
+        "\tret\n");
+
+/* a return address right after "call exe+PS9_HIT_TEST" (E8 rel32) */
+static BOOL returns_from_hit_test(BYTE *ret)
+{
+    if (ret < guard_exe + 5 || ret >= guard_code_end) return FALSE;
+    return ret[-5] == 0xe8 && ret + *(INT32 *)(ret - 4) == guard_exe + PS9_HIT_TEST;
+}
+
+static HWND WINAPI get_dlg_item_guard(HWND hwnd, int id)
+{
+    HWND ret = real_get_dlg_item(hwnd, id);
+    BYTE *from = __builtin_return_address(0);
+    DWORD *frame = __builtin_frame_address(0), *top, *p, *out, caller = 0;
+    char line[300], cls[64], ocls[64];
+    HWND other;
+    LONG i;
+
+    __asm__("movl %%fs:4, %0" : "=r"(top));  /* NT_TIB StackBase */
+    /* only "call [slot]" (FF 15 slot) from the hit test's body */
+    if (ret || id || from < guard_exe + PS9_HIT_TEST + 6 || from >= guard_exe + PS9_HIT_TEST + PS9_HIT_TEST_SPAN ||
+        from[-6] != 0xff || from[-5] != 0x15 || *(void ***)(from - 4) != guard_slot)
+        return ret;
+    cls[0] = ocls[0] = 0;
+    /* the hit test's own frame: its return address into a caller, then its
+     * arguments (point, out record pointer); the record lies on the stack */
+    for (p = frame + 2, out = NULL; p + 3 <= top && p < frame + 2 + 1024; p++)
+        if (returns_from_hit_test((BYTE *)(ULONG_PTR)*p)) {
+            out = (DWORD *)(ULONG_PTR)p[2];
+            caller = *p;
+            break;
+        }
+    if (guard_trace > 0 && InterlockedDecrement(&guard_trace) >= 0) {
+        GetClassNameA(hwnd, cls, sizeof(cls));
+        if (out) wsprintfA(line, "dllmgr76: trace: hit test from exe+0x%lx point %08lx: GetDlgItem(%p %s, 0) = NULL, record at %p (frame %p, stack top %p)\n",
+                           caller - (DWORD)(ULONG_PTR)guard_exe, p[1], (void *)hwnd, cls, (void *)out, (void *)p, (void *)top);
+        else wsprintfA(line, "dllmgr76: trace: hit test at exe+0x%lx: GetDlgItem(%p %s, 0) = NULL, frame not found\n",
+                       (DWORD)(from - guard_exe), (void *)hwnd, cls);
+        crash_say(line);
+    }
+    if (!out || out <= p + 2 || out >= top || ((ULONG_PTR)out & 3)) return ret;
+    /* one redirect at a time; a stale one of this thread (the hit test was
+     * left without returning) no longer has the stub in its slot */
+    if (InterlockedCompareExchangePointer((void **)&guard_return, (void *)(ULONG_PTR)caller, NULL)) {
+        DWORD *where = guard_where;
+        if (!where || where <= frame || where >= top || *where == (DWORD)(ULONG_PTR)guard_nothing) return ret;
+        guard_return = NULL;
+        if (InterlockedCompareExchangePointer((void **)&guard_return, (void *)(ULONG_PTR)caller, NULL)) return ret;
+    }
+    *out = 0;
+    guard_where = p;
+    *p = (DWORD)(ULONG_PTR)guard_nothing;
+
+    for (i = 0; i < guard_logged_n && i < (LONG)ARRAYSIZE(guard_logged); i++)
+        if (guard_logged[i] == hwnd) return ret;
+    if ((i = InterlockedIncrement(&guard_logged_n) - 1) >= (LONG)ARRAYSIZE(guard_logged)) return ret;
+    guard_logged[i] = hwnd;
+    other = GetParent(hwnd);
+    GetClassNameA(hwnd, cls, sizeof(cls));
+    if (other) GetClassNameA(other, ocls, sizeof(ocls));
+    wsprintfA(line, "dllmgr76: guard: hit test from exe+0x%lx on %p (class %s, parent/owner %p %s) without a view child; answered 'nothing here'\n",
+              caller - (DWORD)(ULONG_PTR)guard_exe, (void *)hwnd, cls, (void *)other, ocls);
+    crash_say(line);
+    return ret;
+}
+
+static void start_hit_test_guard(void)
+{
+    typedef struct { DWORD attrs, name, hmod, iat, nt, bound, unload, stamp; } delay_desc;
+    BYTE *base = (BYTE *)GetModuleHandleW(NULL);
+    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)(base + ((IMAGE_DOS_HEADER *)base)->e_lfanew);
+    IMAGE_DATA_DIRECTORY *dir = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
+    IMAGE_SECTION_HEADER *sec = IMAGE_FIRST_SECTION(nt);
+    char value[16];
+    delay_desc *d;
+    int i;
+
+    if (GetEnvironmentVariableA("DLLMGR76_NO_GUARD", NULL, 0) || nt->FileHeader.TimeDateStamp != PS9_STAMP ||
+        !dir->VirtualAddress || !(real_get_dlg_item = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "GetDlgItem")))
+        return;
+    if (GetEnvironmentVariableA("DLLMGR76_TRACE", value, sizeof(value))) guard_trace = atoi(value);
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
+        if (PS9_HIT_TEST >= sec->VirtualAddress && PS9_HIT_TEST < sec->VirtualAddress + sec->Misc.VirtualSize &&
+            (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE))
+            guard_code_end = base + sec->VirtualAddress + sec->Misc.VirtualSize;
+    if (!guard_code_end) return;
+    guard_exe = base;
+#define DELAY_PTR(d, v) ((d)->attrs & 1 ? base + (v) : (BYTE *)(ULONG_PTR)(v))
+    for (d = (delay_desc *)(base + dir->VirtualAddress); d->name && !guard_slot; d++) {
+        IMAGE_THUNK_DATA *names = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->nt), *slots = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->iat);
+        if (lstrcmpiA((char *)DELAY_PTR(d, d->name), "user32.dll")) continue;
+        for (; names->u1.AddressOfData; names++, slots++) {
+            DWORD protect;
+            if (IMAGE_SNAP_BY_ORDINAL(names->u1.Ordinal) ||
+                strcmp((char *)((IMAGE_IMPORT_BY_NAME *)DELAY_PTR(d, names->u1.AddressOfData))->Name, "GetDlgItem"))
+                continue;
+            if (!VirtualProtect(&slots->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) break;
+            slots->u1.Function = (ULONG_PTR)get_dlg_item_guard;
+            VirtualProtect(&slots->u1.Function, sizeof(void *), protect, &protect);
+            guard_slot = (void **)&slots->u1.Function;
+            break;
+        }
+    }
+#undef DELAY_PTR
+    if (guard_trace > 0) {
+        char line[160];
+        wsprintfA(line, "dllmgr76: trace: guard %s (GetDlgItem delay slot %p)\n", guard_slot ? "installed" : "NOT installed",
+                  (void *)guard_slot);
+        crash_say(line);
+    }
+}
+#else
+static void start_hit_test_guard(void) {}
+#endif
+
 
 /* Sampling profiler (DLLMGR_SAMPLE=ms[,seconds[,delay|go]], off by default): a thread
  * suspends the main thread every few ms and records EIP plus the first
@@ -1506,6 +1656,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
         return TRUE;
     }
     if (reason == DLL_PROCESS_ATTACH) { start_sampler(); start_crash_report(); }  /* diagnostics, also with the proxy off */
+    if (reason == DLL_PROCESS_ATTACH) start_hit_test_guard();  /* #76: crash guard, also with the proxy off */
     if (reason == DLL_PROCESS_ATTACH && GetEnvironmentVariableA("DLLMGR_MSGLOG", NULL, 0))
         CloseHandle(CreateThread(NULL, 0, msglog_writer, NULL, 0, NULL));
     if ((reason == DLL_PROCESS_ATTACH || reason == DLL_THREAD_ATTACH) && GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0)) {

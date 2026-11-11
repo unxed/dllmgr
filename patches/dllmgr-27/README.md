@@ -79,6 +79,20 @@ of #71. Logging only (the exception goes on), at most 4 reports.
 (reads from msimg32.dll after FreeLibrary) gives "0x7a4e1000 is inside
 msimg32.dll UNLOADED 0 ms ago".
 
+## Hit-test guard (#76, DLLMGR76_NO_GUARD=1 turns it off)
+
+version.dll build only, only for Photoshop.exe 9.0 (link stamp
+0x42400fac), also with DLLMGR27_OFF=1. Photoshop's cursor hit test
+(exe+0xb01a90) leaves its out window record unwritten when the window under
+the cursor (or its owner) has no child with id 0, and one caller then crashes
+at exe+0xb249ce (experiments/photoshop-cs2-76/README.md). The exe's
+delay-import slot of GetDlgItem is hooked; for a NULL GetDlgItem(.., 0) made
+through that slot from the hit test, the record is set to NULL and the hit
+test returns 0 ("nothing here") through a small stub. One
+`dllmgr76: guard: hit test from exe+0x.. on HWND (class .., parent/owner ..)`
+line per window in the run log; `DLLMGR76_TRACE=N` logs the first N such
+calls. Clean-room implementation from the description (2026-11-11).
+
 ## FastStone "Association Settings" (#73, DLLMGR73_ASSOC)
 
 FastStone's button calls ShellExecuteA("open", "control", "/name
