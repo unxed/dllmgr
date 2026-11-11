@@ -445,6 +445,24 @@ def dllmgr_version():
         return 'unknown (' + str(HERE.parent) + ' is not a readable git checkout)'
 
 
+def dllmgr_revision():
+    """Full commit of this dllmgr for the app journal (`dllmgr upgrade` compares
+    it): install.sh's record, else a clean checkout's HEAD; None when unknown."""
+    record = HERE.parent / '.dllmgr-revision'
+    if record.is_file():
+        value = record.read_text().strip()
+        return value if re.fullmatch('[0-9a-f]{40}', value) else None
+    try:
+        git = ['git', '-C', str(HERE.parent)]
+        if subprocess.check_output(git + ['status', '--porcelain', '--', 'dllmgr', 'catalog', 'patches', 'scripts'],
+                                   text=True, stderr=subprocess.DEVNULL).strip():
+            return None  # local edits: no commit describes this code
+        value = subprocess.check_output(git + ['rev-parse', 'HEAD'], text=True, stderr=subprocess.DEVNULL).strip()
+        return value if re.fullmatch('[0-9a-f]{40}', value) else None
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
 def running_on(exe_name, proc=Path('/proc')):
     """(pid, 'private runtime' | 'system Wine' | '?') for running copies of exe_name (diagnostics, #44/#45)."""
     found = []
@@ -639,7 +657,8 @@ def install(args, prefix):
                      target=target, exe_sha256=digest(exe), fix=args.fix, release=release,
                      generation=generation, files=hashes, runtime=str(runtime), base=str(base),
                      package_sha256=digest(package), desktops=owned,
-                     runtime_release=runtime_release(args.runtime_package))
+                     runtime_release=runtime_release(args.runtime_package),
+                     dllmgr_revision=dllmgr_revision())
         if app != 'faststone':
             state['app'] = app
         changes = [dict(path=str(p.absolute()),
