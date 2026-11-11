@@ -37,6 +37,7 @@ class ShareTest(unittest.TestCase):
         (self.checkout / "scripts").mkdir()
         shutil.copy2(ROOT / "scripts" / "share-recipe.py", self.checkout / "scripts")
         shutil.copy2(ROOT / "scripts" / "catalog_fixes.py", self.checkout / "scripts")
+        shutil.copy2(ROOT / "scripts" / "install-version.sh", self.checkout / "scripts")
         shutil.copytree(ROOT / "catalog", self.checkout / "catalog")
         (self.checkout / "patches").mkdir()
         (self.checkout / "patches" / "test.patch").touch()
