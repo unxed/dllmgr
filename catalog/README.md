@@ -65,6 +65,13 @@ A source patch for one bug.
 | `ai_assisted` | no | `true` if an AI agent wrote the change |
 | `funding` | no | URL of a bounty or donation page; dllmgr only shows it |
 
+An AI-assisted fix can end its prose with an `## AI usage` section: the
+output of `scripts/ai-usage.py N` for its ticket (harness and model, agents,
+input/output/cache tokens, API-equivalent cost; #72). It counts the agents
+that worked on that ticket from the local Claude Code transcripts, not the
+coordinating session or cloud agents, and the cost is what the tokens would
+cost on the Claude API (scripts/ai-prices.json), not what was billed.
+
 ## The description in words
 
 The prose of a fix file is a product, not a comment. It is the part a Wine
