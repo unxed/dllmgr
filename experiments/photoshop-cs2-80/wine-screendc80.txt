@@ -1,0 +1,42 @@
+# stand :132 (Xvfb 3072x1728, 192 DPI), screendc80.exe (i686): v23 runtime, rt80 (v23 + dllmgr-80), rt80 with DLLMGR80_OFF=1
+=== b0c4e61a772b7ad6ac19adf8b00658ed07817220215e0cc25e85078ba4ac1f3c
+PMv2 thread: SM_CXSCREEN=3072 SM_CYSCREEN=1728 monitor dpi=192
+unaware thread: SM_CXSCREEN=1536 SM_CYSCREEN=864 system dpi=96
+unaware thread: desktop window rect 0,0-1536,864
+unaware thread: SetCursorPos(400,300) -> GetCursorPos 400,300
+GetDC(NULL): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-3072,1728
+GetWindowDC(GetDesktopWindow()): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-3072,1728
+GetDCEx(desktop,DCX_WINDOW|DCX_CACHE|DCX_LOCKWINDOWUPDATE): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-3072,1728
+CreateDC("DISPLAY"): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-3072,1728
+GetDC(NULL) R2_NOT outline logical 100,100-300,250: changed 696 px, physical box 100,100-300,250 (200x150)
+GetWindowDC(GetDesktopWindow()) R2_NOT outline logical 100,100-300,250: changed 696 px, physical box 100,100-300,250 (200x150)
+GetDCEx(desktop,DCX_WINDOW|DCX_CACHE|DCX_LOCKWINDOWUPDATE) R2_NOT outline logical 100,100-300,250: changed 696 px, physical box 100,100-300,250 (200x150)
+CreateDC("DISPLAY") R2_NOT outline logical 100,100-300,250: changed 696 px, physical box 100,100-300,250 (200x150)
+GetDC(NULL) PatBlt(DSTINVERT) logical 100,100-300,250: changed 30000 px, physical box 100,100-300,250 (200x150)
+GetWindowDC(GetDesktopWindow()) PatBlt(DSTINVERT) logical 100,100-300,250: changed 30000 px, physical box 100,100-300,250 (200x150)
+GetDCEx(desktop,DCX_WINDOW|DCX_CACHE|DCX_LOCKWINDOWUPDATE) PatBlt(DSTINVERT) logical 100,100-300,250: changed 30000 px, physical box 100,100-300,250 (200x150)
+CreateDC("DISPLAY") PatBlt(DSTINVERT) logical 100,100-300,250: changed 30000 px, physical box 100,100-300,250 (200x150)
+=== rt80
+PMv2 thread: SM_CXSCREEN=3072 SM_CYSCREEN=1728 monitor dpi=192
+unaware thread: SM_CXSCREEN=1536 SM_CYSCREEN=864 system dpi=96
+unaware thread: desktop window rect 0,0-1536,864
+unaware thread: SetCursorPos(400,300) -> GetCursorPos 400,300
+GetDC(NULL): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-1536,864
+GetWindowDC(GetDesktopWindow()): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-1536,864
+GetDCEx(desktop,DCX_WINDOW|DCX_CACHE|DCX_LOCKWINDOWUPDATE): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-1536,864
+CreateDC("DISPLAY"): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-3072,1728
+GetDC(NULL) R2_NOT outline logical 100,100-300,250: changed 1392 px, physical box 200,200-599,499 (399x299)
+GetWindowDC(GetDesktopWindow()) R2_NOT outline logical 100,100-300,250: changed 1392 px, physical box 200,200-599,499 (399x299)
+GetDCEx(desktop,DCX_WINDOW|DCX_CACHE|DCX_LOCKWINDOWUPDATE) R2_NOT outline logical 100,100-300,250: changed 1392 px, physical box 200,200-599,499 (399x299)
+CreateDC("DISPLAY") R2_NOT outline logical 100,100-300,250: changed 696 px, physical box 100,100-300,250 (200x150)
+GetDC(NULL) PatBlt(DSTINVERT) logical 100,100-300,250: changed 120000 px, physical box 200,200-600,500 (400x300)
+GetWindowDC(GetDesktopWindow()) PatBlt(DSTINVERT) logical 100,100-300,250: changed 120000 px, physical box 200,200-600,500 (400x300)
+GetDCEx(desktop,DCX_WINDOW|DCX_CACHE|DCX_LOCKWINDOWUPDATE) PatBlt(DSTINVERT) logical 100,100-300,250: changed 120000 px, physical box 200,200-600,500 (400x300)
+CreateDC("DISPLAY") PatBlt(DSTINVERT) logical 100,100-300,250: changed 30000 px, physical box 100,100-300,250 (200x150)
+=== rt80 DLLMGR80_OFF=1
+GetDC(NULL): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-3072,1728
+GetWindowDC(GetDesktopWindow()): HORZRES=1536 VERTRES=864 DESKTOPHORZRES=3072 LOGPIXELSX=96 clipbox(2) 0,0-3072,1728
+GetDC(NULL) R2_NOT outline logical 100,100-300,250: changed 696 px, physical box 100,100-300,250 (200x150)
+GetWindowDC(GetDesktopWindow()) R2_NOT outline logical 100,100-300,250: changed 696 px, physical box 100,100-300,250 (200x150)
+GetDC(NULL) PatBlt(DSTINVERT) logical 100,100-300,250: changed 30000 px, physical box 100,100-300,250 (200x150)
+GetWindowDC(GetDesktopWindow()) PatBlt(DSTINVERT) logical 100,100-300,250: changed 30000 px, physical box 100,100-300,250 (200x150)

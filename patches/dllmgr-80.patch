@@ -1,0 +1,136 @@
+--- a/dlls/win32u/clipping.c
++++ b/dlls/win32u/clipping.c
+@@ -185,6 +185,22 @@
+             rgn = mirrored;
+         }
+ 
++        if (dc->dpi_virtual)  /* dllmgr #80: the region is in logical units */
++        {
++            DWORD size = NtGdiGetRegionData( rgn, 0, NULL );
++            RGNDATA *data = size ? malloc( size ) : NULL;
++            HRGN scaled = 0;
++
++            if (data && NtGdiGetRegionData( rgn, size, data ))
++                scaled = NtGdiExtCreateRegion( &dc->dpi_xform, size, data );
++            free( data );
++            if (scaled)
++            {
++                if (mirrored) NtGdiDeleteObjectApp( mirrored );
++                rgn = mirrored = scaled;
++            }
++        }
++
+         if (!dc->hClipRgn)
+             create_default_clip_region( dc );
+ 
+--- a/dlls/win32u/dc.c
++++ b/dlls/win32u/dc.c
+@@ -461,6 +461,7 @@
+     oldworld2vport = dc->xformWorld2Vport;
+     /* Combine with the world transformation */
+     combine_transform( &dc->xformWorld2Vport, &dc->xformWorld2Wnd, &xformWnd2Vport );
++    if (dc->dpi_virtual) combine_transform( &dc->xformWorld2Vport, &dc->xformWorld2Vport, &dc->dpi_xform );
+ 
+     /* Create inverse of world-to-viewport transformation */
+     dc->vport2WorldValid = DC_InvertXform( &dc->xformWorld2Vport,
+@@ -478,6 +479,28 @@
+ 
+ 
+ /***********************************************************************
++ *           set_dc_dpi_virtualization
++ *
++ * dllmgr #80: a DPI-unaware thread works in logical (96 DPI) screen
++ * coordinates; on a screen DC its drawing would land at the physical pixel
++ * of the same number (Windows does the same). xform maps logical to
++ * physical device units for such a DC; NULL turns it off.
++ */
++void set_dc_dpi_virtualization( HDC hdc, const XFORM *xform )
++{
++    DC *dc;
++
++    if (!(dc = get_dc_ptr( hdc ))) return;
++    if (xform || dc->dpi_virtual)
++    {
++        dc->dpi_virtual = xform != NULL;
++        if (xform) dc->dpi_xform = *xform;
++        DC_UpdateXforms( dc );
++    }
++    release_dc_ptr( dc );
++}
++
++/***********************************************************************
+  *           reset_dc_state
+  */
+ static BOOL reset_dc_state( HDC hdc )
+--- a/dlls/win32u/dce.c
++++ b/dlls/win32u/dce.c
+@@ -1285,6 +1285,42 @@
+     return ret;
+ }
+ 
++/* dllmgr #80: a DPI-unaware thread that draws on a desktop window DC
++ * (GetDC(0), GetWindowDC(GetDesktopWindow()), GetDCEx(desktop, ...)) uses the
++ * logical coordinates it gets from GetCursorPos/GetWindowRect. Windows draws
++ * them 1:1 on the physical screen (tests/wine/screendc80.c, 175 %), so XOR
++ * drag outlines (Photoshop CS2 palettes, MFC/Delphi drag rects) land at half
++ * the position at 200 %. Scale such DCs from the thread's virtual screen to
++ * the physical one, as Windows does for the windows of such a thread.
++ * Every call sets or clears it, since cache DCs are shared. DLLMGR80_OFF=1:
++ * Wine/Windows behaviour. */
++static void dllmgr80_virtualize_screen_dc( HDC hdc, HWND hwnd )
++{
++    static int off = -1;
++    XFORM xform;
++    RECT virt, raw;
++    UINT dpi;
++
++    if (off < 0) off = getenv( "DLLMGR80_OFF" ) != NULL;
++    if (off || hwnd != get_desktop_window() || !(dpi = get_thread_dpi()))
++    {
++        set_dc_dpi_virtualization( hdc, NULL );
++        return;
++    }
++    virt = get_virtual_screen_rect( dpi, MDT_DEFAULT );
++    raw = get_virtual_screen_rect( 0, MDT_RAW_DPI );
++    if (EqualRect( &virt, &raw ) || IsRectEmpty( &virt ))
++    {
++        set_dc_dpi_virtualization( hdc, NULL );
++        return;
++    }
++    /* device units start at the desktop's own origin in both spaces */
++    xform.eM11 = (FLOAT)(raw.right - raw.left) / (virt.right - virt.left);
++    xform.eM22 = (FLOAT)(raw.bottom - raw.top) / (virt.bottom - virt.top);
++    xform.eM12 = xform.eM21 = xform.eDx = xform.eDy = 0;
++    set_dc_dpi_virtualization( hdc, &xform );
++}
++
+ /***********************************************************************
+  *           NtUserGetDCEx (win32u.@)
+  */
+@@ -1425,6 +1461,7 @@
+     if (set_dce_flags( dce->hdc, DCHF_VALIDATEVISRGN )) update_vis_rgn = TRUE;  /* DC was dirty */
+ 
+     if (update_vis_rgn) update_visible_region( dce );
++    dllmgr80_virtualize_screen_dc( dce->hdc, hwnd );
+ 
+     TRACE( "(%p,%p,0x%x): returning %p%s\n", hwnd, clip_rgn, flags, dce->hdc,
+            update_vis_rgn ? " (updated)" : "" );
+--- a/dlls/win32u/ntgdi_private.h
++++ b/dlls/win32u/ntgdi_private.h
+@@ -89,6 +89,8 @@
+     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
+     XFORM         xformVport2World;  /* Inverse of the above transformation */
+     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
++    BOOL          dpi_virtual;       /* dllmgr #80: dpi_xform is applied after world-to-viewport */
++    XFORM         dpi_xform;         /* dllmgr #80: logical (thread DPI) to physical screen */
+     RECT          bounds;            /* Current bounding rect */
+ } DC;
+ 
+@@ -191,6 +193,7 @@
+ extern BOOL set_viewport_org( HDC hdc, INT x, INT y, POINT *point );
+ extern void DC_InitDC( DC * dc );
+ extern void DC_UpdateXforms( DC * dc );
++extern void set_dc_dpi_virtualization( HDC hdc, const XFORM *xform );
+ 
+ /* dib.c */
+ extern BOOL fill_color_table_from_pal_colors( BITMAPINFO *info, HDC hdc );
