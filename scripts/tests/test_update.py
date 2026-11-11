@@ -40,6 +40,7 @@ def commit_files(name, runtime='app-isolation-wine-11.0-v23', modules='faststone
     return {
         'dllmgr': ('100755', DLLMGR.format(name).encode()),
         'scripts/install-version.sh': ('100755', (SCRIPTS / 'install-version.sh').read_bytes()),
+        'scripts/upgrade.py': ('100644', b''),
         'scripts/private-runtime.json': ('100644', json.dumps(dict(release=runtime, sha256=name[0] * 64)).encode()),
         'catalog/index.json': ('100644', json.dumps(index).encode()),
         'patches/dllmgr-1.patch': ('100644', b'patch\n'),
@@ -138,6 +139,16 @@ class UpdateTest(unittest.TestCase):
         self.assertFalse([u for u in self.github.urls if u.startswith(update.RAW)])
         self.assertNotIn('/commits/', ''.join(self.github.urls))
         self.assertEqual(json.loads(update.stamp_path().read_text())['revision'], self.new)
+
+    def test_rollback_to_a_commit_without_update_says_how_to_come_back(self):
+        self.run_update()
+        files = commit_files('b')
+        del files['scripts/upgrade.py']
+        self.github.add(self.new, files, tip=False)
+        code, out = self.run_update('--revision', self.new)
+        self.assertEqual(code, 0)
+        self.assertIn('bbbbbbb has no dllmgr update/upgrade; to come back run ' +
+                      str(self.home / '.local/lib/dllmgr' / self.old / 'dllmgr') + ' update', out)
 
     def test_up_to_date_downloads_nothing(self):
         self.run_update()

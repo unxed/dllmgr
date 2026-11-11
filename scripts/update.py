@@ -242,8 +242,12 @@ def main(argv=None):
     report(old, new)
     if old and not (HERE.parent / '.dllmgr-revision').is_file():
         print('  Note: this command ran from ' + str(HERE.parent) + '; ' + str(launcher()) + ' is the updated one.')
-    print('  Next: dllmgr upgrade (--dry-run shows which fixed apps change). Back: dllmgr update --revision ' +
-          (old[:7] if old else 'SHA'))
+    if (install_dir() / new / 'scripts/upgrade.py').is_file():
+        print('  Next: dllmgr upgrade (--dry-run shows which fixed apps change). Back: dllmgr update --revision ' +
+              (old[:7] if old else 'SHA'))
+    elif old:  # an older commit without update/upgrade
+        print('  Note: ' + new[:7] + ' has no dllmgr update/upgrade; to come back run ' +
+              str(install_dir() / old / 'dllmgr') + ' update')
     return 0
 
 
