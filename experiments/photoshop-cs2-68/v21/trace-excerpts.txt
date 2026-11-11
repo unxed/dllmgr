@@ -1,0 +1,22 @@
+== altf4: Wine (last input of the process = Alt KeyPress; F4 went to Muffin's keybinding)
+330843.491:0024:trace:event:call_event_handler 12718 KeyPress for hwnd/window 0x508bc/1200059
+330843.491:0024:trace:x11drv:window_set_user_time window 0x508bc/1200059, requesting _NET_WM_USER_TIME 330843490 serial 12719
+330843.522:0024:warn:x11drv:set_net_active_window skipping _NET_ACTIVE_WINDOW for withdrawn window 0x20918/1200064 serial 12797
+330843.528:0024:trace:x11drv:window_set_user_time window 0x20918/1200064, requesting _NET_WM_USER_TIME 330843490 serial 12826
+== altf4: Muffin
+VERBOSE: Window 0x1200064 transient for 0x1200001
+STARTUP: window 0x1200064 focus prevented by other activity; 330843490 < 330843497
+WINDOW_STATE: Window 0x1200064 does not focus on map, and does not place on top on map.
+== closebtn: Muffin (dialog time = last typed key; the frame click is Muffin's)
+STARTUP: Window 0x1200059 has _NET_WM_USER_TIME of 330953879
+STARTUP: Window 0x1200059 has _NET_WM_USER_TIME of 330953920
+STARTUP: Window 0x1200059 has _NET_WM_USER_TIME of 330953961
+STARTUP: Window 0x1200059 has _NET_WM_USER_TIME of 330957662
+WINDOW_OPS: Ending grab op 4 at time 330957663
+STARTUP: window 0x1200064 focus prevented by other activity; 330953961 < 330957662
+WINDOW_STATE: Window 0x1200064 does not focus on map, and does not place on top on map.
+== altf4-x1: Wine + Muffin (transient of the focused frame: on top, but no focus)
+331085.098:0024:trace:event:call_event_handler 19388 KeyPress for hwnd/window 0x10068/1200001
+331085.098:0024:trace:x11drv:window_set_user_time window 0x10068/1200001, requesting _NET_WM_USER_TIME 331085097 serial 19391
+STARTUP: window 0x1200064 focus prevented by other activity; 331085097 < 331085104
+WINDOW_STATE: Window 0x1200064 does not focus on map, and does not place on top on map.

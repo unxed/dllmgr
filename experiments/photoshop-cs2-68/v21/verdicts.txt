@@ -1,0 +1,12 @@
+ctrlw: no confirmation window
+menu: dialog 0x01200065 above-doc=yes above-xclock=n/a active=yes _NET_WM_STATE_SKIP_TASKBAR, _NET_WM_STATE_FOCUSED _NET_WM_USER_TIME(CARDINAL) = 329685904
+altf4: dialog 0x01200064 above-doc=NO above-xclock=n/a active=NO(0x1200059) _NET_WM_STATE_SKIP_TASKBAR, _NET_WM_STATE_DEMANDS_ATTENTION _NET_WM_USER_TIME(CARDINAL) = 329794307
+closebtn: dialog 0x01200064 above-doc=NO above-xclock=n/a active=NO(0x1200059) _NET_WM_STATE_SKIP_TASKBAR, _NET_WM_STATE_DEMANDS_ATTENTION _NET_WM_USER_TIME(CARDINAL) = 329889030
+menu xclock=1: dialog 0x01200065 above-doc=yes above-xclock=yes active=yes _NET_WM_STATE_SKIP_TASKBAR, _NET_WM_STATE_FOCUSED _NET_WM_USER_TIME(CARDINAL) = 330035687
+menu xclock=click: dialog 0x01200065 above-doc=yes above-xclock=yes active=yes _NET_WM_STATE_SKIP_TASKBAR, _NET_WM_STATE_FOCUSED _NET_WM_USER_TIME(CARDINAL) = 330159164
+altf4 xclock=1: dialog 0x01200064 above-doc=yes above-xclock=yes active=NO(0x1200001) _NET_WM_STATE_SKIP_TASKBAR _NET_WM_USER_TIME(CARDINAL) = 330274238
+closebtn xclock=1: dialog 0x01000064 above-doc=yes above-xclock=yes active=yes _NET_WM_STATE_SKIP_TASKBAR, _NET_WM_STATE_FOCUSED _NET_WM_USER_TIME(CARDINAL) = 330413721
+# r2 (WINEDEBUG=+timestamp,+event,+x11drv, MUFFIN_VERBOSE=1)
+altf4: dialog 0x01200064 above-doc=NO above-xclock=n/a active=NO(0x1200059) _NET_WM_STATE_SKIP_TASKBAR, _NET_WM_STATE_DEMANDS_ATTENTION _NET_WM_USER_TIME(CARDINAL) = 330843490
+closebtn: dialog 0x01200064 above-doc=NO above-xclock=n/a active=NO(0x1200059) _NET_WM_STATE_SKIP_TASKBAR, _NET_WM_STATE_DEMANDS_ATTENTION _NET_WM_USER_TIME(CARDINAL) = 330953961
+altf4 xclock=1: dialog 0x01200064 above-doc=yes above-xclock=yes active=NO(0x1200001) _NET_WM_STATE_SKIP_TASKBAR _NET_WM_USER_TIME(CARDINAL) = 331085097
