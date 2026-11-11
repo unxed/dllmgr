@@ -1,0 +1,6 @@
+Built by CI run https://github.com/unxed/dllmgr/actions/runs/43023388052 at commit 981e902. Changes since v22:
+- dllmgr-27 proxy (#76): clean-room hit-test guard for Photoshop CS2 9.0 (link stamp 0x42400fac). The proxy hooks the delay-import GetDlgItem slot used by the hit test at exe+0xb01a90 and keeps it from walking a window without the expected control; it logs "dllmgr76: guard:" once per window. Off switch: DLLMGR76_NO_GUARD=1; DLLMGR76_TRACE=N for a trace.
+The Wine part (patches, wineserver) is the same as v22.
+Stand (owner's laptop, Xvfb 192 DPI, Muffin, recipe installed with --runtime-package):
+1. Photoshop e2e (experiments/photoshop-cs2-e2e/e2e.sh), plain wine Photoshop.exe C:\t46.png: handover to the private runtime, document open; ru Ctrl+N as with v21/v22. The guard did not fire in the normal run (no "dllmgr76: guard:" line); the dllmgr76 lines in status.txt are the crash reporter's record of the known handled access violation at exe+0xd599e7 (F29).
+2. The guard was not tested against the real #76 crash (no reliable reproduction on the stand).
