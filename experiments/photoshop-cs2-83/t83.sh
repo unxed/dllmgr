@@ -12,7 +12,9 @@
 # run while the popup is open), VIA_DLLMGR=1 (start with `dllmgr run
 # photoshop-cs2` on a prefix where `dllmgr fix photoshop-cs2` was applied),
 # CAP (tests/wine/screencap83.exe: screen-DC read of CAPRECT, default the
-# popup rectangle "536 152 244 48", before and while the popup is open).
+# popup rectangle "536 152 244 48", before and while the popup is open),
+# ARROW2 ("X Y" of the other slider arrow: opens it, then the first and the
+# second again; 4-, 5-, 6-*.png).
 OUT=$1; mkdir -p "$OUT"
 w() { env WINEARCH=wow64 WINELOADER=$RT/bin/wine WINESERVER=$RT/bin/wineserver "$@"; }
 PS="$WINEPREFIX/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2"
@@ -46,5 +48,17 @@ if [ -n "$ARROW" ]; then
 	xdotool mousemove $ARROW click 1; sleep 2
 	import -window root "$OUT/3-popup-again.png"
 	xdotool key Escape; sleep 1
+	if [ -n "$ARROW2" ]; then  # the other slider, then both again (owner's order)
+		xdotool mousemove 1500 900 click 1; sleep 1
+		xdotool mousemove $ARROW2 click 1; sleep 2
+		import -window root "$OUT/4-popup2.png"
+		xdotool key Escape; sleep 1; xdotool mousemove 1500 900 click 1; sleep 1
+		xdotool mousemove $ARROW click 1; sleep 2
+		import -window root "$OUT/5-popup1-after2.png"
+		xdotool key Escape; sleep 1; xdotool mousemove 1500 900 click 1; sleep 1
+		xdotool mousemove $ARROW2 click 1; sleep 2
+		import -window root "$OUT/6-popup2-again.png"
+		xdotool key Escape; sleep 1
+	fi
 fi
 w $RT/bin/wineserver -k

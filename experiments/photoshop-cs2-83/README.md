@@ -97,3 +97,34 @@ windows-probes runs failed on the Ubuntu runner's apt (DNS outage, not our
 code; bc24910 adds apt-get update); dispatched run 43045669566 was still
 running at the pause: read its log for "dpirect83.exe (after setscale)".
 Expected on Windows: physical rect in the pma-v1/v2 lines.
+
+## Owner feedback on v23: garbage on the right side of the Opacity popup and the left side of the Flow popup (2026-11-11)
+
+v23 does not contain 660b42f (its proxy is the "head" build here). With v23
+the frame of every slider popup is the snapshot of the menu bar at the
+popup's logical position (physical x 316..438 for Opacity, about 405..527
+for Flow on the owner's screen); where that strip holds white menu
+background the frame looks plain white and passes for the highlight, where
+it holds menu text ("Filter" and its neighbours lie near the right end of
+the Opacity strip and the left end of the Flow strip) it shows coloured
+pixels. So the remaining edges are the same defect.
+
+Stand check, t83.sh with ARROW2 (Opacity, then Flow, then Opacity and Flow
+again), runtime v22 (Wine part of v23), fresh prefix per run, three proxies
+that differ only in the change: head (v23 proxy), fix (660b42f), ref (fix +
+DLLMGR27_NO_PREFILL=1, no snapshot at all):
+
+| shot | head vs ref | fix vs ref |
+|---|---|---|
+| Flow (opened after Opacity) | 1240 px differ | 0 |
+| Opacity again | 1256 | 0 |
+| Flow again | 1240 | 0 |
+
+(In the fix run the very first click showed the tool tip instead of the
+popup; the later Opacity shot covers it.) both-sliders-before-after.png:
+rows head, fix, ref; left Opacity, right Flow. With the change both popups
+have the clean 3D frame on all sides, identical to the no-snapshot run. The
+v24 build (CI run 43082877347, head 56ae058) carries it.
+
+Windows reference for dpirect83: runs 43043199242 and 43045669566 were
+cancelled on the Ubuntu builder's apt timeouts (not our code); still open.
