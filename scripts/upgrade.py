@@ -227,6 +227,7 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
+    sys.stdout.reconfigure(line_buffering=True)  # keep order with the fix's own output
     try:
         sys.exit(main())
     except (private_app.Error, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
