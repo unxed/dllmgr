@@ -74,7 +74,8 @@ with DLLMGR80_OFF=1 back to 100,100-300,250.
 Crops (top-left 1000x1400 px of the screen at step 6, 50 %):
 before-v22-drag6-50pct.png, after-fix-drag6-50pct.png. With the fix the
 outline matches the toolbox's final place and size at every step (x edges
-116/216/316/416/516/616 for steps 1..6).
+116/216/316/416/516/616 for steps 1..6); a second run with the final build
+(rt80 rebuilt from patches/dllmgr-80.patch as committed) gave the same numbers.
 
 In-process alternative (not done here): the dllmgr-27 proxy could hook
 GetDC/GetWindowDC/GetDCEx for the desktop window in the application's
