@@ -19,6 +19,7 @@ PIN = json.loads((SCRIPTS / 'private-runtime.json').read_text())
 MODULES = upgrade.catalog_fixes.release('faststone', 'wine-11.0')
 NOW, OLD = 'b' * 40, 'a' * 40
 REAPPLY = upgrade.reapply
+PROCESS_PREFIX = upgrade.process_prefix
 
 
 class UpgradeTest(unittest.TestCase):
@@ -37,6 +38,10 @@ class UpgradeTest(unittest.TestCase):
             p = patch.object(private_app, name, value)
             p.start()
             self.addCleanup(p.stop)
+        self.where = {}
+        p = patch.object(upgrade, 'process_prefix', lambda pid: self.where.get(pid))
+        p.start()
+        self.addCleanup(p.stop)
         self.calls = []
         self.results = {}
         p = patch.object(upgrade, 'reapply', self.fake_reapply)
@@ -145,7 +150,8 @@ class UpgradeTest(unittest.TestCase):
     def test_running_and_local_package_apps_are_held_back(self):
         self.add('photoshop-cs2', 'Photoshop.exe', dllmgr_revision=OLD)
         self.add('faststone', 'FSViewer.exe', package_sha256='1' * 64, runtime_release='local package /x.zip')
-        self.running['Photoshop.exe'] = [(4242, 'private runtime')]
+        self.running['Photoshop.exe'] = [(4242, 'private runtime'), (4343, 'private runtime')]
+        self.where = {4242: self.prefix, 4343: self.root / 'elsewhere'}
         code, out = self.run_upgrade('--yes')
         self.assertEqual((code, self.calls), (0, []))
         self.assertIn('held back: running (pid 4242); close it', out)
@@ -165,6 +171,23 @@ class UpgradeTest(unittest.TestCase):
         code, out = self.run_upgrade('--prefix', str(self.root / 'missing'))
         self.assertEqual(code, 1)
         self.assertIn('not a Wine prefix', out)
+
+    def test_the_same_app_running_in_another_prefix_does_not_hold_back(self):
+        self.add('photoshop-cs2', 'Photoshop.exe', dllmgr_revision=OLD)
+        self.running['Photoshop.exe'] = [(4343, 'private runtime')]
+        self.where = {4343: self.root / 'elsewhere'}
+        code, out = self.run_upgrade('--yes')
+        self.assertEqual(self.calls, ['photoshop-cs2'])
+
+    def test_process_prefix_reads_wineprefix_or_home(self):
+        proc = self.root / 'proc'
+        for pid, env in [(1, b'HOME=/h\0WINEPREFIX=/p/x\0'), (2, b'HOME=/h\0'), (3, b'')]:
+            (proc / str(pid)).mkdir(parents=True)
+            (proc / str(pid) / 'environ').write_bytes(env)
+        self.assertEqual(PROCESS_PREFIX(1, proc), Path('/p/x'))
+        self.assertEqual(PROCESS_PREFIX(2, proc), Path('/h/.wine'))
+        self.assertIsNone(PROCESS_PREFIX(3, proc))
+        self.assertIsNone(PROCESS_PREFIX(4, proc))
 
     def test_unreadable_journal_is_reported(self):
         path = self.add('faststone', 'FSViewer.exe')

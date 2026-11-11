@@ -75,6 +75,27 @@ def plan_for(app, state, revision):
     return changes
 
 
+def process_prefix(pid, proc=Path('/proc')):
+    """The Wine prefix a process runs in (its WINEPREFIX, else HOME/.wine), or
+    None when its environment cannot be read."""
+    try:
+        env = dict(item.split(b'=', 1) for item in (proc / str(pid) / 'environ').read_bytes().split(b'\0') if b'=' in item)
+    except OSError:
+        return None
+    value = env.get(b'WINEPREFIX') or (env[b'HOME'] + b'/.wine' if env.get(b'HOME') else None)
+    return Path(os.fsdecode(value)).resolve() if value else None
+
+
+def running_in(prefix, exe_name):
+    """Pids of exe_name running in this prefix (unknown prefix counts: safe side)."""
+    pids = []
+    for pid, _ in private_app.running_on(exe_name):
+        where = process_prefix(pid)
+        if where is None or where == Path(prefix).resolve():
+            pids.append(pid)
+    return pids
+
+
 def held_back(app, state):
     """Why an app that needs an upgrade must not be touched now, or None."""
     if str(state.get('runtime_release', '')).startswith('local package'):
@@ -83,9 +104,9 @@ def held_back(app, state):
     exe = Path(state['exe'])
     if not exe.is_file():
         return 'executable is gone: ' + str(exe) + ' (dllmgr fix ' + app + ' --exe PATH selects another)'
-    running = private_app.running_on(exe.name)
+    running = running_in(state['prefix'], exe.name)
     if running:
-        return ('running (pid ' + ', '.join(str(pid) for pid, _ in running) +
+        return ('running (pid ' + ', '.join(str(pid) for pid in running) +
                 '); close it and run dllmgr upgrade again')
     return None
 
