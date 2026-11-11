@@ -1343,106 +1343,6 @@ static void start_crash_report(void)
     AddVectoredExceptionHandler(1, crash_handler);
 }
 
-/* #76 hit-test guard (DLLMGR76_NO_GUARD=1 turns it off). Photoshop CS2's
- * cursor hit test (the FindWindow of its Mac layer, behaviour described in
- * experiments/photoshop-cs2-76/README.md) answers "grow"/"drag" (5/4) for a
- * window that is, or is owned by / a child of, a window of its document or
- * palette class, and takes the window record from that window's child with
- * id 0 (GetDlgItem(w, 0)). With no such child it returns without writing the
- * record pointer, and its caller then uses the cursor point it left in that
- * slot as a pointer: the crash at photoshop+0xb249ce. Photoshop.exe takes
- * GetDlgItem through its delay imports; the hook acts only for a call from
- * that one site of the CS2 9.0 build (link time stamp and the call
- * instruction through this very slot are checked) and turns the empty answer
- * into the hit test's own "nothing here" result (record NULL, part 0), the
- * one it gives for HTNOWHERE. Logged once per window (dllmgr76: guard ...);
- * DLLMGR76_TRACE=N logs the first N GetDlgItem calls of the hit test. */
-#define CS2_STAMP 0x42400fac           /* Photoshop.exe 9.0, 2005-03-22 */
-#define CS2_HIT_RET 0xb01c2d           /* RVA right after the hit test's GetDlgItem call */
-static BYTE *hit_ret;
-static HWND guard_seen[8];
-static LONG hit_trace;                 /* DLLMGR76_TRACE=N: log the first N calls from the site */
-static LONG guard_seen_n;
-
-static HWND WINAPI __attribute__((noinline)) hit_dlg_item(HWND hwnd, int id)
-{
-    HWND ret = GetDlgItem(hwnd, id);
-    DWORD *args, *part, **record_slot;
-    MEMORY_BASIC_INFORMATION here, there;
-    char cls[64], owner_cls[64], line[300];
-    LONG i;
-
-    if ((BYTE *)__builtin_return_address(0) != hit_ret) return ret;
-    /* incoming stack: hwnd, id, then the caller's frame (part at +0x18, the
-     * hit test's return address at +0x1c, the point at +0x20, the record
-     * pointer's address at +0x24); the asm hides the arithmetic on &hwnd
-     * from the optimizer */
-    __asm__("" : "=r"(args) : "0"(&hwnd));
-    if (hit_trace > 0 && InterlockedDecrement(&hit_trace) >= 0) {
-        GetClassNameA(hwnd, line, 64);
-        GetClassNameA(ret, line + 64, 64);
-        wsprintfA(line + 128, "dllmgr76: %lu hit test from exe+0x%lx point %08lx: GetDlgItem(%p %s, %d) = %p %s\n", GetTickCount(),
-                  args[7] - (DWORD)(ULONG_PTR)GetModuleHandleW(NULL), args[8], hwnd, line, id, ret, ret ? line + 64 : "");
-        crash_say(line + 128);
-    }
-    if (ret || id) return ret;
-    part = args + 6;
-    record_slot = (DWORD **)(args + 9);
-    if ((*part != 4 && *part != 5) || ((ULONG_PTR)*record_slot & 3) || (BYTE *)*record_slot < (BYTE *)args ||
-        !VirtualQuery(args, &here, sizeof(here)) || !VirtualQuery(*record_slot, &there, sizeof(there)) ||
-        here.AllocationBase != there.AllocationBase)
-        return ret;                    /* not the frame we know (the record pointer lives on this stack): leave it alone */
-    **record_slot = 0;
-    *part = 0;
-    for (i = 0; i < guard_seen_n && i < 8; i++) if (guard_seen[i] == hwnd) return ret;
-    if (InterlockedIncrement(&guard_seen_n) > 8) return ret;
-    guard_seen[guard_seen_n - 1] = hwnd;
-    cls[0] = owner_cls[0] = 0;
-    GetClassNameA(hwnd, cls, sizeof(cls));
-    GetClassNameA(GetParent(hwnd), owner_cls, sizeof(owner_cls));
-    wsprintfA(line, "dllmgr76: guard: hit test from exe+0x%lx on %p (%s, parent/owner %s) without a view child; answered 'nothing here'\n",
-              args[7] - (DWORD)(ULONG_PTR)GetModuleHandleW(NULL), hwnd, cls, owner_cls);
-    crash_say(line);
-    return ret;
-}
-
-static void guard_hit_test(void)
-{
-    typedef struct { DWORD attrs, name, hmod, iat, nt, bound, unload, stamp; } delay_desc;
-    BYTE *base = (BYTE *)GetModuleHandleW(NULL);
-    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)(base + ((IMAGE_DOS_HEADER *)base)->e_lfanew);
-    IMAGE_DATA_DIRECTORY *dir = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
-    delay_desc *d;
-
-    if (GetEnvironmentVariableA("DLLMGR76_NO_GUARD", NULL, 0) || nt->FileHeader.TimeDateStamp != CS2_STAMP ||
-        !dir->VirtualAddress || nt->OptionalHeader.SizeOfImage <= CS2_HIT_RET)
-        return;
-#define DELAY_PTR(d, v) ((d)->attrs & 1 ? base + (v) : (BYTE *)(ULONG_PTR)(v))
-    for (d = (delay_desc *)(base + dir->VirtualAddress); d->name; d++) {
-        IMAGE_THUNK_DATA *names = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->nt), *slots = (IMAGE_THUNK_DATA *)DELAY_PTR(d, d->iat);
-        if (lstrcmpiA((char *)DELAY_PTR(d, d->name), "user32.dll")) continue;
-        for (; names->u1.AddressOfData; names++, slots++) {
-            BYTE *call = base + CS2_HIT_RET - 6;
-            DWORD protect;
-            if (IMAGE_SNAP_BY_ORDINAL(names->u1.Ordinal) ||
-                strcmp((char *)((IMAGE_IMPORT_BY_NAME *)DELAY_PTR(d, names->u1.AddressOfData))->Name, "GetDlgItem"))
-                continue;
-            /* the site must be "call [slot]" (ff 15 + the slot address) */
-            if (call[0] != 0xff || call[1] != 0x15 || *(DWORD *)(call + 2) != (DWORD)(ULONG_PTR)&slots->u1.Function) return;
-            if (!VirtualProtect(&slots->u1.Function, sizeof(void *), PAGE_READWRITE, &protect)) return;
-            hit_ret = base + CS2_HIT_RET;
-            {
-                char n[16] = "";
-                if (GetEnvironmentVariableA("DLLMGR76_TRACE", n, sizeof(n))) hit_trace = atoi(n);
-            }
-            slots->u1.Function = (ULONG_PTR)hit_dlg_item;
-            VirtualProtect(&slots->u1.Function, sizeof(void *), protect, &protect);
-            return;
-        }
-    }
-#undef DELAY_PTR
-}
-
 
 /* Sampling profiler (DLLMGR_SAMPLE=ms[,seconds[,delay|go]], off by default): a thread
  * suspends the main thread every few ms and records EIP plus the first
@@ -1606,7 +1506,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
         return TRUE;
     }
     if (reason == DLL_PROCESS_ATTACH) { start_sampler(); start_crash_report(); }  /* diagnostics, also with the proxy off */
-    if (reason == DLL_PROCESS_ATTACH) guard_hit_test();  /* #76: a crash fix, also with the proxy off */
     if (reason == DLL_PROCESS_ATTACH && GetEnvironmentVariableA("DLLMGR_MSGLOG", NULL, 0))
         CloseHandle(CreateThread(NULL, 0, msglog_writer, NULL, 0, NULL));
     if ((reason == DLL_PROCESS_ATTACH || reason == DLL_THREAD_ATTACH) && GetEnvironmentVariableA("DLLMGR27_OFF", NULL, 0)) {
