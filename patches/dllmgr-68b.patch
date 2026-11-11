@@ -1,0 +1,13 @@
+--- a/dlls/winex11.drv/event.c
++++ b/dlls/winex11.drv/event.c
+@@ -703,6 +703,10 @@
+ 
+     if (protocol == x11drv_atom(WM_DELETE_WINDOW))
+     {
++        /* dllmgr #68: the WM handled the user's Alt+F4 or close-button
++         * click itself; its time is user activity of this process, so the
++         * confirmation the app opens now may take the focus */
++        if (event_time) note_process_user_time( event_time );
+         if (hwnd == NtUserGetDesktopWindow())
+         {
+             /* The desktop window does not have a close button that we can

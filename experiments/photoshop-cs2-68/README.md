@@ -69,3 +69,13 @@ WM_DELETE_WINDOW event time as user time of the process, as
 net_active_window_notify already does for _NET_ACTIVE_WINDOW; then the
 dialog's time equals Muffin's last_user_time and is no longer "before" it.
 Retest these four failing rows after that.
+
+## 2026-11-11: Alt+F4 / close button fixed (patches/dllmgr-68b.patch)
+
+Cause (v21 recheck above): Muffin handles Alt+F4 and the close button
+itself, so its last input time is newer than the time dllmgr-68 gives the
+confirmation, and it refuses the focus. dllmgr-68b (winex11 event.c,
+WM_DELETE_WINDOW): the WM's close-request time is noted as user activity
+of the process. Stand (rt-exp = v21 + dllmgr-78 + dllmgr-68b, v21-close.sh):
+altf4: dialog above-doc=yes active=yes _NET_WM_STATE_FOCUSED;
+closebtn: dialog above-doc=yes active=yes _NET_WM_STATE_FOCUSED.

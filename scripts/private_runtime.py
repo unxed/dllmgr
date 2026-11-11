@@ -29,8 +29,12 @@ OPTIONAL_GROUPS = (
     {   # #74: sane.ds Unix side lists TWAIN sources from a device cache (patches/dllmgr-74-sane.patch)
         'x86_64-unix/sane.so': 'lib/wine/x86_64-unix/sane.so',
     },
+    {   # #78: wineserver z-order rule for a non-topmost window put after a
+        # topmost one (patches/dllmgr-78.patch); same protocol as the base
+        'bin/wineserver': 'bin/wineserver',
+    },
 )
-UNIX_MODES = {'bin/wine', 'x86_64-unix/ntdll.so', 'x86_64-unix/win32u.so', 'x86_64-unix/winex11.so', 'x86_64-unix/sane.so'}
+UNIX_MODES = {'bin/wine', 'x86_64-unix/ntdll.so', 'x86_64-unix/win32u.so', 'x86_64-unix/winex11.so', 'x86_64-unix/sane.so', 'bin/wineserver'}
 
 
 class Error(RuntimeError):

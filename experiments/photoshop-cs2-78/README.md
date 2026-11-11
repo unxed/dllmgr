@@ -140,3 +140,12 @@ with RT=rt-exp: expect exstyle 0x80 after the click and no palette above
 xclock), Wine's user32 win.c z-order tests with the change, the build
 script entry (tests/wine/app-isolation-build.sh, after dllmgr-77), runtime
 v22 (#77 + #78), e2e, comments on #78/#82.
+
+## 2026-11-11: Photoshop stand run with both parts (rt-exp)
+
+t78p-dismiss.sh + zlist78: after the History click foreground/active/focus
+stay on the main window and the palette keeps exstyle 0x80; after switching
+to xclock the clock covers the palette (no Photoshop window above it);
+Alt+F4 brings Photoshop's own close confirmation. Matches the Windows
+reference. Runtime package now also ships bin/wineserver (optional overlay
+group, base checksum in app-isolation-check.sh).
