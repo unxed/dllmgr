@@ -450,6 +450,20 @@ selection for the affected apps. Missing metadata alone is insufficient to
 remove a managed rule. A distro or external scheduler can invoke these commands
 later. Service and scheduling policy belong to that integration.
 
+State 2026-11-11 (#86): there is no separate catalog index yet; the catalog,
+the runtime pin and the recipes ship inside dllmgr itself. So `dllmgr update`
+installs the latest dllmgr commit from GitHub (verified blob by blob, the
+install.sh layout, old commits kept, `--revision` to go back) and reports the
+changed pins, and `dllmgr upgrade` reconciles the apps that have a private
+fix journal (`<prefix>/.dllmgr/apps/*.json`: FastStone, Photoshop CS2) against
+the running dllmgr's pins (runtime package sha256, module release, dllmgr
+commit) by re-running their `fix`. Gaps against this section: no
+follow/unfollow (every fixed app is followed), no re-detection of moved or
+new installations (a missing executable is held back), only the default
+prefix plus `--prefix` (no prefix registry), and the prefix-wide fixes
+(`faststone-fonts`, `faststone-avif`) and legacy shared FastStone journals are
+not reconciled.
+
 Advanced commands remain available for authors and manual overrides.
 
 ```

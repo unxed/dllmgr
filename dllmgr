@@ -33,6 +33,11 @@ Usage:
   dllmgr cleanup [FIX] [--dry-run] [--yes]   remove all traces of dllmgr (or of one fix)
   dllmgr share faststone
   dllmgr diag [--prefix PATH]      read-only debug report to paste into an issue
+  dllmgr update [--revision SHA]   install the latest dllmgr from GitHub (changes no app;
+                                   --revision installs that commit, e.g. to roll back)
+  dllmgr upgrade [--yes] [--dry-run] [--prefix PATH]...
+                                   re-apply fixed apps whose runtime/modules/dllmgr changed
+  Both, like apt update && apt dist-upgrade:  dllmgr update && dllmgr upgrade
 Wine commands use WINEPREFIX (default: ~/.wine).
 'dllmgr fix' alone finds the programs with verified recipes and asks before
 applying each one. Set DLLMGR_VERBOSE=1 or pass --verbose for detailed output.
@@ -99,6 +104,14 @@ case ${1:-} in
     diag)
         shift
         exec python3 "$here/scripts/diag.py" "$@"
+        ;;
+    update)
+        shift
+        exec python3 "$here/scripts/update.py" "$@"
+        ;;
+    upgrade)
+        shift
+        exec python3 "$here/scripts/upgrade.py" "$@"
         ;;
     -h|--help|help)
         usage

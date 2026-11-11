@@ -86,7 +86,10 @@ Planned:
 
 The preview implements `dllmgr fix` (find the programs with recipes in a
 prefix and apply them after a yes), `dllmgr fix faststone`,
-`dllmgr unfix faststone` and `dllmgr share faststone`. See the [FastStone recipe](catalog/bundles/faststone-all.md)
+`dllmgr unfix faststone`, `dllmgr share faststone`, and
+`dllmgr update && dllmgr upgrade` (install the latest dllmgr from GitHub, then
+re-apply the fixed programs whose pins changed; see
+[keeping up to date](docs/recipes.md#keep-dllmgr-and-the-fixed-programs-up-to-date)). See the [FastStone recipe](catalog/bundles/faststone-all.md)
 for the supported configuration and measured results. The planned `fix world`,
 subscriptions, unattended updates and GUI are described in the
 [CLI and GUI design](docs/concept.md#10-cli).

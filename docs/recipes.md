@@ -23,6 +23,37 @@ sudo and works with an existing dllmgr installation created by this installer.
 You can call `"$HOME/.local/bin/dllmgr"` directly when `~/.local/bin` is outside
 your `PATH`.
 
+## Keep dllmgr and the fixed programs up to date
+
+Like `sudo apt update && sudo apt dist-upgrade`, without sudo and without a
+checkout:
+
+```sh
+dllmgr update && dllmgr upgrade
+```
+
+`dllmgr update` installs the latest commit of `main` from
+github.com/unxed/dllmgr: the commit comes from the GitHub API, each file from
+raw.githubusercontent.com and is checked against its git blob SHA-1 in that
+commit's tree. It uses the installer core of `install.sh`
+(`scripts/install-version.sh`: the same `~/.local/lib/dllmgr/<commit>` layout,
+lock and atomic switch), keeps the older commits and prints what changed for
+you: old -> new commit, the pinned Wine runtime and the module releases. It
+changes no program. `dllmgr update --revision OLD` goes back to an installed
+(or any) commit without downloading what is already there.
+
+`dllmgr upgrade` looks at every program dllmgr has fixed in the default prefix
+(`WINEPREFIX` or `~/.wine`; more with `--prefix PATH`, repeatable), compares
+the installed runtime package, module release and dllmgr commit with what the
+current dllmgr pins, prints a plan and asks. `--dry-run` only prints the plan,
+`--yes` does not ask. Each program is re-applied exactly as `dllmgr fix <app>`
+does, with its recorded executable, prefix, recipe and base Wine; settings
+made with `dllmgr set` stay. Programs that are up to date are left alone.
+A running program, or one installed from a local `--runtime-package`, is held
+back with the reason. If re-applying one program fails, its previous fix stays
+and the others are still upgraded; the exit status is then 1. `upgrade` says
+so when `dllmgr update` has not been run for a week or never.
+
 The installer also adds a menu entry, **Fix Windows programs**. It opens a
 terminal and runs `dllmgr fix` for the default prefix (see below). To remove
 it, delete `~/.local/share/applications/dllmgr-fix.desktop`.
