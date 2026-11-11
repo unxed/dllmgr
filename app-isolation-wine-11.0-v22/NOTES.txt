@@ -1,0 +1,10 @@
+Built by CI run https://github.com/unxed/dllmgr/actions/runs/42991900670 at commit 7a37d05. Changes since v21:
+- dllmgr-77 (#77): with system=tahoma, Tahoma replaces the raster System font; system=tahoma is the default for photoshop-cs2.
+- dllmgr-78 (#78/#82): WM_TAKE_FOCUS asks WM_MOUSEACTIVATE, so a click into a Photoshop palette no longer makes it the foreground/active window; wineserver keeps a non-topmost window non-topmost when it is placed after a topmost one (palettes no longer stay above other applications).
+- dllmgr-68b (#68): the WM's close request (WM_DELETE_WINDOW from Alt+F4 or the frame's close button) counts as user activity, so the confirmation dialog gets the focus and stays above the document.
+Package: now also ships bin/wineserver (optional overlay group in scripts/private_runtime.py, base checksum in tests/wine/app-isolation-check.sh).
+Stand (owner's laptop, Xvfb 192 DPI, Muffin, dllmgr 2da5a9b, recipe installed with --runtime-package):
+1. Photoshop e2e (experiments/photoshop-cs2-e2e/e2e.sh), plain wine Photoshop.exe C:\t46.png: handover to the private runtime, document open, splash fringe 0 px - same as v21; the startup "program error" box (#84) shows as with v21.
+2. #78/#82 (t78p-dismiss.sh, installed runtime): after the History click foreground/active stay on the main window, palette exstyle 0x80; xclock covers the palettes after the switch; Alt+F4 brings Photoshop's "Save changes" confirmation.
+3. #68 (v21-close.sh): altf4 and closebtn: dialog above-doc=yes active=yes.
+4. FastStone smoke (t73c.sh): dllmgr run faststone starts on the private runtime, browser shown, Association Settings button opens the zenity checklist.
