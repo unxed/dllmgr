@@ -26,6 +26,7 @@ second one with the link, then add the back link to the first as a comment.
 | 14 | WineHQ 60741 (comment) | when the agg modes are stable: all our AGG know-how (run composition in one buffer, max-compose of overlaps, run-width scaling of linear advances, LIGHT hinting, LCD filter weights, bold strikes kept, stem-phase result from #69 research) | to write (owner, 2026-11-10) | waiting for stable agg |
 | 15 | WineHQ (new bug, duplicate search first) | winedbg attach to a 32-bit process under wow64 (new-style WINEARCH=wow64 build) crashes the break-in thread: page fault at 0xffc00d6c in wow64 32-bit code, no backtrace (experiments/faststone-esc/README.md) | to write after a retest on wine.git master | candidate |
 | 16 | WineHQ 34133 (comment) or a new bug | Photoshop splash background: all findings in words (initial window contents, prefill proof, live margin by region cut, 60746 shape bug, screen reads), master retest still white | docs/bugzilla/winehq-splash-background.txt | posted 2026-11-10 (owner, comment in 34133) |
+| 17 | WineHQ (new bug, duplicate search first) | #83: GetWindowRect from a per-monitor-aware thread returns the logical (96 DPI) rectangle of a DPI-unaware window, while the screen DC of that thread is physical (tests/wine/dpirect83.c: 268,76-390,100 in default, PMA v1 and v2 at 192 DPI, stock 11.0) | to write after the Windows reference (windows-probes.yml, dpirect83 after setscale) and a wine.git master retest | candidate |
 
 ## Posted (for cross links)
 

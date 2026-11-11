@@ -180,6 +180,16 @@ static void capture_under(HWND hwnd, const WINDOWPOS *pos)
      * it showed the window behind as background, stock Wine shows white
      * (owner A/B, 2026-11-09). Windows with a caption are left alone. */
     if ((GetWindowLongW(hwnd, GWL_STYLE) & WS_CAPTION) == WS_CAPTION) return;
+    /* #83: Photoshop's tool windows (palettes, toolbox, options bar and its
+     * Opacity/Flow slider popups) paint themselves completely; the popup
+     * paints its 3D frame as non-client area, which Wine does before
+     * WM_WINDOWPOSCHANGED, so the snapshot presented there replaced the frame.
+     * The snapshot itself comes from the wrong place under Wine's DPI
+     * virtualization (GetWindowRect stays logical in a per-monitor-aware
+     * thread, the screen DC is physical): the owner saw the menu bar text
+     * around the popup. The splash, the one window that needs the snapshot,
+     * is not a tool window. */
+    if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) return;
 #endif
     old_ctx = physical_begin();
     if (!GetWindowRect(hwnd, &rect)) { physical_end(old_ctx); return; }
