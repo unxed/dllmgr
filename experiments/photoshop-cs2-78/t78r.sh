@@ -6,7 +6,8 @@
 # z-order with WS_EX_TOPMOST (PROBE = zlist78.exe) and screenshots.
 # Env: RT, WINEPREFIX, PROBE, WDBG, DISMISS=1 (F26 box), EXTRA (env for
 # Photoshop), SW = emu (alttab-emu.py, default) | wmctrl | key (xdotool
-# alt+Tab), HIST / TOOL ("X Y" of a History row / a toolbox button).
+# alt+Tab) | keyhold (Alt held 1.8 s, Cinnamon shows its switcher),
+# HIST / TOOL ("X Y" of a History row / a toolbox button).
 OUT=$1; mkdir -p "$OUT"; HIST=${HIST:-2780 800}; TOOL=${TOOL:-50 260}; SW=${SW:-emu}
 E=$(dirname "$(readlink -f "$0")")
 w() { env WINEARCH=wow64 WINELOADER=$RT/bin/wine WINESERVER=$RT/bin/wineserver "$@"; }
@@ -25,6 +26,7 @@ switch() {
 	emu) "$E/alttab-emu.py" "$T" ;;
 	wmctrl) wmctrl -i -a "$T" ;;
 	key) xdotool key alt+Tab ;;
+	keyhold) xdotool keydown alt; sleep 0.3; xdotool key Tab; sleep 1.5; xdotool keyup alt ;;
 	esac
 	sleep 3
 }
@@ -56,4 +58,4 @@ dump 4-tool-click
 switch
 dump 5-tool-switched
 import -window root -resize 25% "$OUT/5-tool-switched-25pct.png"
-pkill -f 'xterm.*TERM'; w $RT/bin/wineserver -k
+kill $(xdotool getwindowpid "$T"); w $RT/bin/wineserver -k
