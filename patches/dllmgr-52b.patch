@@ -9,7 +9,7 @@
  };
  
  static inline struct font_physdev *get_font_dev( PHYSDEV dev )
-@@ -3238,6 +3240,7 @@
+@@ -3269,6 +3271,7 @@
      struct font_physdev *physdev = get_font_dev( dev );
  
      release_gdi_font( physdev->font );
@@ -17,7 +17,7 @@
      free( physdev );
      return TRUE;
  }
-@@ -3882,6 +3885,21 @@
+@@ -3913,6 +3916,21 @@
  }
  
  
@@ -39,7 +39,7 @@
  /*************************************************************
   * font_GetCharABCWidths
   */
-@@ -3902,7 +3920,7 @@
+@@ -3933,7 +3951,7 @@
      for (i = 0; i < count; i++)
      {
          c = chars ? chars[i] : first + i;
@@ -48,7 +48,7 @@
      }
      pthread_mutex_unlock( &font_lock );
      return TRUE;
-@@ -3927,8 +3945,7 @@
+@@ -3958,8 +3976,7 @@
  
      pthread_mutex_lock( &font_lock );
      for (c = 0; c < count; c++, buffer++)
@@ -58,7 +58,7 @@
      pthread_mutex_unlock( &font_lock );
      return TRUE;
  }
-@@ -3955,7 +3972,7 @@
+@@ -3986,7 +4003,7 @@
      for (i = 0; i < count; i++)
      {
          c = chars ? chars[i] : i + first;
@@ -67,7 +67,136 @@
              buffer[i] = 0;
          else
              buffer[i] = abc.abcA + abc.abcB + abc.abcC;
-@@ -4314,7 +4331,7 @@
+@@ -4177,6 +4194,7 @@
+ static DWORD font_GetKerningPairs( PHYSDEV dev, DWORD count, KERNINGPAIR *pairs )
+ {
+     struct font_physdev *physdev = get_font_dev( dev );
++    struct gdi_font *font;
+ 
+     if (!physdev->font)
+     {
+@@ -4184,18 +4202,20 @@
+         return dev->funcs->pGetKerningPairs( dev, count, pairs );
+     }
+ 
++    /* dllmgr #52b: the pairs are returned as they are (no device-to-logical
++     * step follows), so a GDI-scaled DC takes them from the 96-DPI font */
++    font = physdev->mfont ? physdev->mfont : physdev->font;
+     pthread_mutex_lock( &font_lock );
+-    if (physdev->font->kern_count == -1)
+-        physdev->font->kern_count = font_funcs->get_kerning_pairs( physdev->font,
+-                                                                   &physdev->font->kern_pairs );
++    if (font->kern_count == -1)
++        font->kern_count = font_funcs->get_kerning_pairs( font, &font->kern_pairs );
+     pthread_mutex_unlock( &font_lock );
+ 
+     if (count && pairs)
+     {
+-        count = min( count, physdev->font->kern_count );
+-        memcpy( pairs, physdev->font->kern_pairs, count * sizeof(*pairs) );
++        count = min( count, font->kern_count );
++        memcpy( pairs, font->kern_pairs, count * sizeof(*pairs) );
+     }
+-    else count = physdev->font->kern_count;
++    else count = font->kern_count;
+ 
+     return count;
+ }
+@@ -4265,12 +4285,50 @@
+ #undef SCALE_Y
+ }
+ 
++/* dllmgr #52b: the fields the caller converts from device to logical units */
++static void mul_outline_font_metrics( OUTLINETEXTMETRICW *otm, int k )
++{
++    otm->otmTextMetrics.tmHeight *= k;
++    otm->otmTextMetrics.tmAscent *= k;
++    otm->otmTextMetrics.tmDescent *= k;
++    otm->otmTextMetrics.tmInternalLeading *= k;
++    otm->otmTextMetrics.tmExternalLeading *= k;
++    otm->otmTextMetrics.tmAveCharWidth *= k;
++    otm->otmTextMetrics.tmMaxCharWidth *= k;
++    otm->otmTextMetrics.tmOverhang *= k;
++    otm->otmAscent *= k;
++    otm->otmDescent *= k;
++    otm->otmLineGap *= k;
++    otm->otmsCapEmHeight *= k;
++    otm->otmsXHeight *= k;
++    otm->otmrcFontBox.top *= k;
++    otm->otmrcFontBox.bottom *= k;
++    otm->otmrcFontBox.left *= k;
++    otm->otmrcFontBox.right *= k;
++    otm->otmMacAscent *= k;
++    otm->otmMacDescent *= k;
++    otm->otmMacLineGap *= k;
++    otm->otmptSubscriptSize.x *= k;
++    otm->otmptSubscriptSize.y *= k;
++    otm->otmptSubscriptOffset.x *= k;
++    otm->otmptSubscriptOffset.y *= k;
++    otm->otmptSuperscriptSize.x *= k;
++    otm->otmptSuperscriptSize.y *= k;
++    otm->otmptSuperscriptOffset.x *= k;
++    otm->otmptSuperscriptOffset.y *= k;
++    otm->otmsStrikeoutSize *= k;
++    otm->otmsStrikeoutPosition *= k;
++    otm->otmsUnderscoreSize *= k;
++    otm->otmsUnderscorePosition *= k;
++}
++
+ /*************************************************************
+  * font_GetOutlineTextMetrics
+  */
+ static UINT font_GetOutlineTextMetrics( PHYSDEV dev, UINT size, OUTLINETEXTMETRICW *metrics )
+ {
+     struct font_physdev *physdev = get_font_dev( dev );
++    struct gdi_font *font;
+     UINT ret = 0;
+ 
+     if (!physdev->font)
+@@ -4279,28 +4337,32 @@
+         return dev->funcs->pGetOutlineTextMetrics( dev, size, metrics );
+     }
+ 
+-    if (!physdev->font->scalable) return 0;
++    /* dllmgr #52b: on a GDI-scaled DC the 96-DPI font, times the hidden scale
++     * (device units; the caller divides by it again) */
++    font = physdev->mfont ? physdev->mfont : physdev->font;
++    if (!font->scalable) return 0;
+ 
+     pthread_mutex_lock( &font_lock );
+-    if (font_funcs->set_outline_text_metrics( physdev->font ))
++    if (font_funcs->set_outline_text_metrics( font ))
+     {
+-	ret = physdev->font->otm.otmSize;
+-        if (metrics && size >= physdev->font->otm.otmSize)
++	ret = font->otm.otmSize;
++        if (metrics && size >= font->otm.otmSize)
+         {
+             WCHAR *ptr = (WCHAR *)(metrics + 1);
+-            *metrics = physdev->font->otm;
++            *metrics = font->otm;
+             metrics->otmpFamilyName = (char *)ptr - (ULONG_PTR)metrics;
+-            lstrcpyW( ptr, (WCHAR *)physdev->font->otm.otmpFamilyName );
++            lstrcpyW( ptr, (WCHAR *)font->otm.otmpFamilyName );
+             ptr += lstrlenW(ptr) + 1;
+             metrics->otmpStyleName = (char *)ptr - (ULONG_PTR)metrics;
+-            lstrcpyW( ptr, (WCHAR *)physdev->font->otm.otmpStyleName );
++            lstrcpyW( ptr, (WCHAR *)font->otm.otmpStyleName );
+             ptr += lstrlenW(ptr) + 1;
+             metrics->otmpFaceName = (char *)ptr - (ULONG_PTR)metrics;
+-            lstrcpyW( ptr, (WCHAR *)physdev->font->otm.otmpFaceName );
++            lstrcpyW( ptr, (WCHAR *)font->otm.otmpFaceName );
+             ptr += lstrlenW(ptr) + 1;
+             metrics->otmpFullName = (char *)ptr - (ULONG_PTR)metrics;
+-            lstrcpyW( ptr, (WCHAR *)physdev->font->otm.otmpFullName );
+-            scale_outline_font_metrics( physdev->font, metrics );
++            lstrcpyW( ptr, (WCHAR *)font->otm.otmpFullName );
++            scale_outline_font_metrics( font, metrics );
++            if (physdev->mfont) mul_outline_font_metrics( metrics, physdev->mk );
+         }
+     }
+     pthread_mutex_unlock( &font_lock );
+@@ -4345,7 +4407,7 @@
      pthread_mutex_lock( &font_lock );
      for (i = pos = 0; i < count; i++)
      {
@@ -76,7 +205,7 @@
          pos += abc.abcA + abc.abcB + abc.abcC;
          dxs[i] = pos;
      }
-@@ -4343,8 +4360,7 @@
+@@ -4374,8 +4436,7 @@
      pthread_mutex_lock( &font_lock );
      for (i = pos = 0; i < count; i++)
      {
@@ -86,7 +215,7 @@
          pos += abc.abcA + abc.abcB + abc.abcC;
          dxs[i] = pos;
      }
-@@ -4438,7 +4454,27 @@
+@@ -4469,7 +4530,27 @@
      }
  
      pthread_mutex_lock( &font_lock );
@@ -115,7 +244,7 @@
          font_funcs->set_bitmap_text_metrics( physdev->font ))
      {
          *metrics = physdev->font->otm.otmTextMetrics;
-@@ -4586,7 +4622,7 @@
+@@ -4617,7 +4698,7 @@
  static HFONT font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
  {
      struct font_physdev *physdev = get_font_dev( dev );
@@ -124,7 +253,7 @@
      DC *dc = get_physdev_dc( dev );
  
      if (hfont)
-@@ -4648,6 +4684,13 @@
+@@ -4679,6 +4760,13 @@
          pthread_mutex_lock( &font_lock );
  
          font = select_font( &lf, dcmat, can_use_bitmap );
@@ -138,7 +267,7 @@
  
          if (font)
          {
-@@ -4676,7 +4719,10 @@
+@@ -4707,7 +4795,10 @@
          pthread_mutex_unlock( &font_lock );
      }
      physdev->font = font;

@@ -203,3 +203,38 @@ gdi-scaling-52b-metrics.png, text=agg-rgb). Not covered yet (doubtful
 spots, add when an app needs them): GetOutlineTextMetrics, GetGlyphOutline
 metrics, GetCharWidthInfo, kerning pairs. Next: the activation dialog's
 white patches, then the `scaling=gdi` setting.
+
+### Kerning pairs and outline metrics at 96 DPI (2026-11-11, dllmgr-52b)
+
+Owner's order: GetKerningPairs and GetOutlineTextMetrics now use the 96-DPI
+font too. GetOutlineTextMetrics takes `mfont`'s values times the hidden
+scale (device units); NtGdiGetOutlineTextMetricsInternalW divides by it
+again, so the application gets the 96-DPI integers. GetKerningPairs has no
+device-to-logical step in Wine, so the pairs of `mfont` are returned as
+they are. Rebased on the current stack (after dllmgr-80): dllmgr-52-gdi needs
+one manual fix in ntgdi_private.h (the `dllmgr_scale` field next to #80's
+`dpi_virtual`); the stand tree is $B/src/wine-gdi, build $B/build-gdi,
+runtime $B/rt-gdi (rt80 + this win32u).
+
+Probe tests/wine/gdi-metrics52.c: for 10 fonts compares TEXTMETRIC,
+OUTLINETEXTMETRIC, all kerning pairs, widths and ABC of 0x20-0x7e and one
+text extent between a plain 32-bpp memory DC and a DPI-unaware window DC;
+prints mismatches and "match: N/M". First run (old build, before this
+change) was not usable: its plain DC was the 1-bpp default bitmap, which
+picks bitmap strikes (5661/7036 also without GDI scaling); fixed to a
+32-bpp DIB section. The rerun with the new build (expect M/M with and
+without DLLMGR52_GDI_SCALE=1) is NOT done yet: the session was paused.
+
+Deferred (owner, 2026-11-11):
+- GetGlyphOutline: one call returns the picture and the metrics together.
+  Returning 96-DPI metrics with a k-size bitmap breaks applications that
+  size their buffer or blit from gmBlackBoxX/Y; returning both at 96 DPI
+  loses the point of GDI scaling for apps that draw glyphs themselves. Do
+  it when an application under GDI scaling is seen calling GetGlyphOutline
+  (WINEDEBUG=+font shows the calls) and its text spacing or glyph boxes are
+  off; then decide per format (GGO_METRICS alone: 96-DPI values; bitmap
+  formats: keep k-size bitmaps, metrics consistent with them).
+- GetCharWidthInfo (lsb/rsb minima, used by Uniscribe/usp10 and some
+  rich-edit code): do it when an application using usp10 or rich edit under
+  GDI scaling shows clipped first/last glyphs or shifted runs; the fix is
+  `mfont`'s values times k, like GetCharABCWidths.

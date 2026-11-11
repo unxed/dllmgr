@@ -52,3 +52,13 @@ contrast=2.2 scaling=exact. FastStone keeps stock text by default.
 Photoshop CS2 on the stand (local runtime with dllmgr-52), Edit menu:
 photoshop-edit-menu-bitmap-vs-gray.png, left text=bitmap (v8 today), right
 text=gray contrast=2.2 (new default). Menu bar and menu items are smoothed.
+
+## To do (owner, 2026-11-11): Courier New and "100%" digits
+
+On runtime-exact-2x.png and stock-halftone.png the Courier New line is
+proportional, and "100%" in Arial and Courier New has overlapping zeros
+(stock Wine the same). Task: run tests/wine/text-aa on v23 and on rt-gdi with
+WINEDEBUG=+font to see which file is really used for Arial and Courier New
+(substitution?) and where the digit widths come from; run the same probe on
+Windows in CI; write the result here; open a ticket if it reproduces. Not
+started (session paused).
