@@ -86,3 +86,14 @@ without the change):
   screendc80 setscale). Listed in docs/upstream-outbox.md.
 - The prefill's own logical/physical mix (fault 2) remains for windows
   that still get a snapshot; docs/sandbox-findings.md F30.
+
+## State at the pause (2026-11-11, owner's pause request)
+
+Done: cause found and proven, fix in prefill.c committed (660b42f), stand
+A/B verified (Opacity on v22, Flow via `dllmgr run` on v21). Delivery needs
+the next runtime build (app-isolation.yml builds the proxy); not published.
+Open: the Windows reference for dpirect83 (outbox row 17). The first two
+windows-probes runs failed on the Ubuntu runner's apt (DNS outage, not our
+code; bc24910 adds apt-get update); dispatched run 43045669566 was still
+running at the pause: read its log for "dpirect83.exe (after setscale)".
+Expected on Windows: physical rect in the pma-v1/v2 lines.
