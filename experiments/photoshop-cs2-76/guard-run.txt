@@ -1,0 +1,11 @@
+# o7: SCEN=fake DLLMGR76_TRACE=3000, guarded proxy (runtime v21, stand :134, 2026-11-11)
+# callers of the hit test that reached GetDlgItem (count, return address):
+    494 exe+0xa76688
+    288 exe+0x748cd3
+    144 exe+0xa73dcf
+# first and last trace line, guard line:
+dllmgr76: 363214911 hit test from exe+0xa76688 point 033801c2: GetDlgItem(0003093E PSFloatC, 0) = 00000000 
+dllmgr76: 363229851 hit test from exe+0x748cd3 point 033401c5: GetDlgItem(0003093E PSFloatC, 0) = 00000000 
+dllmgr76: guard: hit test from exe+0xa76688 on 0003093E (PSFloatC, parent/owner ) without a view child; answered 'nothing here'
+# o6 struct watcher (50 ms), the only structural hazard seen in all runs:
+t=33155ms STRUCT self hit=[000208de PSDocC "" 10006,10086-11296,10624 style=96cf0000 ex=00000100 id=0 pid=d0] owner=00010060 | no child id 0 in [000208de PSDocC "" 10006,10086-11296,10624 style=96cf0000 ex=00000100 id=0 pid=d0]

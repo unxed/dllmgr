@@ -101,3 +101,17 @@ compare when Photoshop's paint timer fires. Not yet verified end to end
 (the first build imported libgcc_s for a 64-bit division and broke the
 proxy; fixed with double arithmetic, and build.sh now refuses MinGW runtime
 DLL imports).
+
+## Hit-test guard (#76, DLLMGR76_NO_GUARD=1 turns it off)
+
+Photoshop CS2's cursor hit test takes the window record of a window owned by
+(or a child of) one of its document/palette windows from that window's child
+with id 0; with no such child it leaves its output pointer unset and one
+caller then reads the cursor point as a pointer (the owner's crash at
+photoshop+0xb249ce). Only in Photoshop.exe 9.0 (link stamp 0x42400fac), its
+delay-import slot of GetDlgItem gets a hook that, for a call from that one
+site (call instruction through the slot checked), turns the empty answer
+into the hit test's own "nothing here" (record NULL, part 0) and logs
+`dllmgr76: guard: ...` once per window. `DLLMGR76_TRACE=N` logs the first N
+GetDlgItem calls of the hit test with the caller and the point. Details:
+experiments/photoshop-cs2-76/README.md.
