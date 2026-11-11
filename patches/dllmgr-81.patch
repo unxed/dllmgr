@@ -1,0 +1,70 @@
+--- a/dlls/winex11.drv/x11drv.h
++++ b/dlls/winex11.drv/x11drv.h
+@@ -677,6 +677,7 @@
+     UINT        parent_invalid : 1; /* is the parent host window possibly invalid */
+     UINT        reparenting : 1; /* window is being reparented, likely from a decoration change */
+     UINT        is_resizable : 1; /* window is allowed to be resized by the window manager */
++    UINT        dllmgr81_wm_config : 1; /* dllmgr #81: the next SetWindowPos reports a WM config */
+     Window      embedder;       /* window id of embedder */
+     Pixmap         icon_pixmap;
+     Pixmap         icon_mask;
+--- a/dlls/winex11.drv/window.c
++++ b/dlls/winex11.drv/window.c
+@@ -1796,6 +1796,7 @@
+ 
+     TRACE( "window %p/%lx config changed %s -> %s, flags %#x\n", data->hwnd, data->whole_window,
+            wine_dbgstr_rect(&old_rect), wine_dbgstr_rect(&new_rect), flags );
++    data->dllmgr81_wm_config = 1;
+     return flags;
+ }
+ 
+@@ -2140,6 +2141,37 @@
+ }
+ 
+ 
++/* dllmgr #81: the window manager resizes a window of a DPI-scaled (e.g.
++ * DPI-unaware) application to a size that has no exact logical equivalent
++ * (an odd number of pixels at 200 %). Win32 rounds it to the next logical
++ * unit, and the rect sent back is a pixel off what X has, so we requested a
++ * config change in the middle of the WM's interactive resize. Muffin applies
++ * such a request on top of its own resize: the window grows ahead of the
++ * pointer, hits the bottom of the work area and is pushed up to y=0 (over the
++ * application's menu and palettes, Photoshop CS2 document windows). When the
++ * rect only differs from the current X config by that rounding, keep the X
++ * config. Only for a SetWindowPos that reports a WM config (the window's own
++ * requests are unchanged). DLLMGR81_OFF=1: Wine's behaviour. */
++static void dllmgr81_keep_wm_config( struct x11drv_win_data *data, RECT *rect )
++{
++    static int off = -1;
++    const RECT *cur = &data->current_state.rect;
++    UINT win_dpi, raw_dpi;
++    int tol;
++
++    if (off < 0) off = getenv( "DLLMGR81_OFF" ) != NULL;
++    if (off || !data->managed || data->configure_serial) return;
++    if (!(win_dpi = NtUserGetDpiForWindow( data->hwnd ))) return;
++    if (!(raw_dpi = NtUserGetWinMonitorDpi( data->hwnd, MDT_RAW_DPI )) || raw_dpi <= win_dpi) return;
++    tol = (raw_dpi + 2 * win_dpi - 1) / (2 * win_dpi);  /* rounding error, ceil(scale / 2) */
++    if (EqualRect( rect, cur )) return;
++    if (abs( rect->left - cur->left ) > tol || abs( rect->top - cur->top ) > tol ||
++        abs( rect->right - cur->right ) > tol || abs( rect->bottom - cur->bottom ) > tol) return;
++    TRACE( "window %p/%lx keeping WM config %s instead of %s\n", data->hwnd, data->whole_window,
++           wine_dbgstr_rect(cur), wine_dbgstr_rect(rect) );
++    *rect = *cur;
++}
++
+ /***********************************************************************
+  *		sync_window_position
+  *
+@@ -2175,6 +2207,11 @@
+     window_rect = window_rect_from_visible( old_rects, data->desired_state.rect );
+     if (data->is_offscreen) OffsetRect( &new_rect, window_rect.left - old_rects->window.left,
+                                         window_rect.top - old_rects->window.top );
++    if (data->dllmgr81_wm_config)
++    {
++        data->dllmgr81_wm_config = 0;
++        dllmgr81_keep_wm_config( data, &new_rect );
++    }
+ 
+     window_set_config( data, new_rect, above );
+ }
