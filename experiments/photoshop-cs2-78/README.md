@@ -149,3 +149,44 @@ to xclock the clock covers the palette (no Photoshop window above it);
 Alt+F4 brings Photoshop's own close confirmation. Matches the Windows
 reference. Runtime package now also ships bin/wineserver (optional overlay
 group, base checksum in app-isolation-check.sh).
+
+## 2026-11-12: cause of the owner's v23 report: the trampoline path runs the stock wineserver
+
+Owner (v23): the palettes stay on top after a switch with a normal launch
+(menu entry / .desktop / plain `wine Photoshop.exe`), not with `dllmgr run`.
+Live :0 (coordinator's read-only watcher, 2026-11-11 22:08/22:09): the two
+palettes above the active window had `_NET_WM_STATE_ABOVE` (= WS_EX_TOPMOST
+in winex11); on 2026-11-11 night the owner's Photoshop was served by
+`/opt/wine-stable/bin/wineserver` (stock; its sha256 differs from the v23
+`bin/wineserver`).
+
+Why: a normal launch starts Photoshop.exe with stock Wine, which starts the
+stock wineserver for ~/.wine. The version.dll trampoline (patches/dllmgr-27,
+prefill.c `trampoline()`) then runs `dllmgr run` and waits on a named event
+and the single-instance mutex, which only works through that same server.
+private-app.py `launch()` sets WINESERVER to the runtime's, but Wine only
+starts a server when none runs for the prefix, so the private Photoshop
+connects to the stock one. The client half of #78 (winex11
+WM_MOUSEACTIVATE) is there, the server half (server/window.c link_window)
+is not: a palette raised after the hidden topmost tooltip becomes topmost.
+The same happens under `dllmgr run` whenever any stock-Wine process keeps
+the prefix's server alive.
+
+Stand (full Cinnamon on Xvfb :132, real Alt+Tab, document open,
+t78r.sh SERVER0=/opt/wine-stable/bin/wineserver, v23 runtime loader):
+History click -> palette exstyle 0x88 + `_NET_WM_STATE_ABOVE`, after the
+switch it stays above the terminal; toolbox click -> the toolbox too
+(2 Photoshop windows above the terminal, as on the owner's :0). The same run
+with the runtime's own wineserver: always 0x80, nothing above
+(t78d-cinn-key, -keyhold, -wmctrl, -busy, -pal; PAL/BUSY did not find any
+other path to 0x88).
+
+Proposed fix (not done): do the #78 z-order rule on the client side, in
+win32u (shipped in the overlay, loaded whatever server runs): in
+set_window_pos, after WM_WINDOWPOSCHANGING, a window that is not topmost and
+is not asked to become topmost, with an insert-after window that is
+topmost, gets HWND_TOP instead (the server then puts it on top of the
+non-topmost windows = the Windows result of tests/wine/zorder78b.c). Keep
+the server part or drop it. Also: `dllmgr run` could log in launch.log
+which wineserver binary serves the prefix, and runtime fixes should not
+live only in wineserver (trampoline launches never get it).

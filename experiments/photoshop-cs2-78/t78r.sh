@@ -7,6 +7,10 @@
 # Photoshop top-level and screenshots.
 # 2026-11-11 evening: the owner sees the stuck palettes only with an image
 # open (a separate framed document window, _NET_WM_WINDOW_TYPE_DIALOG), so
+# SERVER0=/opt/wine-stable/bin/wineserver: start that (stock) wineserver
+# for the prefix first, as the launch trampoline does (stock wine starts
+# Photoshop.exe, its version.dll proxy relaunches through `dllmgr run`, and
+# the private runtime connects to the server that already runs).
 # a test image C:\t78.png is generated and opened, and the scenarios also
 # click into the document and switch away while it is focused.
 # BUSY=1 adds a last scenario like real work: hover every toolbox button
@@ -53,6 +57,10 @@ switch() {
 }
 PS="$WINEPREFIX/drive_c/Program Files (x86)/Adobe/Adobe Photoshop CS2"
 cd "$PS" || exit 1
+[ -n "$SERVER0" ] && env WINEPREFIX="$WINEPREFIX" "$SERVER0" -p60
+# which wineserver binary serves this prefix
+sdir=/tmp/.wine-$(id -u)/server-$(stat -c '%d-%i' "$WINEPREFIX" | awk -F- '{printf "%x-%x", $1, $2}')
+server_bin() { for p in $(pgrep -x wineserver); do [ "$(readlink /proc/$p/cwd)" = "$sdir" ] && readlink /proc/$p/exe; done; }
 # our own test image (no ICC profile, so no profile-mismatch prompt)
 [ -f "$WINEPREFIX/drive_c/t78.png" ] || convert -size 900x700 plasma:fractal -strip "$WINEPREFIX/drive_c/t78.png"
 (w DLLMGR27_NO_TRAMPOLINE=1 WINEDLLOVERRIDES=version=n,b WINEDEBUG=${WDBG:--all} $EXTRA setsid $RT/bin/wine Photoshop.exe 'C:\t78.png' > "$OUT/wine.log" 2>&1 &)
@@ -75,6 +83,7 @@ doc_click() {	# into the middle of the document's canvas
 	eval "$(xdotool getwindowgeometry --shell "$DOC")"
 	xdotool mousemove $((X + WIDTH / 2)) $((Y + HEIGHT / 2)) click 1; sleep 2
 }
+echo "server: $(server_bin)" | tee "$OUT/server.txt"
 dump 0-before
 import -window root -resize 25% "$OUT/0-before-25pct.png"
 xdotool mousemove $HIST click 1; sleep 2
