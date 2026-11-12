@@ -268,6 +268,7 @@ def main():
     ap.add_argument('--quiet-ms', type=int, default=1000)
     ap.add_argument('--quiet-cpu', type=float, default=0.05)
     ap.add_argument('--timeout', type=float, default=120)
+    ap.add_argument('--shot', help='screenshot (import -window root) at the end, before the app is stopped')
     ap.add_argument('--settle', type=float, default=0, help='extra seconds after the last step')
     ap.add_argument('--cold', nargs='*', default=[])
     ap.add_argument('--wine-log', action='append', default=[], help='more Wine logs (glob, files written during the run)')
@@ -366,6 +367,8 @@ def main():
     time.sleep(a.settle)
     end = now()
     marks.append((end, 'end of measurement'))
+    if a.shot:
+        subprocess.run(['import', '-window', 'root', '-resize', '25%', a.shot], stderr=subprocess.DEVNULL)
     # stop the app: every wineserver binary seen for our prefix (stock and
     # private runtime), then whatever of ours is left (the trampoline's
     # dllmgr runs in its own session), checked by WINEPREFIX against pid reuse
