@@ -70,3 +70,10 @@ left 2000 px of the screen, 50 %).
   WineHQ candidate (retest on wine.git master first), plus a possible Muffin
   note (applies a client ConfigureRequest during an interactive resize).
   Not yet in docs/upstream-outbox.md.
+
+## 2026-11-12: held out of runtime v24
+
+Owner's decision ("Да, без #81"): runtime v24 ships without dllmgr-81.
+tests/wine/app-isolation-build.sh no longer applies it; the patch file and
+this README stay. Bringing it back needs the open checks above
+(DLLMGR81_OFF run, recordings) and the owner's OK.
