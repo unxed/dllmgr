@@ -152,6 +152,6 @@ Close FastStone and Photoshop, then:
     cd ~/dev/dllmgr && git pull -q && mkdir -p ~/dllmgr-perf
     python3 tools/perf/startup.py --live --out ~/dllmgr-perf/faststone --prefix ~/.wine --wine-log "$HOME/.wine/.dllmgr/runs/*.log" --step '^FastStone.Image.Viewer' -- dllmgr run faststone
     # close FastStone, then:
-    python3 tools/perf/startup.py --live --out ~/dllmgr-perf/photoshop --prefix ~/.wine --wine-log "$HOME/.wine/.dllmgr/runs/*.log" --step 'Adobe Activation|^Adobe Photoshop$' --timeout 240 -- dllmgr run photoshop-cs2
+    python3 tools/perf/startup.py --live --out ~/dllmgr-perf/photoshop --prefix ~/.wine --wine-log "$HOME/.wine/.dllmgr/runs/*.log" --step 'Adobe Activation|^Adobe Photoshop$' --timeout 240 --quiet-cpu 0.2 -- dllmgr run photoshop-cs2
 
 It prints the timeline; ~/dllmgr-perf holds the files to send.
