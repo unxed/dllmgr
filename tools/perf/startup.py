@@ -278,12 +278,17 @@ def main():
     ap.add_argument('--strace', action='store_true')
     ap.add_argument('--server-trace', action='store_true')
     ap.add_argument('--server-strace', action='store_true')
+    ap.add_argument('--live', action='store_true',
+                    help="the owner's own desktop and prefix: no killing, no eviction, no tracing; "
+                         'refuses to start while anything runs in the prefix; the app stays open')
     ap.add_argument('command', nargs=argparse.REMAINDER)
     a = ap.parse_args()
     cmd = a.command[1:] if a.command[:1] == ['--'] else a.command
     if not cmd:
         ap.error('no COMMAND')
-    if os.environ.get('DISPLAY', '') in ('', ':0', ':0.0'):
+    if a.live and (a.cold or a.strace or a.server_trace or a.server_strace):
+        ap.error('--live measures only (no --cold/--strace/--server-*)')
+    if not a.live and os.environ.get('DISPLAY', '') in ('', ':0', ':0.0'):
         sys.exit('startup.py: refusing DISPLAY %r (stand displays only)' % os.environ.get('DISPLAY'))
     os.makedirs(a.out, exist_ok=True)
     prefix = os.path.realpath(a.prefix)
@@ -291,7 +296,19 @@ def main():
     if a.wine_trace and '+timestamp' not in env.get('WINEDEBUG', ''):
         env['WINEDEBUG'] = ','.join(x for x in (env.get('WINEDEBUG'), '+timestamp,+loaddll,+process') if x)
     notes = ['load average before the run: %.2f %.2f %.2f (other agents share the machine)' % os.getloadavg()]
-    subprocess.run([a.wineserver, '-k'], env=env, stderr=subprocess.DEVNULL)
+    if a.live:
+        busy = []
+        for name in os.listdir('/proc'):
+            try:
+                with open('/proc/%s/environ' % name, 'rb') as f:
+                    if name.isdigit() and (b'WINEPREFIX=' + prefix.encode() + b'\0') in f.read():
+                        busy.append(open('/proc/%s/comm' % name).read().strip())
+            except OSError:
+                pass
+        if busy:
+            sys.exit('startup.py: close these first (they run in %s): %s' % (prefix, ' '.join(sorted(set(busy)))))
+    else:
+        subprocess.run([a.wineserver, '-k'], env=env, stderr=subprocess.DEVNULL)
     stale = 0
     keep, pid = set(), os.getpid()
     while pid > 1:  # never our own ancestors
@@ -300,7 +317,7 @@ def main():
             pid = int(open('/proc/%d/stat' % pid).read().rsplit(')', 1)[1].split()[1])
         except (OSError, ValueError, IndexError):
             break
-    for name in os.listdir('/proc'):  # leftovers of an earlier run in this (our own) prefix
+    for name in [] if a.live else os.listdir('/proc'):  # leftovers of an earlier run in this (our own) prefix
         try:
             with open('/proc/%s/environ' % name, 'rb') as f:
                 if name.isdigit() and int(name) not in keep and (b'WINEPREFIX=' + prefix.encode() + b'\0') in f.read():
@@ -375,12 +392,16 @@ def main():
     with procs.lock:
         servers = {p.get('exe') for p in procs.seen.values() if 'wineserver' in p['comm'] and p.get('exe')}
         ours = list(procs.seen)
-    for srv in sorted(servers | {a.wineserver}):
+    if a.live:
+        servers, ours = set(), []
+        marks.append((now(), 'live: the application stays open; close it yourself'))
+    for srv in sorted(servers | ({a.wineserver} if not a.live else set())):
         subprocess.run([srv, '-k'], env=env, stderr=subprocess.DEVNULL)
     try:
-        proc.wait(timeout=5)
+        proc.wait(timeout=0 if a.live else 5)
     except subprocess.TimeoutExpired:
-        os.killpg(proc.pid, signal.SIGKILL)
+        if not a.live:
+            os.killpg(proc.pid, signal.SIGKILL)
     for pid in ours:
         try:
             with open('/proc/%d/environ' % pid, 'rb') as f:
