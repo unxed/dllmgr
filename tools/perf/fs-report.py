@@ -108,6 +108,7 @@ def main():
     per_proc = collections.defaultdict(Stat)
     per_call = collections.defaultdict(Stat)
     per_class = collections.defaultdict(Stat)
+    proc_class = collections.defaultdict(Stat)
     name_dirs = collections.defaultdict(set)   # basename -> dirs asked in (lookups that failed or not)
     name_stat = collections.defaultdict(Stat)
     last_miss = {}  # tid -> path of the last ENOENT lookup
@@ -244,7 +245,8 @@ def main():
                 last_miss[tid] = path
                 fail_paths[path] += 1
             cls = classify(path, prefix)
-            for st in (per_proc[comm.get(pid, str(pid))], per_call[call], per_class[cls], total):
+            for st in (per_proc[comm.get(pid, str(pid))], per_call[call], per_class[cls], total,
+                       proc_class[comm.get(pid, str(pid)) + ' / ' + cls]):
                 st.n += 1
                 st.fail += failed
                 st.time += dur
@@ -272,6 +274,7 @@ def main():
     table('per process', per_proc)
     table('per syscall', per_call)
     table('per path class', per_class, limit=40)
+    table('per process / path class (by calls)', proc_class, key=lambda kv: -kv[1].n, limit=2 * a.top)
     print('\n## per-folder lookups: names asked for in the most directories')
     print('%-28s %6s %8s %8s %9s %7s' % ('name', 'dirs', 'calls', 'failed', 'time ms', 'scans'))
     caused = collections.Counter(os.path.basename(s[3]).lower() for s in scan_done if s[3])

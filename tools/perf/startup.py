@@ -29,7 +29,7 @@ Options:
 Output in DIR: timeline.txt (ms since launch), summary.json, cpu.tsv,
 wine.log (COMMAND's stderr), x.tsv, and the trace files.
 """
-import argparse, json, os, re, signal, subprocess, sys, threading, time
+import argparse, glob, json, os, re, signal, subprocess, sys, threading, time
 
 T0 = None
 HZ = os.sysconf('SC_CLK_TCK')
@@ -125,7 +125,7 @@ class Procs(threading.Thread):
             for pid, p in self.seen.items():
                 if pid not in alive and 'gone' not in p:
                     p['gone'] = t
-            self.series.append((t, sum(p['user'] + p['sys'] for p in self.seen.values())))
+            self.series.append((t, sum(p['user'] + p['sys'] for p in self.seen.values() if p['comm'] != 'strace')))
 
     def run(self):
         while not self.stop:
@@ -270,7 +270,7 @@ def main():
     ap.add_argument('--timeout', type=float, default=120)
     ap.add_argument('--settle', type=float, default=0, help='extra seconds after the last step')
     ap.add_argument('--cold', nargs='*', default=[])
-    ap.add_argument('--wine-log', action='append', default=[])
+    ap.add_argument('--wine-log', action='append', default=[], help='more Wine logs (glob, files written during the run)')
     ap.add_argument('--wineserver', default='/opt/wine-stable/bin/wineserver')
     ap.add_argument('--no-wine-trace', dest='wine_trace', action='store_false',
                     help='do not add +timestamp,+loaddll,+process to WINEDEBUG')
@@ -289,8 +289,26 @@ def main():
     env = dict(os.environ, WINEPREFIX=prefix)
     if a.wine_trace and '+timestamp' not in env.get('WINEDEBUG', ''):
         env['WINEDEBUG'] = ','.join(x for x in (env.get('WINEDEBUG'), '+timestamp,+loaddll,+process') if x)
-    notes = []
+    notes = ['load average before the run: %.2f %.2f %.2f (other agents share the machine)' % os.getloadavg()]
     subprocess.run([a.wineserver, '-k'], env=env, stderr=subprocess.DEVNULL)
+    stale = 0
+    keep, pid = set(), os.getpid()
+    while pid > 1:  # never our own ancestors
+        keep.add(pid)
+        try:
+            pid = int(open('/proc/%d/stat' % pid).read().rsplit(')', 1)[1].split()[1])
+        except (OSError, ValueError, IndexError):
+            break
+    for name in os.listdir('/proc'):  # leftovers of an earlier run in this (our own) prefix
+        try:
+            with open('/proc/%s/environ' % name, 'rb') as f:
+                if name.isdigit() and int(name) not in keep and (b'WINEPREFIX=' + prefix.encode() + b'\0') in f.read():
+                    os.kill(int(name), signal.SIGKILL)
+                    stale += 1
+        except OSError:
+            pass
+    if stale:
+        notes.append('killed %d leftover processes of this prefix' % stale)
     time.sleep(0.5)
     if a.cold:
         files, size = evict(a.cold)
@@ -304,6 +322,8 @@ def main():
                                   stderr=open(os.path.join(a.out, 'server.log'), 'wb'))
         time.sleep(1.0)
     if a.strace:
+        if a.quiet_cpu == 0.05:
+            a.quiet_cpu = 0.25  # traced idle polling is inflated too
         cmd = ['strace', '-f', '-tt', '-T', '-qq', '-s', '300', '-o', os.path.join(a.out, 'fs.strace'),
                '-e', 'trace=%file,getdents64,clone,clone3,vfork,fork,prctl,ioctl,close,execve'] + cmd
     x = XWatch(a.out)
@@ -346,14 +366,26 @@ def main():
     time.sleep(a.settle)
     end = now()
     marks.append((end, 'end of measurement'))
-    # stop the app: our prefix's wineserver only
-    srv = env.get('WINESERVER') or a.wineserver
-    subprocess.run([srv, '-k'], env=env, stderr=subprocess.DEVNULL)
-    subprocess.run([a.wineserver, '-k'], env=env, stderr=subprocess.DEVNULL)
+    # stop the app: every wineserver binary seen for our prefix (stock and
+    # private runtime), then whatever of ours is left (the trampoline's
+    # dllmgr runs in its own session), checked by WINEPREFIX against pid reuse
+    with procs.lock:
+        servers = {p.get('exe') for p in procs.seen.values() if 'wineserver' in p['comm'] and p.get('exe')}
+        ours = list(procs.seen)
+    for srv in sorted(servers | {a.wineserver}):
+        subprocess.run([srv, '-k'], env=env, stderr=subprocess.DEVNULL)
     try:
-        proc.wait(timeout=20)
+        proc.wait(timeout=5)
     except subprocess.TimeoutExpired:
         os.killpg(proc.pid, signal.SIGKILL)
+    for pid in ours:
+        try:
+            with open('/proc/%d/environ' % pid, 'rb') as f:
+                mine = (b'WINEPREFIX=' + prefix.encode() + b'\0') in f.read()
+            if mine:
+                os.kill(pid, signal.SIGKILL)
+        except OSError:
+            pass
     if server:
         try:
             server.wait(timeout=10)
@@ -371,7 +403,10 @@ def main():
         for t, kind, wid, name, geo in x.events:
             if kind.startswith('map'):
                 ev.append((t, 'X %s 0x%x %s %r' % (kind, wid, geo, name)))
-    ev += wine_events([os.path.join(a.out, 'wine.log')] + a.wine_log, T0)
+    logs = [os.path.join(a.out, 'wine.log')]
+    for pattern in a.wine_log:  # e.g. PREFIX/.dllmgr/runs/*.log (dllmgr run keeps +loaddll out of stderr)
+        logs += [p for p in glob.glob(pattern) if os.path.getmtime(p) >= time.time() - (now() - T0) - 1]
+    ev += wine_events(logs, T0)
     shown = [t for t in x.damage_times if t <= end]
     last_damage = shown[-1] if shown else None
     if last_damage:
