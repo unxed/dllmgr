@@ -6,7 +6,8 @@
 #     steps (hand-like), pause, screenshots 0.2 s and 1.5 s into each pause,
 #     release, screenshot;
 #  2. drag the toolbox by its title strip the same way;
-#  3. hover along the options bar in legs with pauses (tool tips).
+#  3. hover along the options bar in legs with pauses (tool tips);
+#  4. new document: brush cursor over the canvas, drag the document window.
 # Env: RT, WINEPREFIX, EXTRA (env for Photoshop, e.g. the dllmgr run
 # settings), WDBG, THUMB ("X Y" of the slider thumb, default 759 174).
 # Run inside a stand session.
@@ -70,4 +71,23 @@ xdotool mousemove 150 137; sleep 1
 glide 150 137 10 0 8 7-hover
 xdotool mousemove 1500 900; sleep 1.5
 import -window root "$OUT/8-hover-done.png"
+# 4. new document (Ctrl+N, Enter), brush cursor over the canvas with pauses,
+#    then drag the document window by its title bar with pauses
+F=$(xdotool search --name '^Adobe Photoshop$' | head -1); xdotool windowactivate --sync "$F"; sleep 1
+xdotool key ctrl+n; sleep 3
+wmctrl -l | grep -q ' New$' || { xdotool mousemove 40 86 click 1; sleep 1.5; xdotool key n; sleep 3; }  # File > New
+wmctrl -l | cut -c20- > "$OUT/windows-new.txt"
+xdotool key Return; sleep 4
+import -window root "$OUT/9-doc.png"
+D=$(xdotool search --onlyvisible --name '@ ' | head -1)
+if [ -n "$D" ]; then
+	eval "$(xdotool getwindowgeometry --shell $D)"; echo "doc $D ${WIDTH}x${HEIGHT}+$X+$Y" > "$OUT/doc.txt"
+	CX=$((X + WIDTH / 4)); CY=$((Y + HEIGHT / 3))
+	xdotool mousemove $CX $CY; sleep 1
+	glide $CX $CY 6 3 4 10-canvas
+	xdotool mousemove $((X + WIDTH / 2)) $((Y - 20)); sleep 0.5; xdotool mousedown 1; sleep 0.3
+	glide $((X + WIDTH / 2)) $((Y - 20)) 8 4 4 11-docdrag
+	xdotool mouseup 1; sleep 2
+	import -window root "$OUT/12-docdrag-released.png"
+fi
 w $RT/bin/wineserver -k

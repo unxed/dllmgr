@@ -128,3 +128,45 @@ v24 build (CI run 43082877347, head 56ae058) carries it.
 
 Windows reference for dpirect83: runs 43043199242 and 43045669566 were
 cancelled on the Ubuntu builder's apt timeouts (not our code); still open.
+
+## Follow-up 2026-11-12: owner retest on v23 ("frame still offset; under dllmgr run moving also leaves artifacts when the mouse pauses")
+
+The frame: expected, v23 has no 660b42f.
+
+### What a v24 from run 43082877347 (head 56ae058) would contain
+
+v23 (v22 Wine + #76 proxy guard) plus: dllmgr-80 (#80, desktop-window DCs
+of DPI-unaware threads scaled to physical, stand-checked in
+experiments/photoshop-cs2-80), dllmgr-81 (#81, winex11: keep the WM config
+when a WM resize differs only by the DPI rounding; stand-checked for the
+corner resize only, README still lists open checks: DLLMGR81_OFF run,
+recordings) and this proxy change. Nothing runtime-related landed after
+56ae058. #81 changes every WM-driven reconfiguration of a DPI-scaled
+window, so it is the risky part; #83 needs only the proxy.
+
+### Motion artifacts: stand check (t83m.sh)
+
+v23 Wine (runtime b0c4e61a...), fresh prefix per run, the v23 proxy
+("head") or 660b42f ("fix"); "run" = the `dllmgr run` environment
+(DLLMGR52_TEXT=agg-rgb, DLLMGR52_GAMMA=2.2, DLLMGR77_SYSTEM=Tahoma,
+LC_ALL=C.UTF-8, WINEDEBUG=+loaddll), "plain" = none of it; reference
+"nopre" = head + DLLMGR27_NO_PREFILL=1. Each case moves in quick 4-10 px
+steps, pauses, screenshots 0.2 s and 1.5 s into every pause:
+
+| case | head run | head plain | fix run | nopre run |
+|---|---|---|---|---|
+| Opacity thumb drag, 4 pauses, release | no trails | no trails | = nopre (0 px) | - |
+| toolbox drag by its strip, 4 pauses, release | one XOR outline at half coordinates (#80), no leftovers after release | same | - | - |
+| hover along the options bar (tool tips) | tool tips clean, nothing left behind | - | = nopre (0 px) | - |
+| new document: brush cursor over the canvas, 4 pauses | one brush circle per frame, no trails | - | - | - |
+| brush stroke at 23 % with 4 pauses (meant as a document drag; the press landed in the canvas) | stroke and cursor clean | - | - | - |
+
+Head differs from nopre only by the v23 frame snapshot (1272 px in the
+popup) and, in every hover frame, 220 px in the brush-tip preview of the
+options bar (a small tool window that composes the soft tip over the
+snapshot); both are 0 with the fix.
+
+Not reproduced on the stand. Needed from the owner: what was being moved
+(slider thumb in the popup, the popup, a palette, a document window, the
+brush over the canvas), what "artifacts" look like (a screenshot or a short
+video), and what the other launch was that did not show them.
