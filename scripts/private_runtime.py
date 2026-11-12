@@ -29,8 +29,10 @@ OPTIONAL_GROUPS = (
     {   # #74: sane.ds Unix side lists TWAIN sources from a device cache (patches/dllmgr-74-sane.patch)
         'x86_64-unix/sane.so': 'lib/wine/x86_64-unix/sane.so',
     },
-    {   # #78: wineserver z-order rule for a non-topmost window put after a
-        # topmost one (patches/dllmgr-78.patch); same protocol as the base
+    {   # #78 in runtimes v22-v23: wineserver z-order rule for a non-topmost
+        # window put after a topmost one; same protocol as the base. Later
+        # packages do it in win32u (a trampoline launch keeps the stock server)
+        # and no longer ship it; kept so those packages still verify.
         'bin/wineserver': 'bin/wineserver',
     },
 )

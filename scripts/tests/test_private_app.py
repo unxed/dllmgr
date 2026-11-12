@@ -592,6 +592,23 @@ class PrivateAppTest(unittest.TestCase):
 
 
 class LaunchLogTest(unittest.TestCase):
+    def test_prefix_server_finds_the_wineserver_of_this_prefix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix, proc = Path(tmp) / "pfx", Path(tmp) / "proc"
+            prefix.mkdir()
+            st = os.stat(prefix)
+            sdir = "/tmp/.wine-%d/server-%x-%x" % (os.getuid(), st.st_dev, st.st_ino)
+            for pid, comm, cwd, exe in (("10", "wineserver", "/tmp/.wine-0/server-1-2", "/other"),
+                                        ("11", "wine", sdir, "/x/wine"),
+                                        ("12", "wineserver", sdir, "/opt/wine-stable/bin/wineserver")):
+                (proc / pid).mkdir(parents=True)
+                (proc / pid / "comm").write_text(comm + "\n")
+                os.symlink(cwd, proc / pid / "cwd")
+                os.symlink(exe, proc / pid / "exe")
+            self.assertEqual(private_app.prefix_server(prefix, proc), "/opt/wine-stable/bin/wineserver")
+            (proc / "12" / "comm").write_text("bash\n")
+            self.assertIsNone(private_app.prefix_server(prefix, proc))
+
     def test_keeps_the_last_twenty_lines(self):
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp)

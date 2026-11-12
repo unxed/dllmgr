@@ -190,3 +190,24 @@ non-topmost windows = the Windows result of tests/wine/zorder78b.c). Keep
 the server part or drop it. Also: `dllmgr run` could log in launch.log
 which wineserver binary serves the prefix, and runtime fixes should not
 live only in wineserver (trampoline launches never get it).
+
+## 2026-11-12: fix moved to win32u (patches/dllmgr-78.patch), server part dropped
+
+win32u set_window_pos, after WM_WINDOWPOSCHANGING and swp_owner_popups: a
+top-level window that is not WS_EX_TOPMOST, with an insert-after window that
+is, gets HWND_TOP (the server then puts it on top of the non-topmost windows,
+or above its topmost owner). DLLMGR78_OFF=1: Wine's rule. The server hunk is
+gone and the runtime no longer ships bin/wineserver; the winex11
+WM_MOUSEACTIVATE part is unchanged.
+
+Stand, local build (rt78c = v23 with this win32u.so and a wineserver without
+the server hunk):
+- tests/wine/zorder78b: A, B, P, M with P not topmost on the runtime server
+  and on the stock server (Windows order); DLLMGR78_OFF=1 on the stock server
+  gives P topmost (the bug).
+- Photoshop, full Cinnamon on :132, document open, SW=key, t78r.sh:
+  SERVER0=/opt/wine-stable/bin/wineserver (owner's normal-launch case) and
+  the runtime's own server: History click, toolbox click, document click +
+  History, document focused: after every Alt+Tab 0 Photoshop windows above
+  the terminal, no palette with exstyle 0x88 in any dump
+  (out/t78fix-stocksrv, out/t78fix-ownsrv).

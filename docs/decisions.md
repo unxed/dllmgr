@@ -293,3 +293,22 @@ running one for the same branch. While a deep run is in progress, push only
   honestly. See [the development policy](development.md).
 - Reason: the user needs working fixes and fast feedback, not a growing queue
   of changes held back by perfectionism.
+
+## D24 — Runtime fixes need a client-side path, not only wineserver
+
+- Date: 2026-11-12
+- Decided by: coordinator, on the #78 findings (agent cc-rcnb-52ab)
+- Decision: a private-runtime fix must not live only in wineserver. A
+  normal launch (menu entry, .desktop, plain `wine App.exe`) starts the exe
+  with stock Wine, which starts the stock wineserver for the prefix; the
+  version.dll trampoline then relaunches through `dllmgr run`, and the
+  private runtime connects to that server (Wine starts a server only when
+  none runs; the trampoline's named event and mutex need the same server).
+  The same happens under `dllmgr run` whenever a stock-Wine process keeps
+  the prefix's server alive. Any server-side fix therefore needs a client
+  side (win32u, winex11, ntdll, or the proxy) that gives the result with the
+  stock server too.
+- Applied: #78's z-order rule moved from server/window.c to win32u
+  set_window_pos (patches/dllmgr-78.patch); the runtime stops shipping
+  bin/wineserver. `dllmgr run` writes to launch.log which wineserver serves
+  the prefix.

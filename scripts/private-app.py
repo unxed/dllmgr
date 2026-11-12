@@ -930,6 +930,25 @@ def watch(prefix, app, argv, env, quick=3.0):
         pass
 
 
+def prefix_server(prefix, proc=Path('/proc')):
+    """#78: the binary of the wineserver that already serves this prefix, or
+    None. Wine starts a server only when none runs, so after a trampoline
+    launch (stock wine started the exe) the private runtime gets the stock
+    server, and a fix that lives only in wineserver does not apply."""
+    try:
+        st = os.stat(prefix)
+    except OSError:
+        return None
+    sdir = '/tmp/.wine-%d/server-%x-%x' % (os.getuid(), st.st_dev, st.st_ino)
+    for entry in proc.glob('[0-9]*'):
+        try:
+            if (entry / 'comm').read_text().strip() == 'wineserver' and os.readlink(entry / 'cwd') == sdir:
+                return os.readlink(entry / 'exe')
+        except OSError:
+            continue
+    return None
+
+
 def launch(args, prefix):
     _, state = read_state(prefix, args.exe, app_of(args))
     exe = Path(state['exe'])
@@ -961,7 +980,10 @@ def launch(args, prefix):
         free_alt_click(prefix, app_of(args), env)
     if read_settings(prefix, app_of(args))['logs'] == 'on' and not env.get('WINEDEBUG'):
         env['WINEDEBUG'] = RUN_WINEDEBUG  # #76: which module sat at a crash address
-    launch_log(prefix, 'run ' + app_of(args) + ': starting the private runtime')
+    server = prefix_server(prefix)
+    launch_log(prefix, 'run ' + app_of(args) + ': starting the private runtime; wineserver: ' +
+               ('already running ' + server + ('' if server == str(runtime / 'bin/wineserver') else ' (not the runtime\'s)')
+                if server else 'none running, the runtime starts its own'))
     return argv, env  # started outside the prefix lock by watch() or supervise()
 
 
