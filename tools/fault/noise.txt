@@ -1,0 +1,20 @@
+# Known-benign failing calls and log lines for tools/fault/fault.py.
+# One case-insensitive regex per line, matched against the shown call text
+# plus the caller module ("RegOpenKeyExA(HKLM, \"...\") photoshop.exe"),
+# against "KIND NAME" of not-found lookups ("file C:\..."), and against
+# "level:channel:function message" of err:/fixme: lines.
+# Add a line only with a note on why the case is benign.
+
+# Probing for optional components that are normally absent
+GetFileAttributes\w*\("[^"]*desktop\.ini"
+LoadLibrary\w*\("(mscoree|mshtml|dwmapi|uxtheme|imm32|msimg32)\.dll"
+GetModuleHandle
+# Language/locale resource probing
+\\(lang|locale|locales|localization)\\
+# fonts the X server does not have: harmless Wine messages
+fixme:font:
+fixme:ntdll:NtQuerySystemInformation
+fixme:ver:GetCurrentPackageId
+err:vulkan:
+fixme:imm:
+fixme:msvcrt:
