@@ -211,3 +211,20 @@ the server hunk):
   History, document focused: after every Alt+Tab 0 Photoshop windows above
   the terminal, no palette with exstyle 0x88 in any dump
   (out/t78fix-stocksrv, out/t78fix-ownsrv).
+
+CI build (app-isolation run 43126123680, package sha256 3b9960fb…, no
+bin/wineserver in it), installed with `dllmgr fix photoshop-cs2
+--runtime-package` on a fresh prefix-clean copy:
+- t78r.sh TRAMP=1 (the owner's normal launch: /opt/wine-stable/bin/wine
+  Photoshop.exe, trampoline -> dllmgr run): the prefix is served by
+  /opt/wine-stable/bin/wineserver, Photoshop maps the runtime's win32u.so;
+  all scenarios 0 Photoshop windows above the terminal, no exstyle 0x88
+  (out/t78fix-tramp-key). launch.log: "starting the private runtime;
+  wineserver: already running /opt/wine-stable/bin/wineserver (not the
+  runtime's)".
+- Original #78 scenario (NODOC=1, SW=wmctrl, rt78c, both servers): History
+  click keeps the main window foreground, nothing above after the switch.
+- e2e.sh (fresh install, C:\t78.png): handover to the private runtime, the
+  document opens (66.7 %, so the script's "@ 100%" grep says NOT OPEN); the
+  F26 "program error" box comes up at startup as before on this stand, so
+  the ru Ctrl+N step got nothing (F26, unchanged).

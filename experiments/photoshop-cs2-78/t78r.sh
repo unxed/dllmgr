@@ -11,6 +11,9 @@
 # for the prefix first, as the launch trampoline does (stock wine starts
 # Photoshop.exe, its version.dll proxy relaunches through `dllmgr run`, and
 # the private runtime connects to the server that already runs).
+# TRAMP=1: start like the owner's normal launch, /opt/wine-stable/bin/wine
+# Photoshop.exe in a prefix with the recipe installed (RT = its runtime).
+# NODOC=1: no document (the original #78 scenario).
 # a test image C:\t78.png is generated and opened, and the scenarios also
 # click into the document and switch away while it is focused.
 # BUSY=1 adds a last scenario like real work: hover every toolbox button
@@ -63,7 +66,12 @@ sdir=/tmp/.wine-$(id -u)/server-$(stat -c '%d-%i' "$WINEPREFIX" | awk -F- '{prin
 server_bin() { for p in $(pgrep -x wineserver); do [ "$(readlink /proc/$p/cwd)" = "$sdir" ] && readlink /proc/$p/exe; done; }
 # our own test image (no ICC profile, so no profile-mismatch prompt)
 [ -f "$WINEPREFIX/drive_c/t78.png" ] || convert -size 900x700 plasma:fractal -strip "$WINEPREFIX/drive_c/t78.png"
-(w DLLMGR27_NO_TRAMPOLINE=1 WINEDLLOVERRIDES=version=n,b WINEDEBUG=${WDBG:--all} $EXTRA setsid $RT/bin/wine Photoshop.exe 'C:\t78.png' > "$OUT/wine.log" 2>&1 &)
+ARG='C:\t78.png'; [ -n "$NODOC" ] && ARG=
+if [ -n "$TRAMP" ]; then	# the owner's normal launch: stock wine + installed trampoline
+	(env WINEDEBUG=-all setsid /opt/wine-stable/bin/wine Photoshop.exe $ARG > "$OUT/wine.log" 2>&1 &)
+else
+(w DLLMGR27_NO_TRAMPOLINE=1 WINEDLLOVERRIDES=version=n,b WINEDEBUG=${WDBG:--all} $EXTRA setsid $RT/bin/wine Photoshop.exe $ARG > "$OUT/wine.log" 2>&1 &)
+fi
 for i in $(seq 60); do sleep 3; wmctrl -l 2>/dev/null | grep -q 'Activation' && break; done
 sleep 3; xdotool mousemove 1788 1372 click 1; sleep 5; wmctrl -c 'Adobe Updater Preferences' 2>/dev/null; sleep 2
 if [ -n "$DISMISS" ]; then
@@ -84,6 +92,10 @@ doc_click() {	# into the middle of the document's canvas
 	xdotool mousemove $((X + WIDTH / 2)) $((Y + HEIGHT / 2)) click 1; sleep 2
 }
 echo "server: $(server_bin)" | tee "$OUT/server.txt"
+for p in $(pgrep -f 'Photoshop.exe'); do	# which win32u the Photoshop process of this prefix maps
+	tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qx "WINEPREFIX=$WINEPREFIX" &&
+		echo "photoshop $p: $(grep -m1 -o '/[^ ]*win32u.so' /proc/$p/maps)" | tee -a "$OUT/server.txt"
+done
 dump 0-before
 import -window root -resize 25% "$OUT/0-before-25pct.png"
 xdotool mousemove $HIST click 1; sleep 2
