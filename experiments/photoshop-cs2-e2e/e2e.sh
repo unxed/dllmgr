@@ -28,7 +28,7 @@ xdotool mousemove 1788 1372 click 1; sleep 4                 # trial: Continue T
 wmctrl -c 'Adobe Updater Preferences'; sleep 2
 wmctrl -l > "$OUT/windows.txt"
 grep -q 'hardware or system' "$OUT/windows.txt" && echo "document: ERROR BOX"
-grep -q '@ 100%' "$OUT/windows.txt" && echo "document: open" || echo "document: NOT OPEN"
+grep -q ' @ [0-9][0-9.,]*%' "$OUT/windows.txt" && echo "document: open" || echo "document: NOT OPEN"
 import -window root "$OUT/2-loaded.png"
 F=$(xdotool search --name '^Adobe Photoshop$' | head -1)
 xdotool windowactivate --sync "$F"
