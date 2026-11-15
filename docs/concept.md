@@ -673,6 +673,33 @@ Hypotheses (checked at the start of I6):
 - **H7.** `LdrRegisterDllNotification` exists in Wine 9 (check against
   `dlls/ntdll`).
 
+### 16.1 Escalation for problems beyond replaceable DLLs
+
+Prefer small, independently testable steps that leave the user's system Wine
+untouched. Start with a scoped workaround when a problem cannot be fixed by
+replacing a leaf DLL. Keep each change reversible and limited to one application
+and prefix, and verify it against a reproducer before expanding its scope.
+
+If a workaround is not viable, the long-term direction is an atomic,
+application-isolated way to select or replace Wine components that dllmgr cannot
+replace as ordinary DLLs. Treat that as a separate design and implementation
+problem: prove the component boundary, compatibility requirements, rollback,
+and test strategy before attempting broad replacement. Do not modify the system
+Wine installation.
+
+For hardware-key problems, the design space may include a narrowly scoped bridge
+to host-driver interaction, a compatible driver implementation, or another
+verified approach. If the blocker is fundamentally tied to Windows architecture
+and cannot be handled in Wine, ReactOS may be considered only as a last-resort
+target after its feasibility and applicable clean-room and licensing constraints
+are established. These are future directions, not claims that any path is
+currently implemented or safe for a particular application.
+
+Use the same RUP discipline throughout: deliver the smallest useful slice,
+cover it with a focused test, and validate it before proceeding to the next
+dependency. A higher-risk or irreversible design choice needs explicit evidence
+and must not be inferred from this roadmap alone.
+
 ## 17. Debug-data collection (`dllmgr diag`)
 
 An agent (the fix-it-in-wine skill) or a person must not invent each time how to
