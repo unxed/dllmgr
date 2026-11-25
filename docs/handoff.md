@@ -229,14 +229,14 @@ below marked **LOCAL** needs the owner's machine.
 
 ## Where things are
 
-- Work is merged into `main`; PRs 15 and 17 are closed.
+- Work is merged into `main`; PRs [#15](https://github.com/unxed/dllmgr/pull/15) and [#17](https://github.com/unxed/dllmgr/pull/17) were merged on 2026-11-06.
 - Recipe `catalog/bundles/faststone-all.md`: five fixes, prebuilt in the
   prerelease https://github.com/unxed/dllmgr/releases/tag/faststone-v2.
 - Status table of every known symptom: `docs/faststone.md`, section
   "Status with recipe faststone-v2". Per-fix evidence: `results` rows in
   `catalog/fixes/*.md`.
-- Data model proposal: `docs/data-model.md` (D14), waiting for the owner after
-  the architecture review below.
+- Data model proposal: `docs/data-model.md` (D14), still awaiting the owner's
+  decision; the merged architecture review is recorded below.
 - Install on the owner's machine (also the acceptance test):
   `dllmgr share faststone` prints the link and the one-line installer;
   `dllmgr fix faststone`, `dllmgr uninstall faststone`.
@@ -334,19 +334,21 @@ browser). Not a Wine bug so far.
 
 ## Open threads
 
-- Architecture and vision review: https://github.com/unxed/dllmgr/pull/16
-  (into `fix/faststone-v2`) and https://github.com/unxed/fix-it-in-wine/pull/10.
-  It adds `docs/vision.md` (the owner's text verbatim plus marked editorial
-  notes), D16 clean-room rules (Wine gets text only; Windows only as a black
-  box), D17 the four headings for every fix file, D18 `dllmgr fix` without an
-  app name (scan the prefix, match, ask) and a desktop menu entry, D19 vendor
-  kits (`docs/vendor-kits.md`). Questions for the owner: accept D17 and D19?
-  Enable a vendor kit at install time or by a launcher at each start? May a
-  Bugzilla report link to a clearly labeled AI-written patch in the catalog?
-  The data model (D14) waits for the owner's review of this PR.
-- fix-it-in-wine PRs: lessons from this session
-  (https://github.com/unxed/fix-it-in-wine/pull/8), showcase scope
-  (https://github.com/unxed/fix-it-in-wine/pull/9).
+- Architecture and vision review: dllmgr [#16](https://github.com/unxed/dllmgr/pull/16)
+  (into `fix/faststone-v2`) and fix-it-in-wine [#10](https://github.com/unxed/fix-it-in-wine/pull/10)
+  were merged on 2026-11-06. They record `docs/vision.md` (the owner's text
+  verbatim plus marked editorial notes), D16 clean-room rules (Wine gets text
+  only; Windows only as a black box), D17 the four headings for every fix
+  file, D18 `dllmgr fix` without an app name (scan the prefix, match, ask) and
+  a desktop menu entry, and D19 vendor kits (`docs/vendor-kits.md`). The
+  proposal/questions recorded in the merged PR remain unresolved here: accept
+  D17 and D19, enable a vendor kit at install time or by a launcher at each
+  start, and allow Bugzilla reports to link a clearly labeled AI-written patch
+  in the catalog. D14 remains a proposal awaiting the owner's decision.
+- fix-it-in-wine PRs [#8](https://github.com/unxed/fix-it-in-wine/pull/8)
+  (lessons from this session) and [#9](https://github.com/unxed/fix-it-in-wine/pull/9)
+  (showcase scope) were merged on 2026-11-06; these links are historical
+  context, not open work.
 - dllmgr issues: https://github.com/unxed/dllmgr/issues/8 (FastStone symptoms),
   https://github.com/unxed/dllmgr/issues/13 (ReactOS, LiberNT, CusDeb OS),
   https://github.com/unxed/dllmgr/issues/14 (LVIR_ICON cell).
